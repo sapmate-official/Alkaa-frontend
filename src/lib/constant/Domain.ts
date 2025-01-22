@@ -1,0 +1,1 @@
+export const backendDomain = import.meta.env.VITE_BACKEND_DOMAIN as string
