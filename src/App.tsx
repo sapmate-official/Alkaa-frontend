@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import './App.css'
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import Home from './page/public/Home';
@@ -21,7 +21,7 @@ import Logout from './page/private/Logout';
 
 
 function App() {
-  const [count, setCount] = useState(0)
+  // const [count, setCount] = useState(0)
 
   return (
     <Router>

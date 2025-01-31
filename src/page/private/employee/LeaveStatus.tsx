@@ -1,7 +1,6 @@
 import { useToast } from '@/hooks/use-toast'
 import { LeaveRequest } from '@/interface/general'
 import { APIDictionary } from '@/lib/APIdict'
-import { useTheme } from '@/provider/ThemeProvider'
 import { useAuth } from '@/services/AuthContext'
 import {
   Table,
@@ -15,13 +14,10 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import axios from 'axios'
 import React, { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
 
 const LeaveStatus = () => {
-  const {theme} = useTheme()
   const {user,isLoading} = useAuth()
-  const navigate = useNavigate()
   const {toast} = useToast()
   const [requestList,setrequestList] = React.useState<LeaveRequest[]>([])
   const fetchRequestList = async()=>{
@@ -62,7 +58,7 @@ const LeaveStatus = () => {
     }
   }
 
-  const formatDate = (date: string) => {
+  const formatDate = (date: Date) => {
     return format(new Date(date), 'MMM dd, yyyy')
   }
 

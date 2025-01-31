@@ -1,7 +1,6 @@
-import { useAuth } from "@/services/AuthContext";
 import { useState, useEffect } from "react";
 import { APIDictionary } from "@/lib/APIdict";
-import { MapPin, Clock, CheckCircle, XCircle, History } from "lucide-react";
+import { MapPin, Clock, XCircle, History } from "lucide-react";
 import axios from "axios";
 import LocationViewer from "./Locationviewer";
 interface Location {
@@ -17,7 +16,7 @@ interface AttendanceSession {
 }
 
 const LocationComponent = () => {
-  const { user } = useAuth();
+  // const { user } = useAuth();
   const [location, setLocation] = useState<Location>({ lat: null, lon: null });
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
@@ -74,6 +73,8 @@ const LocationComponent = () => {
           });
         },
         (error) => {
+          console.log(error);
+          
           reject("Unable to get location. Please enable location services.");
         }
       );
@@ -102,7 +103,8 @@ const LocationComponent = () => {
         data: payload,
         withCredentials: true
       });
-
+      console.log(data);
+      
       // Refresh sessions after successful check-in/out
       await fetchTodaySessions();
 

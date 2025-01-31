@@ -1,12 +1,11 @@
 import { useToast } from '@/hooks/use-toast'
 import { User } from '@/interface/general'
-import { APIDictionary } from '@/lib/APIdict'
 import { backendDomain } from '@/lib/constant/Domain'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import axios from 'axios'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 
 const ProfileInfo = () => {
@@ -53,7 +52,7 @@ const ProfileInfo = () => {
                 <CardHeader className="flex flex-row items-center gap-4">
                     <Avatar className="h-16 w-16">
                         <AvatarFallback className="text-lg">
-                            {profileInfo.name.split(' ').map(n => n[0]).join('')}
+                            {profileInfo.name && profileInfo?.name.split(' ').map(n => n[0]).join('')}
                         </AvatarFallback>
                     </Avatar>
                     <div className="space-y-1">

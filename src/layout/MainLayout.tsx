@@ -13,15 +13,10 @@ import {
   IconCalendarStats,
   IconUserCircle,
   IconLogout,
-  IconMenu2,
-  IconX
 } from '@tabler/icons-react';
-import { Separator } from '@/components/ui/separator';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Coins, Edit, Leaf, User2Icon } from 'lucide-react';
 import {  motion } from 'framer-motion';
 import { useState } from 'react';
-import { Button } from 'react-day-picker';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -30,7 +25,7 @@ interface MainLayoutProps {
 
 export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [open, setOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const location = useLocation();
   const noSidebarPaths = ['/', '/auth/signin'];
   const shouldShowSidebar = !noSidebarPaths.includes(location.pathname) && 

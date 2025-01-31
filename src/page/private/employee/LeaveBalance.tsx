@@ -1,5 +1,5 @@
 import { useToast } from '@/hooks/use-toast'
-import { LeaveType, LeaveBalance as ILeaveBalance } from '@/interface/general'
+import {  LeaveBalance as ILeaveBalance } from '@/interface/general'
 import { APIDictionary } from '@/lib/APIdict'
 import { useAuth } from '@/services/AuthContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/table"
 import axios from 'axios'
 import React, { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Calendar, Clock, Battery } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 

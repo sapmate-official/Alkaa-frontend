@@ -1,7 +1,6 @@
 import { useToast } from '@/hooks/use-toast'
 import { LeaveRequest } from '@/interface/general'
 import { APIDictionary } from '@/lib/APIdict'
-import { useTheme } from '@/provider/ThemeProvider'
 import { useAuth } from '@/services/AuthContext'
 import axios from 'axios'
 import React, { useEffect } from 'react'
@@ -17,7 +16,6 @@ import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 
 const LeaveRequestComponent = () => {
-  const {theme} = useTheme()
   const {user,isLoading} = useAuth()
   const {toast} = useToast()
   const [requestList,setrequestList] = React.useState<LeaveRequest[]>([])
