@@ -11,13 +11,13 @@ export default defineConfig({
     },
   },
   
-  server: {
-    host: '192.168.0.193',
-    // host: 'localhost'
-    // host: '127.0.0.1',
-    https: {
-      cert: fs.readFileSync('localhost.pem'),
-      key: fs.readFileSync('localhost-key.pem')
-    }
-  }
+  // server: {
+  //   host: '192.168.0.193',
+  //   // host: 'localhost'
+  //   // host: '127.0.0.1',
+  //   https: {
+  //     cert: fs.readFileSync('localhost.pem'),
+  //     key: fs.readFileSync('localhost-key.pem')
+  //   }
+  // }
 })
