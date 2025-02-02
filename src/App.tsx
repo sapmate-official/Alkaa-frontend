@@ -97,7 +97,7 @@ const EmployeeRoutes = () => {
       <Route path="/leave-balance" element={<LeaveBalance />} />
       <Route path="/attendance" element={<LocationComponent />} />
       <Route path="/profile/:id" element={<ProfileInfo />} />
-<Route path="/logout" element={<Logout />} />
+      <Route path="/logout" element={<Logout />} />
     </Routes>
   );
 }

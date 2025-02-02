@@ -1,1 +1,1 @@
-export const backendDomain = import.meta.env.VITE_BACKEND_DOMAIN as string
+export const backendDomain = "http://alkaa-backend.ap-south-1.elasticbeanstalk.com"
