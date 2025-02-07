@@ -11,27 +11,31 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const { signIn } = useAuth();
+  const { signIn, user, isLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingg, setIsLoadingg] = useState(false);
   const [error, setError] = useState("");
-const navigate = useNavigate();
+  const navigate = useNavigate();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsLoadingg(true);
     setError("");
-    
+
     try {
-      await signIn(email, password);
-      navigate("/p/");
+      const message  = await signIn(email, password);
+      if(message) {
+        setError(message);
+      }
+        // navigate("/p/");
+      // navigate("/p/");
     } catch (err) {
       setError("Invalid email or password");
     } finally {
-      setIsLoading(false);
+      setIsLoadingg(false);
     }
   };
-  
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden">
@@ -41,7 +45,7 @@ const navigate = useNavigate();
               <div className="flex flex-col items-center text-center">
                 <h1 className="text-2xl font-bold">Welcome back</h1>
                 <p className="text-balance text-muted-foreground">
-                  Login to your Sapmate LLC account
+                  Login to your Alkaa account
                 </p>
               </div>
               <div className="grid gap-2">
@@ -53,7 +57,7 @@ const navigate = useNavigate();
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  disabled={isLoading}
+                  disabled={isLoadingg}
                 />
               </div>
               <div className="grid gap-2">
@@ -66,18 +70,18 @@ const navigate = useNavigate();
                     Forgot your password?
                   </a>
                 </div>
-                <Input 
-                  id="password" 
-                  type="password" 
-                  required 
+                <Input
+                  id="password"
+                  type="password"
+                  required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  disabled={isLoading}
+                  disabled={isLoadingg}
                 />
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Logging in..." : "Login"}
+              <Button type="submit" className="w-full" disabled={isLoadingg}>
+                {isLoadingg ? "Logging in..." : "Login"}
               </Button>
             </div>
           </form>
