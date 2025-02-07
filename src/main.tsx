@@ -8,12 +8,11 @@ import { ToastProvider } from './components/ui/toast.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <AuthProvider>
-      <ToastProvider>
       <ThemeProvider>
+      <ToastProvider>
       <App />
-      </ThemeProvider>
       </ToastProvider>
-    </AuthProvider>
+      </ThemeProvider>
+  
   </StrictMode>,
 )
