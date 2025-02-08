@@ -166,12 +166,19 @@ export const SidebarLink = ({
   className?: string;
   props?: React.HTMLAttributes<HTMLDivElement>;
 }) => {
-  const { open, animate } = useSidebar();
+  const { open, animate,setOpen } = useSidebar();
   const navigate = useNavigate();
+  const handleClick = () => {
+    navigate(link.href);
+    // Close sidebar on mobile devices
+    if (window.innerWidth < 768) {
+      setOpen(false);
+    }
+  };
 
   return (
     <div
-      onClick={() => navigate(link.href)}
+      onClick={handleClick}
       className={cn(
         "flex items-center justify-start gap-2 group/sidebar py-2 cursor-pointer",
         className

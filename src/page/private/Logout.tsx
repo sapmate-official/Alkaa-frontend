@@ -1,10 +1,19 @@
 import { useAuth } from '@/services/AuthContext';
-import  { useEffect } from 'react'
+import React, { useEffect } from 'react'
+import { useSetAtom } from 'jotai';
+import { dashboardDataAtom } from '@/store/atom';
 
 const Logout = () => {
     const { logout } = useAuth();
+    const setDashboardData = useSetAtom(dashboardDataAtom);
+    
+    const handleLogout = () => {
+        logout();
+        setDashboardData(null); // Clear dashboard data
+    };
+
     useEffect(()=>{
-        logout()
+        handleLogout()
     },[])
     
     return (
