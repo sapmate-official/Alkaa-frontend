@@ -8,7 +8,8 @@ export default function SignIn() {
   const navigate = useNavigate();
   const { user,isLoading } = useAuth();
   useEffect(()=>{
-    if(user && user.role && !isLoading){
+    
+    if(user  && !isLoading){
       navigate("/p/")
     }else{
       if(!isLoading){

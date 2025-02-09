@@ -1,7 +1,7 @@
 import  { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
-import { APIDictionary } from '../../lib/APIdict';
+import { APIDictionary } from '../../api/APIdict';
 
 const SetPassword = () => {
   const { token } = useParams();
