@@ -1,6 +1,6 @@
 import { useToast } from '@/hooks/use-toast'
 import { User } from '@/interface/general'
-import { APIDictionary } from '@/lib/APIdict'
+import { APIDictionary } from '@/api/APIdict'
 import { useAuth } from '@/services/AuthContext'
 import {
   Table,

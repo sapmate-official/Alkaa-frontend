@@ -1,6 +1,6 @@
 import  { useState } from 'react';
 import axios from 'axios';
-import { APIDictionary } from '../../../lib/APIdict';
+import { APIDictionary } from '../../../api/APIdict';
 import { useToast } from '@/hooks/use-toast';
 
 
@@ -78,3 +78,22 @@ const CreateEmployee = () => {
 };
 
 export default CreateEmployee;
+
+
+// Personal information: 
+
+//   1.Full name
+// 2. Address 
+// 3. Adhar number 
+// 4. Pan number 
+// 5. Mobile number 
+// 6. Date of birth 
+
+// Employment & Compensation:
+
+// 1. Hiring date 
+// 2. Company name ( picklist)
+// 3. Department 
+// 4. Bank details ( A/C Holder Name , A/C number, IFSc code & Bank name)
+// 5. Annual package 
+// 6. Monthly salary

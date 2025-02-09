@@ -1,7 +1,7 @@
 import  { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import axios from 'axios'
-import { APIDictionary } from '../../../lib/APIdict'
+import { APIDictionary } from '../../../api/APIdict'
 import { useToast } from '@/hooks/use-toast'
 
 interface LeaveTypeForm {

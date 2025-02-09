@@ -2,9 +2,12 @@
 import { userIdAtom } from "../store/atom";
 import axios, { AxiosError } from "axios";
 import { useAtom } from "jotai";
-import React, { createContext, useState, useContext, useEffect } from "react";
+import React, { createContext, useState, useContext, useEffect, useCallback } from "react";
 import { User } from "../interface/general";
 import { backendDomain } from "../lib/constant/Domain";
+import { useNavigate } from "react-router-dom";
+import debounce from 'lodash/debounce';
+import Loader from "@/components/Loader";
 
 
 interface AuthContextType {
@@ -12,7 +15,7 @@ interface AuthContextType {
     isLoading: boolean;
     logout: () => void;
     reinitializeAuth: () => void;
-    signIn: (email: string, password: string) => Promise<void>;
+    signIn: (email: string, password: string) => Promise<string | undefined>;
 }
 
 // Create a custom event name
@@ -39,17 +42,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [ ,setUser_id] = useAtom<number | null>(userIdAtom);
-
-    const initializeAuth = async () => {
-        const token = enhancedLocalStorage.getItem("accessToken");
-        console.log(token);
-        
-        if (token) {
-            console.log("AuthProvider - Token found, validating...");
+    const navigate = useNavigate();
+    const [isInitialized, setIsInitialized] = useState(false);
+    const debouncedValidateToken = useCallback(
+        debounce(async (token: string) => {
             await validateToken(token);
-        } else {
-            console.log("AuthProvider - No token found");
+        }, 1000, { leading: true, trailing: false }),
+        []
+    );
+    const initializeAuth = async () => {
+        try {
+            const token = enhancedLocalStorage.getItem("accessToken");
+            if (token) {
+                await debouncedValidateToken(token);
+            } else {
+                setUser(null);
+                navigate('/auth/signin');
+            }
+        } finally {
             setIsLoading(false);
+            setIsInitialized(true);
         }
     };
     const signIn = async (email: string, password: string) => {
@@ -67,48 +79,67 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 throw new Error("Invalid login response");
             }
         } catch (error) {
+            console.log("ami ekhane ",error);
+            
             if (axios.isAxiosError(error)) {
                 const axiosError = error as AxiosError;
                 if (axiosError.response?.status === 401) {
                     console.error("Invalid email or password");
+                    return "Invalid email or password";
                 } else {
                     console.error("Login error:", error);
+                    return "Unexpected login error";
                 }
             }
         }
     }
 
     useEffect(() => {
-        initializeAuth();
-
-        const handleRevalidate = () => {
-            console.log("AuthProvider - Revalidation triggered");
-            initializeAuth();
+        let isSubscribed = true;
+        
+        const handleAuth = async () => {
+            if (!isSubscribed || isInitialized) return;
+            await initializeAuth();
         };
-
-        window.addEventListener(AUTH_REVALIDATE_EVENT, handleRevalidate);
-
+    
+        handleAuth();
+        
         return () => {
-            window.removeEventListener(AUTH_REVALIDATE_EVENT, handleRevalidate);
+            isSubscribed = false;
         };
-    }, []);
+    }, [isInitialized]);
 
     const logout = async () => {
         const accessToken = enhancedLocalStorage.getItem("accessToken");
-        if (accessToken) {
+        const refreshToken = enhancedLocalStorage.getItem("refreshToken");
+        
+        if (accessToken && refreshToken) {
             try {
-                await axios.post(`${backendDomain}/api/v1/general/logout`, null, {
-                    headers: { Authorization: `Bearer ${accessToken}` },
-                    withCredentials: true
-                });
+                const response = await axios.post(
+                    `${backendDomain}/api/v1/general/logout`, 
+                    { refreshToken }, // Send refresh token in body
+                    {
+                        headers: { Authorization: `Bearer ${accessToken}` },
+                        withCredentials: true
+                    }
+                );
+                
+                if(response.status === 200) {
+                    setUser(null);
+                    enhancedLocalStorage.removeItem("accessToken");
+                    enhancedLocalStorage.removeItem("refreshToken");
+                    setIsLoading(false);
+                }
             } catch (error) {
                 console.error("Logout error:", error);
+                // Still clear tokens on frontend in case of backend error
+                setUser(null);
+                enhancedLocalStorage.removeItem("accessToken");
+                enhancedLocalStorage.removeItem("refreshToken");
+                setIsLoading(false);
+                navigate('/auth/signin');
             }
         }
-        setUser(null);
-        enhancedLocalStorage.removeItem("accessToken");
-        enhancedLocalStorage.removeItem("refreshToken");
-        setIsLoading(false);
     };
     const validateToken = async (token: string) => {
         try {
@@ -120,9 +151,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             console.log(response);
             if (response.status === 200 && response.data.user) {
                 
-                setUser(response.data.user);
-                setUser_id(response?.data?.user?.userId);
-                setIsLoading(false);
+                const updates = () => {
+                    setUser(response.data.user);
+                    setUser_id(response.data.user?.userId);
+                    setIsLoading(false);
+                };
+                updates();
             } else {
                 throw new Error("Invalid token response");
             }
@@ -132,6 +166,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             } else {
                 console.error("Token validation error:", error);
                 logout();
+                navigate('/auth/signin');
             }
         }
     };
@@ -169,6 +204,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         reinitializeAuth: initializeAuth,
         signIn: signIn
     };
+    if (!isInitialized) {
+        return <Loader/>; // or a loading spinner
+    }
 
     return (
         <AuthContext.Provider value={contextValue}>
@@ -179,7 +217,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
 export const useAuth = (): AuthContextType => {
     const context = useContext(AuthContext);
-    console.log(context);
     
     if (context === undefined) {
         throw new Error("useAuth must be used within an AuthProvider");
