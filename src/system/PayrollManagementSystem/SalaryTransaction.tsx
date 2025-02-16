@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -13,11 +12,19 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { APIDictionary } from '@/api/APIdict';
+import { SalaryRecord } from '@/interface/general';
 
-const SalaryTransaction = ({ salaryRecord, onTransactionComplete }) => {
+
+
+interface SalaryTransactionProps {
+  salaryRecord: SalaryRecord;
+  onTransactionComplete: () => void;
+}
+
+const SalaryTransaction = ({ salaryRecord, onTransactionComplete }: SalaryTransactionProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState('confirm'); // confirm, otp, processing
@@ -47,7 +54,7 @@ const SalaryTransaction = ({ salaryRecord, onTransactionComplete }) => {
 
       setStep('otp');
     } catch (err) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
     }
@@ -83,7 +90,7 @@ const SalaryTransaction = ({ salaryRecord, onTransactionComplete }) => {
         onTransactionComplete();
       }, 2000);
     } catch (err) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
     }
@@ -130,19 +137,19 @@ const SalaryTransaction = ({ salaryRecord, onTransactionComplete }) => {
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div>
                     <label className="text-gray-500">Account Holder</label>
-                    <p>{salaryRecord.user.bankDetails.accountHolder}</p>
+                    <p>{salaryRecord?.user?.bankDetails?.accountHolder}</p>
                   </div>
                   <div>
                     <label className="text-gray-500">Bank Name</label>
-                    <p>{salaryRecord.user.bankDetails.bankName}</p>
+                    <p>{salaryRecord?.user?.bankDetails?.bankName}</p>
                   </div>
                   <div>
                     <label className="text-gray-500">Account Number</label>
-                    <p>{salaryRecord.user.bankDetails.accountNumber}</p>
+                    <p>{salaryRecord?.user?.bankDetails?.accountNumber}</p>
                   </div>
                   <div>
                     <label className="text-gray-500">IFSC Code</label>
-                    <p>{salaryRecord.user.bankDetails.ifscCode}</p>
+                    <p>{salaryRecord.user?.bankDetails?.ifscCode}</p>
                   </div>
                 </div>
               </div>

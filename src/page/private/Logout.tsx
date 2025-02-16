@@ -1,5 +1,5 @@
 import { useAuth } from '@/services/AuthContext';
-import React, { useEffect } from 'react'
+import  { useEffect } from 'react'
 import { useSetAtom } from 'jotai';
 import { dashboardDataAtom } from '@/store/atom';
 

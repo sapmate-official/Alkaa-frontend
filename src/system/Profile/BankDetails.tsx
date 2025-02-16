@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { IBankDetails } from '../../types/bankDetails';
 import { APIDictionary } from '../../api/APIdict';

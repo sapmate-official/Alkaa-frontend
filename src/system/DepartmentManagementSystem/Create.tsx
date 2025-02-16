@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import  { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -7,7 +7,6 @@ import axios from 'axios'
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -103,6 +102,8 @@ const CreateDepartment = () => {
         ...values,
         orgId: user?.organization.id,
       })
+      console.log(response.data);
+      
 
       toast({
         title: 'Success',

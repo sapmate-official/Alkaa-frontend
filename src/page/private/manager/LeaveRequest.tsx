@@ -92,7 +92,7 @@ const LeaveRequestComponent = () => {
         <TableBody>
           {requestList.map((request) => (
             <TableRow key={request.id}>
-              <TableCell>{request?.User.name}</TableCell>
+              <TableCell>{request?.user?.name}</TableCell>
               <TableCell>{format(new Date(request.startDate), 'PPP')}</TableCell>
               <TableCell>{format(new Date(request.endDate), 'PPP')}</TableCell>
               <TableCell>{request.reason || 'No reason provided'}</TableCell>

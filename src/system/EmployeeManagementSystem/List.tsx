@@ -1,7 +1,7 @@
 import { APIDictionary } from '@/api/APIdict';
 import { useAuth } from '@/services/AuthContext';
 import axios from 'axios';
-import React, { useEffect } from 'react'
+import  { useEffect } from 'react'
 
 const ListOfEmployee = () => {
     const { user } = useAuth()

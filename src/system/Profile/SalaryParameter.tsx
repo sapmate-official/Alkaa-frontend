@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import  { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { ISalaryParameters } from '../../types/salaryParameters';
 import { APIDictionary } from '../../api/APIdict';
@@ -93,8 +93,7 @@ const SalaryParameter = () => {
                 control={form.control}
                 name={field.name as keyof ISalaryParameters}
                 rules={{ 
-                  required: `${field.label} is required`,
-                  valueAsNumber: true
+                  required: `${field.label} is required`
                 }}
                 render={({ field: fieldProps }) => (
                   <FormItem>
@@ -104,7 +103,7 @@ const SalaryParameter = () => {
                         type="number" 
                         {...fieldProps} 
                         value={fieldProps.value?.toString() || ''}
-                        onChange={(e) => fieldProps.onChange(parseFloat(e.target.value))}
+                        onChange={(e) => fieldProps.onChange(Number(e.target.value))}
                         step="0.01"
                       />
                     </FormControl>
