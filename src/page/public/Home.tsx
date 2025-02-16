@@ -10,32 +10,32 @@ import axios from 'axios';
 import { useAtom } from 'jotai';
 import { dashboardDataAtom } from '@/store/atom';
 
-interface Activity {
-  title: string;
-  timestamp: string;
-}
+// interface Activity {
+//   title: string;
+//   timestamp: string;
+// }
 
-interface AttendanceStat {
-  date: string;
-  present: number;
-  absent: number;
-}
+// interface AttendanceStat {
+//   date: string;
+//   present: number;
+//   absent: number;
+// }
 
-interface DashboardData {
-  totalEmployees: number;
-  presentToday: number;
-  pendingLeaves: number;
-  recentActivities: Activity[];
-  attendanceStats: AttendanceStat[];
-}
+// interface DashboardData {
+//   totalEmployees: number;
+//   presentToday: number;
+//   pendingLeaves: number;
+//   recentActivities: Activity[];
+//   attendanceStats: AttendanceStat[];
+// }
 
-const defaultDashboardData: DashboardData = {
-  totalEmployees: 0,
-  presentToday: 0,
-  pendingLeaves: 0,
-  recentActivities: [],
-  attendanceStats: []
-};
+// const defaultDashboardData: DashboardData = {
+//   totalEmployees: 0,
+//   presentToday: 0,
+//   pendingLeaves: 0,
+//   recentActivities: [],
+//   attendanceStats: []
+// };
 
 const Home = () => {
   const { user } = useAuth();
@@ -86,7 +86,14 @@ const Home = () => {
     }
   };
 
-  const QuickActionCard = ({ title, description, icon, onClick }) => (
+  interface QuickActionCardProps {
+    title: string;
+    description: string;
+    icon: React.ReactNode;
+    onClick: () => void;
+  }
+
+  const QuickActionCard = ({ title, description, icon, onClick }: QuickActionCardProps) => (
     <Card className="cursor-pointer hover:bg-accent transition-colors" onClick={onClick}>
       <CardContent className="flex items-center p-6">
         {icon}
@@ -125,7 +132,7 @@ const Home = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{dashboardData.totalEmployees}</div>
+            <div className="text-2xl font-bold">{dashboardData?.totalEmployees ?? 0}</div>
           </CardContent>
         </Card>
 
@@ -135,7 +142,7 @@ const Home = () => {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{dashboardData.presentToday}</div>
+            <div className="text-2xl font-bold">{dashboardData?.presentToday ?? 0}</div>
           </CardContent>
         </Card>
 
@@ -145,7 +152,7 @@ const Home = () => {
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{dashboardData.pendingLeaves}</div>
+            <div className="text-2xl font-bold">{dashboardData?.pendingLeaves ?? 0}</div>
           </CardContent>
         </Card>
 
@@ -169,7 +176,7 @@ const Home = () => {
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={dashboardData.attendanceStats}>
+                <BarChart data={dashboardData?.attendanceStats}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
                   <YAxis />

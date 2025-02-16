@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,9 +9,9 @@ import { useNavigate } from 'react-router-dom';
 
 const PayrollDashboard = () => {
   const [salaryRecords, setSalaryRecords] = useState<SalaryRecord[]>([]);
-  const [statistics, setStatistics] = useState(null);
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [, setStatistics] = useState(null);
+  const [selectedMonth, ] = useState(new Date().getMonth() + 1);
+  const [selectedYear, ] = useState(new Date().getFullYear());
   const {user}= useAuth()
 
   useEffect(() => {
@@ -48,6 +48,10 @@ const PayrollDashboard = () => {
   const viewPayrollUsers = () => {
     navigate("/p/payroll/users");
   };
+
+  // Add type safety for reduce operations
+  const sumObjectValues = (obj: Record<string, number> | number) => 
+    typeof obj === 'number' ? obj : Object.values(obj).reduce((a: number, b: number) => a + b, 0);
 
   return (
     <div className="p-6 space-y-6 w-full h-full overflow-y-scroll">
@@ -156,10 +160,10 @@ const PayrollDashboard = () => {
                     </td>
                     <td className="p-2">₹{record.basicSalary.toLocaleString()}</td>
                     <td className="p-2">
-                      ₹{Object.values(record.allowances).reduce((a, b) => a + b, 0).toLocaleString()}
+                      ₹{sumObjectValues(record.allowances).toLocaleString()}
                     </td>
                     <td className="p-2">
-                      ₹{Object.values(record.deductions).reduce((a, b) => a + b, 0).toLocaleString()}
+                      ₹{sumObjectValues(record.deductions).toLocaleString()}
                     </td>
                     <td className="p-2">₹{record.netSalary.toLocaleString()}</td>
                     <td className="p-2">

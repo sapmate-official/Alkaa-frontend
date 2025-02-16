@@ -2,7 +2,7 @@ import { APIDictionary } from '@/api/APIdict';
 import { Organization } from '@/interface/general';
 import { useAuth } from '@/services/AuthContext';
 import axios from 'axios';
-import React, { useEffect, useState } from 'react';
+import  { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

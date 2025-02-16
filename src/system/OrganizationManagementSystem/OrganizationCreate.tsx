@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { APIDictionary } from '../../api/APIdict';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

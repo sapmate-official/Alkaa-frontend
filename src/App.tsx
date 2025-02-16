@@ -1,21 +1,13 @@
 import { useEffect, useState } from 'react'
 import './App.css'
-import { BrowserRouter as Router, Route, Routes, Navigate, BrowserRouter } from 'react-router-dom';
+import { Route, Routes, Navigate, BrowserRouter } from 'react-router-dom';
 import Home from './page/public/Home';
 import SetPassword from './page/public/SetPassword';
 import { AuthProvider, useAuth } from './services/AuthContext';
-import LeaveRequest from './page/private/manager/LeaveRequest';
-import EmployeeList from './page/private/manager/EmployeeList';
-import LeaveRequestEmployee from './page/private/employee/LeaveRequest';
-import LeaveBalance from './page/private/employee/LeaveBalance';
 import SignIn from './page/public/auth/SignIn';
 import Loader from './components/Loader';
 import { MainLayout } from './layout/MainLayout';
-import LeaveStatus from './page/private/employee/LeaveStatus';
 import ProfileInfo from './system/Profile/ProfileInfo';
-import CreateEmployee from './page/private/manager/CreateEmployee';
-import LocationComponent from './components/Attendance';
-import AttendanceList from './components/AttendanceList';
 import Logout from './page/private/Logout';
 import axios from 'axios';
 import { APIDictionary } from './api/APIdict';
@@ -85,7 +77,7 @@ const ProtectedRoute: React.FC = () => {
   const { user, isLoading } = useAuth();
   const [userDetails, setUserDetails] = useState<any | null>(null);
   const [isUserLoading, setIsUserLoading] = useState(true);
-  const [listOfPermission, setPermissionList] = useAtom(permissionListAtom)
+  const [, setPermissionList] = useAtom(permissionListAtom)
 
   const fetchUserDetails = async () => {
     try {

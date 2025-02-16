@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -15,15 +15,16 @@ import {
 } from '@/components/ui/table';
 import { Search, Users } from 'lucide-react';
 import { APIDictionary } from '@/api/APIdict';
-import { User, SalaryRecord } from '@/types/salary';
+import { User } from '@/types/salary';
 import SalaryTransaction from './SalaryTransaction';
+import { SalaryRecord } from '@/interface/general';
 
 const PayrollDashboardUsers = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [salaryRecords, setSalaryRecords] = useState<SalaryRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -227,7 +228,7 @@ const PayrollDashboardUsers = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {salaryRecords.map((record) => (
+                    {salaryRecords.map((record:SalaryRecord) => (
                       <TableRow key={record.id}>
                         <TableCell>
                           {new Date(record.year, record.month - 1).toLocaleString('default', {

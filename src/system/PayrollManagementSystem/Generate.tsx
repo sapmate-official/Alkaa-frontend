@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { AlertCircle, Check, Loader } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -8,10 +8,11 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { APIDictionary } from '@/api/APIdict';
 import axios from 'axios';
+import { User } from '@/interface/general';
 
 const SalaryGenerator = () => {
-  const [employees, setEmployees] = useState([]);
-  const [selectedEmployees, setSelectedEmployees] = useState([]);
+  const [employees, setEmployees] = useState<User[]>([]);
+  const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
   const [loading, setLoading] = useState(false);
@@ -135,7 +136,7 @@ const SalaryGenerator = () => {
                   />
                   <Label htmlFor="select-all">Select All</Label>
                 </div>
-                {employees.map((employee) => (
+                {employees.map((employee:User) => (
                   <div key={employee.id} className="ml-6 flex items-center space-x-2">
                     <Checkbox
                       id={`employee-${employee.id}`}

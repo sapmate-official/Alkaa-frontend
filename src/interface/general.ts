@@ -216,8 +216,8 @@ export interface SalaryRecord {
   month: number;
   year: number;
   basicSalary: number;
-  allowances?: any;
-  deductions?: any;
+  allowances: number;
+  deductions: number;
   tax: number;
   netSalary: number;
   status: PayrollStatus;

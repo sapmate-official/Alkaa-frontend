@@ -35,7 +35,7 @@ interface linkType {
 export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [open, setOpen] = useState(false);
   const [userDetails, setUserDetails] = useState<any | null>(null);
-  const [isUserLoading, setIsUserLoading] = useState(true);
+  const [, setIsUserLoading] = useState(true);
   const [links, setLinks] = useState<linkType[]>([]);
   const { user, isLoading } = useAuth();
   const location = useLocation();
