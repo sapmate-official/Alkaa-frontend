@@ -32,7 +32,7 @@ import { Toaster } from './components/ui/toaster';
 import ViewLeaveBalance from './system/LeaveBalanceManagementSystem/view';
 import AttendancePanel from './system/AttendanceManagementSystem/panel';
 import AttendanceHistory from './system/AttendanceManagementSystem/history';
-import PayrollDashboard from './system/PayrollManagementSystem/Dashboard';
+import PayrollDashboardForAllEmployee from './system/PayrollManagementSystem/Dashboard';
 import SalaryGenerator from './system/PayrollManagementSystem/Generate';
 import PayrollDashboardUsers from './system/PayrollManagementSystem/DashboardUsers';
 import BankDetails from './system/Profile/BankDetails';
@@ -50,6 +50,7 @@ import RoleAssignment from './system/EmployeeManagementSystem/RoleAssignment';
 import { useAtom } from 'jotai';
 import { permissionListAtom } from './store/atom';
 import PermissionRoute from './components/PermissionRoute';
+import PayRollViewOwn from './system/PayrollManagementSystem/ViewOwn';
 
 
 function App() {
@@ -106,8 +107,7 @@ const ProtectedRoute: React.FC = () => {
   if (isLoading || isUserLoading) {
     return <Loader />;
   }
-  console.log(user, isLoading, userDetails);
-
+  
   if (!user && !isLoading) {
     return <Navigate to="/auth/signin" replace />;
   }
@@ -276,8 +276,11 @@ const PayrollManagementSystem = () => {
   return (
     <Routes>
       <Route path='/' element={
+          <PayRollViewOwn />
+      } />
+      <Route path='/all' element={
         <PermissionRoute requiredPermissions={['payroll.view_all']}>
-          <PayrollDashboard />
+          <PayrollDashboardForAllEmployee />
         </PermissionRoute>
       } />
       <Route path='/generate' element={

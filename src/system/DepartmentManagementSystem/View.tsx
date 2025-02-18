@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator'
 import { Users, MapPin, IndianRupee, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/services/AuthContext'
+import Loader from '@/components/Loader'
 
 interface Department {
   id: string;
@@ -52,7 +53,7 @@ const SpecificDepartmentView = () => {
     fetchDepartment()
   }, [])
 
-  if (!department) return <div>Loading...</div>
+  if (!department) return <Loader/>
 
   return (
     <div className="container mx-auto p-6 space-y-6">

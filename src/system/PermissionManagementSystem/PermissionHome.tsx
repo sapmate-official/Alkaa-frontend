@@ -1,4 +1,5 @@
 import { APIDictionary } from '@/api/APIdict';
+import Loader from '@/components/Loader';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Permission } from '@/interface/general';
 import axios from 'axios';
@@ -31,7 +32,7 @@ const PermissionHome = () => {
     }
 
     if (isLoading) {
-        return <div>Loading...</div>
+        return <Loader/>
     }
 
     return (

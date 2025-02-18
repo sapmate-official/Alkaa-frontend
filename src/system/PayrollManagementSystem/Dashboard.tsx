@@ -7,7 +7,7 @@ import { useAuth } from '@/services/AuthContext';
 import { SalaryRecord } from '@/interface/general';
 import { useNavigate } from 'react-router-dom';
 
-const PayrollDashboard = () => {
+const PayrollDashboardForAllEmployee = () => {
   const [salaryRecords, setSalaryRecords] = useState<SalaryRecord[]>([]);
   const [, setStatistics] = useState(null);
   const [selectedMonth, ] = useState(new Date().getMonth() + 1);
@@ -22,8 +22,9 @@ const PayrollDashboard = () => {
   const fetchSalaryRecords = async () => {
     try {
       const response = await fetch(`${APIDictionary.payroll}/user/${user?.id}`);
-      const data = await response.json();
-      setSalaryRecords(data);
+      const data = await response.json();console.log(data.salaryRecords);
+      
+      setSalaryRecords(data.salaryRecords);
     } catch (error) {
       console.error('Error fetching salary records:', error);
     }
@@ -188,4 +189,4 @@ const PayrollDashboard = () => {
   );
 };
 
-export default PayrollDashboard;
+export default PayrollDashboardForAllEmployee;

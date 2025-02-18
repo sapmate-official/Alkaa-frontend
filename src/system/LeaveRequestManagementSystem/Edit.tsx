@@ -8,6 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Calendar } from '@/components/ui/calendar'
+import Loader from '@/components/Loader'
 
 interface LeaveRequest {
   id: string
@@ -88,7 +89,7 @@ const EditLeaveRequest = () => {
   }
 
   if (!leaveRequest) {
-    return <div>Loading...</div>
+    return <Loader />
   }
 
   return (

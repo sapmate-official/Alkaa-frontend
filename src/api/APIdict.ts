@@ -34,4 +34,5 @@ export const APIDictionary = {
     notification: `${backendDomain}/api/v2/notification`,
     department: `${backendDomain}/api/v2/department`,
     dashboard: (userId: string) => `${backendDomain}/api/v2/screen/dashboard/${userId}`,
+    get_payroll: (userId: string) => `${backendDomain}/api/v2/payroll/user/${userId}`,
 };
