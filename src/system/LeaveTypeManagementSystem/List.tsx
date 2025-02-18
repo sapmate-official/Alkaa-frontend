@@ -48,7 +48,7 @@ export default function LeaveTypeList() {
     };
 
     return (
-        <div className="p-4">
+        <div className="p-4 w-full h-full">
            <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold">Leave Types</h2>
                 <Button 

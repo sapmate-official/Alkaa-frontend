@@ -232,17 +232,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           <div>
         <SidebarLink
           link={{
-            label: user?.name || "User",
+            label:` ${user?.firstName} ${user?.lastName}` || "User",
             href: `/p/profile/${user?.id}`,
-            icon: (
-          <img
-            src="https://assets.aceternity.com/manu.png"
-            className="h-7 w-7 flex-shrink-0 rounded-full"
-            width={50}
-            height={50}
-            alt="Avatar"
-          />
-            ),
+            icon: userDetails?.avatar ? (
+              <img
+                src={userDetails?.avatar}
+                alt="avatar"
+                className="h-8 w-8 rounded-full"
+              />
+            ) : (
+              <User2Icon className="h-5 w-5" />
+            )
           }}
         />
           </div>

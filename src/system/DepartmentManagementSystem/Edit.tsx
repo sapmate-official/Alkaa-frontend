@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { useToast } from '@/hooks/use-toast'
+import Loader from '@/components/Loader'
 
 const SpecificDepartmentEdit = () => {
   const { id } = useParams()
@@ -87,8 +88,7 @@ const SpecificDepartmentEdit = () => {
     }
   }
 
-  if (!department) return <div>Loading...</div>
-
+  if (!department) return <Loader/>
   return (
     <form onSubmit={handleSubmit} className=" mx-auto p-4 h-full w-full overflow-y-scroll">
       <Card>
