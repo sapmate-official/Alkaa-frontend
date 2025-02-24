@@ -21,6 +21,7 @@ const EmployeeList = () => {
   const { toast } = useToast()
   const { user, isLoading } = useAuth()
   const navigate = useNavigate()
+  
 
   const fetchEmployeeList = async () => {
     try {

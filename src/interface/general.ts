@@ -106,7 +106,7 @@ export interface User {
   createdAt: Date;
   updatedAt: Date;
   organization: Organization;
-  department?: Department;
+  Department?: Department[];
   manager?: User;
   subordinates: User[];
   roles: UserRole[];

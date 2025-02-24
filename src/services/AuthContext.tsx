@@ -79,7 +79,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 throw new Error("Invalid login response");
             }
         } catch (error) {
-            console.log("ami ekhane ",error);
             
             if (axios.isAxiosError(error)) {
                 const axiosError = error as AxiosError;

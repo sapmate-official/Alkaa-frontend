@@ -33,17 +33,20 @@ const SpecificDepartmentView = () => {
   const {user} = useAuth()
   const [department, setDepartment] = useState<Department | null>(null)
   const navigate = useNavigate()
-
+  console.log(user);
+  
   const fetchDepartment = async () => {   
     try {
       let response;
-      if(user?.departmentId) {
-        response = await axios.get(`${APIDictionary.department}/${user.departmentId}`)
+      if(user?.Department?.[0]?.id) {
+        response = await axios.get(`${APIDictionary.department}/${user.Department[0].id}`)
+        setDepartment(response.data)
 
-      }else{
-        response = await axios.get(`${APIDictionary.department}/${id}`)
       }
-      setDepartment(response.data)
+      if(id) {
+        response = await axios.get(`${APIDictionary.department}/${id}`)
+        setDepartment(response.data)
+      }
     } catch (error) {
       console.log(error)
     }
@@ -51,7 +54,7 @@ const SpecificDepartmentView = () => {
 
   useEffect(() => {
     fetchDepartment()
-  }, [])
+  }, [user,id])
 
   if (!department) return <Loader/>
 
@@ -72,10 +75,18 @@ const SpecificDepartmentView = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(`/p/department/${id}/edit`)}
+              onClick={() => navigate(`/p/department/${id ? id : user?.Department?.[0]?.id}/edit`)}
             >
               <Pencil className="h-4 w-4 mr-2" />
               Edit Department
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/p/department/list`)}
+            >
+              <Users className="h-4 w-4 mr-2" />
+              List of Department
             </Button>
           </div>
         </CardHeader>

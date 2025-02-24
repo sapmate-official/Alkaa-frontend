@@ -45,7 +45,7 @@ const ListOfDepartment = () => {
     }, [])
 
     return (
-        <div className="p-4">
+        <div className="p-4 w-full h-full ">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold">Departments</h1>
                 <Button onClick={() => navigate("/p/department/create")}>
