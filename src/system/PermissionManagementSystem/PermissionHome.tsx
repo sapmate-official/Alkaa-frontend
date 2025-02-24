@@ -1,6 +1,15 @@
 import { APIDictionary } from '@/api/APIdict';
 import Loader from '@/components/Loader';
+import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
 import { Permission } from '@/interface/general';
 import axios from 'axios';
 import React from 'react'
@@ -39,50 +48,46 @@ const PermissionHome = () => {
         <div className="p-4 w-full">
             <div className="flex justify-between items-center mb-4">
                 <h1 className="text-2xl font-bold">Permission Management</h1>
-                <button 
-                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                <Button 
                     onClick={() => onClick('/p/permission/create')}
                 >
                     Create Permission
-                </button>
+                </Button>
             </div>
 
-<ScrollArea className='h-screen'>
-            <div className="overflow-x-auto">
-                <table className="min-w-full bg-white border border-gray-300">
-                    <thead className="bg-gray-100">
-                        <tr>
-                            <th className="px-6 py-3 border-b text-left">Name</th>
-                            <th className="px-6 py-3 border-b text-left">Module</th>
-                            <th className="px-6 py-3 border-b text-left">Action</th>
-                            <th className="px-6 py-3 border-b text-left">Description</th>
-                            <th className="px-6 py-3 border-b text-left">Created At</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+            <ScrollArea className="h-screen">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Module</TableHead>
+                            <TableHead>Action</TableHead>
+                            <TableHead>Description</TableHead>
+                            <TableHead>Created At</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
                         {permissions.map((permission) => (
-                            <tr key={permission.id} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 border-b">{permission.name}</td>
-                                <td className="px-6 py-4 border-b">{permission.module}</td>
-                                <td className="px-6 py-4 border-b">{permission.action}</td>
-                                <td className="px-6 py-4 border-b">{permission.description || '-'}</td>
-                                <td className="px-6 py-4 border-b">
+                            <TableRow key={permission.id}>
+                                <TableCell>{permission.name}</TableCell>
+                                <TableCell>{permission.module}</TableCell>
+                                <TableCell>{permission.action}</TableCell>
+                                <TableCell>{permission.description || '-'}</TableCell>
+                                <TableCell>
                                     {new Date(permission.createdAt).toLocaleDateString()}
-                                </td>
-                            </tr>
+                                </TableCell>
+                            </TableRow>
                         ))}
                         {permissions.length === 0 && (
-                            <tr>
-                                <td colSpan={5} className="px-6 py-4 text-center">
+                            <TableRow>
+                                <TableCell colSpan={5} className="text-center">
                                     No permissions found
-                                </td>
-                            </tr>
+                                </TableCell>
+                            </TableRow>
                         )}
-                    </tbody>
-                </table>
-            </div>
-</ScrollArea>
-
+                    </TableBody>
+                </Table>
+            </ScrollArea>
         </div>
     )
 }
