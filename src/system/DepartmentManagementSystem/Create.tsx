@@ -65,7 +65,7 @@ const CreateDepartment = () => {
         }
 
         // Fetch departments
-        const deptResponse = await axios.get(`${APIDictionary.department}?orgId=${user.organization.id}`)
+        const deptResponse = await axios.get(`${APIDictionary.department}/org/${user.organization.id}`)
         setDepartments(deptResponse.data || [])
 
         // Fetch employees
