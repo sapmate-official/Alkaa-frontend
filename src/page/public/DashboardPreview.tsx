@@ -59,7 +59,7 @@ const upcomingEvents = [
 
 const EnhancedDashboardPreview = () => {
   return (
-    <div className="p-6 space-y-6 w-full overflow-y-auto bg-background rounded-lg border border-border shadow-sm">
+    <div className="p-6 space-y-6 w-full overflow-y-auto bg-background rounded-lg border border-border shadow-sm ">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>

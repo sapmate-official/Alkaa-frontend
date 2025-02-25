@@ -221,7 +221,9 @@ const AlkaaLandingPage: React.FC = () => {
               </div>
               <div className="md:w-1/2">
                 <div className="relative h-64 md:h-96 w-full rounded-lg overflow-hidden bg-secondary">
-                  <EnhancedDashboardPreview/>
+                <div className="scale-[0.7] origin-top-left h-[143%] w-[143%]">
+      <EnhancedDashboardPreview />
+    </div>
                 </div>
               </div>
             </div>
