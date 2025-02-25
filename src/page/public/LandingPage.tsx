@@ -19,6 +19,8 @@ import {
   MessageCircle,
   ArrowRight
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import EnhancedDashboardPreview from './DashboardPreview';
 
 interface FeatureCardProps {
   title: string;
@@ -103,7 +105,7 @@ const PricingTier: React.FC<PricingTierProps> = ({
 
 const AlkaaLandingPage: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
+  const navigate = useNavigate()
   return (
     <div className="min-h-screen flex flex-col">
       {/* Navigation */}
@@ -119,7 +121,7 @@ const AlkaaLandingPage: React.FC = () => {
             <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Features</a>
             <a href="#testimonials" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Testimonials</a>
             <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
-            <Button variant="outline">Log in</Button>
+            <Button onClick={()=>navigate("/auth/signin")} variant="outline">Log in</Button>
             <Button>Start Free Trial</Button>
           </nav>
           
@@ -219,12 +221,7 @@ const AlkaaLandingPage: React.FC = () => {
               </div>
               <div className="md:w-1/2">
                 <div className="relative h-64 md:h-96 w-full rounded-lg overflow-hidden bg-secondary">
-                  <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
-                    <div className="text-center">
-                      <Building2 className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">Dashboard Preview</p>
-                    </div>
-                  </div>
+                  <EnhancedDashboardPreview/>
                 </div>
               </div>
             </div>
