@@ -60,7 +60,7 @@ function App() {
     <BrowserRouter>
     <Routes>
       {/* Public Routes - Outside AuthProvider */}
-      <Route path="/" element={<Home />} />
+      <Route path="/" element={<LandingPage />} />
       <Route path="/reset-password/:token" element={<SetPassword />} />
       <Route path="/auth/signin" element={<AuthProvider><SignIn /></AuthProvider>} />
       
