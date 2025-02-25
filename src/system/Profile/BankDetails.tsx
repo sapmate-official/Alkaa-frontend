@@ -33,7 +33,7 @@ const BankDetails = () => {
   const { toast } = useToast();
 
   useEffect(()=>{
-    if(user){
+    if(user?.id){
       fetchBankDetails()
     }
   },[user])
@@ -48,10 +48,13 @@ const BankDetails = () => {
   }
   const onSubmit = async (data: IBankDetails) => {
     try {
-        if(!user?.id) return;
-        data = {...data, userId: user?.id}
+        if(!user?.id) {
+          toast({ title: 'User not found', variant: 'destructive' });
+          return;
+        }
+        data = {...data, userId: user.id}
       const response = await axios.post(APIDictionary.bank, data,{withCredentials:true});
-      if (response.status === 201) {
+      if (response?.status === 201) {
         toast({ title: 'Bank details saved successfully' });
       }
     } catch (error) {

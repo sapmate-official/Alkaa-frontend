@@ -68,15 +68,15 @@ const PayRollViewOwn = () => {
         </Button>
       </div>
       
-      {payrollData.salaryRecords.map((record, index) => (
+      {payrollData?.salaryRecords?.map((record, index) => (
         <Card key={index}>
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle>
                 Salary for {new Date(record.processedAt).toLocaleString('default', { month: 'long' })} {record.year}
               </CardTitle>
-              <Badge variant={record.status === 'PAID' ? 'success' : 'secondary'}>
-                {record.status}
+              <Badge variant={record?.status === 'PAID' ? 'success' : 'secondary'}>
+                {record?.status}
               </Badge>
             </div>
           </CardHeader>
@@ -94,7 +94,7 @@ const PayRollViewOwn = () => {
                 <TableBody>
                   <TableRow>
                     <TableCell>Basic Salary</TableCell>
-                    <TableCell className="text-right">₹{record.basicSalary.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">₹{record?.basicSalary?.toLocaleString()}</TableCell>
                   </TableRow>
                   {Object.entries(record.allowances).map(([key, value]) => (
                     <TableRow key={key}>
@@ -117,7 +117,7 @@ const PayRollViewOwn = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {Object.entries(record.deductions).map(([key, value]) => (
+                  {Object.entries(record?.deductions).map(([key, value]) => (
                     <TableRow key={key}>
                       <TableCell className="capitalize">{key}</TableCell>
                       <TableCell className="text-right">₹{value.toLocaleString()}</TableCell>
@@ -129,7 +129,7 @@ const PayRollViewOwn = () => {
 
             <div className="flex justify-end">
               <p className="text-xl font-bold">
-                Net Salary: ₹{record.netSalary.toLocaleString()}
+                Net Salary: ₹{record?.netSalary?.toLocaleString()}
               </p>
             </div>
           </CardContent>
@@ -146,19 +146,19 @@ const PayRollViewOwn = () => {
             <TableBody>
               <TableRow>
                 <TableCell className="font-medium">Account Holder</TableCell>
-                <TableCell>{payrollData.bankDetails.accountHolder}</TableCell>
+                <TableCell>{payrollData?.bankDetails?.accountHolder}</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="font-medium">Account Number</TableCell>
-                <TableCell>{payrollData.bankDetails.accountNumber}</TableCell>
+                <TableCell>{payrollData?.bankDetails?.accountNumber}</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="font-medium">IFSC Code</TableCell>
-                <TableCell>{payrollData.bankDetails.ifscCode}</TableCell>
+                <TableCell>{payrollData?.bankDetails?.ifscCode}</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="font-medium">Bank Name</TableCell>
-                <TableCell>{payrollData.bankDetails.bankName}</TableCell>
+                <TableCell>{payrollData?.bankDetails?.bankName}</TableCell>
               </TableRow>
             </TableBody>
           </Table>

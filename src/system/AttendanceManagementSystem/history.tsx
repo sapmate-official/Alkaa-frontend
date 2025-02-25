@@ -54,10 +54,10 @@ const AttendanceHistory = () => {
   const calculateTotalDuration = (sessions: AttendanceSession[]) => {
     const totalMinutes = sessions.reduce((acc, session) => {
       // Skip sessions with null duration
-      if (!session.duration) {
+      if (!session?.duration) {
         return acc;
       }
-      return acc + (session.duration.totalMinutes || 0);
+      return acc + (session?.duration?.totalMinutes || 0);
     }, 0);
   
     const hours = Math.floor(totalMinutes / 60);
@@ -106,16 +106,16 @@ const AttendanceHistory = () => {
                     <CardContent className="pt-6">
                       <div className="flex justify-between items-center">
                         <div>
-                          <p className="text-sm font-semibold">Session {session.sessionNumber}</p>
+                          <p className="text-sm font-semibold">Session {session?.sessionNumber}</p>
                           <p className="text-sm text-gray-500">
-                            {formatTime(session.checkInTime)} - {formatTime(session.checkOutTime)}
+                            {formatTime(session?.checkInTime)} - {formatTime(session?.checkOutTime)}
                           </p>
                         </div>
                         <div className="flex items-center gap-4">
                           <Badge variant="secondary">
-                            Duration: {session.duration.hours.toFixed(1)}h
+                            Duration: {session?.duration?.hours?.toFixed(1)}h
                           </Badge>
-                          <Badge variant="outline">{session.status}</Badge>
+                          <Badge variant="outline">{session?.status}</Badge>
                         </div>
                       </div>
                     </CardContent>

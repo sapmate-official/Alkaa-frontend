@@ -41,10 +41,10 @@ const SalaryTransaction = ({ salaryRecord, onTransactionComplete }: SalaryTransa
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          salaryRecordId: salaryRecord.id,
-          userId: salaryRecord.userId,
-          amount: salaryRecord.netSalary,
-          bankDetails: salaryRecord.user.bankDetails,
+          salaryRecordId: salaryRecord?.id,
+          userId: salaryRecord?.userId,
+          amount: salaryRecord?.netSalary,
+          bankDetails: salaryRecord?.user?.bankDetails,
         }),
       });
 
@@ -124,11 +124,11 @@ const SalaryTransaction = ({ salaryRecord, onTransactionComplete }: SalaryTransa
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium">Employee Name</label>
-                  <p className="text-lg">{`${salaryRecord.user.firstName} ${salaryRecord.user.lastName}`}</p>
+                  <p className="text-lg">{`${salaryRecord?.user?.firstName ?? ''} ${salaryRecord?.user?.lastName ?? ''}`}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium">Employee ID</label>
-                  <p className="text-lg">{salaryRecord.user.employeeId}</p>
+                  <p className="text-lg">{salaryRecord?.user?.employeeId}</p>
                 </div>
               </div>
 
@@ -158,7 +158,7 @@ const SalaryTransaction = ({ salaryRecord, onTransactionComplete }: SalaryTransa
                 <div className="flex justify-between items-center">
                   <span className="font-medium">Net Salary Amount</span>
                   <span className="text-xl font-bold">
-                    ₹{salaryRecord.netSalary.toLocaleString('en-IN')}
+                    ₹{salaryRecord?.netSalary?.toLocaleString('en-IN')}
                   </span>
                 </div>
               </div>

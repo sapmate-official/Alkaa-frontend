@@ -50,9 +50,9 @@ const PayrollDashboardForAllEmployee = () => {
     navigate("/p/payroll/users");
   };
 
-  // Add type safety for reduce operations
-  const sumObjectValues = (obj: Record<string, number> | number) => 
-    typeof obj === 'number' ? obj : Object.values(obj).reduce((a: number, b: number) => a + b, 0);
+  // Modified sumObjectValues function with optional chaining
+  const sumObjectValues = (obj?: Record<string, number> | number) => 
+    typeof obj === 'number' ? obj : Object?.values(obj || {})?.reduce((a: number, b: number) => a + b, 0);
 
   return (
     <div className="p-6 space-y-6 w-full h-full overflow-y-scroll">
@@ -81,7 +81,7 @@ const PayrollDashboardForAllEmployee = () => {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">
-              ₹{salaryRecords[0]?.basicSalary.toLocaleString() || 0}
+              ₹{salaryRecords?.[0]?.basicSalary?.toLocaleString() || 0}
             </p>
           </CardContent>
         </Card>
@@ -92,7 +92,7 @@ const PayrollDashboardForAllEmployee = () => {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">
-              ₹{salaryRecords[0]?.netSalary.toLocaleString() || 0}
+              ₹{salaryRecords?.[0]?.netSalary?.toLocaleString() || 0}
             </p>
           </CardContent>
         </Card>
@@ -103,7 +103,7 @@ const PayrollDashboardForAllEmployee = () => {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">
-              ₹{salaryRecords[0]?.tax.toLocaleString() || 0}
+              ₹{salaryRecords?.[0]?.tax?.toLocaleString() || 0}
             </p>
           </CardContent>
         </Card>
@@ -151,31 +151,31 @@ const PayrollDashboardForAllEmployee = () => {
                 </tr>
               </thead>
               <tbody>
-                {salaryRecords.map((record) => (
-                  <tr key={record.id} className="border-b">
+                {salaryRecords?.map((record) => (
+                  <tr key={record?.id} className="border-b">
                     <td className="p-2">
-                      {new Date(record.year, record.month - 1).toLocaleString('default', {
+                      {new Date(record?.year, (record?.month || 1) - 1).toLocaleString('default', {
                         month: 'long',
                         year: 'numeric'
                       })}
                     </td>
-                    <td className="p-2">₹{record.basicSalary.toLocaleString()}</td>
+                    <td className="p-2">₹{record?.basicSalary?.toLocaleString()}</td>
                     <td className="p-2">
-                      ₹{sumObjectValues(record.allowances).toLocaleString()}
+                      ₹{sumObjectValues(record?.allowances)?.toLocaleString()}
                     </td>
                     <td className="p-2">
-                      ₹{sumObjectValues(record.deductions).toLocaleString()}
+                      ₹{sumObjectValues(record?.deductions)?.toLocaleString()}
                     </td>
-                    <td className="p-2">₹{record.netSalary.toLocaleString()}</td>
+                    <td className="p-2">₹{record?.netSalary?.toLocaleString()}</td>
                     <td className="p-2">
                       <span
                         className={`px-2 py-1 rounded-full text-sm ${
-                          record.status === 'PAID'
+                          record?.status === 'PAID'
                             ? 'bg-green-100 text-green-800'
                             : 'bg-yellow-100 text-yellow-800'
                         }`}
                       >
-                        {record.status}
+                        {record?.status}
                       </span>
                     </td>
                   </tr>

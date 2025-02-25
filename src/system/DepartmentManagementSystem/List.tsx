@@ -71,15 +71,15 @@ const ListOfDepartment = () => {
                             className="cursor-pointer hover:bg-gray-100"
                             onClick={() => navigate(`/p/department/${dept.id}`)}
                         >
-                            <TableCell className="font-medium">{dept.name}</TableCell>
-                            <TableCell>{dept.code}</TableCell>
-                            <TableCell>{dept.location}</TableCell>
+                            <TableCell className="font-medium">{dept?.name}</TableCell>
+                            <TableCell>{dept?.code}</TableCell>
+                            <TableCell>{dept?.location}</TableCell>
                             <TableCell>
-                                {dept.departmentHead.firstName} {dept.departmentHead.lastName}
+                                {dept?.departmentHead?.firstName} {dept?.departmentHead?.lastName}
                             </TableCell>
-                            <TableCell>${dept.budget.toLocaleString()}</TableCell>
+                            <TableCell>${dept?.budget?.toLocaleString()}</TableCell>
                             <TableCell className="max-w-xs truncate">
-                                {dept.description}
+                                {dept?.description}
                             </TableCell>
                         </TableRow>
                     ))}

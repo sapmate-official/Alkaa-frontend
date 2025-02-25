@@ -96,7 +96,7 @@ const LeaveRequestCreate = () => {
   useEffect(() => {
     const fetchLeaveTypes = async () => {
       try {
-        const response = await axios.get(`${APIDictionary.get_all_org_leave_type(user?.orgId || "")}`, {
+        const response = await axios.get(`${APIDictionary.get_all_org_leave_type(user?.orgId ?? "")}`, {
           withCredentials: true
         })
         setLeaveTypes(response.data)
@@ -112,20 +112,20 @@ const LeaveRequestCreate = () => {
     if (user?.orgId) {
       fetchLeaveTypes()
     }
-  }, [user])
+  }, [user?.orgId])
 
   const validateLeaveBalance = async () => {
     try {
-      const response = await axios.get(`${APIDictionary.leave_balance}/${formData.leaveTypeId}/${user?.id}`, {
+      const response = await axios.get(`${APIDictionary.leave_balance}/${formData?.leaveTypeId}/${user?.id}`, {
         withCredentials: true
       })
-      const balance = response.data
-      return balance.remainingDays > 0
+      const balance = response?.data
+      return balance?.remainingDays > 0
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to check leave balance",
-        variant: "destructive"
+          title: "Error",
+          description: "Failed to check leave balance",
+          variant: "destructive"
       })
       return false
     }
@@ -136,7 +136,7 @@ const LeaveRequestCreate = () => {
       const response = await axios.get(`${APIDictionary.leave_balance}/${leaveTypeId}/${user?.id}`, {
         withCredentials: true
       })
-      setLeaveBalance(response.data.remainingDays)
+      setLeaveBalance(response?.data?.remainingDays ?? null)
     } catch (error) {
       toast({
         title: "Error",
@@ -153,7 +153,7 @@ const LeaveRequestCreate = () => {
 
     try {
       // Validate form
-      if (!formData.leaveTypeId || !formData.startDate || !formData.endDate || !formData.reason || !user?.id) {
+      if (!formData?.leaveTypeId || !formData?.startDate || !formData?.endDate || !formData?.reason || !user?.id) {
         toast({
           title: "Error",
           description: "Please fill all required fields",
@@ -175,11 +175,11 @@ const LeaveRequestCreate = () => {
 
       // Prepare request payload
       const requestData = {
-        userId: user.id,
-        leaveTypeId: formData.leaveTypeId,
-        startDate: formData.startDate?.toISOString(),
-        endDate: formData.endDate?.toISOString(),
-        reason: formData.reason
+        userId: user?.id,
+        leaveTypeId: formData?.leaveTypeId,
+        startDate: formData?.startDate?.toISOString(),
+        endDate: formData?.endDate?.toISOString(),
+        reason: formData?.reason
       }
 
       // Submit request
@@ -224,7 +224,7 @@ const LeaveRequestCreate = () => {
                 <div>
                   <label className="text-sm font-medium">Leave Type</label>
                   <Select
-                    value={formData.leaveTypeId}
+                    value={formData?.leaveTypeId}
                     onValueChange={(value) => {
                       setFormData(prev => ({ ...prev, leaveTypeId: value }))
                       if (value) {

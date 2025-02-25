@@ -32,7 +32,7 @@ const SalaryParameter = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user) {
+    if (user?.id) {
       fetchSalaryParameters();
     }
   }, [user]);
@@ -40,9 +40,9 @@ const SalaryParameter = () => {
   const fetchSalaryParameters = async () => {
     try {
       if (!user?.id) return;
-      const response = await axios.get(APIDictionary.payrollParameters(user.id));
-      if (response.data) {
-        form.reset(response.data);
+      const response = await axios.get(APIDictionary?.payrollParameters?.(user?.id));
+      if (response?.data) {
+        form?.reset?.(response?.data);
       }
     } catch (error) {
       console.error('Failed to fetch salary parameters:', error);
@@ -52,23 +52,22 @@ const SalaryParameter = () => {
   const onSubmit = async (data: ISalaryParameters) => {
     try {
       if (!user?.id) return;
-      // Convert all numeric fields to numbers
       const numericData = {
         ...data,
-        hraPercentage: parseFloat(data.hraPercentage as any),
-        daPercentage: parseFloat(data.daPercentage as any),
-        taPercentage: parseFloat(data.taPercentage as any),
-        pfPercentage: parseFloat(data.pfPercentage as any),
-        taxPercentage: parseFloat(data.taxPercentage as any),
-        insuranceFixed: parseFloat(data.insuranceFixed as any),
-        userId: user.id
+        hraPercentage: parseFloat(data?.hraPercentage?.toString() ?? '0'),
+        daPercentage: parseFloat(data?.daPercentage?.toString() ?? '0'),
+        taPercentage: parseFloat(data?.taPercentage?.toString() ?? '0'),
+        pfPercentage: parseFloat(data?.pfPercentage?.toString() ?? '0'),
+        taxPercentage: parseFloat(data?.taxPercentage?.toString() ?? '0'),
+        insuranceFixed: parseFloat(data?.insuranceFixed?.toString() ?? '0'),
+        userId: user?.id
       };
-      const response = await axios.post(APIDictionary.payrollParameters(user.id), numericData);
-      if (response.status === 200) {
-        toast({ title: 'Salary parameters saved successfully' });
+      const response = await axios.post(APIDictionary?.payrollParameters?.(user?.id), numericData);
+      if (response?.status === 200) {
+        toast?.({ title: 'Salary parameters saved successfully' });
       }
     } catch (error) {
-      toast({ title: 'Failed to save salary parameters', variant: 'destructive' });
+      toast?.({ title: 'Failed to save salary parameters', variant: 'destructive' });
     }
   };
 
@@ -79,7 +78,7 @@ const SalaryParameter = () => {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form?.handleSubmit?.(onSubmit)} className="space-y-6">
             {[
               { name: "hraPercentage", label: "HRA Percentage" },
               { name: "daPercentage", label: "DA Percentage" },
@@ -89,21 +88,21 @@ const SalaryParameter = () => {
               { name: "insuranceFixed", label: "Insurance Amount" },
             ].map((field) => (
               <FormField
-                key={field.name}
-                control={form.control}
-                name={field.name as keyof ISalaryParameters}
+                key={field?.name}
+                control={form?.control}
+                name={field?.name as keyof ISalaryParameters}
                 rules={{ 
-                  required: `${field.label} is required`
+                  required: `${field?.label} is required`
                 }}
                 render={({ field: fieldProps }) => (
                   <FormItem>
-                    <FormLabel>{field.label}</FormLabel>
+                    <FormLabel>{field?.label}</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 
                         {...fieldProps} 
-                        value={fieldProps.value?.toString() || ''}
-                        onChange={(e) => fieldProps.onChange(Number(e.target.value))}
+                        value={fieldProps?.value?.toString() ?? ''}
+                        onChange={(e) => fieldProps?.onChange?.(Number(e?.target?.value))}
                         step="0.01"
                       />
                     </FormControl>

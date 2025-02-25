@@ -64,14 +64,14 @@ const SpecificDepartmentView = () => {
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <div className="space-y-1">
             <CardTitle className="text-2xl font-bold">
-              {department.name}
+              {department?.name}
             </CardTitle>
-            <Badge variant={department.status ? "success" : "destructive"}>
-              {department.status ? "Active" : "Inactive"}
+            <Badge variant={department?.status ? "success" : "destructive"}>
+              {department?.status ? "Active" : "Inactive"}
             </Badge>
           </div>
           <div className="flex items-center space-x-4">
-            <Badge variant="outline">{department.code}</Badge>
+            <Badge variant="outline">{department?.code}</Badge>
             <Button
               variant="outline"
               size="sm"
@@ -93,7 +93,7 @@ const SpecificDepartmentView = () => {
         <CardContent>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              {department.description}
+              {department?.description}
             </p>
             
             <Separator />
@@ -101,12 +101,12 @@ const SpecificDepartmentView = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex items-center space-x-2">
                 <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">{department.location}</span>
+                <span className="text-sm">{department?.location}</span>
               </div>
               
               <div className="flex items-center space-x-2">
                 <IndianRupee className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">Budget: ₹{department.budget.toLocaleString()}</span>
+                <span className="text-sm">Budget: ₹{department?.budget?.toLocaleString()}</span>
               </div>
             </div>
 
@@ -118,16 +118,16 @@ const SpecificDepartmentView = () => {
                 <Avatar>
                   <AvatarImage src="" />
                   <AvatarFallback>
-                    {department.departmentHead.firstName[0]}
-                    {department.departmentHead.lastName[0]}
+                    {department?.departmentHead?.firstName?.[0]}
+                    {department?.departmentHead?.lastName?.[0]}
                   </AvatarFallback>
                 </Avatar>
                 <div>
                   <p className="text-sm font-medium">
-                    {department.departmentHead.firstName} {department.departmentHead.lastName}
+                    {department?.departmentHead?.firstName} {department?.departmentHead?.lastName}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {department.departmentHead.email}
+                    {department?.departmentHead?.email}
                   </p>
                 </div>
               </div>
@@ -138,9 +138,9 @@ const SpecificDepartmentView = () => {
             <div className="space-y-4">
               <h3 className="font-semibold flex items-center gap-2">
                 <Users className="h-4 w-4" />
-                Team Members ({department.users.length})
+                Team Members ({department?.users?.length || 0})
               </h3>
-              {department.users.length === 0 ? (
+              {department?.users?.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No team members yet</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

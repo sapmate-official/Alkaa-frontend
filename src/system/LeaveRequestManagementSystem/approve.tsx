@@ -135,14 +135,14 @@ const LeaveRequestApprove = () => {
                                     <CardContent className="p-4">
                                         <div className="flex justify-between items-start">
                                             <div>
-                                                <h4 className="font-semibold">{request.user.firstName} {request.user.lastName}</h4>
-                                                <p className="text-sm text-muted-foreground">{request.leaveType.name}</p>
+                                                <h4 className="font-semibold">{request.user?.firstName} {request.user?.lastName}</h4>
+                                                <p className="text-sm text-muted-foreground">{request.leaveType?.name}</p>
                                             </div>
                                             <Badge variant="secondary">
                                                 {request.status}
                                             </Badge>
                                         </div>
-                                        <p className="text-sm mt-2">{format(new Date(request.startDate), 'PP')} - {format(new Date(request.endDate), 'PP')}</p>
+                                        <p className="text-sm mt-2">{format(new Date(request?.startDate), 'PP')} - {format(new Date(request?.endDate), 'PP')}</p>
                                     </CardContent>
                                 </Card>
                             ))}
@@ -161,8 +161,8 @@ const LeaveRequestApprove = () => {
                                     <CardContent className="p-4">
                                         <div className="flex justify-between items-start">
                                             <div>
-                                                <h4 className="font-semibold">{request.user.firstName} {request.user.lastName}</h4>
-                                                <p className="text-sm text-muted-foreground">{request.leaveType.name}</p>
+                                                <h4 className="font-semibold">{request.user?.firstName} {request.user?.lastName}</h4>
+                                                <p className="text-sm text-muted-foreground">{request.leaveType?.name}</p>
                                             </div>
                                             <Badge
                                                 variant={request.status === 'APPROVED' ? 'success' : 'destructive'}
@@ -170,7 +170,7 @@ const LeaveRequestApprove = () => {
                                                 {request.status}
                                             </Badge>
                                         </div>
-                                        <p className="text-sm mt-2">{format(new Date(request.startDate), 'PP')} - {format(new Date(request.endDate), 'PP')}</p>
+                                        <p className="text-sm mt-2">{format(new Date(request?.startDate), 'PP')} - {format(new Date(request?.endDate), 'PP')}</p>
                                     </CardContent>
                                 </Card>
                             ))}
@@ -193,11 +193,11 @@ const LeaveRequestApprove = () => {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <h4 className="font-semibold">Employee</h4>
-                                        <p>{selectedRequest.user.firstName} {selectedRequest.user.lastName}</p>
+                                        <p>{selectedRequest?.user?.firstName} {selectedRequest?.user?.lastName}</p>
                                     </div>
                                     <div>
                                         <h4 className="font-semibold">Leave Type</h4>
-                                        <p>{selectedRequest.leaveType.name}</p>
+                                        <p>{selectedRequest?.leaveType?.name}</p>
                                     </div>
                                 </div>
 
@@ -205,16 +205,16 @@ const LeaveRequestApprove = () => {
 
                                 <div>
                                     <h4 className="font-semibold">Duration</h4>
-                                    <p>{format(new Date(selectedRequest.startDate), 'PPP')} - {format(new Date(selectedRequest.endDate), 'PPP')}</p>
-                                    <p className="text-sm text-muted-foreground">({selectedRequest.numberOfDays} days)</p>
+                                    <p>{format(new Date(selectedRequest?.startDate), 'PPP')} - {format(new Date(selectedRequest?.endDate), 'PPP')}</p>
+                                    <p className="text-sm text-muted-foreground">({selectedRequest?.numberOfDays} days)</p>
                                 </div>
 
                                 <div>
                                     <h4 className="font-semibold">Reason</h4>
-                                    <p>{selectedRequest.reason || 'No reason provided'}</p>
+                                    <p>{selectedRequest?.reason || 'No reason provided'}</p>
                                 </div>
 
-                                {selectedRequest.status === 'PENDING' && (
+                                {selectedRequest?.status === 'PENDING' && (
                                     <div className="space-y-4">
                                         <Input
                                             placeholder="Enter rejection reason"

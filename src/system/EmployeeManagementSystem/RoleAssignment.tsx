@@ -96,32 +96,32 @@ const RoleAssignment:React.FC<RoleAssignmentProps> = ({setRoleId}) => {
             <h2 className="text-2xl font-bold">Existing Roles</h2>
           </CardHeader>
           <CardContent className="space-y-4">
-            {roles.map((role) => (
-              <div key={role.id} className="border rounded-lg p-4">
+            {roles?.map((role) => (
+              <div key={role?.id} className="border rounded-lg p-4">
                 <div 
                   className="flex items-center justify-between cursor-pointer"
-                  onClick={() => toggleRoleExpansion(role.id)}
+                  onClick={() => toggleRoleExpansion(role?.id)}
                 >
                   <div>
-                    <h3 className="font-semibold text-lg">{role.name}</h3>
-                    <p className="text-sm text-gray-600 mb-2">{role.description}</p>
+                    <h3 className="font-semibold text-lg">{role?.name}</h3>
+                    <p className="text-sm text-gray-600 mb-2">{role?.description}</p>
                   </div>
                   <Button 
                     variant="ghost" 
                     size="sm"
                     className="h-8 w-8"
                   >
-                    {expandedRoles.includes(role.id) ? '−' : '+'}
+                    {expandedRoles?.includes(role?.id) ? '−' : '+'}
                   </Button>
                 </div>
                 
-                {expandedRoles.includes(role.id) && (
+                {expandedRoles?.includes(role?.id) && (
                   <div className="space-y-1 mt-2 border-t pt-2">
                     <h4 className="text-sm font-medium">Permissions:</h4>
                     <div className="pl-4">
-                      {role.permissions.map(({ permission }) => (
-                        <div key={permission.id} className="text-sm text-gray-600">
-                          • {permission.name}
+                      {role?.permissions?.map(({ permission }) => (
+                        <div key={permission?.id} className="text-sm text-gray-600">
+                          • {permission?.name}
                         </div>
                       ))}
                     </div>
@@ -153,9 +153,9 @@ const RoleAssignment:React.FC<RoleAssignmentProps> = ({setRoleId}) => {
                         <SelectValue placeholder="Select a role" />
                       </SelectTrigger>
                       <SelectContent>
-                        {roles.map((role) => (
-                          <SelectItem key={role.id} value={role.id}>
-                            {role.name}
+                        {roles?.map((role) => (
+                          <SelectItem key={role?.id} value={role?.id}>
+                            {role?.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -166,10 +166,10 @@ const RoleAssignment:React.FC<RoleAssignmentProps> = ({setRoleId}) => {
                     <div className="space-y-2">
                       <h3 className="text-sm font-medium">Role Permissions</h3>
                       <div className="border rounded p-4">
-                        {roles.find(r => r.id === selectedRole)?.permissions.map(({ permission }) => (
-                          <div key={permission.id} className="flex items-center space-x-2">
+                        {roles?.find(r => r?.id === selectedRole)?.permissions?.map(({ permission }) => (
+                          <div key={permission?.id} className="flex items-center space-x-2">
                             <Checkbox checked disabled />
-                            <label>{permission.name}</label>
+                            <label>{permission?.name}</label>
                           </div>
                         ))}
                       </div>
@@ -201,19 +201,19 @@ const RoleAssignment:React.FC<RoleAssignmentProps> = ({setRoleId}) => {
                   <div className="space-y-2">
                     <h3 className="text-sm font-medium">Select Permissions</h3>
                     <div className="border rounded p-4 space-y-2 max-h-[300px] overflow-y-auto">
-                      {permissions.map((permission) => (
-                        <div key={permission.id} className="flex items-center space-x-2">
+                      {permissions?.map((permission) => (
+                        <div key={permission?.id} className="flex items-center space-x-2">
                           <Checkbox
-                            checked={selectedPermissions.includes(permission.id)}
+                            checked={selectedPermissions?.includes(permission?.id)}
                             onCheckedChange={(checked) => {
                               setSelectedPermissions(prev => 
                                 checked 
-                                  ? [...prev, permission.id]
-                                  : prev.filter(id => id !== permission.id)
+                                  ? [...prev, permission?.id]
+                                  : prev?.filter(id => id !== permission?.id)
                               )
                             }}
                           />
-                          <label>{permission.name}</label>
+                          <label>{permission?.name}</label>
                         </div>
                       ))}
                     </div>

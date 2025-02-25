@@ -65,12 +65,12 @@ const CreateDepartment = () => {
         }
 
         // Fetch departments
-        const deptResponse = await axios.get(`${APIDictionary.department}/org/${user.organization.id}`)
-        setDepartments(deptResponse.data || [])
+        const deptResponse = await axios.get(`${APIDictionary.department}/org/${user?.organization?.id}`)
+        setDepartments(deptResponse?.data || [])
 
         // Fetch employees
-        const empResponse = await axios.get(`${APIDictionary.Organization}/employees/${user.organization.id}`)
-        setEmployees(empResponse.data || [])
+        const empResponse = await axios.get(`${APIDictionary.Organization}/employees/${user?.organization?.id}`)
+        setEmployees(empResponse?.data || [])
       } catch (error) {
         console.error('Error fetching data:', error)
         toast({
@@ -100,9 +100,9 @@ const CreateDepartment = () => {
     try {
       const response = await axios.post(APIDictionary.department, {
         ...values,
-        orgId: user?.organization.id,
+        orgId: user?.organization?.id,
       })
-      console.log(response.data);
+      console.log(response?.data);
       
 
       toast({
@@ -190,10 +190,10 @@ const CreateDepartment = () => {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {departments.length > 0 ? (
-                      departments.map((dept) => (
-                        <SelectItem key={dept.id} value={dept.id}>
-                          {dept.name}
+                    {departments?.length > 0 ? (
+                      departments?.map((dept) => (
+                        <SelectItem key={dept?.id} value={dept?.id}>
+                          {dept?.name}
                         </SelectItem>
                       ))
                     ) : (
@@ -221,10 +221,10 @@ const CreateDepartment = () => {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {employees.length > 0 ? (
-                      employees.map((emp) => (
-                        <SelectItem key={emp.id} value={emp.id}>
-                          {`${emp.firstName} ${emp.lastName}`}
+                    {employees?.length > 0 ? (
+                      employees?.map((emp) => (
+                        <SelectItem key={emp?.id} value={emp?.id}>
+                          {`${emp?.firstName} ${emp?.lastName}`}
                         </SelectItem>
                       ))
                     ) : (

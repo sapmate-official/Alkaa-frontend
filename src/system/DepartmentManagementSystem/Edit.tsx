@@ -29,14 +29,14 @@ const SpecificDepartmentEdit = () => {
   const fetchDepartment = async () => {   
     try {
       const response = await axios.get(`${APIDictionary.department}/${id}`)
-      setDepartment(response.data)
+      setDepartment(response?.data)
       setFormData({
-        name: response.data.name,
-        description: response.data.description,
-        code: response.data.code,
-        location: response.data.location,
-        budget: response.data.budget,
-        status: response.data.status
+        name: response?.data?.name ?? '',
+        description: response?.data?.description ?? '',
+        code: response?.data?.code ?? '',
+        location: response?.data?.location ?? '',
+        budget: response?.data?.budget ?? 0,
+        status: response?.data?.status ?? true
       })
     } catch (error) {
       console.log(error)
@@ -55,7 +55,7 @@ const SpecificDepartmentEdit = () => {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    const { name, value } = e.target
+    const { name, value } = e?.target
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -101,7 +101,7 @@ const SpecificDepartmentEdit = () => {
             <Input
               id="name"
               name="name"
-              value={formData.name}
+              value={formData?.name}
               onChange={handleChange}
             />
           </div>
@@ -111,7 +111,7 @@ const SpecificDepartmentEdit = () => {
             <Textarea
               id="description"
               name="description"
-              value={formData.description}
+              value={formData?.description}
               onChange={handleChange}
               rows={4}
             />
@@ -122,7 +122,7 @@ const SpecificDepartmentEdit = () => {
             <Input
               id="code"
               name="code"
-              value={formData.code}
+              value={formData?.code}
               onChange={handleChange}
             />
           </div>
@@ -132,7 +132,7 @@ const SpecificDepartmentEdit = () => {
             <Input
               id="location"
               name="location"
-              value={formData.location}
+              value={formData?.location}
               onChange={handleChange}
             />
           </div>
@@ -143,7 +143,7 @@ const SpecificDepartmentEdit = () => {
               id="budget"
               name="budget"
               type="number"
-              value={formData.budget}
+              value={formData?.budget}
               onChange={handleChange}
             />
           </div>
@@ -151,7 +151,7 @@ const SpecificDepartmentEdit = () => {
           <div className="flex items-center space-x-2">
             <Switch
               id="status"
-              checked={formData.status}
+              checked={formData?.status}
               onCheckedChange={handleStatusChange}
             />
             <Label htmlFor="status">Department Active Status</Label>

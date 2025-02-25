@@ -7,14 +7,14 @@ const ListOfEmployee = () => {
     const { user } = useAuth()
     const fetchListOfEmployee = async () => {
         try {
-            const response = await axios.get(`${APIDictionary.Organization}/employees/${user?.organization.id}`);
+            const response = await axios.get(`${APIDictionary.Organization}/employees/${user?.organization?.id}`);
             console.log(response.data);
         } catch (error) {
             console.error('Failed to fetch employee list:', error);
         }
     }
     useEffect(() => {
-        if (user) {
+        if (user?.organization?.id) {
             fetchListOfEmployee()
         }
     }, [user])

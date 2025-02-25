@@ -65,29 +65,29 @@ const NotificationTemplateCreate = () => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const response = await fetch(`${APIDictionary.notification}/template`, {
+      const response = await fetch(`${APIDictionary?.notification}/template`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...values,
-          variables: values.variables ? JSON.parse(values.variables) : {},
+          variables: values?.variables ? JSON.parse(values.variables) : {},
           orgId: user?.orgId
         })
       });
 
-      if (!response.ok) {
+      if (!response?.ok) {
         throw new Error('Failed to create template');
       }
 
-      toast({
+      toast?.({
         title: "Success",
         description: "Notification template created successfully",
       });
-      form.reset();
+      form?.reset();
     } catch (error:any) {
-      toast({
+      toast?.({
         title: "Error",
-        description: error.message || "Something went wrong",
+        description: error?.message || "Something went wrong",
         variant: "destructive",
       });
     }

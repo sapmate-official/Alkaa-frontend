@@ -106,9 +106,9 @@ const EditLeaveRequest = () => {
                   <label className="text-sm font-medium">Start Date</label>
                   <Calendar
                     mode="single"
-                    selected={leaveRequest.startDate}
+                    selected={leaveRequest?.startDate}
                     onSelect={(date) => date && setLeaveRequest(prev => ({ ...prev!, startDate: date }))}
-                    disabled={(date) => date > leaveRequest.endDate}
+                    disabled={(date) => date > (leaveRequest?.endDate ?? new Date())}
                   />
                 </div>
 
@@ -116,9 +116,9 @@ const EditLeaveRequest = () => {
                   <label className="text-sm font-medium">End Date</label>
                   <Calendar
                     mode="single"
-                    selected={leaveRequest.endDate}
+                    selected={leaveRequest?.endDate}
                     onSelect={(date) => date && setLeaveRequest(prev => ({ ...prev!, endDate: date }))}
-                    disabled={(date) => date < leaveRequest.startDate}
+                    disabled={(date) => date < (leaveRequest?.startDate ?? new Date())}
                   />
                 </div>
               </div>
@@ -127,7 +127,7 @@ const EditLeaveRequest = () => {
                 <div>
                   <label className="text-sm font-medium">Reason</label>
                   <Input
-                    value={leaveRequest.reason}
+                    value={leaveRequest?.reason ?? ''}
                     onChange={(e) => setLeaveRequest(prev => ({ ...prev!, reason: e.target.value }))}
                     placeholder="Enter reason for leave"
                   />

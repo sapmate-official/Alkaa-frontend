@@ -75,7 +75,7 @@ const AttendancePanel = () => {
       const checkInData = {
         date: formattedDate,
         checkInTime: currentDate.toISOString(),
-        checkInLocation: location ? `${location.latitude},${location.longitude}` : '',
+        checkInLocation: location ? `${location?.latitude},${location?.longitude}` : '',
         notes: "",
       };
 
@@ -112,7 +112,7 @@ const AttendancePanel = () => {
         userId: user?.id,
         date: format(currentDate, 'yyyy-MM-dd'),
         checkOutTime: currentDate.toISOString(),
-        checkOutLocation: location ? `${location.latitude},${location.longitude}` : '',
+        checkOutLocation: location ? `${location?.latitude},${location?.longitude}` : '',
         notes: "",
         deviceInfo: JSON.stringify(deviceInfo),
         ipAddress
@@ -123,11 +123,11 @@ const AttendancePanel = () => {
       });
       
       setIsCheckedIn(false);
-      if (response.data.dailyTotal && response.data.session) {
+      if (response?.data?.dailyTotal && response?.data?.session) {
         setSessionInfo({
-          sessionNumber: response.data.session.sessionNumber,
-          totalHours: response.data.dailyTotal.hours,
-          status: response.data.session.status
+          sessionNumber: response?.data?.session?.sessionNumber,
+          totalHours: response?.data?.dailyTotal?.hours,
+          status: response?.data?.session?.status
         });
       }
     } catch (error:AxiosError | any) {
@@ -167,8 +167,8 @@ const AttendancePanel = () => {
               </>
             )}
             <p>IP Address: {ipAddress || 'Loading...'}</p>
-            <p>Location: {location ? `${location.latitude}, ${location.longitude}` : 'Loading...'}</p>
-            <p>Device: {deviceInfo.platform}</p>
+            <p>Location: {location ? `${location?.latitude}, ${location?.longitude}` : 'Loading...'}</p>
+            <p>Device: {deviceInfo?.platform}</p>
           </div>
           
           <div className="flex justify-center">
@@ -209,23 +209,23 @@ const AttendancePanel = () => {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {todaySessions.map((session:AttendanceRecord) => (
-                        <TableRow key={session.id}>
-                            <TableCell>{session.sessionNumber}</TableCell>
+                    {todaySessions?.map((session:AttendanceRecord) => (
+                        <TableRow key={session?.id}>
+                            <TableCell>{session?.sessionNumber}</TableCell>
                             <TableCell>
-                                {format(new Date(session.checkInTime), 'HH:mm:ss')}
+                                {format(new Date(session?.checkInTime), 'HH:mm:ss')}
                             </TableCell>
                             <TableCell>
-                                {session.checkOutTime ? 
-                                    format(new Date(session.checkOutTime), 'HH:mm:ss') : 
+                                {session?.checkOutTime ? 
+                                    format(new Date(session?.checkOutTime), 'HH:mm:ss') : 
                                     'Active'}
                             </TableCell>
                             <TableCell>
-                                {session.duration?.hours || 0}h
+                                {session?.duration?.hours || 0}h
                             </TableCell>
-                            <TableCell>{session.status}</TableCell>
+                            <TableCell>{session?.status}</TableCell>
                             <TableCell>
-                                {session.checkInLocation ? 'Yes' : 'No'}
+                                {session?.checkInLocation ? 'Yes' : 'No'}
                             </TableCell>
                         </TableRow>
                     ))}

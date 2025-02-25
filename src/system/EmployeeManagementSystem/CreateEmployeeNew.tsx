@@ -93,7 +93,7 @@ const CreateEmployeeNew = () => {
         `${APIDictionary.department}/org/${user?.orgId}`,
         { withCredentials: true }
       );
-      setDepartments(response.data);
+      setDepartments(response.data || []);
     } catch (error) {
       console.error(error);
       toast({
@@ -110,7 +110,7 @@ const CreateEmployeeNew = () => {
         `${APIDictionary.Organization}/employees/${user?.orgId}`,
         { withCredentials: true }
       );
-      setEmployees(response.data);
+      setEmployees(response.data || []);
     } catch (error) {
       console.error(error);
       toast({
@@ -171,7 +171,14 @@ const CreateEmployeeNew = () => {
       }
 
       // Final submission
-      if (!user?.orgId) return;
+      if (!user?.orgId) {
+        toast({
+          title: 'Error',
+          description: 'Organization ID not found',
+          variant: 'destructive',
+        });
+        return;
+      }
       console.log(form.getValues());
       console.log(data);
       data = form.getValues();
@@ -226,9 +233,9 @@ const CreateEmployeeNew = () => {
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                {departments.map((dept) => (
-                  <SelectItem key={dept.id} value={dept.id}>
-                    {dept.name}
+                {departments?.map((dept) => (
+                  <SelectItem key={dept?.id} value={dept?.id}>
+                    {dept?.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -245,8 +252,8 @@ const CreateEmployeeNew = () => {
           onCheckedChange={(checked) => {
             setUseHeadAsManager(checked as boolean);
             if (checked) {
-              const selectedDept = departments.find(
-                (dept) => dept.id === form.getValues("departmentId")
+              const selectedDept = departments?.find(
+                (dept) => dept?.id === form.getValues("departmentId")
               );
               if (selectedDept?.headId) {
                 form.setValue("managerId", selectedDept.headId);
@@ -275,9 +282,9 @@ const CreateEmployeeNew = () => {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {employees.map((emp) => (
-                    <SelectItem key={emp.id} value={emp.id}>
-                      {`${emp.firstName} ${emp.lastName}`}
+                  {employees?.map((emp) => (
+                    <SelectItem key={emp?.id} value={emp?.id}>
+                      {`${emp?.firstName} ${emp?.lastName}`}
                     </SelectItem>
                   ))}
                 </SelectContent>
