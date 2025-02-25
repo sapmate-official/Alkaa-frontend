@@ -99,24 +99,24 @@ const ViewLeaveBalance = () => {
               ))
             ) : (
               leaveBalances.map((balance) => (
-                <TableRow key={balance.id}>
+                <TableRow key={balance?.id}>
                   <TableCell className="font-medium">
                     <div>
-                      <p>{balance.leaveType.name}</p>
-                      <p className="text-sm text-muted-foreground">{balance.leaveType.description}</p>
+                      <p>{balance?.leaveType?.name}</p>
+                      <p className="text-sm text-muted-foreground">{balance?.leaveType?.description}</p>
                     </div>
                   </TableCell>
-                  <TableCell className="text-right">{balance.leaveType.annualLimit}</TableCell>
-                  <TableCell className="text-right">{balance.usedDays}</TableCell>
-                  <TableCell className="text-right">{balance.remainingDays}</TableCell>
-                  <TableCell className="text-right">{balance.carryForward}</TableCell>
+                  <TableCell className="text-right">{balance?.leaveType?.annualLimit}</TableCell>
+                  <TableCell className="text-right">{balance?.usedDays}</TableCell>
+                  <TableCell className="text-right">{balance?.remainingDays}</TableCell>
+                  <TableCell className="text-right">{balance?.carryForward}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      {balance.leaveType.isPaid ? 
+                      {balance?.leaveType?.isPaid ? 
                         <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Paid</span> : 
                         <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">Unpaid</span>
                       }
-                      {balance.leaveType.requiresApproval && 
+                      {balance?.leaveType?.requiresApproval && 
                         <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Approval Required</span>
                       }
                     </div>

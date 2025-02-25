@@ -30,12 +30,13 @@ export default function LeaveTypeList() {
         try {
             if (!user?.orgId) return;
             const response = await axios.get(
-                APIDictionary.get_all_org_leave_type(user?.orgId || ""),
+                APIDictionary.get_all_org_leave_type(user?.orgId)
             );
-            console.log("Leave types:", response.data);
-            setLeaveTypes(response.data);
+            console.log("Leave types:", response?.data);
+            setLeaveTypes(response?.data || []);
         } catch (error) {
             console.error("Error fetching leave types:", error);
+            setLeaveTypes([]);
         }
     };
 
@@ -73,20 +74,20 @@ export default function LeaveTypeList() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {leaveTypes.map((leaveType) => (
-                        <TableRow key={leaveType.id}>
-                            <TableCell>{leaveType.name}</TableCell>
-                            <TableCell>{leaveType.description}</TableCell>
-                            <TableCell>{leaveType.annualLimit}</TableCell>
-                            <TableCell>{leaveType.requiresApproval ? "Yes" : "No"}</TableCell>
-                            <TableCell>{leaveType.isPaid ? "Yes" : "No"}</TableCell>
-                            <TableCell>{leaveType.carryForward ? "Yes" : "No"}</TableCell>
-                            <TableCell>{leaveType.maxCarryForward}</TableCell>
+                    {leaveTypes?.map((leaveType) => (
+                        <TableRow key={leaveType?.id}>
+                            <TableCell>{leaveType?.name}</TableCell>
+                            <TableCell>{leaveType?.description}</TableCell>
+                            <TableCell>{leaveType?.annualLimit}</TableCell>
+                            <TableCell>{leaveType?.requiresApproval ? "Yes" : "No"}</TableCell>
+                            <TableCell>{leaveType?.isPaid ? "Yes" : "No"}</TableCell>
+                            <TableCell>{leaveType?.carryForward ? "Yes" : "No"}</TableCell>
+                            <TableCell>{leaveType?.maxCarryForward}</TableCell>
                             <TableCell>
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    onClick={() => handleEdit(leaveType.id)}
+                                    onClick={() => handleEdit(leaveType?.id)}
                                 >
                                     <Edit2 className="h-4 w-4" />
                                 </Button>

@@ -18,6 +18,7 @@ import { APIDictionary } from '@/api/APIdict';
 import { User } from '@/types/salary';
 import SalaryTransaction from './SalaryTransaction';
 import { SalaryRecord } from '@/interface/general';
+import { useAuth } from '@/services/AuthContext';
 
 const PayrollDashboardUsers = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -25,6 +26,7 @@ const PayrollDashboardUsers = () => {
   const [salaryRecords, setSalaryRecords] = useState<SalaryRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [, setLoading] = useState(false);
+  const {user} = useAuth()
 
   useEffect(() => {
     fetchUsers();
@@ -38,7 +40,7 @@ const PayrollDashboardUsers = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch(`${APIDictionary.payroll}/users/active`);
+      const response = await fetch(`${APIDictionary.payroll}/users/active/${user?.orgId}`);
       const data = await response.json();
       setUsers(data);
     } catch (error) {

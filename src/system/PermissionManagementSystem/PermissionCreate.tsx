@@ -87,7 +87,7 @@ const PermissionCreate = () => {
     const fetchPermissions = async () => {
         try {
             const response = await axios.get(APIDictionary.Permission);
-            setPermissions(response.data);
+            setPermissions(response?.data ?? []);
         } catch (err) {
             setError('Failed to fetch permissions');
         }
@@ -100,19 +100,21 @@ const PermissionCreate = () => {
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData({
             ...formData,
-            [e.target.name]: e.target.value
+            [e.target?.name ?? '']: e.target?.value ?? ''
         });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+        e?.preventDefault();
         setLoading(true);
         setError('');
 
         try {
-            await axios.post(APIDictionary.Permission, formData);
-            setFormData({ name: '', description: '', module: '', action: '' });
-            fetchPermissions(); // Refresh the list
+            const response = await axios.post(APIDictionary.Permission, formData);
+            if (response?.data) {
+                setFormData({ name: '', description: '', module: '', action: '' });
+                fetchPermissions(); // Refresh the list
+            }
         } catch (err) {
             setError('Failed to create permission');
         } finally {
@@ -220,12 +222,12 @@ const PermissionCreate = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {permissions.map((permission) => (
-                                        <tr key={permission.id} className="border-b">
-                                            <td className="px-4 py-2">{permission.name}</td>
-                                            <td className="px-4 py-2">{permission.module}</td>
-                                            <td className="px-4 py-2">{permission.action}</td>
-                                            <td className="px-4 py-2">{permission.description}</td>
+                                    {permissions?.map((permission) => (
+                                        <tr key={permission?.id} className="border-b">
+                                            <td className="px-4 py-2">{permission?.name}</td>
+                                            <td className="px-4 py-2">{permission?.module}</td>
+                                            <td className="px-4 py-2">{permission?.action}</td>
+                                            <td className="px-4 py-2">{permission?.description}</td>
                                         </tr>
                                     ))}
                                 </tbody>

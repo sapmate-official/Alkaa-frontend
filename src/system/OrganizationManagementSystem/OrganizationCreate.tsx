@@ -73,9 +73,9 @@ const OrganizationCreate = () => {
     const fetchPermissions = async () => {
       try {
         const response = await axios.get(APIDictionary.Permission);
-        setPermissions(response.data);
+        setPermissions(response?.data || []);
         // By default select all permissions
-        setSelectedPermissions(response.data.map((p: Permission) => p.id));
+        setSelectedPermissions(response?.data?.map((p: Permission) => p?.id) || []);
       } catch (error) {
         console.error('Error fetching permissions:', error);
       }
@@ -91,7 +91,7 @@ const OrganizationCreate = () => {
         ...orgForm,
         subscriptionEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year from now
       });
-      setOrganizationId(response.data.id);
+      setOrganizationId(response?.data?.id);
       toast({
         title: "Organization created successfully",
         description: "Proceeding to set up admin permissions",
@@ -101,7 +101,7 @@ const OrganizationCreate = () => {
       toast({
         variant: "destructive",
         title: "Failed to create organization",
-        description: error.response?.data?.message || "An unexpected error occurred",
+        description: error?.response?.data?.message || "An unexpected error occurred",
       });
       console.error('Error creating organization:', error);
     } finally {
@@ -120,10 +120,10 @@ const OrganizationCreate = () => {
         permissions: [],
         isDefault: false
       });
-      setRoleId(response.data.id);
+      setRoleId(response?.data?.id);
       
       try {
-        await updateRolePermissions(response.data.id);
+        await updateRolePermissions(response?.data?.id);
         toast({
           title: "Admin role created successfully",
           description: "Proceeding to create admin user",
@@ -133,14 +133,14 @@ const OrganizationCreate = () => {
         toast({
           variant: "destructive",
           title: "Failed to set role permissions",
-          description: permError.response?.data?.message || "An unexpected error occurred",
+          description: permError?.response?.data?.message || "An unexpected error occurred",
         });
       }
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Failed to create admin role",
-        description: error.response?.data?.message || "An unexpected error occurred",
+        description: error?.response?.data?.message || "An unexpected error occurred",
       });
       console.error('Error creating admin role:', error);
     } finally {
@@ -162,7 +162,7 @@ const OrganizationCreate = () => {
     } catch (error: any) {
       console.error('Error updating role permissions:', error);
       // Throw the error to be caught by the parent function
-      throw new Error(error.response?.data?.message || "Failed to update role permissions");
+      throw new Error(error?.response?.data?.message || "Failed to update role permissions");
     }
   };
 
@@ -179,7 +179,7 @@ const OrganizationCreate = () => {
       try {
         // Assign role to user
         await axios.post(APIDictionary.user_role, {
-          userId: userResponse.data.id,
+          userId: userResponse?.data?.id,
           roleId: roleId
         });
 
@@ -193,18 +193,18 @@ const OrganizationCreate = () => {
         
       } catch (roleError: any) {
         // If role assignment fails, delete the created user
-        await axios.delete(`${APIDictionary.user}/${userResponse.data.id}`);
+        await axios.delete(`${APIDictionary.user}/${userResponse?.data?.id}`);
         toast({
           variant: "destructive",
           title: "Failed to assign admin role",
-          description: roleError.response?.data?.message || "An unexpected error occurred",
+          description: roleError?.response?.data?.message || "An unexpected error occurred",
         });
       }
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Failed to create admin user",
-        description: error.response?.data?.message || "An unexpected error occurred",
+        description: error?.response?.data?.message || "An unexpected error occurred",
       });
       console.error('Error creating admin user:', error);
     } finally {

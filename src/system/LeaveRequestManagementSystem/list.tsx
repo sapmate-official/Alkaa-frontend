@@ -48,10 +48,10 @@ const LeaveRequestList = () => {
       const response = await axios.get(`${APIDictionary.leave_request}/user/${user?.id}`, {
         withCredentials: true
       })
-      if (response.status === 200) {
-        console.log('Leave requests:', response.data);
+      if (response?.status === 200) {
+        console.log('Leave requests:', response?.data);
         
-        setLeaveRequests(response.data)
+        setLeaveRequests(response?.data)
       }
     } catch (error) {
       toast({
@@ -113,23 +113,23 @@ const LeaveRequestList = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {leaveRequests.map((request) => (
-              <TableRow key={request.id}>
-                <TableCell>{request.leaveType?.name || 'Unknown'}</TableCell>
-                <TableCell>{format(new Date(request.startDate), 'PP')}</TableCell>
-                <TableCell>{format(new Date(request.endDate), 'PP')}</TableCell>
-                <TableCell>{request.numberOfDays}</TableCell>
+            {leaveRequests?.map((request) => (
+              <TableRow key={request?.id}>
+                <TableCell>{request?.leaveType?.name || 'Unknown'}</TableCell>
+                <TableCell>{format(new Date(request?.startDate), 'PP')}</TableCell>
+                <TableCell>{format(new Date(request?.endDate), 'PP')}</TableCell>
+                <TableCell>{request?.numberOfDays}</TableCell>
                 <TableCell className="max-w-[200px] truncate">
-                  {request.reason || 'No reason provided'}
+                  {request?.reason || 'No reason provided'}
                 </TableCell>
-                <TableCell>{getStatusBadge(request.status)}</TableCell>
-                <TableCell>{format(new Date(request.createdAt), 'PP')}</TableCell>
+                <TableCell>{getStatusBadge(request?.status)}</TableCell>
+                <TableCell>{format(new Date(request?.createdAt), 'PP')}</TableCell>
                 <TableCell>
-                  {request.status === 'PENDING' && (
+                  {request?.status === 'PENDING' && (
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleEdit(request.id)}
+                      onClick={() => handleEdit(request?.id)}
                     >
                       <Edit2 className="h-4 w-4" />
                     </Button>

@@ -87,13 +87,13 @@ const ProfileInfo = () => {
                         <div className="flex items-center gap-4">
                             <Avatar className="h-16 w-16">
                                 <AvatarFallback className="text-lg">
-                                    {profileInfo.name?.split(' ').map(n => n[0]).join('') || profileInfo?.email?.toUpperCase()}
+                                    {profileInfo?.name?.split(' ')?.map(n => n?.[0])?.join('') || profileInfo?.email?.[0]?.toUpperCase()}
                                 </AvatarFallback>
                             </Avatar>
                             <div className="space-y-1">
-                                <CardTitle className="text-2xl">{profileInfo.name || profileInfo.email}</CardTitle>
-                                <Badge variant={profileInfo.status === 'active' ? 'default' : 'destructive'}>
-                                    {profileInfo.status}
+                                <CardTitle className="text-2xl">{profileInfo?.name || profileInfo?.email}</CardTitle>
+                                <Badge variant={profileInfo?.status === 'active' ? 'default' : 'destructive'}>
+                                    {profileInfo?.status}
                                 </Badge>
                             </div>
                         </div>
@@ -122,18 +122,18 @@ const ProfileInfo = () => {
                     <CardContent className="grid gap-4 sm:grid-cols-2">
                         <div className="space-y-1">
                             <p className="text-sm text-muted-foreground">Email</p>
-                            <p className="font-medium">{profileInfo.email}</p>
+                            <p className="font-medium">{profileInfo?.email}</p>
                         </div>
-                        {profileInfo.mobileNumber && (
+                        {profileInfo?.mobileNumber && (
                             <div className="space-y-1">
                                 <p className="text-sm text-muted-foreground">Phone</p>
-                                <p className="font-medium">{profileInfo.mobileNumber}</p>
+                                <p className="font-medium">{profileInfo?.mobileNumber}</p>
                             </div>
                         )}
-                        {profileInfo.address && (
+                        {profileInfo?.address && (
                             <div className="space-y-1 sm:col-span-2">
                                 <p className="text-sm text-muted-foreground">Address</p>
-                                <p className="font-medium">{profileInfo.address}</p>
+                                <p className="font-medium">{profileInfo?.address}</p>
                             </div>
                         )}
                     </CardContent>
@@ -150,23 +150,23 @@ const ProfileInfo = () => {
                     <CardContent className="grid gap-4 sm:grid-cols-2">
                         <div className="space-y-1">
                             <p className="text-sm text-muted-foreground">Employee ID</p>
-                            <p className="font-medium">{profileInfo.employeeId || profileInfo.id}</p>
+                            <p className="font-medium">{profileInfo?.employeeId || profileInfo?.id}</p>
                         </div>
-                        {profileInfo.hiredDate && (
+                        {profileInfo?.hiredDate && (
                             <div className="space-y-1">
                                 <p className="text-sm text-muted-foreground">Hire Date</p>
                                 <p className="font-medium">
-                                    {new Date(profileInfo.hiredDate).toLocaleDateString()}
+                                    {new Date(profileInfo?.hiredDate).toLocaleDateString()}
                                 </p>
                             </div>
                         )}
-                        {profileInfo.roles && profileInfo.roles.length > 0 && (
+                        {profileInfo?.roles && profileInfo?.roles?.length > 0 && (
                             <div className="space-y-1 sm:col-span-2">
                                 <p className="text-sm text-muted-foreground">Roles</p>
                                 <div className="flex flex-wrap gap-2">
-                                    {profileInfo.roles.map((role) => (
-                                        <Badge key={role.id} variant="secondary">
-                                            {role.role.name}
+                                    {profileInfo?.roles?.map((role) => (
+                                        <Badge key={role?.id} variant="secondary">
+                                            {role?.role?.name}
                                         </Badge>
                                     ))}
                                 </div>
@@ -185,16 +185,16 @@ const ProfileInfo = () => {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="grid gap-4 sm:grid-cols-2">
-                            {(profileInfo.annualPackage ?? 0) > 0 && (
+                            {(profileInfo?.annualPackage ?? 0) > 0 && (
                                 <div className="space-y-1">
                                     <p className="text-sm text-muted-foreground">Annual Package</p>
-                                    <p className="font-medium">₹{(profileInfo.annualPackage ?? 0).toLocaleString()}</p>
+                                    <p className="font-medium">₹{(profileInfo?.annualPackage ?? 0).toLocaleString()}</p>
                                 </div>
                             )}
-                            {(profileInfo.monthlySalary ?? 0) > 0 && (
+                            {(profileInfo?.monthlySalary ?? 0) > 0 && (
                                 <div className="space-y-1">
                                     <p className="text-sm text-muted-foreground">Monthly Salary</p>
-                                    <p className="font-medium">₹{(profileInfo.monthlySalary ?? 0).toLocaleString()}</p>
+                                    <p className="font-medium">₹{(profileInfo?.monthlySalary ?? 0).toLocaleString()}</p>
                                 </div>
                             )}
                         </CardContent>

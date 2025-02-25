@@ -45,35 +45,35 @@ const OrganizationHome = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {organizationList.map((org) => (
-                    <Card key={org.id} className="hover:shadow-lg transition-shadow">
+                {organizationList?.map((org) => (
+                    <Card key={org?.id} className="hover:shadow-lg transition-shadow">
                         <CardHeader>
                             <div className="flex justify-between items-start">
-                                <CardTitle className="text-xl">{org.name}</CardTitle>
-                                <Badge variant={org.isActive ? "default" : "destructive"}>
-                                    {org.isActive ? "Active" : "Inactive"}
+                                <CardTitle className="text-xl">{org?.name}</CardTitle>
+                                <Badge variant={org?.isActive ? "default" : "destructive"}>
+                                    {org?.isActive ? "Active" : "Inactive"}
                                 </Badge>
                             </div>
-                            <CardDescription>{org.industry || "No industry specified"}</CardDescription>
+                            <CardDescription>{org?.industry || "No industry specified"}</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
                                 <div className="flex items-center text-sm">
                                     <Building2 className="mr-2 h-4 w-4" />
-                                    <span>Plan: {org.subscriptionPlan}</span>
+                                    <span>Plan: {org?.subscriptionPlan}</span>
                                 </div>
                                 <div className="flex items-center text-sm">
                                     <Users className="mr-2 h-4 w-4" />
-                                    <span>{org.users?.length || 0} Users</span>
+                                    <span>{org?.users?.length || 0} Users</span>
                                 </div>
                                 <div className="flex items-center text-sm">
                                     <Calendar className="mr-2 h-4 w-4" />
-                                    <span>Created: {new Date(org.createdAt).toLocaleDateString()}</span>
+                                    <span>Created: {new Date(org?.createdAt).toLocaleDateString()}</span>
                                 </div>
                                 <Button 
                                     variant="outline" 
                                     className="w-full mt-4"
-                                    onClick={() => navigate(`/p/organization/${org.id}`)}
+                                    onClick={() => navigate(`/p/organization/${org?.id}`)}
                                 >
                                     View Details
                                 </Button>

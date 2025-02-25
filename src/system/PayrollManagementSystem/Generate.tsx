@@ -42,18 +42,18 @@ const SalaryGenerator = () => {
 
     try {
       const results = await Promise.all(
-        selectedEmployees.map(async (userId) => {
+        selectedEmployees?.map(async (userId) => {
           const response = await axios.post(`${APIDictionary.payroll}/generate`, 
             { userId, month, year },
             { withCredentials: true }
           );
-          return response.data;
-        })
+          return response?.data;
+        }) ?? []
       );
 
       setStatus({
         type: 'success',
-        message: `Successfully generated salaries for ${results.length} employees`
+        message: `Successfully generated salaries for ${results?.length} employees`
       });
       setSelectedEmployees([]);
     } catch (error) {
@@ -125,10 +125,10 @@ const SalaryGenerator = () => {
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="select-all"
-                    checked={selectedEmployees.length === employees.length}
+                    checked={selectedEmployees?.length === employees?.length}
                     onCheckedChange={(checked) => {
                       if (checked) {
-                        setSelectedEmployees(employees.map(emp => emp.id));
+                        setSelectedEmployees(employees?.map(emp => emp?.id) ?? []);
                       } else {
                         setSelectedEmployees([]);
                       }
@@ -136,21 +136,21 @@ const SalaryGenerator = () => {
                   />
                   <Label htmlFor="select-all">Select All</Label>
                 </div>
-                {employees.map((employee:User) => (
-                  <div key={employee.id} className="ml-6 flex items-center space-x-2">
+                {employees?.map((employee:User) => (
+                  <div key={employee?.id} className="ml-6 flex items-center space-x-2">
                     <Checkbox
-                      id={`employee-${employee.id}`}
-                      checked={selectedEmployees.includes(employee.id)}
+                      id={`employee-${employee?.id}`}
+                      checked={selectedEmployees?.includes(employee?.id)}
                       onCheckedChange={(checked) => {
                         if (checked) {
-                          setSelectedEmployees([...selectedEmployees, employee.id]);
+                          setSelectedEmployees([...selectedEmployees, employee?.id]);
                         } else {
-                          setSelectedEmployees(selectedEmployees.filter(id => id !== employee.id));
+                          setSelectedEmployees(selectedEmployees?.filter(id => id !== employee?.id) ?? []);
                         }
                       }}
                     />
-                    <Label htmlFor={`employee-${employee.id}`}>
-                      {`${employee.firstName} ${employee.lastName} (${employee.employeeId})`}
+                    <Label htmlFor={`employee-${employee?.id}`}>
+                      {`${employee?.firstName} ${employee?.lastName} (${employee?.employeeId})`}
                     </Label>
                   </div>
                 ))}
@@ -158,7 +158,7 @@ const SalaryGenerator = () => {
             </div>
 
             {/* Status Messages */}
-            {status.message && (
+            {status?.message && (
               <Alert variant={status.type === 'error' ? 'destructive' : 'default'}>
                 {status.type === 'error' ? (
                   <AlertCircle className="h-4 w-4" />

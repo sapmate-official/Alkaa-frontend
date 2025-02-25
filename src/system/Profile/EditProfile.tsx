@@ -55,25 +55,24 @@ const ProfileEdit = () => {
         const response = await axios.get(APIDictionary.userProfile(userId || ''), {
           withCredentials: true
         });
-        const userData = response.data.user;
+        const userData = response.data?.user;
         console.log('User data:', userData);
         
-        
         setFormData({
-          firstName: userData.firstName || '',
-          lastName: userData.lastName || '',
-          email: userData.email || '',
-          address: userData.address || '',
-          adharNumber: userData.adharNumber || '',
-          panNumber: userData.panNumber || '',
-          mobileNumber: userData.mobileNumber || '',
-          dateOfBirth: userData.dateOfBirth?.split('T')[0] || '',
-          hiredDate: userData.hiredDate?.split('T')[0] || '',
-          companyName: userData.companyName || '',
-          departmentId: userData.departmentId || '',
-          annualPackage: userData.annualPackage?.toString() || '',
-          monthlySalary: userData.monthlySalary?.toString() || '',
-          orgId: userData.orgId || '',
+          firstName: userData?.firstName || '',
+          lastName: userData?.lastName || '',
+          email: userData?.email || '',
+          address: userData?.address || '',
+          adharNumber: userData?.adharNumber || '',
+          panNumber: userData?.panNumber || '',
+          mobileNumber: userData?.mobileNumber || '',
+          dateOfBirth: userData?.dateOfBirth?.split('T')[0] || '',
+          hiredDate: userData?.hiredDate?.split('T')[0] || '',
+          companyName: userData?.companyName || '',
+          departmentId: userData?.departmentId || '',
+          annualPackage: userData?.annualPackage?.toString() || '',
+          monthlySalary: userData?.monthlySalary?.toString() || '',
+          orgId: userData?.orgId || '',
         });
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -86,7 +85,7 @@ const ProfileEdit = () => {
     e.preventDefault();
     try {
       const userId = id || user?.id;
-      await axios.patch(APIDictionary.userProfile(userId?userId:''), formData,{
+      await axios.patch(APIDictionary.userProfile(userId || ''), formData, {
         withCredentials: true,
       });
       alert('Profile updated successfully');

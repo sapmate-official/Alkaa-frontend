@@ -67,18 +67,18 @@ const PermissionHome = () => {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {permissions.map((permission) => (
-                            <TableRow key={permission.id}>
-                                <TableCell>{permission.name}</TableCell>
-                                <TableCell>{permission.module}</TableCell>
-                                <TableCell>{permission.action}</TableCell>
-                                <TableCell>{permission.description || '-'}</TableCell>
+                        {permissions?.map((permission) => (
+                            <TableRow key={permission?.id}>
+                                <TableCell>{permission?.name}</TableCell>
+                                <TableCell>{permission?.module}</TableCell>
+                                <TableCell>{permission?.action}</TableCell>
+                                <TableCell>{permission?.description || '-'}</TableCell>
                                 <TableCell>
-                                    {new Date(permission.createdAt).toLocaleDateString()}
+                                    {new Date(permission?.createdAt).toLocaleDateString()}
                                 </TableCell>
                             </TableRow>
                         ))}
-                        {permissions.length === 0 && (
+                        {permissions?.length === 0 && (
                             <TableRow>
                                 <TableCell colSpan={5} className="text-center">
                                     No permissions found

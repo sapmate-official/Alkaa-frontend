@@ -61,16 +61,16 @@ const ListOfNotification = () => {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {notifications.map((notification) => (
-                        <TableRow key={notification.id}>
+                    {notifications?.map((notification) => (
+                        <TableRow key={notification?.id}>
                             <TableCell>
-                                <Badge variant={notification.isRead ? "secondary" : "default"}>
-                                    {notification.isRead ? "Read" : "Unread"}
+                                <Badge variant={notification?.isRead ? "secondary" : "default"}>
+                                    {notification?.isRead ? "Read" : "Unread"}
                                 </Badge>
                             </TableCell>
-                            <TableCell>{notification.content}</TableCell>
+                            <TableCell>{notification?.content}</TableCell>
                             <TableCell>
-                                {new Date(notification.createdAt).toLocaleDateString('en-US', {
+                                {notification?.createdAt && new Date(notification.createdAt).toLocaleDateString('en-US', {
                                     year: 'numeric',
                                     month: 'short',
                                     day: 'numeric',

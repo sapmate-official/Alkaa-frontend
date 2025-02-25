@@ -35,22 +35,22 @@ const CreateLeaveType = () => {
                 },
                 body: JSON.stringify({
                     ...data,
-                    orgId: user?.organization?.id
+                    orgId: user?.organization?.id ?? null
                 }),
             });
 
-            if (!response.ok) {
+            if (!response?.ok) {
                 throw new Error('Failed to create leave type');
             }
             navigate('/p/leavetype');
-            toast({
+            toast?.({
                 title: "Success",
                 description: "Leave type created successfully",
             })
             
-            form.reset();
+            form?.reset();
         } catch (error) {
-            toast({
+            toast?.({
                 title: "Error",
                 description: "Failed to create leave type",
                 variant: "destructive",

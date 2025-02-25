@@ -58,18 +58,26 @@ function App() {
 
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <MainLayout>
-          <Routes>
-            <Route path="/" element={<SignIn />} />
-            <Route path="/auth/signin" element={<SignIn />} />
-            <Route path="/reset-password/:token" element={<SetPassword />} />
-            <Route path='/p/*' element={<ProtectedRoute />} />
-          </Routes>
-          <Toaster />
-        </MainLayout>
-      </AuthProvider>
-    </BrowserRouter>
+    <Routes>
+      {/* Public Routes - Outside AuthProvider */}
+      <Route path="/" element={<Home />} />
+      <Route path="/reset-password/:token" element={<SetPassword />} />
+      <Route path="/auth/signin" element={<AuthProvider><SignIn /></AuthProvider>} />
+      
+      {/* Protected Routes - Wrapped in AuthProvider */}
+      <Route
+        path="/p/*"
+        element={
+          <AuthProvider>
+            <MainLayout>
+              <ProtectedRoute />
+            </MainLayout>
+          </AuthProvider>
+        }
+      />
+    </Routes>
+    <Toaster />
+  </BrowserRouter>
   )
 }
 
@@ -107,7 +115,7 @@ const ProtectedRoute: React.FC = () => {
   if (isLoading || isUserLoading) {
     return <Loader />;
   }
-  
+
   if (!user && !isLoading) {
     return <Navigate to="/auth/signin" replace />;
   }
@@ -200,31 +208,31 @@ const RolePermissionManagementSystem = () => {
 const DepartmentManagementSystem = () => {
   return (
     <Routes>
-        <Route path='/' element={
-      <PermissionRoute requiredPermissions={['department.read']}>
+      <Route path='/' element={
+        <PermissionRoute requiredPermissions={['department.read']}>
           <SpecificDepartmentView />
-          </PermissionRoute>
-        } />
-        <Route path='/list' element={
-      <PermissionRoute requiredPermissions={['department.read']}>
+        </PermissionRoute>
+      } />
+      <Route path='/list' element={
+        <PermissionRoute requiredPermissions={['department.read']}>
           <ListOfDepartment />
-          </PermissionRoute>
-        } />
-        <Route path='/create' element={
-      <PermissionRoute requiredPermissions={['department.create']}>
+        </PermissionRoute>
+      } />
+      <Route path='/create' element={
+        <PermissionRoute requiredPermissions={['department.create']}>
           <CreateDepartment />
-          </PermissionRoute>
-        } />
-        <Route path='/:id' element={
-      <PermissionRoute requiredPermissions={['department.read']}>
+        </PermissionRoute>
+      } />
+      <Route path='/:id' element={
+        <PermissionRoute requiredPermissions={['department.read']}>
           <SpecificDepartmentView />
-          </PermissionRoute>
-        } />
-        <Route path='/:id/edit' element={
-      <PermissionRoute requiredPermissions={['department.update']}>
+        </PermissionRoute>
+      } />
+      <Route path='/:id/edit' element={
+        <PermissionRoute requiredPermissions={['department.update']}>
           <SpecificDepartmentEdit />
-          </PermissionRoute>
-        } />
+        </PermissionRoute>
+      } />
     </Routes>
   )
 }
@@ -232,15 +240,15 @@ const EmployeeManagementSystem = () => {
   return (
     <Routes>
       <Route path='/' element={
-      <PermissionRoute requiredPermissions={['Read User Details']}>
-        <ListOfEmployee />
-          </PermissionRoute>
-        } />
+        <PermissionRoute requiredPermissions={['Read User Details']}>
+          <ListOfEmployee />
+        </PermissionRoute>
+      } />
       <Route path='/create' element={
-      <PermissionRoute requiredPermissions={['Create User/Employee']}>
-        <CreateEmployeeNew />
-          </PermissionRoute>
-        } />
+        <PermissionRoute requiredPermissions={['Create User/Employee']}>
+          <CreateEmployeeNew />
+        </PermissionRoute>
+      } />
     </Routes>
   )
 }
@@ -276,7 +284,7 @@ const PayrollManagementSystem = () => {
   return (
     <Routes>
       <Route path='/' element={
-          <PayRollViewOwn />
+        <PayRollViewOwn />
       } />
       <Route path='/all' element={
         <PermissionRoute requiredPermissions={['payroll.view_all']}>

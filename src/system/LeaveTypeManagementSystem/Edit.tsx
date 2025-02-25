@@ -136,7 +136,7 @@ const EditLeaveType = () => {
                                         type="number" 
                                         min="0"
                                         {...field}
-                                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                                        onChange={(e) => field.onChange(Number(e.target?.value) || 0)}
                                     />
                                 </FormControl>
                                 <FormMessage />
@@ -210,7 +210,7 @@ const EditLeaveType = () => {
                                             type="number"
                                             min="0"
                                             {...field}
-                                            onChange={(e) => field.onChange(parseInt(e.target.value))}
+                                            onChange={(e) => field.onChange(Number(e.target?.value) || 0)}
                                         />
                                     </FormControl>
                                     <FormMessage />

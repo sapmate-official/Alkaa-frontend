@@ -35,8 +35,8 @@ const SpecificOrganizationView = () => {
 
   const fetchOrganisation = async () => {
     try {
-      const response = await axios.get(`${APIDictionary.Organization}/${user?.organization.id}`);
-      setOrganization(response.data);
+      const response = await axios.get(`${APIDictionary.Organization}/${user?.organization?.id}`);
+      setOrganization(response?.data);
     } catch (error) {
       console.error('Failed to fetch organisation:', error);
     }
@@ -78,11 +78,11 @@ const SpecificOrganizationView = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-2xl">{organization.name}</CardTitle>
+              <CardTitle className="text-2xl">{organization?.name}</CardTitle>
               <CardDescription>Organization Details</CardDescription>
             </div>
-            <Badge variant={organization.isActive ? "default" : "destructive"}>
-              {organization.isActive ? 'Active' : 'Inactive'}
+            <Badge variant={organization?.isActive ? "default" : "destructive"}>
+              {organization?.isActive ? 'Active' : 'Inactive'}
             </Badge>
           </div>
         </CardHeader>
@@ -90,17 +90,17 @@ const SpecificOrganizationView = () => {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div>
               <h3 className="font-medium">Industry</h3>
-              <p className="text-sm text-muted-foreground">{organization.industry}</p>
+              <p className="text-sm text-muted-foreground">{organization?.industry}</p>
             </div>
             <div>
               <h3 className="font-medium">Subscription</h3>
-              <p className="text-sm text-muted-foreground">{organization.subscriptionPlan}</p>
+              <p className="text-sm text-muted-foreground">{organization?.subscriptionPlan}</p>
             </div>
             <div>
               <h3 className="font-medium">Valid Period</h3>
               <p className="text-sm text-muted-foreground">
-                {new Date(organization.subscriptionStart).toLocaleDateString()} - 
-                {new Date(organization.subscriptionEnd).toLocaleDateString()}
+                {new Date(organization?.subscriptionStart || '').toLocaleDateString()} - 
+                {new Date(organization?.subscriptionEnd || '').toLocaleDateString()}
               </p>
             </div>
           </div>
@@ -113,7 +113,7 @@ const SpecificOrganizationView = () => {
       <div>
         <CardTitle>Employee Directory</CardTitle>
         <CardDescription>
-          Total Employees: {organization.users.length}
+          Total Employees: {organization?.users?.length || 0}
         </CardDescription>
       </div>
       <Button 
@@ -135,25 +135,25 @@ const SpecificOrganizationView = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {organization.users.map((user) => (
+              {organization?.users?.map((user) => (
                 <TableRow 
-                  key={user.id}
+                  key={user?.id}
                   className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleUserClick(user.id)}
+                  onClick={() => handleUserClick(user?.id)}
                 >
                   <TableCell className="flex items-center gap-2">
                     <Avatar className="h-8 w-8">
                       <AvatarFallback>
-                        {user.firstName[0]}{user.lastName[0]}
+                        {user?.firstName?.[0]}{user?.lastName?.[0]}
                       </AvatarFallback>
                     </Avatar>
-                    <span>{`${user.firstName} ${user.lastName}`}</span>
+                    <span>{`${user?.firstName || ''} ${user?.lastName || ''}`}</span>
                   </TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.employeeId || 'N/A'}</TableCell>
+                  <TableCell>{user?.email}</TableCell>
+                  <TableCell>{user?.employeeId || 'N/A'}</TableCell>
                   <TableCell>
-                    <Badge variant={user.status === 'active' ? "success" : "destructive"}>
-                      {user.status}
+                    <Badge variant={user?.status === 'active' ? "success" : "destructive"}>
+                      {user?.status}
                     </Badge>
                   </TableCell>
                 </TableRow>
