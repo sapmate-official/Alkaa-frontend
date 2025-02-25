@@ -1,11 +1,471 @@
+import React, { useState } from 'react';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { 
 
+  CheckCircleIcon, 
 
-const LandingPage = () => {
-  console.log("LandingPage");
-  
-  return (
-    <div>Lorem ipsum dolor, sit amet consectetur adipisicing elit. Aspernatur ad ab repellat optio enim, quam quas corporis at tempore perferendis sunt, sit eveniet necessitatibus ex dignissimos incidunt nam. Modi, nemo.</div>
-  )
+  Users,
+  Calendar,
+  ChartPie,
+  Clock,
+  Building2,
+  MessageCircle,
+  ArrowRight
+} from 'lucide-react';
+
+interface FeatureCardProps {
+  title: string;
+  description: string;
+  icon: React.ReactNode;
 }
 
-export default LandingPage
+const FeatureCard: React.FC<FeatureCardProps> = ({ title, description, icon }) => (
+  <Card className="border border-border bg-card hover:shadow-md transition-shadow">
+    <CardHeader className="pb-2">
+      <div className="mb-2 text-primary">{icon}</div>
+      <CardTitle className="text-lg font-semibold">{title}</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <CardDescription className="text-sm text-muted-foreground">{description}</CardDescription>
+    </CardContent>
+  </Card>
+);
+
+interface TestimonialProps {
+  quote: string;
+  author: string;
+  role: string;
+  company: string;
+}
+
+const Testimonial: React.FC<TestimonialProps> = ({ quote, author, role, company }) => (
+  <Card className="border border-border bg-card hover:shadow-md transition-shadow h-full flex flex-col">
+    <CardContent className="pt-6 flex-1 flex flex-col">
+      <p className="text-muted-foreground italic mb-4">"{quote}"</p>
+      <div className="mt-auto">
+        <p className="font-semibold">{author}</p>
+        <p className="text-sm text-muted-foreground">{role}, {company}</p>
+      </div>
+    </CardContent>
+  </Card>
+);
+
+interface PricingTierProps {
+  title: string;
+  price: string;
+  description: string;
+  features: string[];
+  buttonText: string;
+  highlighted?: boolean;
+}
+
+const PricingTier: React.FC<PricingTierProps> = ({ 
+  title, 
+  price, 
+  description, 
+  features, 
+  buttonText, 
+  highlighted = false 
+}) => (
+  <Card className={`border ${highlighted ? 'border-primary bg-secondary/50' : 'border-border bg-card'} h-full flex flex-col`}>
+    <CardHeader>
+      <CardTitle>{title}</CardTitle>
+      <CardDescription>{description}</CardDescription>
+    </CardHeader>
+    <CardContent className="flex-1 flex flex-col">
+      <div className="mb-4">
+        <span className="text-3xl font-bold">{price}</span>
+        {price !== 'Custom' && <span className="text-muted-foreground">/month</span>}
+      </div>
+      <ul className="space-y-2 mb-6 flex-1">
+        {features.map((feature, index) => (
+          <li key={index} className="flex items-start">
+            <CheckCircleIcon className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" />
+            <span className="text-sm">{feature}</span>
+          </li>
+        ))}
+      </ul>
+      <Button 
+        className={`w-full ${highlighted ? 'bg-primary hover:bg-primary/90 text-white' : 'bg-secondary text-foreground hover:bg-secondary/80'}`}
+      >
+        {buttonText}
+      </Button>
+    </CardContent>
+  </Card>
+);
+
+const AlkaaLandingPage: React.FC = () => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      {/* Navigation */}
+      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 max-w-screen-xl items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white font-bold">A</div>
+            <span className="text-xl font-bold">Alkaa</span>
+          </div>
+          
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center gap-6">
+            <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Features</a>
+            <a href="#testimonials" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Testimonials</a>
+            <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
+            <Button variant="outline">Log in</Button>
+            <Button>Start Free Trial</Button>
+          </nav>
+          
+          {/* Mobile menu button */}
+          <div className="md:hidden">
+            <Button 
+              variant="outline" 
+              className="h-10 w-10 p-0" 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              <span className="sr-only">Toggle menu</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-4 w-4"
+              >
+                {mobileMenuOpen ? (
+                  <>
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </>
+                ) : (
+                  <>
+                    <line x1="4" y1="12" x2="20" y2="12" />
+                    <line x1="4" y1="6" x2="20" y2="6" />
+                    <line x1="4" y1="18" x2="20" y2="18" />
+                  </>
+                )}
+              </svg>
+            </Button>
+          </div>
+        </div>
+        
+        {/* Mobile Navigation */}
+        {mobileMenuOpen && (
+          <div className="md:hidden p-4 border-t border-border/40 bg-background">
+            <nav className="flex flex-col gap-4">
+              <a 
+                href="#features" 
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Features
+              </a>
+              <a 
+                href="#testimonials" 
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Testimonials
+              </a>
+              <a 
+                href="#pricing" 
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Pricing
+              </a>
+              <div className="flex flex-col gap-2 pt-2">
+                <Button variant="outline">Log in</Button>
+                <Button>Start Free Trial</Button>
+              </div>
+            </nav>
+          </div>
+        )}
+      </header>
+
+      <main className="flex-1">
+        {/* Hero Section */}
+        <section className="py-20 md:py-32">
+          <div className="container max-w-screen-xl px-4 md:px-8">
+            <div className="flex flex-col md:flex-row gap-8 items-center">
+              <div className="md:w-1/2 space-y-6">
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                  Streamline Your <span className="text-primary">Employee Management</span>
+                </h1>
+                <p className="text-lg text-muted-foreground">
+                  Alkaa provides a comprehensive solution for HR teams to manage employees, track performance, and boost productivity.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                  <Button className="text-base px-8 py-6">Start Free Trial</Button>
+                  <Button variant="outline" className="text-base px-8 py-6">
+                    Book a Demo
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="flex items-center gap-2 pt-2">
+                  <p className="text-sm text-muted-foreground">No credit card required</p>
+                  <span className="text-muted-foreground">•</span>
+                  <p className="text-sm text-muted-foreground">14-day free trial</p>
+                </div>
+              </div>
+              <div className="md:w-1/2">
+                <div className="relative h-64 md:h-96 w-full rounded-lg overflow-hidden bg-secondary">
+                  <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
+                    <div className="text-center">
+                      <Building2 className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">Dashboard Preview</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Features Section */}
+        <section id="features" className="py-20 bg-secondary/30">
+          <div className="container max-w-screen-xl px-4 md:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Powerful Features for Modern HR Teams</h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Everything you need to manage your workforce efficiently in one place.
+              </p>
+            </div>
+            
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <FeatureCard
+                title="Employee Directory"
+                description="Maintain a comprehensive database of all employee information, accessible and searchable in seconds."
+                icon={<Users className="h-6 w-6" />}
+              />
+              <FeatureCard
+                title="Attendance Tracking"
+                description="Monitor employee attendance, time-off requests, and work hours with automated reporting."
+                icon={<Clock className="h-6 w-6" />}
+              />
+              <FeatureCard
+                title="Performance Management"
+                description="Set goals, conduct reviews, and track performance metrics to help employees grow."
+                icon={<ChartPie className="h-6 w-6" />}
+              />
+              <FeatureCard
+                title="Leave Management"
+                description="Streamline leave requests, approvals, and balance tracking with customizable policies."
+                icon={<Calendar className="h-6 w-6" />}
+              />
+              <FeatureCard
+                title="Onboarding & Offboarding"
+                description="Create structured workflows for new hires and departing employees to ensure smooth transitions."
+                icon={<Building2 className="h-6 w-6" />}
+              />
+              <FeatureCard
+                title="Internal Communications"
+                description="Keep your team connected with built-in messaging, announcements, and feedback channels."
+                icon={<MessageCircle className="h-6 w-6" />}
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Testimonials Section */}
+        <section id="testimonials" className="py-20">
+          <div className="container max-w-screen-xl px-4 md:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Trusted by HR Leaders</h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                See what our customers have to say about how Alkaa has transformed their HR operations.
+              </p>
+            </div>
+            
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Testimonial
+                quote="Alkaa has completely transformed how we manage our team of 150+ employees. The interface is intuitive and the automation features save us countless hours each month."
+                author="Sarah Johnson"
+                role="HR Director"
+                company="TechNova Inc."
+              />
+              <Testimonial
+                quote="The onboarding workflow in Alkaa has reduced our new hire setup time by 70%. It's been a game-changer for our rapidly growing team."
+                author="Michael Chen"
+                role="People Operations Manager"
+                company="GrowthSync"
+              />
+              <Testimonial
+                quote="As a small business owner, I needed something comprehensive yet simple. Alkaa strikes that perfect balance and has scaled perfectly as we've grown from 10 to 50 employees."
+                author="Lisa Rodriguez"
+                role="CEO"
+                company="Bright Solutions"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Pricing Section */}
+        <section id="pricing" className="py-20 bg-secondary/30">
+          <div className="container max-w-screen-xl px-4 md:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple, Transparent Pricing</h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Choose the plan that works best for your organization. All plans include a 14-day free trial.
+              </p>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              <PricingTier
+                title="Starter"
+                price="$7"
+                description="Perfect for small teams just getting started"
+                features={[
+                  "Up to 25 employees",
+                  "Employee directory",
+                  "Basic attendance tracking",
+                  "Leave management",
+                  "Email support",
+                  "Mobile app access"
+                ]}
+                buttonText="Start Free Trial"
+              />
+              <PricingTier
+                title="Professional"
+                price="$12"
+                description="Ideal for growing businesses"
+                features={[
+                  "Up to 100 employees",
+                  "Everything in Starter",
+                  "Performance management",
+                  "Advanced reporting",
+                  "Onboarding workflows",
+                  "Priority support",
+                  "API access"
+                ]}
+                buttonText="Start Free Trial"
+                highlighted={true}
+              />
+              <PricingTier
+                title="Enterprise"
+                price="Custom"
+                description="For large organizations with complex needs"
+                features={[
+                  "Unlimited employees",
+                  "Everything in Professional",
+                  "Custom integrations",
+                  "Dedicated account manager",
+                  "SSO & advanced security",
+                  "Custom workflows",
+                  "24/7 phone support"
+                ]}
+                buttonText="Contact Sales"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="py-20">
+          <div className="container max-w-screen-xl px-4 md:px-8">
+            <div className="bg-primary rounded-lg py-12 px-6 md:p-12 text-white text-center">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Transform Your HR Operations?</h2>
+              <p className="text-lg opacity-90 max-w-2xl mx-auto mb-8">
+                Join thousands of companies that use Alkaa to streamline their employee management and boost productivity.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button className="bg-white text-primary hover:bg-white/90 text-base px-8 py-6">
+                  Start Your Free Trial
+                </Button>
+                <Button className="bg-transparent border border-white hover:bg-white/10 text-base px-8 py-6">
+                  Schedule a Demo
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-secondary/50 border-t border-border py-12">
+        <div className="container max-w-screen-xl px-4 md:px-8">
+          <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-8">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white font-bold">A</div>
+                <span className="text-xl font-bold">Alkaa</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Streamline your employee management with our comprehensive HR solution.
+              </p>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold mb-4">Product</h3>
+              <ul className="space-y-2">
+                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a></li>
+                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</a></li>
+                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Integration</a></li>
+                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Roadmap</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold mb-4">Resources</h3>
+              <ul className="space-y-2">
+                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Blog</a></li>
+                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Documentation</a></li>
+                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Help Center</a></li>
+                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Webinars</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold mb-4">Company</h3>
+              <ul className="space-y-2">
+                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">About</a></li>
+                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Careers</a></li>
+                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contact</a></li>
+                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Privacy Policy</a></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="border-t border-border mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
+            <p className="text-sm text-muted-foreground">
+              &copy; {new Date().getFullYear()} Alkaa. All rights reserved.
+            </p>
+            <div className="flex gap-4 mt-4 md:mt-0">
+              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fillRule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z" clipRule="evenodd" />
+                </svg>
+              </a>
+              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
+                </svg>
+              </a>
+              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
+                </svg>
+              </a>
+              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fillRule="evenodd" d="M19.812 5.418c.861.23 1.538.907 1.768 1.768C21.998 8.746 22 12 22 12s0 3.255-.418 4.814a2.504 2.504 0 0 1-1.768 1.768c-1.56.419-7.814.419-7.814.419s-6.255 0-7.814-.419a2.505 2.505 0 0 1-1.768-1.768C2 15.255 2 12 2 12s0-3.255.417-4.814a2.507 2.507 0 0 1 1.768-1.768C5.744 5 11.998 5 11.998 5s6.255 0 7.814.418ZM15.194 12 10 15V9l5.194 3Z" clipRule="evenodd" />
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default AlkaaLandingPage;
