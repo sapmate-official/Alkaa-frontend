@@ -41,12 +41,21 @@ const SpecificDepartmentView = () => {
       if(user?.Department?.[0]?.id) {
         response = await axios.get(`${APIDictionary.department}/${user.Department[0].id}`)
         setDepartment(response.data)
+        console.log(response)
+        if(!response.data){
 
+          navigate("/p/department/list")    
+        }
+
+      }else{
+        navigate("/p/department/list")
       }
       if(id) {
         response = await axios.get(`${APIDictionary.department}/${id}`)
         setDepartment(response.data)
       }
+      if(!department && user || id){
+        }
     } catch (error) {
       console.log(error)
     }
@@ -57,7 +66,7 @@ const SpecificDepartmentView = () => {
   }, [user,id])
 
   if (!department) return <Loader/>
-
+ 
   return (
     <div className="container mx-auto p-6 space-y-6">
       <Card>
