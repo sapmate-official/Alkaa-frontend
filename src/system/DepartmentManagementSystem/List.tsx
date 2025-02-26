@@ -83,6 +83,14 @@ const ListOfDepartment = () => {
                             </TableCell>
                         </TableRow>
                     ))}
+                    {departments.length === 0 && (
+                        <TableRow>
+                            <TableCell colSpan={6} className="text-center">
+                                No departments found
+                            </TableCell>
+                        </TableRow>
+                    )}
+                    
                 </TableBody>
             </Table>
         </div>
