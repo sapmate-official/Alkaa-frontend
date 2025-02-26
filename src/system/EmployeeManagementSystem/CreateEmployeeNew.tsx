@@ -1,4 +1,4 @@
-import  { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -28,6 +28,7 @@ import { Department, User } from '@/interface/general';
 import RoleAssignment from './RoleAssignment';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
+import { Sparkles } from 'lucide-react';
 
 const basicDetailsSchema = z.object({
   firstName: z.string().min(2, 'First name is required'),
@@ -87,6 +88,7 @@ const CreateEmployeeNew = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [employees, setEmployees] = useState<User[]>([]);
   const [useHeadAsManager, setUseHeadAsManager] = useState(false);
+  const [employeeIdExists, setEmployeeIdExists] = useState(false);
   const fetchDepartments = async () => {
     try {
       const response = await axios.get(
@@ -124,6 +126,7 @@ const CreateEmployeeNew = () => {
   useEffect(() => {
     fetchDepartments();
     fetchEmployees();
+    fetchEmployeeId();
   }, [user?.orgId]);
 
   const form = useForm({
@@ -162,6 +165,61 @@ const CreateEmployeeNew = () => {
       managerId: ''
     }
   });
+  const fetchEmployeeId = async () => {
+    try {
+      if (!user?.orgId) {
+        toast({
+          title: 'Error',
+          description: 'Organization ID not found',
+          variant: 'destructive',
+        });
+        return;
+      }
+      const response = await axios.get(
+        `${APIDictionary.Organization}/employees/employee-id/${user?.orgId}/`,
+        { withCredentials: true }
+      );
+      form.setValue('employeeId', response.data?.employeeId);
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch employees",
+        variant: "destructive",
+      });
+    }
+  }
+  const checkEmployeeId = async (employeeId: string) => {
+    try {
+      if (!user?.orgId) {
+        toast({
+          title: 'Error',
+          description: 'Organization ID not found',
+          variant: 'destructive',
+        });
+        return;
+      }
+      if(!employeeId) {
+        setEmployeeIdExists(false);
+        return false;
+      }
+      const response = await axios.get(
+        `${APIDictionary.Organization}/employees/employee-id/${user?.orgId}/check/${employeeId}`,
+        { withCredentials: true }
+      );
+      setEmployeeIdExists(response.data?.exists);
+      return response.data?.exists;
+    }
+    catch (error) {
+      console.error(error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch employees",
+        variant: "destructive",
+      });
+    }
+  }
+  
 
   const onSubmit = async (data: any) => {
     try {
@@ -187,7 +245,7 @@ const CreateEmployeeNew = () => {
         data,
         orgId: user.orgId,
       });
-      if(response.status==201){
+      if (response.status == 201) {
 
         toast({
           title: 'Success',
@@ -195,12 +253,12 @@ const CreateEmployeeNew = () => {
         });
         form.reset();
         setCurrentStep(0);
-      }else{
+      } else {
         toast({
           title: 'Error',
           description: 'Try Again',
-        variant: 'destructive',
-      });
+          variant: 'destructive',
+        });
       }
 
       // Reset form and step
@@ -472,10 +530,31 @@ const CreateEmployeeNew = () => {
                     name="employeeId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Employee ID (Optional)</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
+                        <FormLabel>Employee ID</FormLabel>
+                        <div className="flex gap-2">
+                          <FormControl className="flex-grow">
+                          <Input
+                            {...field}
+                            onChange={async (e) => {
+                            field.onChange(e);
+                            await checkEmployeeId(e.target.value);
+                            }}
+                            className={employeeIdExists ? "border-red-500" : ""}
+                          />
+                          </FormControl>
+                          <Button 
+                          type="button"
+                          onClick={fetchEmployeeId}
+                          variant="outline"
+                          >
+                            <Sparkles/>
+                          </Button>
+                        </div>
+                        {employeeIdExists && (
+                          <div className="text-sm text-red-500 mt-1">
+                            This Employee ID already exists
+                          </div>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}
