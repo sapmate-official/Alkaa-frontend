@@ -186,7 +186,8 @@ const AlkaaLandingPage: React.FC = () => {
                 Pricing
               </a>
               <div className="flex flex-col gap-2 pt-2">
-                <Button variant="outline">Log in</Button>
+            <Button onClick={()=>navigate("/auth/signin")} variant="outline">Log in</Button>
+                
                 <Button>Start Free Trial</Button>
               </div>
             </nav>
