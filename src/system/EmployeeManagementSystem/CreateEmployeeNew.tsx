@@ -62,7 +62,7 @@ const salaryDetailsSchema = z.object({
 });
 
 const roleAssignmentSchema = z.object({
-  departmentId: z.string().min(1, 'Department is required'),
+  departmentId: z.string().optional(),
   roleIds: z.array(z.string()).min(1, 'At least one role must be selected'),
   managerId: z.string().optional(),
 });
@@ -150,14 +150,14 @@ const CreateEmployeeNew = () => {
       bankName: '',
 
       // Salary Details
-      annualPackage: '',
-      monthlySalary: '',
-      hraPercentage: '',
-      daPercentage: '',
-      taPercentage: '',
-      pfPercentage: '',
-      taxPercentage: '',
-      insuranceFixed: '',
+      annualPackage: 0,
+      monthlySalary: 0,
+      hraPercentage: 0,
+      daPercentage: 0,
+      taPercentage: 0,
+      pfPercentage: 0,
+      taxPercentage: 0,
+      insuranceFixed: 0,
 
       // Role Assignment
       departmentId: '',
@@ -262,10 +262,10 @@ const CreateEmployeeNew = () => {
       }
 
       // Reset form and step
-    } catch (error) {
+    } catch (error:any) {
       toast({
         title: 'Error',
-        description: 'Failed to create employee',
+        description: error?.response?.data?.error || error?.response?.data?.message || 'Failed to create employee',
         variant: 'destructive',
       });
     }
@@ -654,6 +654,7 @@ const CreateEmployeeNew = () => {
                             type="number"
                             {...field}
                             onChange={e => field.onChange(parseFloat(e.target.value))}
+                            value={field.value}
                           />
                         </FormControl>
                         <FormMessage />
