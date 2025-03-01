@@ -57,7 +57,7 @@ const ProfileEdit = () => {
         });
         const userData = response.data?.user;
         console.log('User data:', userData);
-        
+
         setFormData({
           firstName: userData?.firstName || '',
           lastName: userData?.lastName || '',
@@ -113,8 +113,8 @@ const ProfileEdit = () => {
     <Card className=" mx-auto h-full w-full overflow-y-scroll">
       <CardHeader className="flex flex-row items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="icon"
             onClick={() => navigate(-1)}
           >
@@ -129,7 +129,7 @@ const ProfileEdit = () => {
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <path d="m15 18-6-6 6-6"/>
+              <path d="m15 18-6-6 6-6" />
             </svg>
           </Button>
           <CardTitle>Edit Profile</CardTitle>
@@ -143,35 +143,35 @@ const ProfileEdit = () => {
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
                 <div className='flex flex-row'>
-                <div>
+                  <div>
 
-                <Label htmlFor="firstName">First Name *</Label>
-                <Input
-                  required
-                  id="firstName"
-                  name="firstName"
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  />
+                    <Label htmlFor="firstName">First Name *</Label>
+                    <Input
+
+                      id="firstName"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleChange}
+                    />
                   </div>
                   <div>
 
-                <Label htmlFor="lastName">Last Name *</Label>
-                <Input
-                  required
-                  id="lastName"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  />
+                    <Label htmlFor="lastName">Last Name *</Label>
+                    <Input
+
+                      id="lastName"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleChange}
+                    />
                   </div>
-                  </div>
+                </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="address">Address *</Label>
                 <Input
-                  required
+
                   id="address"
                   name="address"
                   value={formData.address}
@@ -182,7 +182,7 @@ const ProfileEdit = () => {
               <div className="space-y-2">
                 <Label htmlFor="adharNumber">Aadhar Number *</Label>
                 <Input
-                  required
+                  
                   id="adharNumber"
                   name="adharNumber"
                   value={formData.adharNumber}
@@ -193,7 +193,7 @@ const ProfileEdit = () => {
               <div className="space-y-2">
                 <Label htmlFor="panNumber">PAN Number *</Label>
                 <Input
-                  required
+                  
                   id="panNumber"
                   name="panNumber"
                   value={formData.panNumber}
@@ -204,7 +204,7 @@ const ProfileEdit = () => {
               <div className="space-y-2">
                 <Label htmlFor="mobileNumber">Mobile Number *</Label>
                 <Input
-                  required
+                  
                   id="mobileNumber"
                   name="mobileNumber"
                   value={formData.mobileNumber}
@@ -215,7 +215,7 @@ const ProfileEdit = () => {
               <div className="space-y-2">
                 <Label htmlFor="dateOfBirth">Date of Birth *</Label>
                 <Input
-                  required
+                  
                   type="date"
                   id="dateOfBirth"
                   name="dateOfBirth"
@@ -235,7 +235,7 @@ const ProfileEdit = () => {
               <div className="space-y-2">
                 <Label htmlFor="hiredDate">Hiring Date *</Label>
                 <Input
-                  required
+                  
                   type="date"
                   id="hiredDate"
                   name="hiredDate"
@@ -279,7 +279,7 @@ const ProfileEdit = () => {
               <div className="space-y-2">
                 <Label htmlFor="annualPackage">Annual Package *</Label>
                 <Input
-                  required
+                  
                   type="number"
                   id="annualPackage"
                   name="annualPackage"
@@ -291,7 +291,7 @@ const ProfileEdit = () => {
               <div className="space-y-2">
                 <Label htmlFor="monthlySalary">Monthly Salary *</Label>
                 <Input
-                  required
+                  
                   type="number"
                   id="monthlySalary"
                   name="monthlySalary"
@@ -303,8 +303,8 @@ const ProfileEdit = () => {
           </div>
 
           <div className="flex gap-4 w-full mt-6">
-            <Button 
-              type="button" 
+            <Button
+              type="button"
               variant="outline"
               onClick={() => navigate('/p/profile/edit/bank')}
               className="flex-1"

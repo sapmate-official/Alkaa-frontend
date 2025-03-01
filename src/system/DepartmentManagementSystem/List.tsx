@@ -68,7 +68,7 @@ const ListOfDepartment = () => {
                     {departments.map((dept) => (
                         <TableRow 
                             key={dept.id}
-                            className="cursor-pointer hover:bg-gray-100"
+                            className="cursor-pointer hover:bg-gray-800"
                             onClick={() => navigate(`/p/department/${dept.id}`)}
                         >
                             <TableCell className="font-medium">{dept?.name}</TableCell>
