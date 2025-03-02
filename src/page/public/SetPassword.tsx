@@ -38,7 +38,7 @@ const SetPassword = () => {
         variant: "default",
       });
 
-      navigate('/sign-in');
+      navigate('/auth/signin');
     } catch (error) {
       toast({
         title: "Error",

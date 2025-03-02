@@ -1,4 +1,4 @@
-import  { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -41,8 +41,8 @@ const formSchema = z.object({
   name: z.string().min(2, 'Department name must be at least 2 characters'),
   description: z.string().optional(),
   code: z.string().optional(),
-  headId: z.string().optional(),
-  parentId: z.string().optional(),
+  headId: z.string().nullable().optional(),
+  parentId: z.string().nullable().optional(),
   location: z.string().optional(),
   budget: z.number().positive().optional(),
   status: z.boolean().default(true),
@@ -98,12 +98,19 @@ const CreateDepartment = () => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
+      if(values.parentId === 'none') {
+        values.parentId = null
+      }
+      if(values.headId === 'no-employees') {
+        values.headId = null
+      }
+      setIsLoading(true)
       const response = await axios.post(APIDictionary.department, {
         ...values,
         orgId: user?.organization?.id,
       })
       console.log(response?.data);
-      
+
 
       toast({
         title: 'Success',
@@ -111,6 +118,8 @@ const CreateDepartment = () => {
       })
       navigate("/p/department")
     } catch (error) {
+      setIsLoading(false)
+      console.error('Error creating department:', error)
       toast({
         title: 'Error',
         description: 'Failed to create department',
@@ -183,13 +192,16 @@ const CreateDepartment = () => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Parent Department</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select onValueChange={field.onChange} value={field.value ?? undefined}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select parent department" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
+                    <SelectItem key="none" value="none">
+                      No parent department
+                    </SelectItem>
                     {departments?.length > 0 ? (
                       departments?.map((dept) => (
                         <SelectItem key={dept?.id} value={dept?.id}>
@@ -214,13 +226,16 @@ const CreateDepartment = () => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Department Head</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select onValueChange={field.onChange} value={field.value ?? undefined}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select department head" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
+                        <SelectItem key={0} value={"no-employees"}>
+                          No department head
+                        </SelectItem>
                     {employees?.length > 0 ? (
                       employees?.map((emp) => (
                         <SelectItem key={emp?.id} value={emp?.id}>

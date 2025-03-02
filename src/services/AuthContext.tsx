@@ -1,4 +1,3 @@
-
 import { userIdAtom } from "../store/atom";
 import axios, { AxiosError } from "axios";
 import { useAtom } from "jotai";
@@ -84,7 +83,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 const axiosError = error as AxiosError;
                 if (axiosError.response?.status === 401) {
                     console.error("Invalid email or password");
-                    return "Invalid email or password";
+                    
+                    return (axiosError?.response?.data as { message: string })?.message || "Invalid email or password";
                 } else {
                     console.error("Login error:", error);
                     return "Unexpected login error";
@@ -149,7 +149,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             
             console.log(response);
             if (response.status === 200 && response.data.user) {
-                
                 const updates = () => {
                     setUser(response.data.user);
                     setUser_id(response.data.user?.userId);
@@ -160,12 +159,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 throw new Error("Invalid token response");
             }
         } catch (error) {
-            if (axios.isAxiosError(error) && error.response?.status === 401) {
-                await refreshToken();
-            } else {
-                console.error("Token validation error:", error);
-                logout();
-                navigate('/auth/signin');
+            if (axios.isAxiosError(error)) {
+                if (error.response?.status === 401) {
+                    if (error.response.data?.message === "Organization is inactive") {
+                        setUser(null);
+                        logout();
+                        navigate('/auth/signin', { 
+                            state: { error: "Your organization is inactive. Please contact administrator." }
+                        });
+                        return;
+                    }
+                    // Only attempt refresh if we're not already on the signin page
+                    const currentPath = window.location.pathname;
+                    if (!currentPath.includes('/auth/signin')) {
+                        await refreshToken();
+                    } else {
+                        setUser(null);
+                        setIsLoading(false);
+                    }
+                } else {
+                    console.error("Token validation error:", error);
+                    logout();
+                    navigate('/auth/signin');
+                }
             }
         }
     };

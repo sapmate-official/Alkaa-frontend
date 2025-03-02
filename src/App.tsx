@@ -408,7 +408,7 @@ const OrganizationManagementSystemRoutes = () => {
     <Routes>
       <Route path='/' element={<OrganizationHome />} />
       <Route path='/create' element={<OrganizationCreate />} />
-      <Route path='/:id' element={<SpecificOrganizationHome />} />
+      <Route path='/:organizationId' element={<SpecificOrganizationHome />} />
     </Routes>
   )
 }
@@ -417,7 +417,7 @@ const PermissionManagementSystemRoutes = () => {
     <Routes>
       <Route path='/' element={<PermissionHome />} />
       <Route path='/create' element={<PermissionCreate />} />
-      <Route path='/:id' element={<SpecificOrganizationHome />} />
+      {/* <Route path='/:id' element={<SpecificOrganizationHome />} /> */}
     </Routes>
   )
 }

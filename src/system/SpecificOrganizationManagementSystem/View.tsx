@@ -73,7 +73,7 @@ const SpecificOrganizationView = () => {
   }
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
+    <div className="container mx-auto p-4 space-y-6 overflow-y-scroll h-full">
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -109,7 +109,7 @@ const SpecificOrganizationView = () => {
 
       <Card>
       <CardHeader>
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between ">
       <div>
         <CardTitle>Employee Directory</CardTitle>
         <CardDescription>

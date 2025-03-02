@@ -28,8 +28,8 @@ export function LoginForm({
       }
         // navigate("/p/");
       // navigate("/p/");
-    } catch (err) {
-      setError("Invalid email or password");
+    } catch (err:any) {
+      setError(err.message || err.error || "Invalid email or password");
     } finally {
       setIsLoadingg(false);
     }
@@ -42,7 +42,7 @@ export function LoginForm({
           <form className="p-6 md:p-8" onSubmit={handleSubmit}>
             <div className="flex flex-col gap-6">
               <div className="flex flex-col items-center text-center">
-                <h1 className="text-2xl font-bold">Welcome back</h1>
+                <h1 className="text-2xl font-bold">Experience Alkaa</h1>
                 <p className="text-balance text-muted-foreground">
                   Login to your Alkaa account
                 </p>

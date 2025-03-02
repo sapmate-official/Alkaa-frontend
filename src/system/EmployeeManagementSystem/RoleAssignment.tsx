@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useToast } from '@/hooks/use-toast'
 
 interface Role {
   id: string
@@ -33,6 +34,7 @@ const RoleAssignment:React.FC<RoleAssignmentProps> = ({setRoleId}) => {
   const [newRoleName, setNewRoleName] = useState('')
   const [newRoleDescription, setNewRoleDescription] = useState('')
   const [expandedRoles, setExpandedRoles] = useState<string[]>([])
+  const {toast} = useToast()
 
   const FetchRoles = async () => {
     try {
@@ -65,6 +67,10 @@ const RoleAssignment:React.FC<RoleAssignmentProps> = ({setRoleId}) => {
       setNewRoleName('')
       setNewRoleDescription('')
       setSelectedPermissions([])
+      toast({
+        title: 'Success',
+        description: 'Role created successfully'
+      })
     } catch (error) {
       console.error(error)
     }

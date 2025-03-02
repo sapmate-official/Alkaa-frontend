@@ -164,7 +164,7 @@ const SpecificDepartmentEdit = () => {
             <Button
               type="button"
               variant="outline"
-              onClick={() => navigate('/departments')}
+              onClick={() => navigate(`/p/department/${id}`)}
             >
               Cancel
             </Button>
