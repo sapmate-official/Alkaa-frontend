@@ -28,7 +28,7 @@ import { Department, User } from '@/interface/general';
 import RoleAssignment from './RoleAssignment';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import { Sparkles } from 'lucide-react';
+import { Loader, Sparkles } from 'lucide-react';
 
 const basicDetailsSchema = z.object({
   firstName: z.string().min(2, 'First name is required'),
@@ -89,6 +89,7 @@ const CreateEmployeeNew = () => {
   const [employees, setEmployees] = useState<User[]>([]);
   const [useHeadAsManager, setUseHeadAsManager] = useState(false);
   const [employeeIdExists, setEmployeeIdExists] = useState(false);
+  const [loading, setLoading] = useState(false);
   const fetchDepartments = async () => {
     try {
       const response = await axios.get(
@@ -240,7 +241,7 @@ const CreateEmployeeNew = () => {
       console.log(form.getValues());
       console.log(data);
       data = form.getValues();
-
+      setLoading(true);
       const response = await axios.post(`${APIDictionary.Organization}/employees`, {
         data,
         orgId: user.orgId,
@@ -268,6 +269,8 @@ const CreateEmployeeNew = () => {
         description: error?.response?.data?.error || error?.response?.data?.message || 'Failed to create employee',
         variant: 'destructive',
       });
+    }finally {
+      setLoading(false);
     }
   };
 
@@ -279,94 +282,105 @@ const CreateEmployeeNew = () => {
   const renderRoleAssignmentStep = () => (
     <div className="space-y-4">
       <FormField
-        control={form.control}
-        name="departmentId"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Department</FormLabel>
-            <Select onValueChange={field.onChange} value={field.value}>
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select department" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {departments?.map((dept) => (
-                  <SelectItem key={dept?.id} value={dept?.id}>
-                    {dept?.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
+      control={form.control}
+      name="departmentId"
+      render={({ field }) => (
+        <FormItem>
+        <FormLabel>Department</FormLabel>
+        <Select onValueChange={(value) => {
+          field.onChange(value);
+          // Reset head manager checkbox if department has no head
+          const selectedDept = departments?.find(dept => dept?.id === value);
+          if (!selectedDept?.headId) {
+          setUseHeadAsManager(false);
+          }
+        }} value={field.value}>
+          <FormControl>
+          <SelectTrigger>
+            <SelectValue placeholder="Select department" />
+          </SelectTrigger>
+          </FormControl>
+          <SelectContent>
+          {departments?.map((dept) => (
+            <SelectItem key={dept?.id} value={dept?.id}>
+            {dept?.name}
+            </SelectItem>
+          ))}
+          </SelectContent>
+        </Select>
+        <FormMessage />
+        </FormItem>
+      )}
       />
 
       <div className="flex items-center space-x-2">
-        <Checkbox
-          id="useHeadAsManager"
-          checked={useHeadAsManager}
-          onCheckedChange={(checked) => {
-            setUseHeadAsManager(checked as boolean);
-            if (checked) {
-              const selectedDept = departments?.find(
-                (dept) => dept?.id === form.getValues("departmentId")
-              );
-              if (selectedDept?.headId) {
-                form.setValue("managerId", selectedDept.headId);
-              }
-            } else {
-              form.setValue("managerId", "");
-            }
-          }}
-        />
-        <label htmlFor="useHeadAsManager">
-          Use department head as manager
-        </label>
+      <Checkbox
+        id="useHeadAsManager"
+        checked={useHeadAsManager}
+        disabled={!departments?.find(dept => dept?.id === form.getValues("departmentId"))?.headId}
+        onCheckedChange={(checked) => {
+        setUseHeadAsManager(checked as boolean);
+        if (checked) {
+          const selectedDept = departments?.find(
+          (dept) => dept?.id === form.getValues("departmentId")
+          );
+          if (selectedDept?.headId) {
+          form.setValue("managerId", selectedDept.headId);
+          }
+        } else {
+          form.setValue("managerId", "");
+        }
+        }}
+      />
+      <label 
+        htmlFor="useHeadAsManager"
+        className={!departments?.find(dept => dept?.id === form.getValues("departmentId"))?.headId ? "text-muted-foreground" : ""}
+      >
+        Use department head as manager
+      </label>
       </div>
 
       {!useHeadAsManager && (
-        <FormField
-          control={form.control}
-          name="managerId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Manager</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select manager" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {employees?.map((emp) => (
-                    <SelectItem key={emp?.id} value={emp?.id}>
-                      {`${emp?.firstName} ${emp?.lastName}`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <FormField
+        control={form.control}
+        name="managerId"
+        render={({ field }) => (
+        <FormItem>
+          <FormLabel>Manager</FormLabel>
+          <Select onValueChange={field.onChange} value={field.value}>
+          <FormControl>
+            <SelectTrigger>
+            <SelectValue placeholder="Select manager" />
+            </SelectTrigger>
+          </FormControl>
+          <SelectContent>
+            {employees?.map((emp) => (
+            <SelectItem key={emp?.id} value={emp?.id}>
+              {`${emp?.firstName} ${emp?.lastName}`}
+            </SelectItem>
+            ))}
+          </SelectContent>
+          </Select>
+          <FormMessage />
+        </FormItem>
+        )}
+      />
       )}
 
       <FormField
-        control={form.control}
-        name="roleIds"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Role</FormLabel>
-            <div className="space-y-2">
-              <RoleAssignment setRoleId={roleId => {
-                field.onChange([roleId]);
-              }} />
-            </div>
-            <FormMessage />
-          </FormItem>
-        )}
+      control={form.control}
+      name="roleIds"
+      render={({ field }) => (
+        <FormItem>
+        <FormLabel>Role</FormLabel>
+        <div className="space-y-2">
+          <RoleAssignment setRoleId={roleId => {
+          field.onChange([roleId]);
+          }} />
+        </div>
+        <FormMessage />
+        </FormItem>
+      )}
       />
     </div>
   );
@@ -536,8 +550,8 @@ const CreateEmployeeNew = () => {
                           <Input
                             {...field}
                             onChange={async (e) => {
-                            field.onChange(e);
-                            await checkEmployeeId(e.target.value);
+                              field.onChange(e);
+                              await checkEmployeeId(e.target.value);
                             }}
                             className={employeeIdExists ? "border-red-500" : ""}
                           />
@@ -796,9 +810,20 @@ const CreateEmployeeNew = () => {
                 >
                   Previous
                 </Button>
-                <Button type="submit">
+                {
+                  !loading  && 
+                (<Button type="submit">
                   {currentStep === steps.length - 1 ? 'Create Employee' : 'Next'}
+                </Button>)
+                }
+                {
+                  loading  && 
+                (
+                <Button className='' type="submit">
+                  <Loader className='animate-spin'/>
                 </Button>
+                )
+                }
               </div>
             </form>
           </Form>

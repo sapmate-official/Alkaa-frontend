@@ -10,6 +10,9 @@ import { Users, MapPin, IndianRupee, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/services/AuthContext'
 import Loader from '@/components/Loader'
+import { Dialog, DialogContent,DialogTrigger } from '@/components/ui/dialog'
+import { User } from '@/interface/general'
+import { useToast } from '@/hooks/use-toast'
 
 interface Department {
   id: string;
@@ -30,32 +33,47 @@ interface Department {
 
 const SpecificDepartmentView = () => {
   const { id } = useParams()
-  const {user} = useAuth()
+  const { user } = useAuth()
   const [department, setDepartment] = useState<Department | null>(null)
   const navigate = useNavigate()
+  const [loading, setLoading] = useState(false)
+  const [employeeList,setemployeeList] = useState<User[]>([])
+  const {toast} = useToast()
   console.log(user);
-  
-  const fetchDepartment = async () => {   
+  const fetchEmployeeList = async () => {
+    try {
+      const response = await axios.get(`${APIDictionary.Organization}/employees/${user?.orgId}`)
+      setemployeeList(response.data)
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Error fetching employee list',
+        variant:'destructive'
+      })
+    }
+  }
+
+  const fetchDepartment = async () => {
     try {
       let response;
-      if(user?.Department?.[0]?.id) {
+      if (user?.Department?.[0]?.id) {
         response = await axios.get(`${APIDictionary.department}/${user.Department[0].id}`)
         setDepartment(response.data)
         console.log(response)
-        if(!response.data){
+        if (!response.data) {
 
-          navigate("/p/department/list")    
+          navigate("/p/department/list")
         }
 
-      }else{
+      } else {
         navigate("/p/department/list")
       }
-      if(id) {
+      if (id) {
         response = await axios.get(`${APIDictionary.department}/${id}`)
         setDepartment(response.data)
       }
-      if(!department && user || id){
-        }
+      if (!department && user || id) {
+      }
     } catch (error) {
       console.log(error)
     }
@@ -63,10 +81,10 @@ const SpecificDepartmentView = () => {
 
   useEffect(() => {
     fetchDepartment()
-  }, [user,id])
+  }, [user, id])
 
-  if (!department) return <Loader/>
- 
+  if (!department) return <Loader />
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <Card>
@@ -104,7 +122,7 @@ const SpecificDepartmentView = () => {
             <p className="text-sm text-muted-foreground">
               {department?.description}
             </p>
-            
+
             <Separator />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -112,7 +130,7 @@ const SpecificDepartmentView = () => {
                 <MapPin className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm">{department?.location}</span>
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 <IndianRupee className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm">Budget: ₹{department?.budget?.toLocaleString()}</span>
@@ -122,8 +140,28 @@ const SpecificDepartmentView = () => {
             <Separator />
 
             <div className="space-y-4">
+              <div className='w-full flex justify-between items-center'>
               <h3 className="font-semibold">Department Head</h3>
-              <div className="flex items-center space-x-4">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">Change Department Head</Button>
+                </DialogTrigger>
+                <DialogContent className='space-y-4 flex w-full justify-center items-center'>
+                  <Card className='w-full h-full'>
+                    <CardHeader>
+                      Profile
+                    </CardHeader>
+                    <CardTitle>
+                      
+                    </CardTitle>
+                  </Card>
+                  <Card className='w-full h-full'>
+                    
+                  </Card>
+                </DialogContent>
+              </Dialog>
+              </div>
+              {department.departmentHead && (<div className="flex items-center space-x-4">
                 <Avatar>
                   <AvatarImage src="" />
                   <AvatarFallback>
@@ -139,7 +177,7 @@ const SpecificDepartmentView = () => {
                     {department?.departmentHead?.email}
                   </p>
                 </div>
-              </div>
+              </div>)}
             </div>
 
             <Separator />
@@ -153,7 +191,25 @@ const SpecificDepartmentView = () => {
                 <p className="text-sm text-muted-foreground">No team members yet</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Add team members list here */}
+                  {department?.users?.map((user) => (
+                    <div key={user?.id} className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate(`/p/profile/${user?.id}`)}>
+                      <Avatar>
+                        <AvatarImage src="" />
+                        <AvatarFallback>
+                          {user?.firstName?.[0]}
+                          {user?.lastName?.[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-sm font-medium">
+                          {user?.firstName} {user?.lastName}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {user?.email}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

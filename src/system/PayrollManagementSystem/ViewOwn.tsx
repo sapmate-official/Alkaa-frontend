@@ -57,7 +57,7 @@ const PayRollViewOwn = () => {
   if (!payrollData) return <Loader/>
 
   return (
-    <div className="w-full h-full container mx-auto py-6 space-y-6">
+    <div className="w-full h-full container mx-auto py-6 space-y-6 overflow-y-scroll">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight">My Payroll Information</h1>
         <Button 
