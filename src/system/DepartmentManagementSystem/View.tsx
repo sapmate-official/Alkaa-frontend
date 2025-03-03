@@ -11,8 +11,8 @@ import { Button } from '@/components/ui/button'
 import { useAuth } from '@/services/AuthContext'
 import Loader from '@/components/Loader'
 import { Dialog, DialogContent,DialogTrigger } from '@/components/ui/dialog'
-import { User } from '@/interface/general'
-import { useToast } from '@/hooks/use-toast'
+// import { User } from '@/interface/general'
+// import { useToast } from '@/hooks/use-toast'
 
 interface Department {
   id: string;
@@ -36,22 +36,21 @@ const SpecificDepartmentView = () => {
   const { user } = useAuth()
   const [department, setDepartment] = useState<Department | null>(null)
   const navigate = useNavigate()
-  const [loading, setLoading] = useState(false)
-  const [employeeList,setemployeeList] = useState<User[]>([])
-  const {toast} = useToast()
+  // const [employeeList,setemployeeList] = useState<User[]>([])
+  // const {toast} = useToast()
   console.log(user);
-  const fetchEmployeeList = async () => {
-    try {
-      const response = await axios.get(`${APIDictionary.Organization}/employees/${user?.orgId}`)
-      setemployeeList(response.data)
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Error fetching employee list',
-        variant:'destructive'
-      })
-    }
-  }
+  // const fetchEmployeeList = async () => {
+  //   try {
+  //     const response = await axios.get(`${APIDictionary.Organization}/employees/${user?.orgId}`)
+  //     setemployeeList(response.data)
+  //   } catch (error) {
+  //     toast({
+  //       title: 'Error',
+  //       description: 'Error fetching employee list',
+  //       variant:'destructive'
+  //     })
+  //   }
+  // }
 
   const fetchDepartment = async () => {
     try {
