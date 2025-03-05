@@ -46,11 +46,11 @@ import ListOfDepartment from './system/DepartmentManagementSystem/List';
 import CreateDepartment from './system/DepartmentManagementSystem/Create';
 import SpecificDepartmentView from './system/DepartmentManagementSystem/View';
 import SpecificDepartmentEdit from './system/DepartmentManagementSystem/Edit';
-import RoleAssignment from './system/EmployeeManagementSystem/RoleAssignment';
 import { useAtom } from 'jotai';
 import { permissionListAtom } from './store/atom';
 import PermissionRoute from './components/PermissionRoute';
 import PayRollViewOwn from './system/PayrollManagementSystem/ViewOwn';
+import RolesPermissionsManagement from './system/RoleManagementSystem/RoleManagementDashboard';
 
 
 function App() {
@@ -201,7 +201,7 @@ const ClientRoute = () => {
 const RolePermissionManagementSystem = () => {
   return (
     <Routes>
-      <Route path='/' element={<RoleAssignment />} />
+      <Route path='/' element={<RolesPermissionsManagement />} />
     </Routes>
   )
 }

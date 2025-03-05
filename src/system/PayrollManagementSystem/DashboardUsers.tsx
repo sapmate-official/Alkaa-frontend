@@ -138,7 +138,7 @@ const PayrollDashboardUsers = () => {
             </div>
 
             {/* Salary Statistics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+           {salaryRecords.length>0&& <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Monthly Salary</CardTitle>
@@ -179,7 +179,7 @@ const PayrollDashboardUsers = () => {
                   </p>
                 </CardContent>
               </Card>
-            </div>
+            </div>}
 
             {/* Salary Trend Chart */}
             <Card>
@@ -230,7 +230,7 @@ const PayrollDashboardUsers = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {salaryRecords.map((record:SalaryRecord) => (
+                    {salaryRecords.length>0 && salaryRecords.map((record:SalaryRecord) => (
                       <TableRow key={record.id}>
                         <TableCell>
                           {new Date(record.year, record.month - 1).toLocaleString('default', {

@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { APIDictionary } from '@/api/APIdict';
 import axios from 'axios';
 import { User } from '@/interface/general';
+import { useAuth } from '@/services/AuthContext';
 
 const SalaryGenerator = () => {
   const [employees, setEmployees] = useState<User[]>([]);
@@ -17,6 +18,7 @@ const SalaryGenerator = () => {
   const [year, setYear] = useState(new Date().getFullYear());
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState({ type: '', message: '' });
+  const {user}=useAuth()
 
   useEffect(() => {
     fetchEmployees();
@@ -24,7 +26,7 @@ const SalaryGenerator = () => {
 
   const fetchEmployees = async () => {
     try {
-      const response = await axios.get(`${APIDictionary.payroll}/users/active`, {
+      const response = await axios.get(`${APIDictionary.payroll}/users/active/${user?.orgId}`, {
         withCredentials: true
       });
       setEmployees(response.data);
