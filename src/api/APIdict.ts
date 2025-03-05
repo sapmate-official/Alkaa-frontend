@@ -35,4 +35,5 @@ export const APIDictionary = {
     department: `${backendDomain}/api/v2/department`,
     dashboard: (userId: string) => `${backendDomain}/api/v2/screen/dashboard/${userId}`,
     get_payroll: (userId: string) => `${backendDomain}/api/v2/payroll/user/${userId}`,
+    permission: `${backendDomain}/api/v2/permission`,
 };
