@@ -163,7 +163,7 @@ const CreateEmployeeNew = () => {
       // Role Assignment
       departmentId: '',
       roleIds: [],
-      managerId: ''
+      managerId: user?.id.toString()
     }
   });
   const fetchEmployeeId = async () => {
@@ -241,6 +241,9 @@ const CreateEmployeeNew = () => {
       console.log(form.getValues());
       console.log(data);
       data = form.getValues();
+      if(data.employeeId === '' || data.employeeId === null || data.employeeId === undefined) {
+        data.employeeId = user?.id;
+      }
       setLoading(true);
       const response = await axios.post(`${APIDictionary.Organization}/employees`, {
         data,
@@ -328,7 +331,7 @@ const CreateEmployeeNew = () => {
           form.setValue("managerId", selectedDept.headId);
           }
         } else {
-          form.setValue("managerId", "");
+          form.setValue("managerId", user?.id);
         }
         }}
       />

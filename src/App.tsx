@@ -51,6 +51,9 @@ import { permissionListAtom } from './store/atom';
 import PermissionRoute from './components/PermissionRoute';
 import PayRollViewOwn from './system/PayrollManagementSystem/ViewOwn';
 import RolesPermissionsManagement from './system/RoleManagementSystem/RoleManagementDashboard';
+import AttendanceVerificationComponent from './system/AttendanceManagementSystem/verification';
+import AttendanceLivePanel from './system/AttendanceManagementSystem/livePanel';
+import PastNotCheckedDays from './system/AttendanceManagementSystem/pastdays';
 
 
 function App() {
@@ -315,6 +318,21 @@ const AttendanceManagementSystem = () => {
       <Route path='/history' element={
         <PermissionRoute requiredPermissions={['attendance.view_own', 'attendance.view_team', 'attendance.view_all']}>
           <AttendanceHistory />
+        </PermissionRoute>
+      } />
+      <Route path='/verification' element={
+        <PermissionRoute requiredPermissions={['attendance.view_own', 'attendance.view_team', 'attendance.view_all']}>
+          <AttendanceVerificationComponent />
+        </PermissionRoute>
+      } />
+      <Route path='/live' element={
+        <PermissionRoute requiredPermissions={['attendance.view_own', 'attendance.view_team', 'attendance.view_all']}>
+          <AttendanceLivePanel />
+        </PermissionRoute>
+      } />
+      <Route path='/past-not-checked-days' element={
+        <PermissionRoute requiredPermissions={['attendance.view_own', 'attendance.view_team', 'attendance.view_all']}>
+          <PastNotCheckedDays />
         </PermissionRoute>
       } />
     </Routes>

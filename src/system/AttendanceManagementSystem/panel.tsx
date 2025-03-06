@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useDeviceInfo, useIpAddress, useGeolocation } from '@/hooks/useAttendance';
@@ -7,13 +7,13 @@ import axios, { AxiosError } from 'axios';
 import { useAuth } from '@/services/AuthContext';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { 
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
 import { AttendanceRecord } from '@/interface/general';
 import { useNavigate } from 'react-router-dom';
@@ -32,9 +32,31 @@ const AttendancePanel = () => {
   const [loading, setLoading] = useState(false);
   const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null);
   const { user } = useAuth();
-  const {toast} = useToast();
+  const { toast } = useToast();
   const [todaySessions, setTodaySessions] = useState([]);
   const router = useNavigate();
+  const [PastNotCheckedDayscount, setPastNotCheckedDayscount] = useState(0);
+  const fetchData = async () => {
+    try {
+        const response = await axios.get(`${APIDictionary.attendance}/check-out/past`, {
+            withCredentials: true
+        });
+        setPastNotCheckedDayscount(response.data.length);
+        setLoading(false);
+    } catch (error) {
+        console.error('Failed to fetch past not checked days:', error);
+        toast({
+            title: "Error",
+            description: "Failed to fetch past sessions",
+            variant: "destructive",
+        });
+    }
+};
+
+useEffect(() => {
+    fetchData();
+}, []);
+
 
   useEffect(() => {
     const checkCurrentSession = async () => {
@@ -43,10 +65,10 @@ const AttendancePanel = () => {
         const response = await axios.get(`${APIDictionary.todaySessions}${today}`, {
           withCredentials: true
         });
-        
+
         const sessions = response.data;
         setTodaySessions(sessions);
-        
+
         if (sessions.length > 0) {
           const lastSession = sessions[sessions.length - 1];
           setIsCheckedIn(!lastSession.checkOutTime);
@@ -69,9 +91,9 @@ const AttendancePanel = () => {
     setLoading(true);
     try {
       const currentDate = new Date();
-      
+
       const formattedDate = format(currentDate, 'yyyy-MM-dd');
-      
+
       const checkInData = {
         date: formattedDate,
         checkInTime: currentDate.toISOString(),
@@ -121,7 +143,7 @@ const AttendancePanel = () => {
       const response = await axios.post(APIDictionary.checkOut, checkOutData, {
         withCredentials: true
       });
-      
+
       setIsCheckedIn(false);
       if (response?.data?.dailyTotal && response?.data?.session) {
         setSessionInfo({
@@ -130,11 +152,11 @@ const AttendancePanel = () => {
           status: response?.data?.session?.status
         });
       }
-    } catch (error:AxiosError | any) {
+    } catch (error: AxiosError | any) {
       toast({
-        title:error?.response?.data?.message,
+        title: error?.response?.data?.message,
         description: "Please try again",
-        variant:"destructive"
+        variant: "destructive"
       })
       console.error('Check-out failed:', error);
     }
@@ -145,13 +167,37 @@ const AttendancePanel = () => {
     <div className="p-4 w-full h-full overflow-y-scroll">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Attendance Panel</h1>
-        <Button 
-          onClick={() => router('/p/attendance/history')}
-          variant="outline"
-          className="bg-blue-500 hover:bg-blue-600 text-white"
-        >
-          History
-        </Button>
+        <div className='flex space-x-4'>
+
+          <Button
+            onClick={() => router('/p/attendance/past-not-checked-days')}
+            variant="outline"
+            className="bg-blue-500 hover:bg-blue-600 text-white"
+          >
+            Past Not Checked Days ({PastNotCheckedDayscount})
+          </Button>
+          <Button
+            onClick={() => router('/p/attendance/live')}
+            variant="outline"
+            className="bg-blue-500 hover:bg-blue-600 text-white"
+          >
+            Live Panel
+          </Button>
+          <Button
+            onClick={() => router('/p/attendance/verification')}
+            variant="outline"
+            className="bg-blue-500 hover:bg-blue-600 text-white"
+          >
+            Verification Panel
+          </Button>
+          <Button
+            onClick={() => router('/p/attendance/history')}
+            variant="outline"
+            className="bg-blue-500 hover:bg-blue-600 text-white"
+          >
+            History
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -170,19 +216,19 @@ const AttendancePanel = () => {
             <p>Location: {location ? `${location?.latitude}, ${location?.longitude}` : 'Loading...'}</p>
             <p>Device: {deviceInfo?.platform}</p>
           </div>
-          
+
           <div className="flex justify-center">
             {!isCheckedIn ? (
-              <Button 
-                onClick={handleCheckIn} 
+              <Button
+                onClick={handleCheckIn}
                 disabled={loading}
                 className="bg-green-500 hover:bg-green-600"
               >
                 {loading ? 'Processing...' : 'Check In'}
               </Button>
             ) : (
-              <Button 
-                onClick={handleCheckOut} 
+              <Button
+                onClick={handleCheckOut}
                 disabled={loading}
                 className="bg-red-500 hover:bg-red-600"
               >
@@ -194,45 +240,46 @@ const AttendancePanel = () => {
       </Card>
       <Card className="mt-4">
         <CardHeader>
-            <CardTitle>Today's Sessions</CardTitle>
+          <CardTitle>Today's Sessions</CardTitle>
         </CardHeader>
         <CardContent>
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Session</TableHead>
-                        <TableHead>Check In</TableHead>
-                        <TableHead>Check Out</TableHead>
-                        <TableHead>Duration</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Location</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {todaySessions?.map((session:AttendanceRecord) => (
-                        <TableRow key={session?.id}>
-                            <TableCell>{session?.sessionNumber}</TableCell>
-                            <TableCell>
-                                {format(new Date(session?.checkInTime), 'HH:mm:ss')}
-                            </TableCell>
-                            <TableCell>
-                                {session?.checkOutTime ? 
-                                    format(new Date(session?.checkOutTime), 'HH:mm:ss') : 
-                                    'Active'}
-                            </TableCell>
-                            <TableCell>
-                                {session?.duration?.hours || 0}h
-                            </TableCell>
-                            <TableCell>{session?.status}</TableCell>
-                            <TableCell>
-                                {session?.checkInLocation ? 'Yes' : 'No'}
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Session</TableHead>
+                <TableHead>Check In</TableHead>
+                <TableHead>Check Out</TableHead>
+                <TableHead>Duration</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Location</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {todaySessions?.map((session: AttendanceRecord) => (
+                <TableRow key={session?.id}>
+                  <TableCell>{session?.sessionNumber}</TableCell>
+                  <TableCell>
+                    {format(new Date(session?.checkInTime), 'HH:mm:ss')}
+                  </TableCell>
+                  <TableCell>
+                    {session?.checkOutTime ?
+                      format(new Date(session?.checkOutTime), 'HH:mm:ss') :
+                      'Active'}
+                  </TableCell>
+                  <TableCell>
+                    {session?.duration?.hours || 0}h
+                  </TableCell>
+                  <TableCell>{session?.status}</TableCell>
+                  <TableCell>
+                    {session?.checkInLocation ? 'Yes' : 'No'}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
+      
     </div>
   );
 };
