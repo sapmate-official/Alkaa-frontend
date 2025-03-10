@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { APIDictionary } from '../../api/APIdict'
+import { APIDictionary } from '../../api/v2/APIdict'
 import axios from 'axios'
 import {
   Form,

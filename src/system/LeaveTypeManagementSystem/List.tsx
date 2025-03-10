@@ -1,4 +1,4 @@
-import { APIDictionary } from "@/api/APIdict";
+import { APIDictionary } from "@/api/v2/APIdict";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAuth } from "@/services/AuthContext";

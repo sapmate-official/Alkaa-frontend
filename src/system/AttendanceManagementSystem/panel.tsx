@@ -2,7 +2,7 @@ import  { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useDeviceInfo, useIpAddress, useGeolocation } from '@/hooks/useAttendance';
-import { APIDictionary } from '@/api/APIdict';
+import { APIDictionary } from '@/api/v2/APIdict';
 import axios, { AxiosError } from 'axios';
 import { useAuth } from '@/services/AuthContext';
 import { format } from 'date-fns';

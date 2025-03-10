@@ -8,7 +8,7 @@ import { Search, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import { useTheme } from '@/provider/ThemeProvider';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
-import { APIDictionary } from '@/api/APIdict';
+import { APIDictionary } from '@/api/v2/APIdict';
 import { useAuth } from '@/services/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 

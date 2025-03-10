@@ -1,6 +1,6 @@
 import  { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { APIDictionary } from '@/api/APIdict';
+import { APIDictionary } from '@/api/v2/APIdict';
 import { useAuth } from '@/services/AuthContext';
 import { Users, Clock, CalendarDays, Activity, AlertCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';

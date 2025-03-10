@@ -1,4 +1,4 @@
-import { APIDictionary } from "@/api/APIdict";
+import { APIDictionary } from "@/api/v2/APIdict";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";

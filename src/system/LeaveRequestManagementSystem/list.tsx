@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/services/AuthContext'
 import { useToast } from '@/hooks/use-toast'
-import { APIDictionary } from '@/api/APIdict'
+import { APIDictionary } from '@/api/v2/APIdict'
 import axios from 'axios'
 import { format } from 'date-fns'
 import {

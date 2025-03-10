@@ -1,4 +1,4 @@
-import { APIDictionary } from "@/api/APIdict"
+import { APIDictionary } from "@/api/v2/APIdict"
 import { useToast } from "@/hooks/use-toast"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

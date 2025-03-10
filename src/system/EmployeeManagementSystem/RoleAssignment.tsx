@@ -1,4 +1,4 @@
-import { APIDictionary } from '@/api/APIdict'
+import { APIDictionary } from '@/api/v2/APIdict'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/services/AuthContext'

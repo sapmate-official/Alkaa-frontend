@@ -1,6 +1,6 @@
 import { useToast } from '@/hooks/use-toast'
 import { User } from '@/interface/general'
-import { APIDictionary } from '@/api/APIdict'
+import { APIDictionary } from '@/api/v2/APIdict'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -50,6 +50,8 @@ const ProfileInfo = () => {
     useEffect(()=>{
         
             fetchProfileInfo()
+            console.log(profileInfo);
+            
         
     },[id])
 
@@ -59,6 +61,10 @@ const ProfileInfo = () => {
     };
 
     const isOwnProfile = !id || id === user?.id;
+    const isManager = user?.id && profileInfo?.managerId && profileInfo?.managerId === user?.id;
+    
+    
+    
 
     if (!profileInfo) {
         return (
@@ -97,7 +103,7 @@ const ProfileInfo = () => {
                                 </Badge>
                             </div>
                         </div>
-                        {isOwnProfile && (
+                        {(isManager || isOwnProfile) && (
                             <Button
                                 variant="outline"
                                 size="sm"

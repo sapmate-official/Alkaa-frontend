@@ -1,4 +1,4 @@
-import { APIDictionary } from '@/api/APIdict';
+import { APIDictionary } from '@/api/v2/APIdict';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/services/AuthContext';
 import {

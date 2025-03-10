@@ -1,4 +1,4 @@
-import { backendDomain } from '../lib/constant/Domain';
+import { backendDomain } from '../../lib/constant/Domain';
 
 export const APIDictionary = {
     setPassword: `${backendDomain}/api/v1/general/set-password`,

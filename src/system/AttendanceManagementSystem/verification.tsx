@@ -47,7 +47,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { APIDictionary } from "@/api/APIdict";
+import { APIDictionary } from "@/api/v2/APIdict";
 import axios from "axios";
 import { useAuth } from "@/services/AuthContext";
 import { useToast } from "@/hooks/use-toast";

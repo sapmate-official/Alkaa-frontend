@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { APIDictionary } from '@/api/APIdict';
+import { APIDictionary } from '@/api/v2/APIdict';
 import { SalaryRecord } from '@/interface/general';
 
 

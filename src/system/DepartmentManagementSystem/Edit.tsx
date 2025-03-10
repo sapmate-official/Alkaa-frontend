@@ -1,4 +1,4 @@
-import { APIDictionary } from '@/api/APIdict'
+import { APIDictionary } from '@/api/v2/APIdict'
 import { Department } from '@/interface/general'
 import axios from 'axios'
 import React, { useEffect, useState } from 'react'

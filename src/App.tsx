@@ -10,13 +10,12 @@ import { MainLayout } from './layout/MainLayout';
 import ProfileInfo from './system/Profile/ProfileInfo';
 import Logout from './page/private/Logout';
 import axios from 'axios';
-import { APIDictionary } from './api/APIdict';
+import { APIDictionary } from './api/v2/APIdict';
 import LandingPage from './page/public/LandingPage';
 import OrganizationHome from './system/OrganizationManagementSystem/OrganizationHome';
 import OrganizationCreate from './system/OrganizationManagementSystem/OrganizationCreate';
 import SpecificOrganizationHome from './system/OrganizationManagementSystem/SpecificOrganizationHome';
 import PermissionCreate from './system/PermissionManagementSystem/PermissionCreate';
-import PermissionHome from './system/PermissionManagementSystem/PermissionHome';
 import ProfileEdit from './system/Profile/EditProfile';
 // import ListOfleaves from './system/LeaveManagementSystem/LeaveType/List';
 // import CreateLeaveType from './system/LeaveManagementSystem/LeaveType/Create';
@@ -54,6 +53,7 @@ import RolesPermissionsManagement from './system/RoleManagementSystem/RoleManage
 import AttendanceVerificationComponent from './system/AttendanceManagementSystem/verification';
 import AttendanceLivePanel from './system/AttendanceManagementSystem/livePanel';
 import PastNotCheckedDays from './system/AttendanceManagementSystem/pastdays';
+import PermissionManagement from './system/PermissionManagementSystem/PermissionManagementSystem';
 
 
 function App() {
@@ -101,7 +101,7 @@ const ProtectedRoute: React.FC = () => {
 
 
       setUserDetails(data);
-      setPermissionList(data.user.roles[0].role.permissions.map((permission: any) => permission.permission))
+      setPermissionList(data?.user?.roles[0]?.role?.permissions?.map((permission: any) => permission.permission))
     } catch (error) {
       console.error("Error fetching user details", error);
     } finally {
@@ -433,7 +433,7 @@ const OrganizationManagementSystemRoutes = () => {
 const PermissionManagementSystemRoutes = () => {
   return (
     <Routes>
-      <Route path='/' element={<PermissionHome />} />
+      <Route path='/' element={<PermissionManagement />} />
       <Route path='/create' element={<PermissionCreate />} />
       {/* <Route path='/:id' element={<SpecificOrganizationHome />} /> */}
     </Routes>

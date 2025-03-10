@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
-import { APIDictionary } from '../../api/APIdict';
+import { APIDictionary } from '../../api/v2/APIdict';
 import { Button } from "@/components/ui/button";
 import {
   Card,

@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/services/AuthContext';
-import { APIDictionary } from '@/api/APIdict';
+import { APIDictionary } from '@/api/v2/APIdict';
 import axios from 'axios';
 import { Department, User } from '@/interface/general';
 import RoleAssignment from './RoleAssignment';
@@ -40,6 +40,7 @@ const basicDetailsSchema = z.object({
   adharNumber: z.string().optional(),
   panNumber: z.string().optional(),
   employeeId: z.string().optional(),
+  hiredDate:z.string().nonempty('Hired Date is required'),  
 
 });
 
@@ -143,6 +144,7 @@ const CreateEmployeeNew = () => {
       adharNumber: '',
       panNumber: '',
       employeeId: '',
+      hiredDate:'',
 
       // Bank Details
       accountHolder: '',
@@ -492,6 +494,19 @@ const CreateEmployeeNew = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Date of Birth</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="hiredDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Hired Date</FormLabel>
                         <FormControl>
                           <Input type="date" {...field} />
                         </FormControl>
