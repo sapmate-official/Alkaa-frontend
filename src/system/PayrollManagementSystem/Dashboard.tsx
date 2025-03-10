@@ -2,7 +2,7 @@ import  { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { APIDictionary } from '@/api/APIdict';
+import { APIDictionary } from '@/api/v2/APIdict';
 import { useAuth } from '@/services/AuthContext';
 import { SalaryRecord } from '@/interface/general';
 import { useNavigate } from 'react-router-dom';

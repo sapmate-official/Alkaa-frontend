@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { APIDictionary } from '../../api/APIdict';
+import { APIDictionary } from '../../api/v2/APIdict';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Permission {

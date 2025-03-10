@@ -52,7 +52,7 @@
 // then check for balance if balance is greater than 0 then allow to submit leave request
 //submit leave request
 //show success message
-import { APIDictionary } from '@/api/APIdict'
+import { APIDictionary } from '@/api/v2/APIdict'
 import { useAuth } from '@/services/AuthContext'
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"

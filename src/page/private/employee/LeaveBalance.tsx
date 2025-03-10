@@ -1,6 +1,6 @@
 import { useToast } from '@/hooks/use-toast'
 import {  LeaveBalance as ILeaveBalance } from '@/interface/general'
-import { APIDictionary } from '@/api/APIdict'
+import { APIDictionary } from '@/api/v2/APIdict'
 import { useAuth } from '@/services/AuthContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'

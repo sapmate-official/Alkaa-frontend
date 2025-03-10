@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/services/AuthContext";
-import { APIDictionary } from "@/api/APIdict";
+import { APIDictionary } from "@/api/v2/APIdict";
 
 enum NotificationType {
   EMAIL = 'EMAIL',

@@ -23,7 +23,7 @@ import { Button, ButtonProps } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Trash2, Edit, PlusCircle, Loader2 } from 'lucide-react';
-import { APIDictionary } from '@/api/APIdict';
+import { APIDictionary } from '@/api/v2/APIdict';
 import { useAuth } from '@/services/AuthContext';
 import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';

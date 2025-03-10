@@ -14,7 +14,7 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { Search, Users } from 'lucide-react';
-import { APIDictionary } from '@/api/APIdict';
+import { APIDictionary } from '@/api/v2/APIdict';
 import { User } from '@/types/salary';
 import SalaryTransaction from './SalaryTransaction';
 import { SalaryRecord } from '@/interface/general';

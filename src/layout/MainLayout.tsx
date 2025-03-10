@@ -17,7 +17,7 @@ import {
 import { Coins, Edit, Leaf, User2Icon } from 'lucide-react';
 import {  motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { APIDictionary } from '@/api/APIdict';
+import { APIDictionary } from '@/api/v2/APIdict';
 import axios from 'axios';
 import { ThemeToggle } from '@/components/ThemeSwitchButtonComponent';
 import { useAtom } from 'jotai';
@@ -129,7 +129,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       //   icon: <IconHome className="h-5 w-5"/>
       // },
     ];
-    for (let i = 0; i < permissionList.length; i++) {
+    for (let i = 0; i < permissionList?.length; i++) {
       const permission = permissionList[i];
       
       if (permission.module === "Attendance") {

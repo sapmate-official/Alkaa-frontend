@@ -1,7 +1,7 @@
 import  { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { ISalaryParameters } from '../../types/salaryParameters';
-import { APIDictionary } from '../../api/APIdict';
+import { APIDictionary } from '../../api/v2/APIdict';
 import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from "@/components/ui/button";

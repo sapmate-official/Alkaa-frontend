@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { APIDictionary } from '../../api/APIdict';
+import { APIDictionary } from '../../api/v2/APIdict';
 import axios from 'axios';
 import { useAuth } from '@/services/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

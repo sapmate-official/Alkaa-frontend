@@ -1,4 +1,4 @@
-import { APIDictionary } from "@/api/APIdict"
+import { APIDictionary } from "@/api/v2/APIdict"
 import { LeaveRequest } from "@/interface/general"
 import { useAuth } from "@/services/AuthContext"
 import { useToast } from "@/hooks/use-toast"
