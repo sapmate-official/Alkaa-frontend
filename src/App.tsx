@@ -17,9 +17,6 @@ import OrganizationCreate from './system/OrganizationManagementSystem/Organizati
 import SpecificOrganizationHome from './system/OrganizationManagementSystem/SpecificOrganizationHome';
 import PermissionCreate from './system/PermissionManagementSystem/PermissionCreate';
 import ProfileEdit from './system/Profile/EditProfile';
-// import ListOfleaves from './system/LeaveManagementSystem/LeaveType/List';
-// import CreateLeaveType from './system/LeaveManagementSystem/LeaveType/Create';
-// import EditLeaveType from './system/LeaveManagementSystem/LeaveType/Edit';
 import LeaveTypeList from './system/LeaveTypeManagementSystem/List';
 import CreateLeaveType from './system/LeaveTypeManagementSystem/Create';
 import EditLeaveType from './system/LeaveTypeManagementSystem/Edit';
@@ -439,32 +436,6 @@ const PermissionManagementSystemRoutes = () => {
     </Routes>
   )
 }
-// const ManagerRoutes = () => {
-//   return (
-//     <Routes>
-//       <Route path="/" element={<Home />} />
-//       <Route path="/leave-request" element={<LeaveRequest />} />
-//       <Route path="/employee-list" element={<EmployeeList />} />
-//       <Route path="/profile/:id" element={<ProfileInfo />} />
-//       <Route path="/employee-create" element={<CreateEmployee />} />
-//       <Route path="/leave-create" element={<CreateLeaveType />} />
-//       <Route path="/attendance" element={<AttendanceList />} />
-//     </Routes>
-//   );
-// }
-// const EmployeeRoutes = () => {
-//   return (
-//     <Routes>
-//       <Route path="/" element={<Home />} />
-//       <Route path="/leave-request" element={<LeaveRequestEmployee />} />
-//       <Route path="/leave-status" element={<LeaveStatus />} />
-//       <Route path="/leave-balance" element={<LeaveBalance />} />
-//       <Route path="/attendance" element={<LocationComponent />} />
-//       <Route path="/profile/:id" element={<ProfileInfo />} />
-//       <Route path="/logout" element={<Logout />} />
-//     </Routes>
-//   );
-// }
 
 
 export default App

@@ -70,6 +70,8 @@ export interface Permission {
   action: string;
   createdAt: Date;
   organization: Organization;
+  subcategory: PermissionSubcategory;
+  subcategoryId: string;
   roles: RolePermission[];
 }
 
@@ -284,6 +286,42 @@ export interface Holiday {
   organization: Organization;
 }
 
+export interface PermissionCategory {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  subcategories: PermissionSubcategory[];
+}
+
+export interface PermissionSubcategory {
+  id: string;
+  categoryId: string;
+  name: string;
+  description?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  category: PermissionCategory;
+  permissions: Permission[];
+}
+
+export interface SalaryParameter {
+  id: string;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  hraPercentage: number;
+  daPercentage: number;
+  taPercentage: number;
+  pfPercentage: number;
+  taxPercentage: number;
+  insuranceFixed: number;
+  additionalAllowances?: any;
+  additionalDeductions?: any;
+  user: User;
+}
+
 export enum UserStatus {
   active = "active",
   inactive = "inactive",
@@ -334,4 +372,10 @@ export enum JobStatus {
   COMPLETED = "COMPLETED",
   FAILED = "FAILED",
   CANCELLED = "CANCELLED"
+}
+
+export enum AttendanceVerificationStatus {
+  UNVERIFIED = "UNVERIFIED",
+  VERIFIED = "VERIFIED",
+  REJECTED = "REJECTED"
 }
