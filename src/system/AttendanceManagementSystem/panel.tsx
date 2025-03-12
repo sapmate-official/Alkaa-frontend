@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { AttendanceRecord } from '@/interface/general';
 import { useNavigate } from 'react-router-dom';
+import LocationViewer from '@/components/Locationviewer';
 
 interface SessionInfo {
   sessionNumber: number;
@@ -213,7 +214,11 @@ useEffect(() => {
               </>
             )}
             <p>IP Address: {ipAddress || 'Loading...'}</p>
-            <p>Location: {location ? `${location?.latitude}, ${location?.longitude}` : 'Loading...'}</p>
+            {
+              location?.latitude && location.longitude &&
+            (<LocationViewer lat={location?.latitude.toString()}lon={location?.longitude.toString()}/>)
+            }
+            {/* <p>Location: {location ? `${location?.latitude}, ${location?.longitude}` : 'Loading...'}</p> */}
             <p>Device: {deviceInfo?.platform}</p>
           </div>
 

@@ -51,6 +51,7 @@ import { APIDictionary } from "@/api/v2/APIdict";
 import axios from "axios";
 import { useAuth } from "@/services/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import LocationViewer from "@/components/Locationviewer";
 
 // Types
 type AttendanceStatus = "PRESENT" | "ABSENT" | "LATE" | "HALF_DAY";
@@ -197,14 +198,11 @@ const mockAttendanceRecords = generateMockData();
 
 // Google Maps Component
 const LocationMap: React.FC<{ location?: Location }> = ({ location }) => {
-  if (!location) return <div className="h-64 bg-gray-100 flex items-center justify-center">No location data available</div>;
-
+  if (!location || !location.lat || !location.lng) return <div className="h-64 bg-gray-100 flex items-center justify-center">No location data available</div>;
+  console.log(location);
+  
   return (
-    <div className="relative h-64 bg-gray-100">
-      <div className="absolute inset-0 flex items-center justify-center">
-        <p className="text-sm text-gray-500">Map showing: {location.address || `Lat: ${location.lat}, Lng: ${location.lng}`}</p>
-      </div>
-    </div>
+    <LocationViewer lat={location.lat.toString()} lon={location.lng.toString()}/>
   );
 };
 

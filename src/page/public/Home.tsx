@@ -10,6 +10,7 @@ import axios from 'axios';
 import { useAtom } from 'jotai';
 import { dashboardDataAtom } from '@/store/atom';
 import Loader from '@/components/Loader';
+import { AttendanceRecord } from '@/interface/general';
 
 
 
@@ -18,6 +19,7 @@ const Home = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [dashboardData, setDashboardData] = useAtom(dashboardDataAtom);
+  const [attendance,setattendanceData] = useState<Record<string,AttendanceRecord[]>>({});
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -55,6 +57,11 @@ const Home = () => {
       const response = await axios.get(`${APIDictionary.dashboard(user.id)}`, { 
         withCredentials: true 
       });
+      const responseAttendance = await axios.get(`${APIDictionary.attendance}/manager/live/${user?.id}`,{
+        withCredentials:true
+      });
+      setattendanceData(responseAttendance?.data?.attendanceRecords)
+
       setDashboardData(response.data);
     } catch (error) {
       console.error('Error refreshing dashboard data:', error);
