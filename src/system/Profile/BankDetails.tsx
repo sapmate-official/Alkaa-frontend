@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from '@/services/AuthContext';
 import SalaryParameter from './SalaryParameter';
+import { useParams } from 'react-router-dom';
 
 
 const BankDetails = () => {
@@ -29,19 +30,26 @@ const BankDetails = () => {
       userId:''
     }
   });
+  const {id} = useParams()
   const {user} = useAuth()
   const { toast } = useToast();
 
   useEffect(()=>{
-    if(user?.id){
+    if(user?.id || id){
       fetchBankDetails()
     }
   },[user])
   
   const fetchBankDetails = async () => {
     try {
-      const response = await axios.get(`${APIDictionary.bank}/${user?.id}`);
-      form.reset(response.data);
+      let response;
+      if(id){
+        response = await axios.get(`${APIDictionary.bank}/${id}`);
+        form.reset(response.data);
+      }else if(user?.id){
+        response = await axios.get(`${APIDictionary.bank}/${user?.id}`);
+        form.reset(response.data);
+      }
     } catch (error) {
       console.error('Failed to fetch bank details:', error);
     }

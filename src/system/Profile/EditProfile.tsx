@@ -306,7 +306,9 @@ const ProfileEdit = () => {
             <Button
               type="button"
               variant="outline"
-              onClick={() => navigate('/p/profile/edit/bank')}
+              onClick={() => {
+                const link = id?`/p/profile/edit/bank/${id}`:'/p/profile/edit/bank'
+                navigate(link)}}
               className="flex-1"
             >
               Edit Bank Details

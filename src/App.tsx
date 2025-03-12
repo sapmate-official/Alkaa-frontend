@@ -400,6 +400,16 @@ const ProfileRoutes = () => {
           <ProfileEdit />
         </PermissionRoute>
       } />
+      <Route path="/edit/:id" element={
+        <PermissionRoute requiredPermissions={['Update User Details']}>
+          <ProfileEdit />
+        </PermissionRoute>
+      } />
+      <Route path="/edit/bank/:id" element={
+        <PermissionRoute requiredPermissions={['Update User Details']}>
+          <BankDetails />
+        </PermissionRoute>
+      } />
       <Route path="/edit/bank" element={
         <PermissionRoute requiredPermissions={['Update User Details']}>
           <BankDetails />
