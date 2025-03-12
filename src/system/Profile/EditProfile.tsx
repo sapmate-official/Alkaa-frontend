@@ -182,7 +182,7 @@ const ProfileEdit = () => {
               <div className="space-y-2">
                 <Label htmlFor="adharNumber">Aadhar Number *</Label>
                 <Input
-                  
+
                   id="adharNumber"
                   name="adharNumber"
                   value={formData.adharNumber}
@@ -193,7 +193,7 @@ const ProfileEdit = () => {
               <div className="space-y-2">
                 <Label htmlFor="panNumber">PAN Number *</Label>
                 <Input
-                  
+
                   id="panNumber"
                   name="panNumber"
                   value={formData.panNumber}
@@ -204,7 +204,7 @@ const ProfileEdit = () => {
               <div className="space-y-2">
                 <Label htmlFor="mobileNumber">Mobile Number *</Label>
                 <Input
-                  
+
                   id="mobileNumber"
                   name="mobileNumber"
                   value={formData.mobileNumber}
@@ -215,7 +215,7 @@ const ProfileEdit = () => {
               <div className="space-y-2">
                 <Label htmlFor="dateOfBirth">Date of Birth *</Label>
                 <Input
-                  
+
                   type="date"
                   id="dateOfBirth"
                   name="dateOfBirth"
@@ -235,7 +235,7 @@ const ProfileEdit = () => {
               <div className="space-y-2">
                 <Label htmlFor="hiredDate">Hiring Date *</Label>
                 <Input
-                  
+
                   type="date"
                   id="hiredDate"
                   name="hiredDate"
@@ -279,7 +279,7 @@ const ProfileEdit = () => {
               <div className="space-y-2">
                 <Label htmlFor="annualPackage">Annual Package *</Label>
                 <Input
-                  
+
                   type="number"
                   id="annualPackage"
                   name="annualPackage"
@@ -291,7 +291,7 @@ const ProfileEdit = () => {
               <div className="space-y-2">
                 <Label htmlFor="monthlySalary">Monthly Salary *</Label>
                 <Input
-                  
+
                   type="number"
                   id="monthlySalary"
                   name="monthlySalary"
@@ -307,8 +307,9 @@ const ProfileEdit = () => {
               type="button"
               variant="outline"
               onClick={() => {
-                const link = id?`/p/profile/edit/bank/${id}`:'/p/profile/edit/bank'
-                navigate(link)}}
+                const link = id ? `/p/profile/edit/bank/${id}` : '/p/profile/edit/bank'
+                navigate(link)
+              }}
               className="flex-1"
             >
               Edit Bank Details

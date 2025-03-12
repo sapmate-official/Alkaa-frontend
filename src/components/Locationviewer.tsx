@@ -1,10 +1,51 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MapPin } from "lucide-react";
+import { olaMaps } from "../services/OlaMap";
 
 const LocationViewer = ({ lat, lon }:{lat:string,lon:string}) => {
   const [address, setAddress] = useState("");
-  console.log(lat,lon);
+  const mapRef = useRef(null);
+  const mapInstanceRef = useRef<any>(null);
+  const markerRef = useRef<any>(null);
   
+  useEffect(() => {
+    if (lat && lon && mapRef.current && !mapInstanceRef.current) {
+      // Initialize map
+      mapInstanceRef.current = olaMaps.init({
+        style: "https://api.olamaps.io/tiles/vector/v1/styles/default-light-standard/style.json",
+        container: 'map',
+        center: [parseFloat(lon), parseFloat(lat)],
+        zoom: 15,
+      });
+
+      // Add a marker after map is initialized
+      mapInstanceRef.current.on('load', () => {
+        if (!markerRef.current && mapInstanceRef.current) {
+          markerRef.current = olaMaps
+            .addMarker({ 
+              offset: [0, -15], 
+              anchor: 'bottom', 
+              color: '#FF5733' 
+            })
+            .setLngLat([parseFloat(lon), parseFloat(lat)])
+            .addTo(mapInstanceRef.current);
+        }
+      });
+    }
+  }, [lat, lon]);
+  
+  // Update map center and marker position when coordinates change
+  useEffect(() => {
+    if (mapInstanceRef.current && lat && lon) {
+      const coords = [parseFloat(lon), parseFloat(lat)];
+      mapInstanceRef.current.setCenter(coords);
+      
+      // Update marker position if it exists
+      if (markerRef.current) {
+        markerRef.current.setLngLat(coords);
+      }
+    }
+  }, [lat, lon]);
 
   useEffect(() => {
     if (lat && lon) {
@@ -39,7 +80,14 @@ const LocationViewer = ({ lat, lon }:{lat:string,lon:string}) => {
           </p>
         </div>
       </div>
-
+      
+      {/* Map container */}
+      <div 
+        id="map" 
+        ref={mapRef} 
+        className="w-full h-64"
+        style={{ minHeight: '250px' }}
+      />
     </div>
   );
 };
