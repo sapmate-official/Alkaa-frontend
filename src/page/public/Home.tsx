@@ -19,7 +19,7 @@ const Home = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [dashboardData, setDashboardData] = useAtom(dashboardDataAtom);
-  const [attendance,setattendanceData] = useState<Record<string,AttendanceRecord[]>>({});
+  const [,setattendanceData] = useState<Record<string,AttendanceRecord[]>>({});
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
