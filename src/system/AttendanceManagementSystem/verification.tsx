@@ -57,11 +57,7 @@ import LocationViewer from "@/components/Locationviewer";
 type AttendanceStatus = "PRESENT" | "ABSENT" | "LATE" | "HALF_DAY";
 type AttendanceVerificationStatus = "UNVERIFIED" | "VERIFIED" | "REJECTED";
 
-interface Location {
-  lat: number;
-  lng: number;
-  address?: string;
-}
+
 
 interface User {
   id: string;
@@ -78,8 +74,8 @@ interface AttendanceRecord {
   sessionNumber: number;
   checkInTime: Date;
   checkOutTime?: Date;
-  checkInLocation: Location;
-  checkOutLocation?: Location;
+  checkInLocation: string;
+  checkOutLocation?: string;
   status: AttendanceStatus;
   notes?: string;
   duration?: {
@@ -94,133 +90,22 @@ interface AttendanceRecord {
   user: User;
 }
 
-// Mock data for demonstration - with multiple sessions per day
-const mockUsers: User[] = [
-  {
-    id: "user1",
-    name: "John Doe",
-    email: "john.doe@example.com",
-    department: "Engineering",
-    position: "Software Developer",
-  },
-  {
-    id: "user2",
-    name: "Jane Smith",
-    email: "jane.smith@example.com",
-    department: "Marketing",
-    position: "Marketing Specialist",
-  },
-  {
-    id: "user3",
-    name: "Robert Johnson",
-    email: "robert.johnson@example.com",
-    department: "Sales",
-    position: "Sales Representative",
-  },
-];
-
-// Generate mock data for multiple days and sessions
-const generateMockData = (): AttendanceRecord[] => {
-  const records: AttendanceRecord[] = [];
-  const startDate = new Date("2025-03-01");
-  const endDate = new Date("2025-03-07");
-  
-  for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
-    for (const user of mockUsers) {
-      // Morning session
-      records.push({
-        id: `${user.id}-${format(date, "yyyy-MM-dd")}-1`,
-        userId: user.id,
-        date: new Date(date),
-        sessionNumber: 1,
-        checkInTime: new Date(new Date(date).setHours(9, Math.floor(Math.random() * 15), 0)),
-        checkOutTime: new Date(new Date(date).setHours(12, 30 + Math.floor(Math.random() * 30), 0)),
-        checkInLocation: { lat: 37.7749, lng: -122.4194, address: "123 Market St, San Francisco, CA" },
-        checkOutLocation: { lat: 37.7749, lng: -122.4194, address: "123 Market St, San Francisco, CA" },
-        status: Math.random() > 0.8 ? "LATE" : "PRESENT",
-        duration: { hours: 3, minutes: 30 + Math.floor(Math.random() * 30) },
-        createdAt: new Date(date),
-        updatedAt: new Date(date),
-        deviceInfo: "iPhone 15 Pro",
-        ipAddress: "192.168.1.1",
-        verificationStatus: "UNVERIFIED",
-        user: user,
-      });
-      
-      // Afternoon session
-      records.push({
-        id: `${user.id}-${format(date, "yyyy-MM-dd")}-2`,
-        userId: user.id,
-        date: new Date(date),
-        sessionNumber: 2,
-        checkInTime: new Date(new Date(date).setHours(13, 30 + Math.floor(Math.random() * 15), 0)),
-        checkOutTime: new Date(new Date(date).setHours(17, 30 + Math.floor(Math.random() * 30), 0)),
-        checkInLocation: { lat: 37.7833, lng: -122.4167, address: "456 Mission St, San Francisco, CA" },
-        checkOutLocation: { lat: 37.7833, lng: -122.4167, address: "456 Mission St, San Francisco, CA" },
-        status: Math.random() > 0.9 ? "HALF_DAY" : "PRESENT",
-        duration: { hours: 4, minutes: Math.floor(Math.random() * 30) },
-        createdAt: new Date(date),
-        updatedAt: new Date(date),
-        deviceInfo: "MacBook Pro",
-        ipAddress: "192.168.1.2",
-        verificationStatus: "UNVERIFIED",
-        user: user,
-      });
-      
-      // Random third session for some users (remote work)
-      if (Math.random() > 0.7) {
-        records.push({
-          id: `${user.id}-${format(date, "yyyy-MM-dd")}-3`,
-          userId: user.id,
-          date: new Date(date),
-          sessionNumber: 3,
-          checkInTime: new Date(new Date(date).setHours(20, Math.floor(Math.random() * 30), 0)),
-          checkOutTime: new Date(new Date(date).setHours(22, Math.floor(Math.random() * 30), 0)),
-          checkInLocation: { lat: 37.8044, lng: -122.2712, address: "Remote - Home Office" },
-          checkOutLocation: { lat: 37.8044, lng: -122.2712, address: "Remote - Home Office" },
-          status: "PRESENT",
-          duration: { hours: 2, minutes: Math.floor(Math.random() * 30) },
-          createdAt: new Date(date),
-          updatedAt: new Date(date),
-          deviceInfo: "iPad Pro",
-          ipAddress: "10.0.0.1",
-          verificationStatus: "UNVERIFIED",
-          user: user,
-        });
-      }
-    }
-  }
-  
-  return records;
-};
-
-const mockAttendanceRecords = generateMockData();
-
-// Google Maps Component
-const LocationMap: React.FC<{ location?: Location }> = ({ location }) => {
-  if (!location || !location.lat || !location.lng) return <div className="h-64 bg-gray-100 flex items-center justify-center">No location data available</div>;
-  console.log(location);
-  
-  return (
-    <LocationViewer lat={location.lat.toString()} lon={location.lng.toString()}/>
-  );
-};
 
 const AttendanceVerificationComponent: React.FC = () => {
-    const {user} = useAuth()
-    const {toast} = useToast()
-  const [records, setRecords] = useState<AttendanceRecord[]>(mockAttendanceRecords);
+  const { user } = useAuth()
+  const { toast } = useToast()
+  const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [selectedRecord, setSelectedRecord] = useState<AttendanceRecord | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [startDate, setStartDate] = useState<Date>(new Date("2025-03-01"));
   const [endDate, setEndDate] = useState<Date>(new Date("2025-03-07"));
   const [managerNotes, setManagerNotes] = useState("");
-  
+
   // Filters
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [verificationFilter, setVerificationFilter] = useState<string>("all");
-  
+
   // Bulk verification state
   const [selectedRecordIds, setSelectedRecordIds] = useState<string[]>([]);
   const [bulkActionNote, setBulkActionNote] = useState("");
@@ -230,8 +115,9 @@ const AttendanceVerificationComponent: React.FC = () => {
         withCredentials: true,
       });
       if (response.data) {
-        setRecords(response.data);
         
+        setRecords(response.data);
+
       }
     } catch (error) {
       console.error("Failed to fetch attendance records:", error);
@@ -248,31 +134,31 @@ const AttendanceVerificationComponent: React.FC = () => {
 
   const postverficiationCall = async (attendanceId: string, verificationStatus: AttendanceVerificationStatus) => {
     try {
-        const response = await axios.post(`${APIDictionary.attendance}/manager/verification`, {
-            userId:user?.id,
-            attendanceId,
-            verificationStatus,
-        }, {
-            withCredentials: true,
-        });
-        if (response.data) {
-            fetchAttendanceManagerVerificationRecords();
-            toast({
-            title: "Attendance record verified",
-            description: "The attendance record has been successfully verified.",
-            variant: "default",
-            })
-        }
-        }
-        catch (error) {
-            console.error("Failed to verify attendance record:", error);
-            toast({
-                title: "Failed to verify attendance record",
-                description: "An error occurred while verifying the attendance record. Please try again later.",
-                variant: "destructive",
-            })
-        }
+      const response = await axios.post(`${APIDictionary.attendance}/manager/verification`, {
+        userId: user?.id,
+        attendanceId,
+        verificationStatus,
+      }, {
+        withCredentials: true,
+      });
+      if (response.data) {
+        fetchAttendanceManagerVerificationRecords();
+        toast({
+          title: "Attendance record verified",
+          description: "The attendance record has been successfully verified.",
+          variant: "default",
+        })
+      }
     }
+    catch (error) {
+      console.error("Failed to verify attendance record:", error);
+      toast({
+        title: "Failed to verify attendance record",
+        description: "An error occurred while verifying the attendance record. Please try again later.",
+        variant: "destructive",
+      })
+    }
+  }
   const verifyAttendance = (id: string, status: AttendanceVerificationStatus, notes: string) => {
     postverficiationCall(id, status)
     setRecords(
@@ -282,14 +168,14 @@ const AttendanceVerificationComponent: React.FC = () => {
           : record
       )
     );
-    
+
     setIsDetailsOpen(false);
   };
-  
+
   const bulkVerifyAttendance = (status: AttendanceVerificationStatus) => {
     records
       .filter((record) => selectedRecordIds.includes(record.id))
-        .forEach((record) => postverficiationCall(record.id, status));
+      .forEach((record) => postverficiationCall(record.id, status));
     setRecords(
       records.map((record) =>
         selectedRecordIds.includes(record.id)
@@ -307,6 +193,8 @@ const AttendanceVerificationComponent: React.FC = () => {
         ? selectedRecordIds.filter((recordId) => recordId !== id)
         : [...selectedRecordIds, id]
     );
+    console.log(selectedRecord);
+    
   };
 
 
@@ -327,41 +215,43 @@ const AttendanceVerificationComponent: React.FC = () => {
     // Filter by date range
     const recordDate = new Date(record.date);
     const isInDateRange = recordDate >= startDate && recordDate <= endDate;
-    
+
     // Filter by user
     const userMatch = selectedUsers.length === 0 || selectedUsers.includes(record.userId);
-    
+
     // Filter by status
     const statusMatch = statusFilter === "all" || record.status === statusFilter;
-    
+
     // Filter by verification status
-    const verificationMatch = 
-      verificationFilter === "all" || 
+    const verificationMatch =
+      verificationFilter === "all" ||
       record.verificationStatus === verificationFilter;
-    
+
     return isInDateRange && userMatch && statusMatch && verificationMatch;
   });
 
   // Group records by date and user
   const groupedRecords: Record<string, Record<string, AttendanceRecord[]>> = {};
-  
+
   filteredRecords.forEach(record => {
     const dateKey = format(new Date(record.date), "yyyy-MM-dd");
     const userKey = record.userId;
-    
+
     if (!groupedRecords[dateKey]) {
       groupedRecords[dateKey] = {};
     }
-    
+
     if (!groupedRecords[dateKey][userKey]) {
       groupedRecords[dateKey][userKey] = [];
     }
-    
+
     groupedRecords[dateKey][userKey].push(record);
   });
 
   const openDetails = (record: AttendanceRecord) => {
     setSelectedRecord(record);
+    console.log(record);
+    
     setManagerNotes(record.notes || "");
     setIsDetailsOpen(true);
   };
@@ -427,7 +317,7 @@ const AttendanceVerificationComponent: React.FC = () => {
                 </PopoverContent>
               </Popover>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium mb-1">End Date</label>
               <Popover>
@@ -450,10 +340,10 @@ const AttendanceVerificationComponent: React.FC = () => {
                 </PopoverContent>
               </Popover>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium mb-1">Employee</label>
-              <Select 
+              <Select
                 value={selectedUsers.length === 1 ? selectedUsers[0] : ""}
                 onValueChange={(value) => {
                   if (value === "all") {
@@ -476,12 +366,12 @@ const AttendanceVerificationComponent: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="block text-sm font-medium mb-1">Status</label>
-                <Select 
-                  value={statusFilter} 
+                <Select
+                  value={statusFilter}
                   onValueChange={setStatusFilter}
                 >
                   <SelectTrigger className="w-full">
@@ -496,11 +386,11 @@ const AttendanceVerificationComponent: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium mb-1">Verification</label>
-                <Select 
-                  value={verificationFilter} 
+                <Select
+                  value={verificationFilter}
                   onValueChange={setVerificationFilter}
                 >
                   <SelectTrigger className="w-full">
@@ -528,7 +418,7 @@ const AttendanceVerificationComponent: React.FC = () => {
                   Clear selection
                 </Button>
               </div>
-              <Textarea 
+              <Textarea
                 placeholder="Add notes for bulk action..."
                 value={bulkActionNote}
                 onChange={(e) => setBulkActionNote(e.target.value)}
@@ -544,7 +434,7 @@ const AttendanceVerificationComponent: React.FC = () => {
                 </Button>
                 <Button
                   variant="default"
-                  size="sm" 
+                  size="sm"
                   onClick={() => bulkVerifyAttendance("VERIFIED")}
                 >
                   Verify Selected
@@ -573,8 +463,8 @@ const AttendanceVerificationComponent: React.FC = () => {
                     <AccordionContent>
                       <div className="pt-2">
                         <div className="flex justify-between mb-2">
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => {
                               const dateRecordIds = Object.values(groupedRecords[dateKey])
@@ -590,8 +480,8 @@ const AttendanceVerificationComponent: React.FC = () => {
                           <TableHeader>
                             <TableRow>
                               <TableHead className="w-10">
-                                <input 
-                                  type="checkbox" 
+                                <input
+                                  type="checkbox"
                                   className="h-4 w-4"
                                   checked={Object.values(groupedRecords[dateKey])
                                     .flat()
@@ -600,18 +490,18 @@ const AttendanceVerificationComponent: React.FC = () => {
                                     const dateRecordIds = Object.values(groupedRecords[dateKey])
                                       .flat()
                                       .map(record => record.id);
-                                    
-                                    const allSelected = dateRecordIds.every(id => 
+
+                                    const allSelected = dateRecordIds.every(id =>
                                       selectedRecordIds.includes(id)
                                     );
-                                    
+
                                     if (allSelected) {
                                       setSelectedRecordIds(selectedRecordIds.filter(
                                         id => !dateRecordIds.includes(id)
                                       ));
                                     } else {
                                       setSelectedRecordIds([...new Set([
-                                        ...selectedRecordIds, 
+                                        ...selectedRecordIds,
                                         ...dateRecordIds
                                       ])]);
                                     }
@@ -634,8 +524,8 @@ const AttendanceVerificationComponent: React.FC = () => {
                                 .map((record, index) => (
                                   <TableRow key={record.id}>
                                     <TableCell>
-                                      <input 
-                                        type="checkbox" 
+                                      <input
+                                        type="checkbox"
                                         className="h-4 w-4"
                                         checked={selectedRecordIds.includes(record.id)}
                                         onChange={() => toggleRecordSelection(record.id)}
@@ -781,16 +671,33 @@ const AttendanceVerificationComponent: React.FC = () => {
                     <TabsTrigger value="checkout" className="flex-1">Check-out Location</TabsTrigger>
                   </TabsList>
                   <TabsContent value="checkin">
-                    <LocationMap location={selectedRecord.checkInLocation} />
-                    <div className="mt-2 text-sm text-gray-500">
-                      {selectedRecord.checkInLocation.address || "No address information"}
-                    </div>
+                    {
+                      selectedRecord.checkInLocation  &&
+                      <LocationViewer lat={selectedRecord?.checkInLocation?.split(",")[0]} lon={selectedRecord?.checkInLocation?.split(",")[1]} />
+                    }
+                    {
+                      !selectedRecord.checkInLocation &&
+                     <div className="flex items-center justify-center h-64 bg-gray-100">
+                      <div className="text-gray-500">
+                      No location data exists
+                      </div>
+                     </div>
+                    }
                   </TabsContent>
                   <TabsContent value="checkout">
-                    <LocationMap location={selectedRecord.checkOutLocation} />
-                    <div className="mt-2 text-sm text-gray-500">
-                      {selectedRecord.checkOutLocation?.address || "No checkout location recorded"}
-                    </div>
+                    {
+                      selectedRecord.checkOutLocation  &&
+                      <LocationViewer lat={selectedRecord?.checkOutLocation?.split(",")[0]} lon={selectedRecord?.checkOutLocation?.split(",")[1]} />
+                    }
+                    {
+                      !selectedRecord.checkOutLocation &&
+                     <div className="flex items-center justify-center h-64 bg-gray-100">
+                      <div className="text-gray-500">
+                      No location data exists
+                      </div>
+                     </div>
+                    }
+                    
                   </TabsContent>
                 </Tabs>
               </div>

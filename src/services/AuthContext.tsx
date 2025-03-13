@@ -142,12 +142,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     };
     const validateToken = async (token: string) => {
         try {
+            // Include the refresh token in authorization headers as well
+            // const refreshToken = enhancedLocalStorage.getItem("refreshToken");
+            
             const response = await axios.get(`${backendDomain}/api/v1/general/validate-token`, {
-                headers: { Authorization: `Bearer ${token}` },
-                withCredentials: true
+                headers: { 
+                    Authorization: `Bearer ${token}`
+                },
+                withCredentials: true // This sends cookies if available, but we don't rely solely on them
             });
             
-            console.log(response);
             if (response.status === 200 && response.data.user) {
                 const updates = () => {
                     setUser(response.data.user);
@@ -169,7 +173,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                         });
                         return;
                     }
-                    // Only attempt refresh if we're not already on the signin page
+                    
+                    // This is the critical part - attempt refresh with token from localStorage
                     const currentPath = window.location.pathname;
                     if (!currentPath.includes('/auth/signin')) {
                         await refreshToken();
@@ -187,17 +192,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     const refreshToken = async () => {
-        const refreshToken = enhancedLocalStorage.getItem("refreshToken");
-        if (!refreshToken) {
+        const refreshTokenValue = enhancedLocalStorage.getItem("refreshToken");
+        if (!refreshTokenValue) {
             logout();
             return;
         }
     
         try {
-            const response = await axios.post(`${backendDomain}/api/v1/general/refresh-token`, null, {
-                headers: { Authorization: `Bearer ${refreshToken}` },
-                withCredentials: true
-            });
+            // Include token both in body and authorization header for maximum compatibility
+            const response = await axios.post(
+                `${backendDomain}/api/v1/general/refresh-token`, 
+                { refreshToken: refreshTokenValue },  // Include in body
+                {
+                    headers: { Authorization: `Bearer ${refreshTokenValue}` }, // Include in header
+                    withCredentials: true
+                }
+            );
             
             if (response.status === 200 && response.data.accessToken && response.data.refreshToken) {
                 enhancedLocalStorage.setItem("accessToken", response.data.accessToken);
