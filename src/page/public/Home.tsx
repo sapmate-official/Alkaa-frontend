@@ -3,14 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { APIDictionary } from '@/api/v2/APIdict';
 import { useAuth } from '@/services/AuthContext';
 import { Users, Clock, CalendarDays, Activity, AlertCircle } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAtom } from 'jotai';
 import { dashboardDataAtom } from '@/store/atom';
 import Loader from '@/components/Loader';
-import { AttendanceRecord } from '@/interface/general';
+import { AttendanceRecord, User } from '@/interface/general';
 
 
 
@@ -19,7 +18,8 @@ const Home = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [dashboardData, setDashboardData] = useAtom(dashboardDataAtom);
-  const [,setattendanceData] = useState<Record<string,AttendanceRecord[]>>({});
+  const [attendanceData,setattendanceData] = useState<Record<string,AttendanceRecord[]>>({});
+  const [employeeList,setEmployee] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -33,20 +33,30 @@ const Home = () => {
           setIsLoading(false);
           return;
         }
-
+        
         const response = await axios.get(`${APIDictionary.dashboard(user.id)}`, { 
           withCredentials: true 
         });
-        setDashboardData(response.data);
+        const responseAttendance = await axios.get(`${APIDictionary.attendance}/manager/live/${user?.id}`,{
+          withCredentials:true
+        });
+        console.log(responseAttendance);
+        
+        setattendanceData(responseAttendance?.data?.attendanceRecords)
+        setEmployee(responseAttendance?.data?.users)
+
+        
+        setDashboardData(response?.data);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       } finally {
         setIsLoading(false);
       }
     };
-
+    
     fetchData();
   }, [user, dashboardData, setDashboardData]);
+  console.log(attendanceData,employeeList);
 
   // Add a refresh function for manual updates
   const refreshDashboard = async () => {
@@ -61,6 +71,8 @@ const Home = () => {
         withCredentials:true
       });
       setattendanceData(responseAttendance?.data?.attendanceRecords)
+      setEmployee(response?.data?.users)
+      
 
       setDashboardData(response.data);
     } catch (error) {
@@ -157,17 +169,43 @@ const Home = () => {
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={dashboardData?.attendanceStats}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="present" fill="#22c55e" name="Present" />
-                  <Bar dataKey="absent" fill="#ef4444" name="Absent" />
-                </BarChart>
-              </ResponsiveContainer>
+              {
+                attendanceData &&  
+                <div className="space-y-4 max-h-[300px] overflow-y-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="text-xs font-semibold text-muted-foreground">
+                        <th className="text-left py-2">Employee</th>
+                        <th className="text-left py-2">Status</th>
+                        <th className="text-left py-2">Check In</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {employeeList.map((employee) => {
+                        const employeeAttendance = attendanceData[employee.id] || [];
+                        const todayAttendance = employeeAttendance.length > 0 ? employeeAttendance[0] : null;
+                        const status = todayAttendance ? "Present" : "Absent";
+                        const checkInTime = todayAttendance?.checkInTime ? new Date(todayAttendance?.checkInTime)?.toLocaleTimeString() : "-";
+                        
+                        return (
+                          <tr key={employee.id} className="border-t border-gray-100">
+                            <td className="py-3">{employee.name}</td>
+                            <td className={`py-3 ${status === "Present" ? "text-green-600" : "text-red-600"}`}>
+                              {status}
+                            </td>
+                            <td className="py-3">{checkInTime}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                  {employeeList.length === 0 && (
+                    <div className="text-center py-4 text-muted-foreground">
+                      No employee data available
+                    </div>
+                  )}
+                </div>
+              }
             </div>
           </CardContent>
         </Card>
