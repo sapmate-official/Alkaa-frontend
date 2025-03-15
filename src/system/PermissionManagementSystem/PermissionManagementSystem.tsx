@@ -604,7 +604,7 @@ const PermissionManagementSystem = () => {
                     <SelectContent>
                       <SelectGroup>
                         {subcategories.map(sub => (
-                          <SelectItem key={sub.id} value={sub.id}>{sub.name}{sub.category.name}</SelectItem>
+                          <SelectItem key={sub.id} value={sub.id}>{sub.category.name} -- {sub.name}</SelectItem>
                         ))}
                       </SelectGroup>
                     </SelectContent>
