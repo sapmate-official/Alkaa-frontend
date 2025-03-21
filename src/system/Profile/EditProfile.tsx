@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Department } from '@/interface/general';
 
 interface FormDataType {
   firstName: string;
@@ -31,6 +32,7 @@ const ProfileEdit = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [departments,setDepartments] = useState<Department[]>([])
   const [formData, setFormData] = useState<FormDataType>({
     firstName: '',
     lastName: '',
@@ -55,6 +57,10 @@ const ProfileEdit = () => {
         const response = await axios.get(APIDictionary.userProfile(userId || ''), {
           withCredentials: true
         });
+        const departmentResponse = await axios.get(`${APIDictionary.department}/org/${user?.orgId}`,{
+          withCredentials: true
+        })
+        setDepartments(departmentResponse.data)
         const userData = response.data?.user;
         console.log('User data:', userData);
 
@@ -270,8 +276,9 @@ const ProfileEdit = () => {
                     <SelectValue placeholder="Select department" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="dept1">IT</SelectItem>
-                    <SelectItem value="dept2">HR</SelectItem>
+                    {departments.map(department => {
+                      return <SelectItem key={department.id} value={department.id}>{department.name}</SelectItem>
+                    })}
                   </SelectContent>
                 </Select>
               </div>

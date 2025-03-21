@@ -61,8 +61,8 @@ const BankDetails = () => {
           return;
         }
         data = {...data, userId: user.id}
-      const response = await axios.post(APIDictionary.bank, data,{withCredentials:true});
-      if (response?.status === 201) {
+      const response = await axios.put(APIDictionary.bank, data,{withCredentials:true});
+      if (response?.status === 200) {
         toast({ title: 'Bank details saved successfully' });
       }
     } catch (error) {
