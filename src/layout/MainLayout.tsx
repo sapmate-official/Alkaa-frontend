@@ -199,7 +199,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         href: "/p/role",
         icon: <Edit className="h-5 w-5"/>
       });
-      }
+      }else if (permission.name === "holiday.read") {
+        baseLinks.push({
+          label: "Holiday",
+          href: "/p/holiday",
+          icon: <IconCalendarStats className="h-5 w-5" />
+        });
+        }
     }
     setLinks(baseLinks);
   }, [userDetails,permissionList]);

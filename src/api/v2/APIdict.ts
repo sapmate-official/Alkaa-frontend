@@ -1,4 +1,5 @@
-import { backendDomain } from '../../lib/constant/Domain';
+import { backendDomain } from "@/lib/constant/Domain";
+
 
 export const APIDictionary = {
     setPassword: `${backendDomain}/api/v1/general/set-password`,
@@ -36,4 +37,8 @@ export const APIDictionary = {
     dashboard: (userId: string) => `${backendDomain}/api/v2/screen/dashboard/${userId}`,
     get_payroll: (userId: string) => `${backendDomain}/api/v2/payroll/user/${userId}`,
     permission: `${backendDomain}/api/v2/permission`,
+    holiday: `${backendDomain}/api/v2/holiday`,
+    holiday_by_org: (orgId:string) => `${backendDomain}/api/v2/holiday/${orgId}`,
+    holiday_type: `${backendDomain}/api/v2/holiday-type`,
+    holiday_type_by_org: (orgId:string) => `${backendDomain}/api/v2/holiday-type/${orgId}`,
 };

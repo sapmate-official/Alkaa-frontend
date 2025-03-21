@@ -51,6 +51,7 @@ import AttendanceVerificationComponent from './system/AttendanceManagementSystem
 import AttendanceLivePanel from './system/AttendanceManagementSystem/livePanel';
 import PastNotCheckedDays from './system/AttendanceManagementSystem/pastdays';
 import PermissionManagement from './system/PermissionManagementSystem/PermissionManagementSystem';
+import HolidayManagementSystem from './system/HolidayManagementSystem/HolidayDashboard';
 
 
 function App() {
@@ -191,6 +192,11 @@ const ClientRoute = () => {
       <Route path="/role/*" element={
         <PermissionRoute requiredPermissions={['Manage User Roles']}>
           <RolePermissionManagementSystem />
+        </PermissionRoute>
+      } />
+      <Route path="/holiday/*" element={
+        <PermissionRoute requireAll={false} requiredPermissions={['holiday.create', 'holiday.read', 'holiday.update', 'holiday.delete']}>
+          <HolidayManagementSystem />
         </PermissionRoute>
       } />
 
