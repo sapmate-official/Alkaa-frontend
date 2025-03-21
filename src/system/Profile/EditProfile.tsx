@@ -91,7 +91,7 @@ const ProfileEdit = () => {
     e.preventDefault();
     try {
       const userId = id || user?.id;
-      await axios.patch(APIDictionary.userProfile(userId || ''), formData, {
+      await axios.put(APIDictionary.userProfile(userId || ''), formData, {
         withCredentials: true,
       });
       alert('Profile updated successfully');
