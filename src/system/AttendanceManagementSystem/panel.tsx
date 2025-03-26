@@ -170,13 +170,13 @@ useEffect(() => {
         <h1 className="text-3xl font-bold">Attendance Panel</h1>
         <div className='flex space-x-4'>
 
-          <Button
+            <Button
             onClick={() => router('/p/attendance/past-not-checked-days')}
             variant="outline"
             className="bg-blue-500 hover:bg-blue-600 text-white"
-          >
-            Past Not Checked Days ({PastNotCheckedDayscount})
-          </Button>
+            >
+            Regularize ({PastNotCheckedDayscount})
+            </Button>
           <Button
             onClick={() => router('/p/attendance/live')}
             variant="outline"

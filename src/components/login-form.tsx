@@ -42,10 +42,9 @@ export function LoginForm({
           <form className="p-6 md:p-8" onSubmit={handleSubmit}>
             <div className="flex flex-col gap-6">
               <div className="flex flex-col items-center text-center">
-                <h1 className="text-2xl font-bold">Experience Alkaa</h1>
-                <p className="text-balance text-muted-foreground">
-                  Login to your Alkaa account
-                </p>
+                <img src="/logo.svg" alt="Alkaa Logo" className="h-full w-full object-contain" />
+
+                
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
@@ -86,10 +85,15 @@ export function LoginForm({
           </form>
           <div className="relative hidden bg-muted md:block">
             <img
-              src="https://res.cloudinary.com/dwxm42izp/image/upload/v1730538183/ulove1t1e6szhyrwasdr.jpg"
+              src="/login_cover.jpg"
               alt="Image"
               className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.9] "
             />
+            {/* <img
+              src="https://res.cloudinary.com/dwxm42izp/image/upload/v1730538183/ulove1t1e6szhyrwasdr.jpg"
+              alt="Image"
+              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.9] "
+            /> */}
           </div>
         </CardContent>
       </Card>
