@@ -8,7 +8,6 @@ import { useNavigate } from "react-router-dom";
 import debounce from 'lodash/debounce';
 import Loader from "@/components/Loader";
 
-
 interface AuthContextType {
     user: User | null;
     isLoading: boolean;
@@ -21,6 +20,22 @@ interface AuthContextType {
 const AUTH_REVALIDATE_EVENT = 'auth-revalidate';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const getCookieValue = (name: string): string | null => {
+    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+    return match ? match[2] : null;
+};
+
+const setCookieFromLocalStorage = (name: string, value: string, daysToExpire: number) => {
+    if (!value) return;
+
+    const date = new Date();
+    date.setTime(date.getTime() + daysToExpire * 24 * 60 * 60 * 1000);
+
+    document.cookie = `${name}=${value}; expires=${date.toUTCString()}; path=/; ${
+        process.env.NODE_ENV === "production" ? `domain=.alkaa.online; secure; ` : ""
+    }sameSite=lax`;
+};
 
 export const enhancedLocalStorage = {
     setItem: (key: string, value: string) => {
@@ -51,9 +66,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     );
     const initializeAuth = async () => {
         try {
-            const token = enhancedLocalStorage.getItem("accessToken");
-            if (token) {
-                await debouncedValidateToken(token);
+            // First check if cookies are available
+            let accessToken = getCookieValue("accessToken");
+            let refreshToken = getCookieValue("refreshToken");
+
+            // If cookies are missing but localStorage has the tokens, restore cookies
+            if (!accessToken && !refreshToken) {
+                const storedAccessToken = enhancedLocalStorage.getItem("accessToken");
+                const storedRefreshToken = enhancedLocalStorage.getItem("refreshToken");
+
+                if (storedAccessToken && storedRefreshToken) {
+                    console.log("Restoring cookies from localStorage");
+                    // Set cookies with appropriate expiration (2 days for access, 7 days for refresh)
+                    setCookieFromLocalStorage("accessToken", storedAccessToken, 2);
+                    setCookieFromLocalStorage("refreshToken", storedRefreshToken, 7);
+
+                    accessToken = storedAccessToken;
+                }
+            }
+
+            if (accessToken) {
+                await debouncedValidateToken(accessToken);
             } else {
                 setUser(null);
                 navigate('/auth/signin');
@@ -71,6 +104,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             }, { withCredentials: true });
             console.log(response);
             if (response.status === 200 && response.data.accessToken && response.data.refreshToken) {
+                // Store in localStorage as backup
                 enhancedLocalStorage.setItem("accessToken", response.data.accessToken);
                 enhancedLocalStorage.setItem("refreshToken", response.data.refreshToken);
                 await validateToken(response.data.accessToken);
