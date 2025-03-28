@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import axios from 'axios';
 import  { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
+import { NotificationSubscribe } from '@/components/ui/NotificationSubscribe';
 
 interface Notification {
   id: string;
@@ -47,9 +48,12 @@ const ListOfNotification = () => {
         <div className="p-4 w-full h-full overflow-y-scroll">
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold">Notifications</h2>
-                <Button onClick={()=>navigate("/p/notification/template")}>
-                    Create Template
-                </Button>
+                <div className="flex gap-2">
+                    <NotificationSubscribe />
+                    <Button onClick={()=>navigate("/p/notification/template")}>
+                        Create Template
+                    </Button>
+                </div>
             </div>
 
             <Table>
