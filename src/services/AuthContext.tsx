@@ -180,8 +180,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             const response = await axios.get(`${backendDomain}/api/v1/general/validate-token`, {
                 headers: { 
                     Authorization: `Bearer ${token}`,
-                    'Cache-Control': 'no-cache', // Bypass service worker caching
-                    'Pragma': 'no-cache'
+                    // 'Cache-Control': 'no-cache', // Bypass service worker caching
+                    // 'Pragma': 'no-cache'
                 },
                 withCredentials: true // This sends cookies if available, but we don't rely solely on them
             });
