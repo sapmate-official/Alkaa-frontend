@@ -1,21 +1,19 @@
 const CACHE_NAME = 'alkaa-cache-v1';
 
-// Only include files that definitely exist
-// Start with a minimal set and expand later
 const urlsToCache = [
   '/',
-  '/index.html'
-  // We'll add more resources progressively after confirming they exist
+  '/index.html',
+  '/assets/logo.svg',
+  '/assets/logo_icon.svg'
 ];
 
-// Install service worker with better error handling
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('Cache opened');
         
-        // Use Promise.allSettled instead of Promise.all to handle failures gracefully
+        
         return Promise.allSettled(
           urlsToCache.map(url => 
             cache.add(url).catch(error => {
@@ -26,7 +24,7 @@ self.addEventListener('install', event => {
       })
       .then(() => {
         console.log('Initial cache completed');
-        return self.skipWaiting(); // Activate worker immediately
+        return self.skipWaiting();
       })
   );
 });
@@ -36,7 +34,7 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        // Cache hit - return response
+        
         if (response) {
           return response;
         }
@@ -93,7 +91,7 @@ self.addEventListener('push', event => {
     const data = event.data.json();
     const options = {
       body: data.content || 'New notification',
-      icon: '/assets/logo.svg', // Try with the assets folder path
+      icon: '/assets/logo_icon.svg', 
       badge: '/assets/logo.svg',
       data: {
         url: data.url || '/'
