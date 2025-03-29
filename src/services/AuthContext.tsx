@@ -176,12 +176,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     };
     const validateToken = async (token: string) => {
         try {
-            // Include the refresh token in authorization headers as well
-            // const refreshToken = enhancedLocalStorage.getItem("refreshToken");
-            
+            // Add additional headers to work with service worker
             const response = await axios.get(`${backendDomain}/api/v1/general/validate-token`, {
                 headers: { 
-                    Authorization: `Bearer ${token}`
+                    Authorization: `Bearer ${token}`,
+                    'Cache-Control': 'no-cache', // Bypass service worker caching
+                    'Pragma': 'no-cache'
                 },
                 withCredentials: true // This sends cookies if available, but we don't rely solely on them
             });

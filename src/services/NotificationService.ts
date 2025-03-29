@@ -61,11 +61,16 @@ class NotificationService {
   
   private async saveSubscription(userId: string, subscription: PushSubscriptionPayload): Promise<void> {
     try {
+      // Get token from localStorage
+      const token = localStorage.getItem("accessToken");
+      
       await fetch(`${APIDictionary.notification}/subscription`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` // Add token from localStorage
         },
+        credentials: 'include', // Include cookies
         body: JSON.stringify({
           userId,
           subscription
