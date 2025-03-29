@@ -1,19 +1,32 @@
 const CACHE_NAME = 'alkaa-cache-v1';
+
+// Only include files that definitely exist
+// Start with a minimal set and expand later
 const urlsToCache = [
   '/',
-  '/index.html',
-  '/assets/logo.svg',
-  '/logo.svg',
-  '/logo_icon.svg'
+  '/index.html'
+  // We'll add more resources progressively after confirming they exist
 ];
 
-// Install service worker
+// Install service worker with better error handling
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('Cache opened');
-        return cache.addAll(urlsToCache);
+        
+        // Use Promise.allSettled instead of Promise.all to handle failures gracefully
+        return Promise.allSettled(
+          urlsToCache.map(url => 
+            cache.add(url).catch(error => {
+              console.warn(`Couldn't cache ${url}: ${error.message}`);
+            })
+          )
+        );
+      })
+      .then(() => {
+        console.log('Initial cache completed');
+        return self.skipWaiting(); // Activate worker immediately
       })
   );
 });
@@ -27,10 +40,33 @@ self.addEventListener('fetch', event => {
         if (response) {
           return response;
         }
-        return fetch(event.request);
-      }
-    )
-  );
+
+        // Clone the request because it's a one-time use stream
+        const fetchRequest = event.request.clone();
+
+        return fetch(fetchRequest).then(response => {
+          // Check if we received a valid response
+          if(!response || response.status !== 200 || response.type !== 'basic') {
+            return response;
+          }
+
+          // Clone the response because it's a one-time use stream
+          const responseToCache = response.clone();
+
+          caches.open(CACHE_NAME)
+            .then(cache => {
+              // Add new resources to cache as they're accessed
+              cache.put(event.request, responseToCache);
+            });
+
+          return response;
+        });
+      })
+      .catch(error => {
+        console.error('Fetch failed:', error);
+        // You could return a custom offline page here
+      })
+    );
 });
 
 // Update a service worker
@@ -45,25 +81,39 @@ self.addEventListener('activate', event => {
           }
         })
       );
+    }).then(() => {
+      return self.clients.claim(); // Take control immediately
     })
   );
 });
 
 // Handle push notifications
 self.addEventListener('push', event => {
-  const data = event.data.json();
-  const options = {
-    body: data.content,
-    icon: '/logo_icon.svg',
-    badge: '/logo_icon.svg',
-    data: {
-      url: data.url || '/'
-    }
-  };
+  try {
+    const data = event.data.json();
+    const options = {
+      body: data.content || 'New notification',
+      icon: '/assets/logo.svg', // Try with the assets folder path
+      badge: '/assets/logo.svg',
+      data: {
+        url: data.url || '/'
+      }
+    };
 
-  event.waitUntil(
-    self.registration.showNotification(data.title || 'Alkaa Notification', options)
-  );
+    event.waitUntil(
+      self.registration.showNotification(data.title || 'Alkaa Notification', options)
+    );
+  } catch (error) {
+    console.error('Error showing notification:', error);
+    // Show a default notification if parsing fails
+    event.waitUntil(
+      self.registration.showNotification('Alkaa Notification', {
+        body: 'You have a new notification',
+        icon: '/assets/logo.svg',
+        badge: '/assets/logo.svg'
+      })
+    );
+  }
 });
 
 // Handle notification click
@@ -71,6 +121,6 @@ self.addEventListener('notificationclick', event => {
   event.notification.close();
   
   event.waitUntil(
-    clients.openWindow(event.notification.data.url)
+    clients.openWindow(event.notification.data?.url || '/')
   );
 });
