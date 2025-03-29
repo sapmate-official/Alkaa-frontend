@@ -29,31 +29,34 @@ self.addEventListener('install', event => {
   );
 });
 
-// Cache and return requests
+// Update the fetch event handler to skip caching for cross-origin requests
 self.addEventListener('fetch', event => {
+  // Skip cross-origin requests to avoid CORS issues
+  if (!event.request.url.startsWith(self.location.origin)) {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        
         if (response) {
           return response;
         }
 
-        // Clone the request because it's a one-time use stream
         const fetchRequest = event.request.clone();
 
-        return fetch(fetchRequest).then(response => {
-          // Check if we received a valid response
+        return fetch(fetchRequest, {
+          credentials: 'include', 
+          
+        }).then(response => {
           if(!response || response.status !== 200 || response.type !== 'basic') {
             return response;
           }
 
-          // Clone the response because it's a one-time use stream
           const responseToCache = response.clone();
 
           caches.open(CACHE_NAME)
             .then(cache => {
-              // Add new resources to cache as they're accessed
               cache.put(event.request, responseToCache);
             });
 
@@ -62,9 +65,8 @@ self.addEventListener('fetch', event => {
       })
       .catch(error => {
         console.error('Fetch failed:', error);
-        // You could return a custom offline page here
       })
-    );
+  );
 });
 
 // Update a service worker
