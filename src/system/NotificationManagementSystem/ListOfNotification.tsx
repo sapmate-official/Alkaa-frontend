@@ -14,6 +14,7 @@ import axios from 'axios';
 import  { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { NotificationSubscribe } from '@/components/ui/NotificationSubscribe';
+import { NotificationTest } from '@/components/ui/NotificationTest';
 
 interface Notification {
   id: string;
@@ -49,6 +50,7 @@ const ListOfNotification = () => {
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold">Notifications</h2>
                 <div className="flex gap-2">
+                    <NotificationTest />
                     <NotificationSubscribe />
                     <Button onClick={()=>navigate("/p/notification/template")}>
                         Create Template

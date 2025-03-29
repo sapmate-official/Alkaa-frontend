@@ -150,7 +150,6 @@ const ProfileEdit = () => {
               <div className="space-y-2">
                 <div className='flex flex-row'>
                   <div>
-
                     <Label htmlFor="firstName">First Name *</Label>
                     <Input
 
