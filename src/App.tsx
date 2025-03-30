@@ -315,7 +315,7 @@ const AttendanceManagementSystem = () => {
     <Routes>
       <Route path='/' element={
         <PermissionRoute requiredPermissions={['attendance.mark', 'attendance.view_own']}>
-          <AttendancePanel />
+          <AttendancePanel  />
         </PermissionRoute>
       } />
       <Route path='/history' element={

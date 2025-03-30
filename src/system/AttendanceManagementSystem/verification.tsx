@@ -57,8 +57,6 @@ import LocationViewer from "@/components/Locationviewer";
 type AttendanceStatus = "PRESENT" | "ABSENT" | "LATE" | "HALF_DAY";
 type AttendanceVerificationStatus = "UNVERIFIED" | "VERIFIED" | "REJECTED";
 
-
-
 interface User {
   id: string;
   name: string;
@@ -88,14 +86,18 @@ interface AttendanceRecord {
   ipAddress?: string;
   verificationStatus: AttendanceVerificationStatus;
   user: User;
+  UserDailyReport?: { 
+    id: string;
+    reportContent: any;
+  }[];
 }
-
 
 const AttendanceVerificationComponent: React.FC = () => {
   const { user } = useAuth()
   const { toast } = useToast()
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [selectedRecord, setSelectedRecord] = useState<AttendanceRecord | null>(null);
+  const [selectedReport, setSelectedReport] = useState<any>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [startDate, setStartDate] = useState<Date>(new Date("2025-03-01"));
   const [endDate, setEndDate] = useState<Date>(new Date("2025-03-07"));
@@ -197,10 +199,13 @@ const AttendanceVerificationComponent: React.FC = () => {
     
   };
 
-
-
   const deselectAllRecords = () => {
     setSelectedRecordIds([]);
+  };
+
+  // Add this new function to check if verification actions are allowed
+  const isVerificationDisabled = (status: AttendanceVerificationStatus): boolean => {
+    return status === "VERIFIED" || status === "REJECTED";
   };
 
   // Get unique users from records
@@ -251,6 +256,21 @@ const AttendanceVerificationComponent: React.FC = () => {
   const openDetails = (record: AttendanceRecord) => {
     setSelectedRecord(record);
     console.log(record);
+    
+    // Parse report content if available
+    if (record.UserDailyReport && record.UserDailyReport.length > 0) {
+      try {
+        const reportData = typeof record.UserDailyReport[0].reportContent === 'string' 
+          ? JSON.parse(record.UserDailyReport[0].reportContent) 
+          : record.UserDailyReport[0].reportContent;
+        setSelectedReport(reportData);
+      } catch (error) {
+        console.error("Error parsing report data:", error);
+        setSelectedReport(null);
+      }
+    } else {
+      setSelectedReport(null);
+    }
     
     setManagerNotes(record.notes || "");
     setIsDetailsOpen(true);
@@ -529,17 +549,16 @@ const AttendanceVerificationComponent: React.FC = () => {
                                         className="h-4 w-4"
                                         checked={selectedRecordIds.includes(record.id)}
                                         onChange={() => toggleRecordSelection(record.id)}
+                                        disabled={isVerificationDisabled(record.verificationStatus)}
                                       />
                                     </TableCell>
                                     <TableCell className="font-medium">
-                                      {index === 0 ? (
-                                        <>
-                                          <div>{record.user.name}</div>
-                                          <div className="text-xs text-gray-500">{record.user.department}</div>
-                                        </>
-                                      ) : (
-                                        <div className="w-4 h-4 bg-gray-300 rounded-full mx-auto"></div>
-                                      )}
+                                      {/* Always show the user name for better clarity */}
+                                      <div>{record.user.name}</div>
+                                      <div className="text-xs text-gray-500">
+                                        {record.user.department}
+                                        {index > 0 && <span className="ml-1 text-blue-500">(Session {record.sessionNumber})</span>}
+                                      </div>
                                     </TableCell>
                                     <TableCell>
                                       <Badge variant="outline">
@@ -567,7 +586,9 @@ const AttendanceVerificationComponent: React.FC = () => {
                                           variant="ghost"
                                           size="icon"
                                           onClick={() => verifyAttendance(record.id, "VERIFIED", record.notes || "")}
-                                          title="Quick Verify"
+                                          title={isVerificationDisabled(record.verificationStatus) ? "Already verified/rejected" : "Quick Verify"}
+                                          disabled={isVerificationDisabled(record.verificationStatus)}
+                                          className={isVerificationDisabled(record.verificationStatus) ? "opacity-50 cursor-not-allowed" : ""}
                                         >
                                           <CheckCircle className="h-4 w-4 text-green-500" />
                                         </Button>
@@ -575,7 +596,9 @@ const AttendanceVerificationComponent: React.FC = () => {
                                           variant="ghost"
                                           size="icon"
                                           onClick={() => verifyAttendance(record.id, "REJECTED", record.notes || "")}
-                                          title="Quick Reject"
+                                          title={isVerificationDisabled(record.verificationStatus) ? "Already verified/rejected" : "Quick Reject"}
+                                          disabled={isVerificationDisabled(record.verificationStatus)}
+                                          className={isVerificationDisabled(record.verificationStatus) ? "opacity-50 cursor-not-allowed" : ""}
                                         >
                                           <XCircle className="h-4 w-4 text-red-500" />
                                         </Button>
@@ -703,6 +726,27 @@ const AttendanceVerificationComponent: React.FC = () => {
               </div>
             </div>
 
+            {/* Enhanced Daily Report section with better formatting */}
+            {selectedReport && (
+              <div className="mt-6 border-t pt-4">
+                <h3 className="text-lg font-medium mb-2">Daily Task Report</h3>
+                <div className="bg-gray-50 p-4 rounded-md">
+                  {Object.keys(selectedReport).length > 0 ? (
+                    <div className="space-y-3">
+                      {Object.entries(selectedReport).map(([key, value], index) => (
+                        <div key={index} className="p-3 bg-white rounded-md border">
+                          <div className="font-medium text-blue-600 mb-1">{key}</div>
+                          <div className="text-gray-700">{String(value)}</div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500">No report data available.</p>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="mt-6">
               <h3 className="text-lg font-medium mb-2">Verification Notes</h3>
               <Textarea
@@ -725,14 +769,22 @@ const AttendanceVerificationComponent: React.FC = () => {
                   <Button
                     variant="destructive"
                     onClick={() => verifyAttendance(selectedRecord.id, "REJECTED", managerNotes)}
+                    disabled={isVerificationDisabled(selectedRecord.verificationStatus)}
+                    className={isVerificationDisabled(selectedRecord.verificationStatus) ? "opacity-50" : ""}
                   >
-                    Reject
+                    {isVerificationDisabled(selectedRecord.verificationStatus) 
+                      ? selectedRecord.verificationStatus === "REJECTED" ? "Already Rejected" : "Already Verified" 
+                      : "Reject"}
                   </Button>
                   <Button
                     variant="default"
                     onClick={() => verifyAttendance(selectedRecord.id, "VERIFIED", managerNotes)}
+                    disabled={isVerificationDisabled(selectedRecord.verificationStatus)}
+                    className={isVerificationDisabled(selectedRecord.verificationStatus) ? "opacity-50" : ""}
                   >
-                    Verify
+                    {isVerificationDisabled(selectedRecord.verificationStatus) 
+                      ? selectedRecord.verificationStatus === "VERIFIED" ? "Already Verified" : "Already Rejected" 
+                      : "Verify"}
                   </Button>
                 </div>
               </div>
