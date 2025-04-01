@@ -1,4 +1,4 @@
-import  { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { ISalaryParameters } from '../../types/salaryParameters';
 import { APIDictionary } from '../../api/v2/APIdict';
@@ -12,20 +12,23 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from '@/services/AuthContext';
+import { BanknoteIcon, PercentIcon, SaveIcon } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
-const SalaryParameter = () => {
+const SalaryParameter = ({ userID }: { userID: string }) => {
   const form = useForm<ISalaryParameters>({
     defaultValues: {
-      hraPercentage: 40,
-      daPercentage: 10,
-      taPercentage: 10,
-      pfPercentage: 12,
-      taxPercentage: 10,
-      insuranceFixed: 1000,
+      hraPercentage: 0,
+      daPercentage: 0,
+      taPercentage: 0,
+      pfPercentage: 0,
+      taxPercentage: 0,
+      insuranceFixed: 0,
     }
   });
   const { user } = useAuth();
@@ -40,9 +43,12 @@ const SalaryParameter = () => {
   const fetchSalaryParameters = async () => {
     try {
       if (!user?.id) return;
-      const response = await axios.get(APIDictionary?.payrollParameters?.(user?.id));
+      const response = await axios.get(APIDictionary?.payrollParameters?.(userID));
+      console.log(response.data);
+
       if (response?.data) {
         form?.reset?.(response?.data);
+        console.log(form?.getValues());
       }
     } catch (error) {
       console.error('Failed to fetch salary parameters:', error);
@@ -60,9 +66,9 @@ const SalaryParameter = () => {
         pfPercentage: parseFloat(data?.pfPercentage?.toString() ?? '0'),
         taxPercentage: parseFloat(data?.taxPercentage?.toString() ?? '0'),
         insuranceFixed: parseFloat(data?.insuranceFixed?.toString() ?? '0'),
-        userId: user?.id
+        userId: userID
       };
-      const response = await axios.post(APIDictionary?.payrollParameters?.(user?.id), numericData);
+      const response = await axios.post(APIDictionary?.payrollParameters?.(userID), numericData);
       if (response?.status === 200) {
         toast?.({ title: 'Salary parameters saved successfully' });
       }
@@ -72,46 +78,109 @@ const SalaryParameter = () => {
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Salary Parameters</CardTitle>
+    <Card className="w-full shadow-md hover:shadow-lg transition-shadow duration-300 border-l-4 border-l-primary/70">
+      <CardHeader className="bg-muted/30 pb-4">
+        <div className="flex items-center gap-2">
+          <div className="p-2 bg-primary/10 rounded-full">
+            <BanknoteIcon className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <CardTitle className="text-lg">Salary Parameters</CardTitle>
+            <CardDescription>Configure salary calculation parameters</CardDescription>
+          </div>
+        </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <Form {...form}>
           <form onSubmit={form?.handleSubmit?.(onSubmit)} className="space-y-6">
-            {[
-              { name: "hraPercentage", label: "HRA Percentage" },
-              { name: "daPercentage", label: "DA Percentage" },
-              { name: "taPercentage", label: "TA Percentage" },
-              { name: "pfPercentage", label: "PF Percentage" },
-              { name: "taxPercentage", label: "Tax Percentage" },
-              { name: "insuranceFixed", label: "Insurance Amount" },
-            ].map((field) => (
-              <FormField
-                key={field?.name}
-                control={form?.control}
-                name={field?.name as keyof ISalaryParameters}
-                rules={{ 
-                  required: `${field?.label} is required`
-                }}
-                render={({ field: fieldProps }) => (
-                  <FormItem>
-                    <FormLabel>{field?.label}</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        {...fieldProps} 
-                        value={fieldProps?.value?.toString() ?? ''}
-                        onChange={(e) => fieldProps?.onChange?.(Number(e?.target?.value))}
-                        step="0.01"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            ))}
-            <Button type="submit" className="w-full">
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                <PercentIcon className="h-4 w-4" />
+                Percentage-based Parameters
+              </h3>
+              <Separator className="bg-slate-200" />
+              <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
+                {[
+                  { name: "hraPercentage", label: "HRA Percentage", desc: "House Rent Allowance" },
+                  { name: "daPercentage", label: "DA Percentage", desc: "Dearness Allowance" },
+                  { name: "taPercentage", label: "TA Percentage", desc: "Travel Allowance" },
+                  { name: "pfPercentage", label: "PF Percentage", desc: "Provident Fund" },
+                  { name: "taxPercentage", label: "Tax Percentage", desc: "Income Tax" },
+                ].map((field) => (
+                  <FormField
+                    key={field?.name}
+                    control={form?.control}
+                    name={field?.name as keyof ISalaryParameters}
+                    rules={{
+                      required: `${field?.label} is required`
+                    }}
+                    render={({ field: fieldProps }) => (
+                      <FormItem>
+                        <FormLabel className="font-medium">{field?.label}</FormLabel>
+                        <FormDescription className="text-xs">{field?.desc}</FormDescription>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              type="number"
+                              {...fieldProps}
+                              value={fieldProps?.value?.toString() ?? ''}
+                              onChange={(e) => fieldProps?.onChange?.(Number(e?.target?.value))}
+                              step="0.01"
+                              className="bg-background pl-3 pr-7 border-slate-300 focus-visible:ring-primary/50"
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-4 mt-6">
+              <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                <BanknoteIcon className="h-4 w-4" />
+                Fixed Amount Parameters
+              </h3>
+              <Separator className="bg-slate-200" />
+              <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
+                <FormField
+                  control={form?.control}
+                  name="insuranceFixed"
+                  rules={{
+                    required: "Insurance amount is required"
+                  }}
+                  render={({ field: fieldProps }) => (
+                    <FormItem>
+                      <FormLabel className="font-medium">Insurance Amount</FormLabel>
+                      <FormDescription className="text-xs">Fixed amount for insurance</FormDescription>
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            type="number"
+                            {...fieldProps}
+                            value={fieldProps?.value?.toString() ?? ''}
+                            onChange={(e) => fieldProps?.onChange?.(Number(e?.target?.value))}
+                            step="0.01"
+                            className="bg-background pl-7 border-slate-300 focus-visible:ring-primary/50"
+                          />
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full mt-6 flex items-center justify-center gap-2 transition-all duration-200 hover:bg-primary/90"
+            >
+              <SaveIcon className="h-4 w-4" />
               Save Salary Parameters
             </Button>
           </form>

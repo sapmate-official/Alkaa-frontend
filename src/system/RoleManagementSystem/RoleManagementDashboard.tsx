@@ -98,7 +98,9 @@ const RolesPermissionsManagement = () => {
 
   const fetchUser = async () => {
     try {
-      const response = await axios.get(`${APIDictionary.user}/org/${user?.orgId}`)
+      const response = await axios.get(`${APIDictionary.user}/org/${user?.orgId}`,{
+        withCredentials: true
+      })
       setUsers(response.data)
     } catch (error) {
       console.log(error)

@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Permission, PermissionCategory, PermissionSubcategory } from '@/interface/general'
 import axios from 'axios'
-import  { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 
 const PermissionManagementSystem = () => {
@@ -20,6 +20,8 @@ const PermissionManagementSystem = () => {
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [editMode, setEditMode] = useState<string | null>(null)
+  const [searchTerm, setSearchTerm] = useState<string>('')
+  const [filterSubcategory, setFilterSubcategory] = useState<string>('all')
 
   useEffect(() => {
     fetchCategories()
@@ -191,7 +193,7 @@ const PermissionManagementSystem = () => {
   }
 
   // create permission
-  const createPermission = async (data: { name: string, subcategoryId: string, action: string, description?: string }) => {
+  const createPermission = async (data: { name: string, subcategoryId: string, action: string, key?: string, description?: string }) => {
     setLoading(true)
     setError(null)
     try {
@@ -210,7 +212,7 @@ const PermissionManagementSystem = () => {
   }
 
   // edit permission
-  const updatePermission = async (id: string, data: { name?: string, subcategoryId?: string, action?: string, description?: string }) => {
+  const updatePermission = async (id: string, data: { name?: string, subcategoryId?: string, action?: string, key?: string, description?: string }) => {
     setLoading(true)
     setError(null)
     try {
@@ -246,14 +248,21 @@ const PermissionManagementSystem = () => {
     }
   }
 
+  // Create a helper function to find category for a subcategory
+  const getCategoryForSubcategory = (subcategoryId: string) => {
+    const subcategory = subcategories.find(sub => sub.id === subcategoryId);
+    if (!subcategory) return null;
+    return categories.find(cat => cat.id === subcategory.categoryId);
+  }
+
   //render category tab
   const categoryTab = () => {
-    return(
+    return (
       <div className="w-full">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Permission Categories</h2>
-          <Button 
-            variant="default" 
+          <Button
+            variant="default"
             onClick={() => setEditMode('categoryCreate')}
           >
             Add New Category
@@ -269,15 +278,15 @@ const PermissionManagementSystem = () => {
               <CardContent className="space-y-3">
                 <div>
                   <Label htmlFor="categoryName">Category Name</Label>
-                  <Input id="categoryName" value={selectedCategory?.name || ''} onChange={e => setSelectedCategory({...selectedCategory, name: e.target.value} as PermissionCategory)} />
+                  <Input id="categoryName" value={selectedCategory?.name || ''} onChange={e => setSelectedCategory({ ...selectedCategory, name: e.target.value } as PermissionCategory)} />
                 </div>
                 <div>
                   <Label htmlFor="categoryDesc">Description</Label>
-                  <Input id="categoryDesc" value={selectedCategory?.description || ''} onChange={e => setSelectedCategory({...selectedCategory, description: e.target.value} as PermissionCategory)} />
+                  <Input id="categoryDesc" value={selectedCategory?.description || ''} onChange={e => setSelectedCategory({ ...selectedCategory, description: e.target.value } as PermissionCategory)} />
                 </div>
               </CardContent>
               <CardFooter className="flex justify-start space-x-2">
-                <Button 
+                <Button
                   variant="default"
                   onClick={() => {
                     if (selectedCategory?.name) {
@@ -291,7 +300,7 @@ const PermissionManagementSystem = () => {
                 >
                   Save
                 </Button>
-                <Button 
+                <Button
                   variant="outline"
                   onClick={() => {
                     setSelectedCategory(null);
@@ -304,7 +313,7 @@ const PermissionManagementSystem = () => {
             </Card>
           )
         }
-        
+
         {
           editMode === 'categoryEdit' && selectedCategory && (
             <Card className="mb-4">
@@ -314,22 +323,22 @@ const PermissionManagementSystem = () => {
               <CardContent className="space-y-3">
                 <div>
                   <Label htmlFor="editCategoryName">Category Name</Label>
-                  <Input id="editCategoryName" value={selectedCategory.name} onChange={e => setSelectedCategory({...selectedCategory, name: e.target.value})} />
+                  <Input id="editCategoryName" value={selectedCategory.name} onChange={e => setSelectedCategory({ ...selectedCategory, name: e.target.value })} />
                 </div>
                 <div>
                   <Label htmlFor="editCategoryDesc">Description</Label>
-                  <Input id="editCategoryDesc" value={selectedCategory.description} onChange={e => setSelectedCategory({...selectedCategory, description: e.target.value})} />
+                  <Input id="editCategoryDesc" value={selectedCategory.description} onChange={e => setSelectedCategory({ ...selectedCategory, description: e.target.value })} />
                 </div>
               </CardContent>
               <CardFooter className="flex justify-start space-x-2">
-                <Button 
+                <Button
                   variant="default"
-                  onClick={() => updateCategory(selectedCategory.id, {name: selectedCategory.name, description: selectedCategory.description})
+                  onClick={() => updateCategory(selectedCategory.id, { name: selectedCategory.name, description: selectedCategory.description })
                     .then(() => setEditMode(null))}
                 >
                   Save
                 </Button>
-                <Button 
+                <Button
                   variant="outline"
                   onClick={() => setEditMode(null)}
                 >
@@ -357,7 +366,7 @@ const PermissionManagementSystem = () => {
                       <p className="text-sm text-gray-600">{category.description || 'No description'}</p>
                     </div>
                     <div className="flex space-x-2">
-                      <Button 
+                      <Button
                         variant="outline"
                         onClick={() => {
                           setSelectedCategory(category);
@@ -366,7 +375,7 @@ const PermissionManagementSystem = () => {
                       >
                         Edit
                       </Button>
-                      <Button 
+                      <Button
                         variant="destructive"
                         onClick={() => {
                           if (window.confirm(`Are you sure you want to delete ${category.name}?`)) {
@@ -386,14 +395,14 @@ const PermissionManagementSystem = () => {
       </div>
     )
   }
-  
+
   //render subcategory tab
   const subcategoryTab = () => {
-    return(
+    return (
       <div className="w-full">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Permission Subcategories</h2>
-          <Button 
+          <Button
             variant="default"
             onClick={() => setEditMode('subcategoryCreate')}
           >
@@ -410,9 +419,9 @@ const PermissionManagementSystem = () => {
               <CardContent className="space-y-3">
                 <div>
                   <Label htmlFor="categorySelect">Parent Category</Label>
-                  <Select 
+                  <Select
                     value={selectedSubcategory?.categoryId || ''}
-                    onValueChange={(value) => setSelectedSubcategory({...selectedSubcategory, categoryId: value} as PermissionSubcategory)}
+                    onValueChange={(value) => setSelectedSubcategory({ ...selectedSubcategory, categoryId: value } as PermissionSubcategory)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select a category" />
@@ -428,23 +437,23 @@ const PermissionManagementSystem = () => {
                 </div>
                 <div>
                   <Label htmlFor="subcategoryName">Subcategory Name</Label>
-                  <Input 
-                    id="subcategoryName" 
-                    value={selectedSubcategory?.name || ''} 
-                    onChange={e => setSelectedSubcategory({...selectedSubcategory, name: e.target.value} as PermissionSubcategory)} 
+                  <Input
+                    id="subcategoryName"
+                    value={selectedSubcategory?.name || ''}
+                    onChange={e => setSelectedSubcategory({ ...selectedSubcategory, name: e.target.value } as PermissionSubcategory)}
                   />
                 </div>
                 <div>
                   <Label htmlFor="subcategoryDesc">Description</Label>
-                  <Input 
-                    id="subcategoryDesc" 
-                    value={selectedSubcategory?.description || ''} 
-                    onChange={e => setSelectedSubcategory({...selectedSubcategory, description: e.target.value} as PermissionSubcategory)} 
+                  <Input
+                    id="subcategoryDesc"
+                    value={selectedSubcategory?.description || ''}
+                    onChange={e => setSelectedSubcategory({ ...selectedSubcategory, description: e.target.value } as PermissionSubcategory)}
                   />
                 </div>
               </CardContent>
               <CardFooter className="flex justify-start space-x-2">
-                <Button 
+                <Button
                   variant="default"
                   onClick={() => {
                     if (selectedSubcategory?.name && selectedSubcategory?.categoryId) {
@@ -461,7 +470,7 @@ const PermissionManagementSystem = () => {
                 >
                   Save
                 </Button>
-                <Button 
+                <Button
                   variant="outline"
                   onClick={() => {
                     setSelectedSubcategory(null);
@@ -474,7 +483,7 @@ const PermissionManagementSystem = () => {
             </Card>
           )
         }
-        
+
         {
           editMode === 'subcategoryEdit' && selectedSubcategory && (
             <Card className="mb-4">
@@ -484,32 +493,32 @@ const PermissionManagementSystem = () => {
               <CardContent className="space-y-3">
                 <div>
                   <Label htmlFor="editSubcategoryName">Subcategory Name</Label>
-                  <Input 
-                    id="editSubcategoryName" 
-                    value={selectedSubcategory.name} 
-                    onChange={e => setSelectedSubcategory({...selectedSubcategory, name: e.target.value})} 
+                  <Input
+                    id="editSubcategoryName"
+                    value={selectedSubcategory.name}
+                    onChange={e => setSelectedSubcategory({ ...selectedSubcategory, name: e.target.value })}
                   />
                 </div>
                 <div>
                   <Label htmlFor="editSubcategoryDesc">Description</Label>
-                  <Input 
-                    id="editSubcategoryDesc" 
-                    value={selectedSubcategory.description} 
-                    onChange={e => setSelectedSubcategory({...selectedSubcategory, description: e.target.value})} 
+                  <Input
+                    id="editSubcategoryDesc"
+                    value={selectedSubcategory.description}
+                    onChange={e => setSelectedSubcategory({ ...selectedSubcategory, description: e.target.value })}
                   />
                 </div>
               </CardContent>
               <CardFooter className="flex justify-start space-x-2">
-                <Button 
+                <Button
                   variant="default"
                   onClick={() => updateSubcategory(selectedSubcategory.id, {
-                    name: selectedSubcategory.name, 
+                    name: selectedSubcategory.name,
                     description: selectedSubcategory.description
                   }).then(() => setEditMode(null))}
                 >
                   Save
                 </Button>
-                <Button 
+                <Button
                   variant="outline"
                   onClick={() => setEditMode(null)}
                 >
@@ -540,7 +549,7 @@ const PermissionManagementSystem = () => {
                         <p className="text-sm text-gray-600">{subcategory.description || 'No description'}</p>
                       </div>
                       <div className="flex space-x-2">
-                        <Button 
+                        <Button
                           variant="outline"
                           onClick={() => {
                             setSelectedSubcategory(subcategory);
@@ -549,7 +558,7 @@ const PermissionManagementSystem = () => {
                         >
                           Edit
                         </Button>
-                        <Button 
+                        <Button
                           variant="destructive"
                           onClick={() => {
                             if (window.confirm(`Are you sure you want to delete ${subcategory.name}?`)) {
@@ -570,19 +579,71 @@ const PermissionManagementSystem = () => {
       </div>
     );
   }
-  
+
   //render permission tab
   const permissionTab = () => {
-    return(
+    const filteredPermissions = permissions.filter(permission => {
+      // Get the subcategory for this permission
+      const subcategory = subcategories.find(sub => sub.id === permission.subcategoryId);
+      const subcategoryName = subcategory?.name || '';
+      
+      // Get the category for this subcategory
+      const category = subcategory ? categories.find(cat => cat.id === subcategory.categoryId) : null;
+      const categoryName = category?.name || '';
+      
+      // Check if permission name, subcategory name, or category name match the search term
+      const matchesSearch = 
+        searchTerm === '' || 
+        permission.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        subcategoryName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        categoryName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        permission.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (permission.key && permission.key.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (permission.description && permission.description.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      const matchesSubcategory = filterSubcategory === 'all' || permission.subcategoryId === filterSubcategory;
+      return matchesSearch && matchesSubcategory;
+    });
+
+    return (
       <div className="w-full">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Permissions</h2>
-          <Button 
+          <Button
             variant="default"
             onClick={() => setEditMode('permissionCreate')}
           >
             Add New Permission
           </Button>
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-4 mb-4">
+          <div className="flex-1">
+            <Label htmlFor="searchPermissions">Search</Label>
+            <Input
+              id="searchPermissions"
+              placeholder="Search by permission name, category, subcategory, action..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="w-full md:w-64">
+            <Label htmlFor="filterSubcategory">Filter by Subcategory</Label>
+            <Select
+              value={filterSubcategory}
+              onValueChange={setFilterSubcategory}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by subcategory" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Subcategories</SelectItem>
+                {subcategories.map(sub => (
+                  <SelectItem key={sub.id} value={sub.id}>{sub.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {
@@ -594,49 +655,62 @@ const PermissionManagementSystem = () => {
               <CardContent className="space-y-3">
                 <div>
                   <Label htmlFor="subcatSelect">Subcategory</Label>
-                  <Select 
+                  <Select
                     value={selectedPermission?.subcategoryId || ''}
-                    onValueChange={(value) => setSelectedPermission({...selectedPermission, subcategoryId: value} as Permission)}
+                    onValueChange={(value) => setSelectedPermission({ ...selectedPermission, subcategoryId: value } as Permission)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select a subcategory" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        {subcategories.map(sub => (
-                          <SelectItem key={sub.id} value={sub.id}>{sub.category.name} -- {sub.name}</SelectItem>
-                        ))}
+                        {subcategories.map(sub => {
+                          const category = categories.find(cat => cat.id === sub.categoryId);
+                          return (
+                            <SelectItem key={sub.id} value={sub.id}>
+                              {category ? `${category.name} -- ` : ''}{sub.name}
+                            </SelectItem>
+                          );
+                        })}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label htmlFor="permissionName">Permission Name</Label>
-                  <Input 
-                    id="permissionName" 
-                    value={selectedPermission?.name || ''} 
-                    onChange={e => setSelectedPermission({...selectedPermission, name: e.target.value} as Permission)} 
+                  <Input
+                    id="permissionName"
+                    value={selectedPermission?.name || ''}
+                    onChange={e => setSelectedPermission({ ...selectedPermission, name: e.target.value } as Permission)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="permissionKey">Permission Key</Label>
+                  <Input
+                    id="permissionKey"
+                    value={selectedPermission?.key || ''}
+                    onChange={e => setSelectedPermission({ ...selectedPermission, key: e.target.value } as Permission)}
                   />
                 </div>
                 <div>
                   <Label htmlFor="permissionAction">Action</Label>
-                  <Input 
-                    id="permissionAction" 
-                    value={selectedPermission?.action || ''} 
-                    onChange={e => setSelectedPermission({...selectedPermission, action: e.target.value} as Permission)} 
+                  <Input
+                    id="permissionAction"
+                    value={selectedPermission?.action || ''}
+                    onChange={e => setSelectedPermission({ ...selectedPermission, action: e.target.value } as Permission)}
                   />
                 </div>
                 <div>
                   <Label htmlFor="permissionDesc">Description</Label>
-                  <Input 
-                    id="permissionDesc" 
-                    value={selectedPermission?.description || ''} 
-                    onChange={e => setSelectedPermission({...selectedPermission, description: e.target.value} as Permission)} 
+                  <Input
+                    id="permissionDesc"
+                    value={selectedPermission?.description || ''}
+                    onChange={e => setSelectedPermission({ ...selectedPermission, description: e.target.value } as Permission)}
                   />
                 </div>
               </CardContent>
               <CardFooter className="flex justify-start space-x-2">
-                <Button 
+                <Button
                   variant="default"
                   onClick={() => {
                     if (selectedPermission?.name && selectedPermission?.subcategoryId && selectedPermission?.action) {
@@ -644,6 +718,7 @@ const PermissionManagementSystem = () => {
                         name: selectedPermission.name,
                         subcategoryId: selectedPermission.subcategoryId,
                         action: selectedPermission.action,
+                        key: selectedPermission.key,
                         description: selectedPermission.description
                       }).then(() => {
                         setSelectedPermission(null);
@@ -654,7 +729,7 @@ const PermissionManagementSystem = () => {
                 >
                   Save
                 </Button>
-                <Button 
+                <Button
                   variant="outline"
                   onClick={() => {
                     setSelectedPermission(null);
@@ -667,7 +742,7 @@ const PermissionManagementSystem = () => {
             </Card>
           )
         }
-        
+
         {
           editMode === 'permissionEdit' && selectedPermission && (
             <Card className="mb-4">
@@ -677,60 +752,74 @@ const PermissionManagementSystem = () => {
               <CardContent className="space-y-3">
                 <div>
                   <Label htmlFor="editSubcatSelect">Subcategory</Label>
-                  <Select 
+                  <Select
                     value={selectedPermission.subcategoryId}
-                    onValueChange={(value) => setSelectedPermission({...selectedPermission, subcategoryId: value})}
+                    onValueChange={(value) => setSelectedPermission({ ...selectedPermission, subcategoryId: value })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select a subcategory" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        {subcategories.map(sub => (
-                          <SelectItem key={sub.id} value={sub.id}>{`${sub.name} • ${sub?.category?.name}`}</SelectItem>
-                        ))}
+                        {subcategories.map(sub => {
+                          const category = categories.find(cat => cat.id === sub.categoryId);
+                          return (
+                            <SelectItem key={sub.id} value={sub.id}>
+                              {sub.name}{category ? ` • ${category.name}` : ''}
+                            </SelectItem>
+                          );
+                        })}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label htmlFor="editPermissionName">Permission Name</Label>
-                  <Input 
-                    id="editPermissionName" 
-                    value={selectedPermission.name} 
-                    onChange={e => setSelectedPermission({...selectedPermission, name: e.target.value})}
+                  <Input
+                    id="editPermissionName"
+                    value={selectedPermission.name}
+                    onChange={e => setSelectedPermission({ ...selectedPermission, name: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="editPermissionKey">Permission Key</Label>
+                  <Input
+                    id="editPermissionKey"
+                    value={selectedPermission.key || ''}
+                    onChange={e => setSelectedPermission({ ...selectedPermission, key: e.target.value })}
                   />
                 </div>
                 <div>
                   <Label htmlFor="editPermissionAction">Action</Label>
-                  <Input 
-                    id="editPermissionAction" 
-                    value={selectedPermission.action} 
-                    onChange={e => setSelectedPermission({...selectedPermission, action: e.target.value})} 
+                  <Input
+                    id="editPermissionAction"
+                    value={selectedPermission.action}
+                    onChange={e => setSelectedPermission({ ...selectedPermission, action: e.target.value })}
                   />
                 </div>
                 <div>
                   <Label htmlFor="editPermissionDesc">Description</Label>
-                  <Input 
-                    id="editPermissionDesc" 
-                    value={selectedPermission.description} 
-                    onChange={e => setSelectedPermission({...selectedPermission, description: e.target.value})} 
+                  <Input
+                    id="editPermissionDesc"
+                    value={selectedPermission.description}
+                    onChange={e => setSelectedPermission({ ...selectedPermission, description: e.target.value })}
                   />
                 </div>
               </CardContent>
               <CardFooter className="flex justify-start space-x-2">
-                <Button 
+                <Button
                   variant="default"
                   onClick={() => updatePermission(selectedPermission.id, {
                     name: selectedPermission.name,
                     subcategoryId: selectedPermission.subcategoryId,
                     action: selectedPermission.action,
+                    key: selectedPermission.key,
                     description: selectedPermission.description
                   }).then(() => setEditMode(null))}
                 >
                   Save
                 </Button>
-                <Button 
+                <Button
                   variant="outline"
                   onClick={() => setEditMode(null)}
                 >
@@ -748,23 +837,26 @@ const PermissionManagementSystem = () => {
             <div className="text-center py-4 text-red-600">{error}</div>
           ) : (
             <div className="border rounded-md divide-y">
-              {permissions.length === 0 ? (
+              {filteredPermissions.length === 0 ? (
                 <div className="p-4 text-center text-gray-500">No permissions found</div>
               ) : (
-                permissions.map((permission) => {
+                filteredPermissions.map((permission) => {
                   const subcategory = subcategories.find(sub => sub.id === permission.subcategoryId);
+                  const category = subcategory ? categories.find(cat => cat.id === subcategory.categoryId) : null;
                   return (
                     <div key={permission.id} className="p-4 flex items-center justify-between">
                       <div>
                         <h3 className="font-medium">{permission.name}</h3>
                         <p className="text-sm text-gray-600">{permission.description || 'No description'}</p>
                         <p className="text-xs text-gray-500">
-                          Action: <span className="font-mono">{permission.action}</span> | 
+                          Key: <span className="font-mono">{permission.key || 'None'}</span> |
+                          Action: <span className="font-mono">{permission.action}</span> |
                           Subcategory: {subcategory?.name || 'Unknown'}
+                          {category && ` • ${category.name}`}
                         </p>
                       </div>
                       <div className="flex space-x-2">
-                        <Button 
+                        <Button
                           variant="outline"
                           onClick={() => {
                             setSelectedPermission(permission);
@@ -773,7 +865,7 @@ const PermissionManagementSystem = () => {
                         >
                           Edit
                         </Button>
-                        <Button 
+                        <Button
                           variant="destructive"
                           onClick={() => {
                             if (window.confirm(`Are you sure you want to delete ${permission.name}?`)) {
