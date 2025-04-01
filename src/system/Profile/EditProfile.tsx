@@ -9,7 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Department } from '@/interface/general';
+import { Department, User } from '@/interface/general';
+import { useAtom } from 'jotai';
+import { permissionListAtom } from '../../store/atom';
+import { Spinner } from "@/components/ui/spinner";
+import { AlertCircle, ArrowLeft, Save } from "lucide-react";
+import { useToast } from '@/hooks/use-toast';
 
 interface FormDataType {
   firstName: string;
@@ -26,13 +31,42 @@ interface FormDataType {
   annualPackage: string;
   monthlySalary: string;
   orgId: string;
+  managerId: string;
+  status?: string;
 }
 
 const ProfileEdit = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [departments,setDepartments] = useState<Department[]>([])
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [managers, setManagers] = useState<User[]>([]);
+  const [canEditStatus, setCanEditStatus] = useState(false);
+  const [permissionList] = useAtom(permissionListAtom);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const {toast} = useToast();
+
+  const isOwnProfile = !id || id === user?.id;
+  const canEditPersonalInfo = permissionList.some(p => p.key === 'update_personal_info') && isOwnProfile;
+  const canEditSubordinatesInfo = permissionList.some(p => p.key === 'update_personal_info_subordinates');
+  const canEditAllUserInfo = permissionList.some(p => p.key === 'update_personal_info_all_user');
+  
+  const canEditEmployeeInfo = permissionList.some(p => p.key === 'update_employee_own') && isOwnProfile;
+  const canEditSubordinatesEmployeeInfo = permissionList.some(p => p.key === 'update_personal_info_subordinates');
+  const canEditAllUserEmployeeInfo = permissionList.some(p => p.key === 'update_employee_info_all_user');
+  
+  const canEditSalary = permissionList.some(p => p.key === 'update_salary_own') && isOwnProfile;
+  const canEditSubordinatesSalary = permissionList.some(p => p.key === 'update_salary_subordinates');
+  const canEditAllUserSalary = permissionList.some(p => p.key === 'update_salary_all_user');
+
+
+  const canEditProfile = isOwnProfile ? 
+    canEditPersonalInfo || canEditEmployeeInfo || canEditSalary : 
+    canEditAllUserInfo || canEditSubordinatesInfo || canEditAllUserEmployeeInfo || 
+    canEditSubordinatesEmployeeInfo || canEditAllUserSalary || canEditSubordinatesSalary;
+
   const [formData, setFormData] = useState<FormDataType>({
     firstName: '',
     lastName: '',
@@ -48,21 +82,28 @@ const ProfileEdit = () => {
     annualPackage: '',
     monthlySalary: '',
     orgId: '',
+    managerId: '',
+    status: 'active',
   });
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const userId = id || user?.id;
-        const response = await axios.get(APIDictionary.userProfile(userId || ''), {
-          withCredentials: true
-        });
-        const departmentResponse = await axios.get(`${APIDictionary.department}/org/${user?.orgId}`,{
-          withCredentials: true
-        })
-        setDepartments(departmentResponse.data)
-        const userData = response.data?.user;
-        console.log('User data:', userData);
+        const [userResponse, departmentResponse, managerListResponse] = await Promise.all([
+          axios.get(APIDictionary.userProfile(userId || ''), { withCredentials: true }),
+          axios.get(`${APIDictionary.department}/org/${user?.orgId}`, { withCredentials: true }),
+          axios.get(`${APIDictionary.user}/fetch-managers/org/${user?.orgId}`, { withCredentials: true })
+        ]);
+        
+        setManagers(managerListResponse.data);
+        setDepartments(departmentResponse.data);
+        const userData = userResponse.data?.user;
+        
+        const isManager = userData?.managerId === user?.id;
+        setCanEditStatus(canEditAllUserInfo || (canEditSubordinatesInfo && isManager));
 
         setFormData({
           firstName: userData?.firstName || '',
@@ -79,25 +120,47 @@ const ProfileEdit = () => {
           annualPackage: userData?.annualPackage?.toString() || '',
           monthlySalary: userData?.monthlySalary?.toString() || '',
           orgId: userData?.orgId || '',
+          managerId: userData?.managerId || '',
+          status: userData?.status || 'active',
         });
       } catch (error) {
         console.error('Error fetching user data:', error);
+        setError('Failed to fetch profile data. Please try again later.');
+      } finally {
+        setLoading(false);
       }
     };
+    
+    if (!canEditProfile) {
+      navigate('/p/profile');
+      return;
+    }
+    
     fetchData();
-  }, [id, user]);
+  }, [id, user, canEditProfile, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
     try {
       const userId = id || user?.id;
       await axios.put(APIDictionary.userProfile(userId || ''), formData, {
         withCredentials: true,
       });
-      alert('Profile updated successfully');
+      toast({
+        title: "Success!",
+        description: "Profile updated successfully",
+        variant: "default"
+      });
     } catch (error) {
       console.error('Error updating profile:', error);
-      alert('Failed to update profile');
+      toast({
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -115,137 +178,197 @@ const ProfileEdit = () => {
       [name]: value || ''
     }));
   };
-  return (
-    <Card className=" mx-auto h-full w-full overflow-y-scroll">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
+
+  if (loading) {
+    return (
+      <Card className="mx-auto h-full w-full">
+        <CardContent className="flex flex-col items-center justify-center h-full py-20">
+          <Spinner size="lg" />
+          <p className="mt-4 text-muted-foreground">Loading profile data...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="mx-auto h-full w-full">
+        <CardContent className="flex flex-col items-center justify-center h-full py-20">
+          <div className="flex flex-col items-center text-destructive gap-2">
+            <AlertCircle size={40} />
+            <p>{error}</p>
+          </div>
+          <Button 
+            variant="outline" 
+            className="mt-4"
             onClick={() => navigate(-1)}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="m15 18-6-6 6-6" />
-            </svg>
+            Go Back
           </Button>
-          <CardTitle>Edit Profile</CardTitle>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="mx-auto h-full w-full overflow-y-auto">
+      <CardHeader className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              aria-label="Go back"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <CardTitle>Edit Profile</CardTitle>
+          </div>
+          <Button 
+            type="submit" 
+            form="profile-form"
+            disabled={submitting}
+            className="flex items-center gap-2"
+          >
+            {submitting ? <Spinner size="sm" /> : <Save className="h-4 w-4" />}
+            {submitting ? "Saving..." : "Save Changes"}
+          </Button>
         </div>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Personal Information Section */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <div className='flex flex-row'>
-                  <div>
-                    <Label htmlFor="firstName">First Name *</Label>
-                    <Input
-
-                      id="firstName"
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={handleChange}
-                    />
-                  </div>
-                  <div>
-
-                    <Label htmlFor="lastName">Last Name *</Label>
-                    <Input
-
-                      id="lastName"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleChange}
-                    />
-                  </div>
+      <CardContent className="pt-6 pb-20">
+        <form id="profile-form" onSubmit={handleSubmit} className="space-y-8">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Personal Information</h3>
+              {(!canEditPersonalInfo && !canEditSubordinatesInfo && !canEditAllUserInfo) && (
+                <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-md">Read only</span>
+              )}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">First Name *</Label>
+                  <Input
+                    id="firstName"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    disabled={!canEditPersonalInfo && !canEditSubordinatesInfo && !canEditAllUserInfo}
+                    className="w-full"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last Name *</Label>
+                  <Input
+                    id="lastName"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    disabled={!canEditPersonalInfo && !canEditSubordinatesInfo && !canEditAllUserInfo}
+                    className="w-full"
+                  />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="address">Address *</Label>
                 <Input
-
                   id="address"
                   name="address"
                   value={formData.address}
                   onChange={handleChange}
+                  disabled={!canEditPersonalInfo && !canEditSubordinatesInfo && !canEditAllUserInfo}
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="adharNumber">Aadhar Number *</Label>
                 <Input
-
                   id="adharNumber"
                   name="adharNumber"
                   value={formData.adharNumber}
                   onChange={handleChange}
+                  disabled={!canEditPersonalInfo && !canEditSubordinatesInfo && !canEditAllUserInfo}
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="panNumber">PAN Number *</Label>
                 <Input
-
                   id="panNumber"
                   name="panNumber"
                   value={formData.panNumber}
                   onChange={handleChange}
+                  disabled={!canEditPersonalInfo && !canEditSubordinatesInfo && !canEditAllUserInfo}
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="mobileNumber">Mobile Number *</Label>
                 <Input
-
                   id="mobileNumber"
                   name="mobileNumber"
                   value={formData.mobileNumber}
                   onChange={handleChange}
+                  disabled={!canEditPersonalInfo && !canEditSubordinatesInfo && !canEditAllUserInfo}
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="dateOfBirth">Date of Birth *</Label>
                 <Input
-
                   type="date"
                   id="dateOfBirth"
                   name="dateOfBirth"
                   value={formData.dateOfBirth}
                   onChange={handleChange}
+                  disabled={!canEditPersonalInfo && !canEditSubordinatesInfo && !canEditAllUserInfo}
                 />
               </div>
+              
+              {canEditStatus && (
+                <div className="space-y-2">
+                  <Label htmlFor="status">User Status</Label>
+                  <Select
+                    value={formData.status || 'active'}
+                    onValueChange={(value) => handleSelectChange('status', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                      <SelectItem value="suspended">Suspended</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
           </div>
 
           <Separator className="my-6" />
 
-          {/* Employment & Compensation Section */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Employment & Compensation</h3>
-            <div className="grid grid-cols-2 gap-6">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Employment & Compensation</h3>
+              {(!canEditEmployeeInfo && !canEditSubordinatesEmployeeInfo && !canEditAllUserEmployeeInfo) && (
+                <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-md">Read only</span>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="hiredDate">Hiring Date *</Label>
                 <Input
-
                   type="date"
                   id="hiredDate"
                   name="hiredDate"
                   value={formData.hiredDate}
                   onChange={handleChange}
+                  disabled={!canEditEmployeeInfo && !canEditSubordinatesEmployeeInfo && !canEditAllUserEmployeeInfo}
+                  className="w-full"
                 />
               </div>
 
@@ -254,8 +377,9 @@ const ProfileEdit = () => {
                 <Select
                   value={formData.companyName || ''}
                   onValueChange={(value) => handleSelectChange('companyName', value)}
+                  disabled={!canEditEmployeeInfo && !canEditSubordinatesEmployeeInfo && !canEditAllUserEmployeeInfo}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select company" />
                   </SelectTrigger>
                   <SelectContent>
@@ -270,6 +394,7 @@ const ProfileEdit = () => {
                 <Select
                   value={formData.departmentId || ''}
                   onValueChange={(value) => handleSelectChange('departmentId', value)}
+                  disabled={!canEditEmployeeInfo && !canEditSubordinatesEmployeeInfo && !canEditAllUserEmployeeInfo}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select department" />
@@ -283,45 +408,74 @@ const ProfileEdit = () => {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="managerId">Manager *</Label>
+                <Select
+                  value={formData.managerId || ''}
+                  onValueChange={(value) => handleSelectChange('managerId', value)}
+                  disabled={!canEditEmployeeInfo && !canEditSubordinatesEmployeeInfo && !canEditAllUserEmployeeInfo}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select manager" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {managers
+                      .filter(manager => manager.id !== (id || user?.id))
+                      .map(manager => (
+                        <SelectItem key={manager.id} value={manager.id}>
+                          {manager.firstName} {manager.lastName}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="annualPackage">Annual Package *</Label>
                 <Input
-
                   type="number"
                   id="annualPackage"
                   name="annualPackage"
                   value={formData.annualPackage}
                   onChange={handleChange}
+                  disabled={!canEditSalary && !canEditSubordinatesSalary && !canEditAllUserSalary}
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="monthlySalary">Monthly Salary *</Label>
                 <Input
-
                   type="number"
                   id="monthlySalary"
                   name="monthlySalary"
                   value={formData.monthlySalary}
                   onChange={handleChange}
+                  disabled={!canEditSalary && !canEditSubordinatesSalary && !canEditAllUserSalary}
                 />
               </div>
             </div>
           </div>
 
-          <div className="flex gap-4 w-full mt-6">
+          <Separator className="my-6" />
+
+          <div className="flex flex-col sm:flex-row gap-4 w-full mt-6">
             <Button
               type="button"
               variant="outline"
               onClick={() => {
-                const link = id ? `/p/profile/edit/bank/${id}` : '/p/profile/edit/bank'
-                navigate(link)
+                const link = id ? `/p/profile/edit/bank/${id}` : '/p/profile/edit/bank';
+                navigate(link);
               }}
               className="flex-1"
             >
               Edit Bank Details
             </Button>
-            <Button type="submit" className="flex-1">
-              Update Profile
+            <Button 
+              type="submit" 
+              className="flex-1 flex items-center justify-center gap-2"
+              disabled={submitting}
+            >
+              {submitting ? <Spinner size="sm" /> : <Save className="h-4 w-4" />}
+              {submitting ? "Saving..." : "Update Profile"}
             </Button>
           </div>
         </form>
