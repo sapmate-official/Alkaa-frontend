@@ -36,9 +36,12 @@ export const APIDictionary = {
     department: `${backendDomain}/api/v2/department`,
     dashboard: (userId: string) => `${backendDomain}/api/v2/screen/dashboard/${userId}`,
     get_payroll: (userId: string) => `${backendDomain}/api/v2/payroll/user/${userId}`,
+    get_payroll_stats: (userId: string) => `${backendDomain}/api/v2/payroll/statistics/${userId}`,
     permission: `${backendDomain}/api/v2/permission`,
     holiday: `${backendDomain}/api/v2/holiday`,
     holiday_by_org: (orgId:string) => `${backendDomain}/api/v2/holiday/${orgId}`,
     holiday_type: `${backendDomain}/api/v2/holiday-type`,
     holiday_type_by_org: (orgId:string) => `${backendDomain}/api/v2/holiday-type/${orgId}`,
+    OrganizationSettings: () => `${backendDomain}/api/v3/settings`,
+    SalaryRecordExistence: (userId: string, month: number, year: number) => `${backendDomain}/api/v2/salary/user/${userId}/monthly/${month}/year/${year}`,
 };
