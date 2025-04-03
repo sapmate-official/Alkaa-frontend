@@ -26,13 +26,13 @@ import { APIDictionary } from "@/api/v2/APIdict";
 
 enum NotificationType {
   EMAIL = 'EMAIL',
-  SMS = 'SMS',
+  IN_APP = 'IN_APP',
   PUSH = 'PUSH'
 }
 
 const formSchema = z.object({
   name: z.string().min(1, "Template name is required"),
-  type: z.enum(["EMAIL", "SMS", "PUSH"], {
+  type: z.enum(["EMAIL", "IN_APP", "PUSH"], {
     required_error: "Please select a notification type",
   }),
   subject: z.string().min(1, "Subject is required"),
