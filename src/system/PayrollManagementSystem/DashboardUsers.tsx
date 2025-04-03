@@ -13,7 +13,7 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
-import { Search, Users, Loader2 } from 'lucide-react';
+import { Search, Users, Loader2, Trash } from 'lucide-react';
 import { APIDictionary } from '@/api/v2/APIdict';
 import { User } from '@/types/salary';
 import SalaryTransaction from './SalaryTransaction';
@@ -72,6 +72,27 @@ const PayrollDashboardUsers = () => {
       setLoading(false);
     }
   };
+  const DeleteSalaryRecord = ({ salaryRecordId }: { salaryRecordId: string }) => {
+    const handleDelete = async () => {
+      try {
+        const response = await fetch(`${APIDictionary.payroll}/${salaryRecordId}`, {
+          method: 'DELETE',
+        });
+        if (!response.ok) {
+          throw new Error('Failed to delete salary record');
+        }
+        setSalaryRecords((prevRecords) => prevRecords.filter(record => record.id !== salaryRecordId));
+      } catch (error) {
+        console.error('Error deleting salary record:', error);
+      }
+    };
+
+    return (
+      <Button variant="outline" onClick={handleDelete}>
+        <Trash className="h-4 w-4" />
+      </Button>
+    );
+  }
   
   const filteredUsers = users.filter(user => 
     `${user?.firstName || ''} ${user?.lastName || ''}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -300,11 +321,20 @@ const PayrollDashboardUsers = () => {
                                 {record?.status}
                               </span>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className='flex items-center space-x-2'>
                               <SalaryTransaction 
                                 salaryRecord={record}
                                 onTransactionComplete={() => fetchUserSalaryRecords(record.userId)}
                               />
+                              <div className='flex-1 items-end'>
+                                {
+                                  record?.status !== 'PAID' && (
+                                  <DeleteSalaryRecord 
+                                  salaryRecordId={record.id}
+                                  />
+                                  )
+                                }
+                                </div>
                             </TableCell>
                           </TableRow>
                         )) : (

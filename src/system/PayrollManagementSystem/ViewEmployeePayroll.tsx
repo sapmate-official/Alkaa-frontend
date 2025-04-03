@@ -7,39 +7,13 @@ import axios from 'axios'
 import { useEffect, useState } from 'react'
 import Loader from '@/components/Loader'
 import { Button } from "@/components/ui/button"
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { jsPDF } from "jspdf"
 import "jspdf-autotable"
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
-import { Download, FileText, TrendingUp } from "lucide-react"
-import { toast } from '@/hooks/use-toast'
-
-interface PayrollData {
-  salaryRecords: Array<{
-    month: number;
-    year: number;
-    basicSalary: number;
-    allowances: Record<string, number>;
-    deductions: Record<string, number>;
-    netSalary: number;
-    status: string;
-    processedAt: string;
-  }>;
-  salaryParameter: {
-    hraPercentage: number;
-    daPercentage: number;
-    taPercentage: number;
-    pfPercentage: number;
-    taxPercentage: number;
-  };
-  bankDetails: {
-    accountHolder: string;
-    accountNumber: string;
-    ifscCode: string;
-    bankName: string;
-  };
-}
+import { ArrowLeft, Download, FileText, TrendingUp, Users } from "lucide-react"
+import { toast } from "@/hooks/use-toast"
 
 interface PayrollStatistics {
   monthlySalaries: Array<{
@@ -70,22 +44,44 @@ interface PayrollStatistics {
     averageSalary: number;
     salaryRecords: number;
   };
+  bankDetails: {
+    accountHolder: string;
+    accountNumber: string;
+    ifscCode: string;
+    bankName: string;
+  };
+  salaryParameter: {
+    hraPercentage: number;
+    daPercentage: number;
+    taPercentage: number;
+    pfPercentage: number;
+    taxPercentage: number;
+  };
+  employee?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    employeeId: string;
+    department?: string;
+  };
 }
 
-const PayRollViewOwn = () => {
+const PayrollViewEmployeeDetails = () => {
+  const { employeeId } = useParams()
   const { user } = useAuth()
   const navigate = useNavigate()
-  const [payrollData, setPayrollData] = useState<PayrollData | null>(null)
   const [statistics, setStatistics] = useState<PayrollStatistics | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [employeeDetails, setEmployeeDetails] = useState<any>(null)
+  const [hasAccess, setHasAccess] = useState(false)
   
-  // Default to last month
+  // Default to current month
   const currentDate = new Date()
-  const lastMonth = currentDate.getMonth() === 0 ? 12 : currentDate.getMonth()
-  const lastMonthYear = currentDate.getMonth() === 0 ? currentDate.getFullYear() - 1 : currentDate.getFullYear()
+  const currentMonth = currentDate.getMonth() + 1 // JavaScript months are 0-based
+  const currentYear = currentDate.getFullYear()
   
-  const [selectedMonth, setSelectedMonth] = useState(lastMonth)
-  const [selectedYear, setSelectedYear] = useState(lastMonthYear)
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth)
+  const [selectedYear, setSelectedYear] = useState(currentYear)
   
   // Generate array of months and years for selectors
   const months = [
@@ -104,48 +100,80 @@ const PayRollViewOwn = () => {
   ]
   
   // Generate years (current year and 5 previous years)
-  const currentYear = currentDate.getFullYear()
   const years = Array.from({ length: 6 }, (_, i) => currentYear - i)
 
-  const fetchData = async () => {
-    try {
-      setIsLoading(true)
-      if (!user?.id) return
-      
-      // Fetch payroll data
-      const response = await axios.get(APIDictionary.get_payroll_stats(user?.id), {
-        params: { month: selectedMonth, year: selectedYear }
-      })
-      
-      setStatistics(response.data)
-      
-      // Also fetch general payroll data
-      const payrollResponse = await axios.get(APIDictionary.get_payroll(user?.id))
-      setPayrollData(payrollResponse.data)
-      
-      setIsLoading(false)
-    } catch (error) {
-      console.error("Error fetching payroll data:", error)
-      toast({
-        title: "Error",
-        description: "Failed to fetch payroll data. Please try again.",
-        variant: "destructive"
-      })
+  // Check if user has access to view this employee's data
+  useEffect(() => {
+    const checkAccess = async () => {
+      try {
+        if (!user?.id || !employeeId) return
+        
+        // Get employee details 
+        const employeeResponse = await axios.get(`${APIDictionary.userProfile(employeeId)}`)
+        setEmployeeDetails(employeeResponse.data.user)
+        
+        // Check if the user is manager of this employee
+        const isManager = employeeResponse.data.user.managerId === user.id
+        
+        // Check if user has org admin permissions
+        const userResponse = await axios.get(`${APIDictionary.userProfile(user.id)}`)
+        const hasViewAllPermission = userResponse.data.user.roles?.some((userRole: any) => 
+          userRole.role.permissions?.some((perm: any) => 
+            perm.permission?.name === "payroll.view_all"
+          )
+        )
+        
+        // Set access status (can view if user is the employee, their manager, or has admin permissions)
+        const canAccess = (user.id === employeeId) || isManager || hasViewAllPermission
+        setHasAccess(canAccess)
+        
+        if (!canAccess) {
+          toast({
+            title: "Access Denied",
+            description: "You don't have permission to view this employee's payroll data.",
+            variant: "destructive"
+          })
+        }
+      } catch (error) {
+        console.error("Error checking access:", error)
+        setHasAccess(false)
+      }
+    }
+    
+    checkAccess()
+  }, [user, employeeId])
+
+  // Fetch payroll data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true)
+        if (!user?.id || !employeeId || !hasAccess) return
+        
+        // Fetch payroll statistics
+        const response = await axios.get(`${APIDictionary.payroll}/employee/${employeeId}`, {
+          params: { month: selectedMonth, year: selectedYear }
+        })
+        
+        setStatistics(response.data)
+        setIsLoading(false)
+      } catch (error) {
+        console.error("Error fetching payroll data:", error)
+        toast({
+          title: "Error",
+          description: "Failed to fetch payroll data. Please try again.",
+          variant: "destructive"
+        })
+        setIsLoading(false)
+      }
+    }
+    
+    if (hasAccess) {
+      fetchData()
+    } else {
       setIsLoading(false)
     }
-  }
-
-  useEffect(() => {
-    fetchData()
-  }, [user, selectedMonth, selectedYear])
-  
-  // Function to check if payslip exists for the selected month/year
-  const checkPayslipExists = () => {
-    if (!statistics?.monthlySalaries?.length) return false
-    return statistics.monthlySalaries.some(
-      salary => salary.month === selectedMonth && salary.year === selectedYear
-    )
-  }
+  }, [user, employeeId, hasAccess, selectedMonth, selectedYear])
   
   // Function to download payslip as PDF
   const downloadPayslip = (salaryData: PayrollStatistics['monthlySalaries'][0]) => {
@@ -165,10 +193,10 @@ const PayRollViewOwn = () => {
     doc.line(14, 37, 196, 37)
     
     const employeeDetails = [
-      ["Name", `${user?.firstName || ''} ${user?.lastName || ''}`],
-      ["Employee ID", user?.employeeId || ''],
-      ["Bank Account", payrollData?.bankDetails?.accountNumber || ''],
-      ["Bank Name", payrollData?.bankDetails?.bankName || '']
+      ["Name", `${statistics?.employee?.firstName || ''} ${statistics?.employee?.lastName || ''}`],
+      ["Employee ID", statistics?.employee?.employeeId || ''],
+      ["Bank Account", statistics?.bankDetails?.accountNumber || ''],
+      ["Bank Name", statistics?.bankDetails?.bankName || '']
     ]
     
     // @ts-ignore - jsPDF-autotable extension
@@ -220,17 +248,17 @@ const PayRollViewOwn = () => {
     // Net salary
     doc.setFontSize(12)
     doc.setTextColor(0, 0, 0)
-    // Access lastAutoTable property added by the plugin
     doc.text(`Net Salary: ₹${salaryData.netSalary.toLocaleString()}`, 105, (doc as any).lastAutoTable.finalY + 20, { align: "center" })
     
     // Additional information
     doc.setFontSize(8)
     doc.setTextColor(100, 100, 100)
     doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 280)
+    doc.text(`Generated by: ${user?.firstName} ${user?.lastName}`, 14, 285)
     doc.text("This is a computer generated payslip and does not require signature.", 105, 285, { align: "center" })
     
     // Save the PDF
-    doc.save(`Payslip-${months.find(m => m.value === salaryData.month)?.label}-${salaryData.year}.pdf`)
+    doc.save(`Payslip-${statistics?.employee?.firstName}-${statistics?.employee?.lastName}-${months.find(m => m.value === salaryData.month)?.label}-${salaryData.year}.pdf`)
     
     toast({
       title: "Success",
@@ -240,6 +268,20 @@ const PayRollViewOwn = () => {
   }
 
   if (isLoading) return <Loader/>
+
+  if (!hasAccess) {
+    return (
+      <Card className="m-4">
+        <CardContent className="p-8 text-center">
+          <h2 className="text-xl font-bold mb-4">Access Denied</h2>
+          <p className="mb-4">You don't have permission to view this employee's payroll data.</p>
+          <Button onClick={() => navigate(-1)}>
+            <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
+          </Button>
+        </CardContent>
+      </Card>
+    )
+  }
 
   // Get the current payslip for the selected month/year
   const currentPayslip = statistics?.monthlySalaries?.find(
@@ -265,14 +307,32 @@ const PayRollViewOwn = () => {
 
   return (
     <div className="w-full h-full px-4 mx-auto py-6 space-y-6 overflow-y-scroll">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">My Payroll Information</h1>
-        <Button 
-          variant="outline"
-          onClick={() => navigate('/p/payroll/all')}
-        >
-          View All Employees' Payroll
-        </Button>
+      <div className="flex flex-wrap justify-between items-center gap-2">
+        <div>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => navigate(-1)}
+            className="mb-2"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back
+          </Button>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {employeeDetails?.firstName} {employeeDetails?.lastName}'s Payroll
+          </h1>
+          <p className="text-muted-foreground">
+            Employee ID: {employeeDetails?.employeeId}
+            {employeeDetails?.department && ` | Department: ${employeeDetails.department.name}`}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline"
+            onClick={() => navigate('/p/payroll/all')}
+          >
+            <Users className="mr-2 h-4 w-4" /> All Employees
+          </Button>
+        </div>
       </div>
       
       {/* Month and Year Selector */}
@@ -505,19 +565,19 @@ const PayRollViewOwn = () => {
             <TableBody>
               <TableRow>
                 <TableCell className="font-medium">Account Holder</TableCell>
-                <TableCell>{payrollData?.bankDetails?.accountHolder}</TableCell>
+                <TableCell>{statistics?.bankDetails?.accountHolder}</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="font-medium">Account Number</TableCell>
-                <TableCell>{payrollData?.bankDetails?.accountNumber}</TableCell>
+                <TableCell>{statistics?.bankDetails?.accountNumber}</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="font-medium">IFSC Code</TableCell>
-                <TableCell>{payrollData?.bankDetails?.ifscCode}</TableCell>
+                <TableCell>{statistics?.bankDetails?.ifscCode}</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="font-medium">Bank Name</TableCell>
-                <TableCell>{payrollData?.bankDetails?.bankName}</TableCell>
+                <TableCell>{statistics?.bankDetails?.bankName}</TableCell>
               </TableRow>
             </TableBody>
           </Table>
@@ -527,4 +587,4 @@ const PayRollViewOwn = () => {
   )
 }
 
-export default PayRollViewOwn
+export default PayrollViewEmployeeDetails

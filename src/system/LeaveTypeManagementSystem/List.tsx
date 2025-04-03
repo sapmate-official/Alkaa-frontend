@@ -52,7 +52,7 @@ export default function LeaveTypeList() {
                 APIDictionary.leave_type(id)
             );
             
-            if (response.status === 204) {
+            if (response.status === 200) {
                 toast({
                     title: "Success",
                     description: "Leave type deleted successfully"

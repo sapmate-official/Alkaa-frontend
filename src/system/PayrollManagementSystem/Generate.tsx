@@ -13,6 +13,7 @@ import { useAuth } from '@/services/AuthContext';
 
 const SalaryGenerator = () => {
   const [employees, setEmployees] = useState<User[]>([]);
+  const [salaryExistenceMap, setSalaryExistenceMap] = useState<Record<string, boolean>>({});
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
@@ -37,6 +38,45 @@ const SalaryGenerator = () => {
       });
     }
   };
+  
+  useEffect(() => {
+    const fetchSalaryRecordExistence = async () => {
+      if (!employees.length) return;
+      
+      const existenceMap: Record<string, boolean> = {};
+      
+      for (const emp of employees) {
+        if (emp?.id) {
+          const exists = await fetchSalaryRecordExistenceBasedOnMonthYear(emp.id, month, year);
+          existenceMap[emp.id] = exists;
+        }
+      }
+      
+      setSalaryExistenceMap(existenceMap);
+      
+      // Update selected employees list to remove any that now have records
+      setSelectedEmployees(prev => 
+        prev.filter(id => !existenceMap[id])
+      );
+    };
+    
+    fetchSalaryRecordExistence();
+  }, [month, year, employees.length]);
+  
+  const fetchSalaryRecordExistenceBasedOnMonthYear = async (userId: string, month: number, year: number) => {
+    try {
+      const response = await axios.get(APIDictionary.SalaryRecordExistence(userId,month,year), {
+        withCredentials: true
+      });
+      return response.data.exists;
+    } catch (error) {
+      setStatus({
+        type: 'error',
+        message: 'Failed to check salary record existence'
+      });
+    }
+  }
+ 
 
   const handleGenerateSalaries = async () => {
     setLoading(true);
@@ -128,9 +168,16 @@ const SalaryGenerator = () => {
                   <Checkbox
                     id="select-all"
                     checked={selectedEmployees?.length === employees?.length}
-                    onCheckedChange={(checked) => {
+                    onCheckedChange={async (checked) => {
+                      
                       if (checked) {
-                        setSelectedEmployees(employees?.map(emp => emp?.id) ?? []);
+                        const eligibleEmployees = [];
+                        for (const emp of employees || []) {
+                          if (emp?.id && !salaryExistenceMap[emp?.id]) {
+                            eligibleEmployees.push(emp.id);
+                          }
+                        }
+                        setSelectedEmployees(eligibleEmployees);
                       } else {
                         setSelectedEmployees([]);
                       }
@@ -138,11 +185,12 @@ const SalaryGenerator = () => {
                   />
                   <Label htmlFor="select-all">Select All</Label>
                 </div>
-                {employees?.map((employee:User) => (
+                {employees?.map((employee: User) => (
                   <div key={employee?.id} className="ml-6 flex items-center space-x-2">
                     <Checkbox
                       id={`employee-${employee?.id}`}
-                      checked={selectedEmployees?.includes(employee?.id)}
+                      checked={selectedEmployees?.includes(employee?.id) || salaryExistenceMap[employee?.id]}
+                      disabled={salaryExistenceMap[employee?.id]}
                       onCheckedChange={(checked) => {
                         if (checked) {
                           setSelectedEmployees([...selectedEmployees, employee?.id]);

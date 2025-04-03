@@ -7,7 +7,6 @@ import { Switch } from "@/components/ui/switch"
 import axios from "axios"
 import { useEffect, useState } from "react"
 import { useParams } from "react-router-dom"
-
 interface Organization {
   id: string;
   name: string;
@@ -88,7 +87,7 @@ const SpecificOrganizationHome = () => {
   if (!organization) return <div>Loading...</div>
 
   return (
-    <Card className="w-full mx-auto mt-8">
+    <Card className="w-full  mt-8">
       <CardHeader>
         <CardTitle className="flex justify-between items-center">
           <div className="flex items-center gap-4">
