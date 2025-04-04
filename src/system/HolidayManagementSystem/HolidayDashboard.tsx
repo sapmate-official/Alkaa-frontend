@@ -15,6 +15,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from '@/hooks/use-toast';
 import { holidayTypeService } from './services/holidayType.service';
+import { useAtom } from 'jotai';
+import { permissionListAtom } from '@/store/atom';
 
 const HolidayManagementSystem = () => {
   const {user} = useAuth()
@@ -26,7 +28,16 @@ const HolidayManagementSystem = () => {
   const [error, setError] = useState<string | null>(null);
   const [orgId, setOrgId] = useState<string>('');
   const {toast} = useToast();
-  
+  const [permissionList]  = useAtom(permissionListAtom);
+  const canManageHolidays = permissionList.some(permission => permission.key === 'holiday_manage');
+  const canViewHolidays = permissionList.some(permission => permission.key === 'holiday_view');
+  // Set default tab based on permissions
+  useEffect(() => {
+    if (!canManageHolidays && activeTab === 'admin') {
+      setActiveTab('calendar');
+    }
+  }, [canManageHolidays, activeTab]);
+
   useEffect(() => {
     setOrgId(user?.orgId || '');
   }, [user]);
@@ -169,7 +180,7 @@ const HolidayManagementSystem = () => {
     <Card className="w-full bg-background shadow-md overflow-y-scroll">
       <CardContent className="p-6">
         <h1 className="text-2xl font-bold mb-6 text-foreground flex items-center">
-          <Calendar className="mr-2" /> Company Holiday Management
+          <Calendar className="mr-2" /> Company Holiday Calendar
         </h1>
         
         {/* Error message */}
@@ -179,47 +190,52 @@ const HolidayManagementSystem = () => {
           </Alert>
         )}
         
-        {/* Navigation Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-1/2 grid-cols-2">
-            <TabsTrigger value="calendar">Holiday Calendar</TabsTrigger>
-            <TabsTrigger value="admin">Manage Holidays</TabsTrigger>
-          </TabsList>
+        {/* Loading state */}
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
+          </div>
+        ) : (
+          <>
+            {/* Show tabs only when user has manage permissions */}
+            {canManageHolidays ? (
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-1/2 grid-cols-2">
+                  <TabsTrigger value="calendar">Holiday Calendar</TabsTrigger>
+                  <TabsTrigger value="admin">Manage Holidays</TabsTrigger>
+                </TabsList>
 
-          {/* Loading state */}
-          {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
-            </div>
-          ) : (
-            <>
-              <TabsContent value="calendar">
-                <CalendarView 
-                  holidays={holidays} 
-                  year={year} 
-                  setYear={setYear}
-                />
-              </TabsContent>
-              
-              <TabsContent value="admin">
-                <AdminView
-                  holidays={holidays}
-                  holidayTypes={holidayTypes}
-                  orgId={orgId || ''}
-                  onAddHoliday={handleAddHoliday}
-                  onDeleteHoliday={handleDeleteHoliday}
-                  onAddHolidayType={handleAddHolidayType}
-                  onUpdateHolidayType={handleUpdateHolidayType}
-                  onDeleteHolidayType={handleDeleteHolidayType}
-                />
-              </TabsContent>
-              
-              {/* <TabsContent value="policy">
-                <PolicyView />
-              </TabsContent> */}
-            </>
-          )}
-        </Tabs>
+                <TabsContent value="calendar">
+                  <CalendarView 
+                    holidays={holidays} 
+                    year={year} 
+                    setYear={setYear}
+                  />
+                </TabsContent>
+                
+                <TabsContent value="admin">
+                  <AdminView
+                    holidays={holidays}
+                    holidayTypes={holidayTypes}
+                    orgId={orgId || ''}
+                    onAddHoliday={handleAddHoliday}
+                    onDeleteHoliday={handleDeleteHoliday}
+                    onAddHolidayType={handleAddHolidayType}
+                    onUpdateHolidayType={handleUpdateHolidayType}
+                    onDeleteHolidayType={handleDeleteHolidayType}
+                  />
+                </TabsContent>
+              </Tabs>
+            ) : (
+              /* Directly render calendar view when only one tab is available */
+              <CalendarView 
+                holidays={holidays} 
+                year={year} 
+                setYear={setYear}
+              />
+            )}
+          </>
+        )}
       </CardContent>
     </Card>
   );
