@@ -14,8 +14,10 @@ import {
 } from "@/components/ui/table"
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Edit2 } from 'lucide-react'
+import { Edit2, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { useAtom } from 'jotai'
+import { permissionListAtom } from '@/store/atom'
 
 interface LeaveRequest {
   id: string
@@ -39,9 +41,20 @@ interface LeaveRequest {
 
 const LeaveRequestList = () => {
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([])
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [canCreateLeaveRequest, setCanCreateLeaveRequest] = useState(false)
+  const [canApproveLeaveRequest, setCanApproveLeaveRequest] = useState(false)
   const { user } = useAuth()
   const { toast } = useToast()
   const navigate = useNavigate()
+  const [permissionList] = useAtom(permissionListAtom)
+
+  const checkPermissions = () => {
+    setCanCreateLeaveRequest(permissionList.some(permission => permission.key === 'leave_request_create'))
+    setCanApproveLeaveRequest(
+      permissionList.some(permission=>permission.key === 'approve_leave') || permissionList.some(permission => permission.key === 'leave_request_approve')
+    )
+  }
 
   const fetchLeaveRequests = async () => {
     try {
@@ -64,7 +77,8 @@ const LeaveRequestList = () => {
 
   useEffect(() => {
     fetchLeaveRequests()
-  }, [])
+    checkPermissions()
+  }, [permissionList])
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -83,18 +97,54 @@ const LeaveRequestList = () => {
     navigate(`/p/leaverequest/edit/${id}`)
   }
 
+  const handleDelete = async (id: string) => {
+    // Confirm before deleting
+    if (!window.confirm("Are you sure you want to delete this leave request?")) {
+      return
+    }
+
+    setIsDeleting(true)
+    try {
+      const response = await axios.delete(`${APIDictionary.leave_request}/${id}`, {
+        withCredentials: true
+      })
+
+      if (response.status === 204) {
+        toast({
+          title: "Success",
+          description: "Leave request deleted successfully",
+          variant: "default"
+        })
+        // Refresh the leave requests list
+        fetchLeaveRequests()
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.error || "Failed to delete leave request",
+        variant: "destructive"
+      })
+      console.error("Error deleting leave request:", error)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   return (
     <div className="container mx-auto py-6 bg-background2">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-bold">My Leave Requests</h2>
         <div className='flex space-x-4'>
-
-        <Button onClick={() => navigate('/p/leaverequest/create')}>
-          Create Leave Request
-        </Button>
-        <Button onClick={() => navigate('/p/leaverequest/approve')}>
-          Approve Leave Request
-        </Button>
+          {canCreateLeaveRequest && (
+            <Button onClick={() => navigate('/p/leaverequest/create')}>
+              Create Leave Request
+            </Button>
+          )}
+          {canApproveLeaveRequest && (
+            <Button onClick={() => navigate('/p/leaverequest/approve')}>
+              Approve Leave Request
+            </Button>
+          )}
         </div>
       </div>
 
@@ -126,13 +176,23 @@ const LeaveRequestList = () => {
                 <TableCell>{format(new Date(request?.createdAt), 'PP')}</TableCell>
                 <TableCell>
                   {request?.status === 'PENDING' && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleEdit(request?.id)}
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEdit(request?.id)}
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(request?.id)}
+                        disabled={isDeleting}
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </div>
                   )}
                 </TableCell>
               </TableRow>
