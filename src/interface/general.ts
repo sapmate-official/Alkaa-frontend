@@ -67,6 +67,7 @@ export interface Permission {
   name: string;
   description?: string;
   module: string;
+  key?: string;
   action: string;
   createdAt: Date;
   organization: Organization;
@@ -378,4 +379,99 @@ export enum AttendanceVerificationStatus {
   UNVERIFIED = "UNVERIFIED",
   VERIFIED = "VERIFIED",
   REJECTED = "REJECTED"
+}
+export interface PayslipData {
+  id: string;
+  userId: string;
+  month: number;
+  year: number;
+  basicSalary: number;
+  netSalary: number;
+  status: PayrollStatus;
+  processedAt: string | null;
+  createdAt: string;
+  allowances: Record<string, number>;
+  deductions: Record<string, number>;
+  paymentMode?: string;
+  paymentRef?: string;
+  remarks?: string;
+  incentive?: number;
+  bonus?: number;
+  employee: {
+    firstName?: string;
+    lastName?: string;
+    employeeId?: string;
+    department?: string;
+    designation?: string;
+    bankDetails?: {
+      accountNumber: string;
+      bankName: string;
+      ifscCode: string;
+    };
+  };
+}
+
+export interface PayrollStatistics {
+  basicInfo: {
+    salaryRecordId: string;
+    month: number;
+    monthName: string;
+    year: number;
+    employee: {
+      id: string;
+      name: string;
+      employeeId: string;
+      department: string;
+    };
+    status: PayrollStatus;
+    processedAt: string | null;
+    paymentInfo: {
+      mode: string | null;
+      reference: string | null;
+      remarks: string | null;
+    };
+  };
+  salaryBreakdown: {
+    basicSalary: number;
+    totalAllowances: number;
+    allowanceDetails: Record<string, number>;
+    totalDeductions: number;
+    deductionDetails: Record<string, number>;
+    netSalary: number;
+    taxAmount: number;
+    additionalPayments: {
+      incentive: number;
+      bonus: number;
+    };
+  };
+  attendanceAnalysis: {
+    totalDaysInMonth: number;
+    workingDays: number;
+    presentDays: number;
+    halfDays: number;
+    absentDays: number;
+    paidLeaveDays: number;
+    unpaidLeaveDays: number;
+    attendancePercentage: number;
+  };
+  comparisons: {
+    earningsRatio: number;
+    previousMonth: {
+      difference: number;
+      percentageChange: number;
+    } | null;
+    yearToDateEarnings: number;
+  };
+  visualData: {
+    earningsVsDeductions: {
+      earnings: number;
+      deductions: number;
+    };
+    salaryComponents: {
+      basic: number;
+      allowances: number;
+      deductions: number;
+      net: number;
+    };
+  };
 }

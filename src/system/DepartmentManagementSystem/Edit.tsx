@@ -1,5 +1,5 @@
 import { APIDictionary } from '@/api/v2/APIdict'
-import { Department } from '@/interface/general'
+import { Department, User } from '@/interface/general'
 import axios from 'axios'
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -11,6 +11,34 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { useToast } from '@/hooks/use-toast'
 import Loader from '@/components/Loader'
+import { Pencil, Trash } from 'lucide-react'
+import { useAtom } from 'jotai'
+import { permissionListAtom } from '@/store/atom'
+import CheckPermission from '@/services/PermissionCheck'
+
+export const ButtonOfSpecificDepartmentEdit = ({id,user}:{
+  id?: string | undefined
+  user: User | null | undefined
+}) => {
+  const navigate = useNavigate()
+  const [permissions] = useAtom(permissionListAtom)
+  const hasPermission = CheckPermission('edit_department', permissions)
+  if (!hasPermission) return null
+  if (!id) return null
+  
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={() => navigate(`/p/department/${id ? id : user?.Department?.[0]?.id}/edit`)}
+    >
+      <Pencil className="h-4 w-4 mr-2" />
+      Edit Department
+    </Button>
+  )
+
+}
+
 
 const SpecificDepartmentEdit = () => {
   const { id } = useParams()
@@ -23,10 +51,12 @@ const SpecificDepartmentEdit = () => {
     budget: 0,
     status: true
   })
-  const {toast} = useToast()
+  const { toast } = useToast()
   const navigate = useNavigate()
+  const [permissions] = useAtom(permissionListAtom)
+  const hasDeletePermission = CheckPermission('delete_department', permissions)
 
-  const fetchDepartment = async () => {   
+  const fetchDepartment = async () => {
     try {
       const response = await axios.get(`${APIDictionary.department}/${id}`)
       setDepartment(response?.data)
@@ -69,6 +99,26 @@ const SpecificDepartmentEdit = () => {
     }))
   }
 
+  const handleDelete = async () => {
+    if (window.confirm('Are you sure you want to delete this department? This action cannot be undone.')) {
+      try {
+        await axios.delete(`${APIDictionary.department}/${id}`)
+        toast({
+          title: "Success",
+          description: "Department deleted successfully"
+        })
+        navigate('/p/department/list') 
+      } catch (error) {
+        console.error('Error deleting department:', error)
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to delete department"
+        })
+      }
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
@@ -88,7 +138,7 @@ const SpecificDepartmentEdit = () => {
     }
   }
 
-  if (!department) return <Loader/>
+  if (!department) return <Loader />
   return (
     <form onSubmit={handleSubmit} className=" mx-auto p-4 h-full w-full overflow-y-scroll">
       <Card>
@@ -168,6 +218,16 @@ const SpecificDepartmentEdit = () => {
             >
               Cancel
             </Button>
+            {hasDeletePermission && (
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={handleDelete}
+              >
+                <Trash className="h-4 w-4 mr-2" />
+                Delete Department
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
