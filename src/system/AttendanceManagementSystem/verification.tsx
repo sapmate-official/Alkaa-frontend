@@ -99,8 +99,12 @@ const AttendanceVerificationComponent: React.FC = () => {
   const [selectedRecord, setSelectedRecord] = useState<AttendanceRecord | null>(null);
   const [selectedReport, setSelectedReport] = useState<any>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [startDate, setStartDate] = useState<Date>(new Date("2025-03-01"));
-  const [endDate, setEndDate] = useState<Date>(new Date("2025-03-07"));
+  const [startDate, setStartDate] = useState<Date>(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 7);
+    return date;
+  });
+  const [endDate, setEndDate] = useState<Date>(new Date());
   const [managerNotes, setManagerNotes] = useState("");
 
   // Filters
