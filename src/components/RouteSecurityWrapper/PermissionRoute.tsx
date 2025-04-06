@@ -1,7 +1,7 @@
 import { useAtom } from "jotai";
 import { ReactNode } from "react";
-import { permissionListAtom } from "../store/atom";
-import Unauthorized from "./Unauthorized";
+import { permissionListAtom } from "../../store/atom";
+import Unauthorized from "../Unauthorized";
 
 interface PermissionRouteProps {
   children: ReactNode;
