@@ -89,7 +89,7 @@ export const DesktopSidebar = ({
     <>
       <motion.div
         className={cn(
-          "h-full px-4 py-4 hidden  md:flex md:flex-col bg-neutral-100 dark:bg-neutral-800 w-[300px] flex-shrink-0",
+          "h-full px-3 py-2 hidden md:flex md:flex-col bg-neutral-100 dark:bg-neutral-800 w-[300px] flex-shrink-0",
           className
         )}
         animate={{
@@ -166,7 +166,7 @@ export const SidebarLink = ({
   className?: string;
   props?: React.HTMLAttributes<HTMLDivElement>;
 }) => {
-  const { open, animate,setOpen } = useSidebar();
+  const { open, animate, setOpen } = useSidebar();
   const navigate = useNavigate();
   const handleClick = () => {
     navigate(link.href);
@@ -180,7 +180,8 @@ export const SidebarLink = ({
     <div
       onClick={handleClick}
       className={cn(
-        "flex items-center justify-start gap-2 group/sidebar py-2 cursor-pointer",
+        "flex items-center gap-2 py-1.5 cursor-pointer",
+        open ? "justify-start" : "justify-center",
         className
       )}
       {...props}
