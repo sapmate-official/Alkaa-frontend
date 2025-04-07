@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import './App.css'
-import { Route, Routes, Navigate, BrowserRouter } from 'react-router-dom';
+import { Route, Routes, Navigate, BrowserRouter, useLocation } from 'react-router-dom';
 import Home from './page/public/Home';
 import SetPassword from './page/public/SetPassword';
 import { AuthProvider, useAuth } from './services/AuthContext';
@@ -36,7 +36,6 @@ import ListOfNotification from './system/NotificationManagementSystem/ListOfNoti
 import ListOfNotificationTemplate from './system/NotificationManagementSystem/ListOfNotificationTemplate';
 import NotificationTemplateCreate from './system/NotificationManagementSystem/NotificationTemplateCreate';
 import SpecificOrganizationView from './system/SpecificOrganizationManagementSystem/View';
-import ListOfEmployee from './system/EmployeeManagementSystem/List';
 import CreateEmployeeNew from './system/EmployeeManagementSystem/CreateEmployeeNew';
 import ListOfDepartment from './system/DepartmentManagementSystem/List';
 import CreateDepartment from './system/DepartmentManagementSystem/Create';
@@ -44,7 +43,7 @@ import SpecificDepartmentView from './system/DepartmentManagementSystem/View';
 import SpecificDepartmentEdit from './system/DepartmentManagementSystem/Edit';
 import { useAtom } from 'jotai';
 import { permissionListAtom } from './store/atom';
-import PermissionRoute from './components/PermissionRoute';
+import PermissionRoute from './components/RouteSecurityWrapper/PermissionRoute';
 import PayRollViewOwn from './system/PayrollManagementSystem/ViewOwn';
 import RolesPermissionsManagement from './system/RoleManagementSystem/RoleManagementDashboard';
 import AttendanceVerificationComponent from './system/AttendanceManagementSystem/verification';
@@ -52,6 +51,17 @@ import AttendanceLivePanel from './system/AttendanceManagementSystem/livePanel';
 import PastNotCheckedDays from './system/AttendanceManagementSystem/pastdays';
 import PermissionManagement from './system/PermissionManagementSystem/PermissionManagementSystem';
 import HolidayManagementSystem from './system/HolidayManagementSystem/HolidayDashboard';
+import OrganizationSettings from './system/SpecificOrganizationManagementSystem/OrganizationSettings';
+import PayrollViewAllEmployees from './system/PayrollManagementSystem/ViewAllEmployees';
+import PayrollViewEmployeeDetails from './system/PayrollManagementSystem/ViewEmployeePayroll';
+import PermissionRouteBasedOnKey from './components/RouteSecurityWrapper/PermissionBasedOnKey';
+import DashboardOfPayroll from './system/PayrollManagementSystem/New_version/DashboardOfPayroll';
+import MainCompOfViewPayslipOfAllSubordinatesPayroll from './system/PayrollManagementSystem/New_version/ManagerLevel/ViewPayslipOfAllSubordinatesPayroll/MainCompOfViewPayslipOfAllSubordinatesPayroll';
+import MainGenerateSubordinateSalaryPage from './system/PayrollManagementSystem/New_version/ManagerLevel/GenerateSalary/MainGenerateSubordinateSalaryPage';
+import MainSubordinateSalaryTransactionPage from './system/PayrollManagementSystem/New_version/ManagerLevel/Salarytransaction/MainSubordinateSalaryTransactionPage';
+import MainGenerateUsersSalaryPage from './system/PayrollManagementSystem/New_version/AdminLevel/GenerateSalary/MainGenerateUserSalaryPage';
+import MainCompOfViewPayslipOfAllUsersPayroll from './system/PayrollManagementSystem/New_version/AdminLevel/ViewPayslipOfAllUsersPayroll/MainCompOfViewPayslipOfAllUsersPayroll';
+import EmployeeManagement from './system/EmployeeManagementSystem/EmployeeManagement';
 
 
 function App() {
@@ -59,26 +69,26 @@ function App() {
 
   return (
     <BrowserRouter>
-    <Routes>
-      {/* Public Routes - Outside AuthProvider */}
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/reset-password/:token" element={<SetPassword />} />
-      <Route path="/auth/signin" element={<AuthProvider><SignIn /></AuthProvider>} />
-      
-      {/* Protected Routes - Wrapped in AuthProvider */}
-      <Route
-        path="/p/*"
-        element={
-          <AuthProvider>
-            <MainLayout>
-              <ProtectedRoute />
-            </MainLayout>
-          </AuthProvider>
-        }
-      />
-    </Routes>
-    <Toaster />
-  </BrowserRouter>
+      <Routes>
+        {/* Public Routes - Outside AuthProvider */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/reset-password/:token" element={<SetPassword />} />
+        <Route path="/auth/signin" element={<AuthProvider><SignIn /></AuthProvider>} />
+
+        {/* Protected Routes - Wrapped in AuthProvider */}
+        <Route
+          path="/p/*"
+          element={
+            <AuthProvider>
+              <MainLayout>
+                <ProtectedRoute />
+              </MainLayout>
+            </AuthProvider>
+          }
+        />
+      </Routes>
+      <Toaster />
+    </BrowserRouter>
   )
 }
 
@@ -87,7 +97,9 @@ const ProtectedRoute: React.FC = () => {
   const { user, isLoading } = useAuth();
   const [userDetails, setUserDetails] = useState<any | null>(null);
   const [isUserLoading, setIsUserLoading] = useState(true);
-  const [, setPermissionList] = useAtom(permissionListAtom)
+  const [, setPermissionList] = useAtom(permissionListAtom);
+  const location = useLocation();
+  const [previousPath, setPreviousPath] = useState<string | null>(null);
 
   const fetchUserDetails = async () => {
     try {
@@ -95,11 +107,9 @@ const ProtectedRoute: React.FC = () => {
       setIsUserLoading(true);
       const response = await axios.get(APIDictionary.userProfile(user?.id), { withCredentials: true });
       const data = response.data;
-      // console.log(data);
-
 
       setUserDetails(data);
-      setPermissionList(data?.user?.roles[0]?.role?.permissions?.map((permission: any) => permission.permission))
+      setPermissionList(data?.user?.roles[0]?.role?.permissions?.map((permission: any) => permission.permission));
     } catch (error) {
       console.error("Error fetching user details", error);
     } finally {
@@ -112,6 +122,15 @@ const ProtectedRoute: React.FC = () => {
       fetchUserDetails();
     }
   }, [user, isLoading]);
+
+
+  useEffect(() => {
+    if (previousPath?.includes('/role') && !location.pathname.includes('/role')) {
+      fetchUserDetails();
+    }
+
+    setPreviousPath(location.pathname);
+  }, [location.pathname]);
 
   if (isLoading || isUserLoading) {
     return <Loader />;
@@ -136,34 +155,40 @@ const ClientRoute = () => {
       <Route path="/profile/*" element={<ProfileRoutes />} />
 
       <Route path="/leavetype/*" element={
-        <PermissionRoute requiredPermissions={['leave.create_types', 'leave.read_types', 'leave.update_types', 'leave.delete_types']}>
+        <PermissionRouteBasedOnKey requiredPermissions={['leave_type_create', 'read_leave_type', 'update_leave_types', 'delete_leave_type']}>
           <LeaveTypeManagementSystem />
-        </PermissionRoute>
+        </PermissionRouteBasedOnKey>
       } />
 
       <Route path="/leaverequest/*" element={
-        <PermissionRoute requireAll={false} requiredPermissions={['leave.request', 'leave.approve', 'leave.reject', 'leave.view_team_leaves', 'leave.view_all_leaves']}>
+        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['leave_request', 'approve_leave', 'reject_leave', 'view_subordinates_leave', 'view_all_user_leave']}>
           <LeaveRequestManagementSystem />
-        </PermissionRoute>
+        </PermissionRouteBasedOnKey>
       } />
 
       <Route path="/leavebalance/*" element={
-        <PermissionRoute requiredPermissions={['leave.manage_balances']}>
+        <PermissionRouteBasedOnKey requiredPermissions={['view_leave_balance']}>
           <LeaveBalanceManagementSystem />
-        </PermissionRoute>
+        </PermissionRouteBasedOnKey>
       } />
 
       <Route path="/attendance/*" element={
-        <PermissionRoute requiredPermissions={['attendance.mark', 'attendance.view_own', 'attendance.view_team', 'attendance.view_all', 'attendance.modify']}>
+        <PermissionRouteBasedOnKey requiredPermissions={['mark_attendance', 'view_own_attendance', 'view_subordinates_attendance', 'view_all_user_attendance']}>
           <AttendanceManagementSystem />
-        </PermissionRoute>
+        </PermissionRouteBasedOnKey>
       } />
 
-      <Route path="/payroll/*" element={
+      {/* <Route path="/payroll/*" element={
         <PermissionRoute requiredPermissions={['payroll.view_own', 'payroll.view_team', 'payroll.view_all', 'payroll.process']}>
           <PayrollManagementSystem />
         </PermissionRoute>
+      } /> */}
+      <Route path="/new-payroll/*" element={
+        <PermissionRouteBasedOnKey requiredPermissions={['view_salary_slip_to_myself ']}>
+          <NewPayrollManagementSystem />
+        </PermissionRouteBasedOnKey>
       } />
+
 
       <Route path="/notification/*" element={
         <PermissionRoute requiredPermissions={['notification.create_template', 'notification.read_template', 'notification.update_template', 'notification.send']}>
@@ -172,27 +197,28 @@ const ClientRoute = () => {
       } />
 
       <Route path="/organization/*" element={
-        <PermissionRoute requiredPermissions={['org.manage_settings', 'org.view_settings']}>
+        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['view_organization_basic_details', 'see_team_details', 'view_own_department_info', 'view_organization_detailed_info']}>
           <SpecificOrganizationManagementSystem />
-        </PermissionRoute>
+        </PermissionRouteBasedOnKey>
+
       } />
 
       <Route path="/employee/*" element={
-        <PermissionRoute requiredPermissions={['Create User/Employee', 'Read User Details', 'Update User Details', 'Delete User']}>
+        <PermissionRouteBasedOnKey requiredPermissions={['create_user', 'Read User Details', 'Update User Details', 'Delete User']}>
           <EmployeeManagementSystem />
-        </PermissionRoute>
+        </PermissionRouteBasedOnKey>
       } />
 
       <Route path="/department/*" element={
-        <PermissionRoute requiredPermissions={['department.create', 'department.read', 'department.update', 'department.delete']}>
+        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['view_all_department_info', 'view_own_department_info', 'create_new_department', 'edit_department']}>
           <DepartmentManagementSystem />
-        </PermissionRoute>
+        </PermissionRouteBasedOnKey>
       } />
 
       <Route path="/role/*" element={
-        <PermissionRoute requiredPermissions={['Manage User Roles']}>
+        <PermissionRouteBasedOnKey requiredPermissions={['manage_role']}>
           <RolePermissionManagementSystem />
-        </PermissionRoute>
+        </PermissionRouteBasedOnKey>
       } />
       <Route path="/holiday/*" element={
         <PermissionRoute requireAll={false} requiredPermissions={['holiday.create', 'holiday.read', 'holiday.update', 'holiday.delete']}>
@@ -214,15 +240,15 @@ const RolePermissionManagementSystem = () => {
 const DepartmentManagementSystem = () => {
   return (
     <Routes>
-      <Route path='/' element={
+      {/* <Route path='/' element={
         <PermissionRoute requiredPermissions={['department.read']}>
           <SpecificDepartmentView />
         </PermissionRoute>
-      } />
-      <Route path='/list' element={
-        <PermissionRoute requiredPermissions={['department.read']}>
+      } /> */}
+      <Route path='/' element={
+        <PermissionRouteBasedOnKey requiredPermissions={['view_all_department_info', 'view_own_department_info']}>
           <ListOfDepartment />
-        </PermissionRoute>
+        </PermissionRouteBasedOnKey>
       } />
       <Route path='/create' element={
         <PermissionRoute requiredPermissions={['department.create']}>
@@ -235,9 +261,9 @@ const DepartmentManagementSystem = () => {
         </PermissionRoute>
       } />
       <Route path='/:id/edit' element={
-        <PermissionRoute requiredPermissions={['department.update']}>
+        <PermissionRouteBasedOnKey requiredPermissions={['edit_department']}>
           <SpecificDepartmentEdit />
-        </PermissionRoute>
+        </PermissionRouteBasedOnKey>
       } />
     </Routes>
   )
@@ -245,15 +271,15 @@ const DepartmentManagementSystem = () => {
 const EmployeeManagementSystem = () => {
   return (
     <Routes>
-      <Route path='/' element={
-        <PermissionRoute requiredPermissions={['Read User Details']}>
-          <ListOfEmployee />
-        </PermissionRoute>
-      } />
       <Route path='/create' element={
-        <PermissionRoute requiredPermissions={['Create User/Employee']}>
+        <PermissionRouteBasedOnKey requiredPermissions={['create_user']}>
           <CreateEmployeeNew />
-        </PermissionRoute>
+        </PermissionRouteBasedOnKey>
+      } />
+      <Route path='/manage' element={
+        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['view_employee_management']}>
+          <EmployeeManagement />
+        </PermissionRouteBasedOnKey>
       } />
     </Routes>
   )
@@ -261,7 +287,11 @@ const EmployeeManagementSystem = () => {
 const SpecificOrganizationManagementSystem = () => {
   return (
     <Routes>
-      <Route path='/' element={<SpecificOrganizationView />} />
+      <Route path='/' element={
+
+        <SpecificOrganizationView />
+      } />
+      <Route path='/settings' element={<OrganizationSettings />} />
     </Routes>
   )
 }
@@ -286,57 +316,127 @@ const NotificationManagementSystem = () => {
     </Routes>
   )
 }
-const PayrollManagementSystem = () => {
+const NewPayrollManagementSystem = () => {
   return (
     <Routes>
-      <Route path='/' element={
-        <PayRollViewOwn />
-      } />
-      <Route path='/all' element={
-        <PermissionRoute requiredPermissions={['payroll.view_all']}>
-          <PayrollDashboardForAllEmployee />
-        </PermissionRoute>
-      } />
-      <Route path='/generate' element={
-        <PermissionRoute requiredPermissions={['payroll.process']}>
-          <SalaryGenerator />
-        </PermissionRoute>
-      } />
-      <Route path='/users' element={
-        <PermissionRoute requiredPermissions={['payroll.view_all']}>
-          <PayrollDashboardUsers />
-        </PermissionRoute>
-      } />
+      <Route
+        path='/'
+        element={
+          <PermissionRouteBasedOnKey requiredPermissions={['view_salary_slip_to_myself']}>
+            <DashboardOfPayroll />
+          </PermissionRouteBasedOnKey>
+        }
+      />
+      <Route
+        path='/subordinate/payslip'
+        element={
+          <PermissionRouteBasedOnKey requiredPermissions={["view_salary_slip_of_subordinates"]}>
+            <MainCompOfViewPayslipOfAllSubordinatesPayroll />
+          </PermissionRouteBasedOnKey>
+        }
+      />
+      <Route
+        path='/subordinate/generate'
+        element={
+          <PermissionRouteBasedOnKey requiredPermissions={["generate_salary_of_subordinates"]}>
+            <MainGenerateSubordinateSalaryPage />
+          </PermissionRouteBasedOnKey>
+        }
+      />
+      <Route
+        path='/subordinate/transaction'
+        element={
+          <PermissionRouteBasedOnKey requiredPermissions={["send_salary_to_subordinates"]}>
+            <MainSubordinateSalaryTransactionPage />
+          </PermissionRouteBasedOnKey>
+        }
+      />
+      <Route
+        path='/admin/payslip'
+        element={
+          <PermissionRouteBasedOnKey requiredPermissions={["view_salary_slip_of_all"]}>
+            <MainCompOfViewPayslipOfAllUsersPayroll />
+          </PermissionRouteBasedOnKey>
+        }
+      />
+      <Route
+        path='/admin/generate'
+        element={
+          <PermissionRouteBasedOnKey requiredPermissions={["generate_salary_of_all"]}>
+            <MainGenerateUsersSalaryPage />
+          </PermissionRouteBasedOnKey>
+        }
+      />
+      <Route
+        path='/admin/transaction'
+        element={
+          <PermissionRouteBasedOnKey requiredPermissions={["send_salary_to_all"]}>
+            <MainGenerateUsersSalaryPage />
+          </PermissionRouteBasedOnKey>
+        }
+      />
+
     </Routes>
   )
 }
+
+// const PayrollManagementSystem = () => {
+//   return (
+//     <Routes>
+//       <Route path='/' element={
+//         <PayRollViewOwn />
+//       } />
+//       <Route path='/all' element={
+//         <PermissionRoute requiredPermissions={['payroll.view_all']}>
+//           <PayrollDashboardForAllEmployee />
+//         </PermissionRoute>
+//       } />
+//       <Route path='/generate' element={
+//         <PermissionRoute requiredPermissions={['payroll.process']}>
+//           <SalaryGenerator />
+//         </PermissionRoute>
+//       } />
+//       <Route path='/users' element={
+//         <PermissionRoute requiredPermissions={['payroll.view_all']}>
+//           <PayrollDashboardUsers />
+//         </PermissionRoute>
+//       } />
+//       <Route path="/p/payroll/own" element={<PayRollViewOwn />} />
+//       <Route path="/p/payroll/all" element={<PayrollViewAllEmployees />} />
+//       <Route path="/p/payroll/employee/:employeeId" element={<PayrollViewEmployeeDetails />} />
+//     </Routes>
+//   )
+// }
 const AttendanceManagementSystem = () => {
   return (
     <Routes>
       <Route path='/' element={
-        <PermissionRoute requiredPermissions={['attendance.mark', 'attendance.view_own']}>
-          <AttendancePanel  />
-        </PermissionRoute>
+        <PermissionRouteBasedOnKey requiredPermissions={['mark_attendance']}>
+          <AttendancePanel />
+        </PermissionRouteBasedOnKey>
       } />
       <Route path='/history' element={
-        <PermissionRoute requiredPermissions={['attendance.view_own', 'attendance.view_team', 'attendance.view_all']}>
+        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['view_own_attendance', 'view_subordinates_attendance', 'view_all_user_attendance']}>
           <AttendanceHistory />
-        </PermissionRoute>
+        </PermissionRouteBasedOnKey>
       } />
+
       <Route path='/verification' element={
-        <PermissionRoute requiredPermissions={['attendance.view_own', 'attendance.view_team', 'attendance.view_all']}>
+        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['view_own_attendance', 'view_subordinates_attendance', 'view_all_user_attendance']}>
           <AttendanceVerificationComponent />
-        </PermissionRoute>
+        </PermissionRouteBasedOnKey>
       } />
       <Route path='/live' element={
-        <PermissionRoute requiredPermissions={['attendance.view_own', 'attendance.view_team', 'attendance.view_all']}>
+        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['view_subordinates_attendance', 'view_all_user_attendance']}>
           <AttendanceLivePanel />
-        </PermissionRoute>
+        </PermissionRouteBasedOnKey>
+
       } />
       <Route path='/past-not-checked-days' element={
-        <PermissionRoute requiredPermissions={['attendance.view_own', 'attendance.view_team', 'attendance.view_all']}>
+        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['view_subordinates_attendance', 'view_all_user_attendance']}>
           <PastNotCheckedDays />
-        </PermissionRoute>
+        </PermissionRouteBasedOnKey>
+
       } />
     </Routes>
   )
@@ -345,9 +445,9 @@ const LeaveBalanceManagementSystem = () => {
   return (
     <Routes>
       <Route path='/' element={
-        <PermissionRoute requiredPermissions={['leave.manage_balances']}>
+        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['view_leave_balance']}>
           <ViewLeaveBalance />
-        </PermissionRoute>
+        </PermissionRouteBasedOnKey>
       } />
     </Routes>
   )
@@ -356,24 +456,24 @@ const LeaveRequestManagementSystem = () => {
   return (
     <Routes>
       <Route path='/' element={
-        <PermissionRoute requireAll={false} requiredPermissions={['leave.request']}>
+        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['leave_request', 'view_subordinates_leave', 'view_all_user_leave']}>
           <LeaveRequestList />
-        </PermissionRoute>
+        </PermissionRouteBasedOnKey>
       } />
       <Route path='/create' element={
-        <PermissionRoute requiredPermissions={['leave.request']}>
+        <PermissionRouteBasedOnKey requiredPermissions={['leave_request']}>
           <LeaveRequestCreate />
-        </PermissionRoute>
+        </PermissionRouteBasedOnKey>
       } />
       <Route path='/edit/:id' element={
-        <PermissionRoute requiredPermissions={['leave.request']}>
+        <PermissionRouteBasedOnKey requiredPermissions={['leave_request']}>
           <EditLeaveRequest />
-        </PermissionRoute>
+        </PermissionRouteBasedOnKey>
       } />
       <Route path='/approve' element={
-        <PermissionRoute requiredPermissions={['leave.approve', 'leave.reject']}>
+        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['approve_leave', 'reject_leave']}>
           <LeaveRequestApprove />
-        </PermissionRoute>
+        </PermissionRouteBasedOnKey>
       } />
     </Routes>
   )
@@ -381,9 +481,21 @@ const LeaveRequestManagementSystem = () => {
 const LeaveTypeManagementSystem = () => {
   return (
     <Routes>
-      <Route path='/' element={<LeaveTypeList />} />
-      <Route path='/create' element={<CreateLeaveType />} />
-      <Route path='/edit/:id' element={<EditLeaveType />} />
+      <Route path='/' element={
+        <PermissionRouteBasedOnKey requiredPermissions={['read_leave_type']}>
+          <LeaveTypeList />
+        </PermissionRouteBasedOnKey>
+      } />
+      <Route path='/create' element={
+        <PermissionRouteBasedOnKey requiredPermissions={['leave_type_create']}>
+          <CreateLeaveType />
+        </PermissionRouteBasedOnKey>
+      } />
+      <Route path='/edit/:id' element={
+        <PermissionRouteBasedOnKey requiredPermissions={['update_leave_types']}>
+          <EditLeaveType />
+        </PermissionRouteBasedOnKey>
+      } />
     </Routes>
   )
 }
@@ -392,34 +504,34 @@ const ProfileRoutes = () => {
   return (
     <Routes>
       <Route path="/" element={
-        <PermissionRoute requiredPermissions={['Read User Details']}>
-          <ProfileInfo />
-        </PermissionRoute>
+      <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['view_personal_info_to_myself', 'view_employment_info_to_myself']}>
+        <ProfileInfo />
+      </PermissionRouteBasedOnKey>
       } />
       <Route path="/:id" element={
-        <PermissionRoute requiredPermissions={['Read User Details']}>
-          <ProfileInfo />
-        </PermissionRoute>
+      <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['view_personal_info_of_all', 'view_employment_info_of_all', 'view_personal_info_of_subordinates', 'view_employment_info_of_subordinates']}>
+        <ProfileInfo />
+      </PermissionRouteBasedOnKey>
       } />
       <Route path="/edit" element={
-        <PermissionRoute requiredPermissions={['Update User Details']}>
-          <ProfileEdit />
-        </PermissionRoute>
+      <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['update_personal_info', 'update_personal_info_all_user']}>
+        <ProfileEdit />
+      </PermissionRouteBasedOnKey>
       } />
       <Route path="/edit/:id" element={
-        <PermissionRoute requiredPermissions={['Update User Details']}>
-          <ProfileEdit />
-        </PermissionRoute>
+      <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['update_personal_info_subordinates', 'update_personal_info_all_user']}>
+        <ProfileEdit />
+      </PermissionRouteBasedOnKey>
       } />
       <Route path="/edit/bank/:id" element={
-        <PermissionRoute requiredPermissions={['Update User Details']}>
-          <BankDetails />
-        </PermissionRoute>
+      <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['update_bank_all_user', 'update_bank_subordinates']}>
+        <BankDetails />
+      </PermissionRouteBasedOnKey>
       } />
       <Route path="/edit/bank" element={
-        <PermissionRoute requiredPermissions={['Update User Details']}>
-          <BankDetails />
-        </PermissionRoute>
+      <PermissionRouteBasedOnKey requiredPermissions={['update_bank_own']}>
+        <BankDetails />
+      </PermissionRouteBasedOnKey>
       } />
     </Routes>
   )
@@ -439,7 +551,11 @@ const OrganizationManagementSystemRoutes = () => {
     <Routes>
       <Route path='/' element={<OrganizationHome />} />
       <Route path='/create' element={<OrganizationCreate />} />
-      <Route path='/:organizationId' element={<SpecificOrganizationHome />} />
+      <Route path='/:organizationId' element={
+        <PermissionRouteBasedOnKey requiredPermissions={['view_organization_basic_details']}>
+          <SpecificOrganizationHome />
+        </PermissionRouteBasedOnKey>
+      } />
     </Routes>
   )
 }
