@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { MapPin } from "lucide-react";
 import { olaMaps } from "../services/OlaMap";
 
-const LocationViewer = ({ lat, lon }:{lat:string,lon:string}) => {
+const LocationViewer = ({ lat, lon,className }:{lat:string,lon:string,  className?: string;}) => {
   const [address, setAddress] = useState("");
   const mapRef = useRef(null);
   const mapInstanceRef = useRef<any>(null);
@@ -58,7 +58,7 @@ const LocationViewer = ({ lat, lon }:{lat:string,lon:string}) => {
   }, [lat, lon]);
 
   return (
-    <div className="rounded-lg overflow-hidden border" 
+    <div className={`rounded-lg overflow-hidden border `}
          style={{ borderColor: 'hsl(var(--border))' }}>
       <div className="p-4 bg-primary/5">
         <div className="flex items-center gap-2 mb-3">
