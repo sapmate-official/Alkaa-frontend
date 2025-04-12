@@ -1,4 +1,3 @@
-import React from 'react'
 
 const MainSalaryUsersTransactionPage = () => {
     //this page has two mode , either route contains one user id and the salary payroll id

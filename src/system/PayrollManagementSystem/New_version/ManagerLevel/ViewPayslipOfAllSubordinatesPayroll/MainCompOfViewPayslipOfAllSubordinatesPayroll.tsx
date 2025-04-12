@@ -843,7 +843,7 @@ const MainCompOfViewPayslipOfAllSubordinatesPayroll = () => {
                                   { name: 'Allowances', value: payslipStatistics.salaryBreakdown.totalAllowances },
                                   { name: 'Deductions', value: -payslipStatistics.salaryBreakdown.totalDeductions },
                                   { name: 'Tax', value: -payslipStatistics.salaryBreakdown.taxAmount }
-                                ].map((entry, index) => (
+                                ].map((_, index) => (
                                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                 ))}
                               </Pie>
@@ -1140,7 +1140,7 @@ const MainCompOfViewPayslipOfAllSubordinatesPayroll = () => {
                                       { name: 'Absent', value: payslipStatistics.attendanceAnalysis.absentDays },
                                       { name: 'Paid Leave', value: payslipStatistics.attendanceAnalysis.paidLeaveDays },
                                       { name: 'Unpaid Leave', value: payslipStatistics.attendanceAnalysis.unpaidLeaveDays }
-                                    ].map((entry, index) => (
+                                    ].map((_, index) => (
                                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                   </Pie>

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { APIDictionary } from "@/api/v2/APIdict";
 import { MapPin, Clock, XCircle, History } from "lucide-react";
 import axios from "axios";
-import LocationViewer from "./Locationviewer";
+import LazyLocationViewer from "./LazyLocationViewer";
 interface Location {
   lat: number | null;
   lon: number | null;
@@ -146,7 +146,8 @@ const LocationComponent = () => {
         <div className="flex items-center gap-2 p-3 rounded bg-secondary">
           <MapPin className="w-5 h-5 text-primary" />
           {location.lat && location.lon && (
-            <LocationViewer lat={location.lat.toString()} lon={location.lon.toString()} />
+            // <LocationViewer lat={location.lat.toString()} lon={location.lon.toString()} />
+            <LazyLocationViewer lat={location.lat.toString()} lon={location.lon.toString()} />
           )}
         </div>
 

@@ -51,7 +51,7 @@ import { APIDictionary } from "@/api/v2/APIdict";
 import axios from "axios";
 import { useAuth } from "@/services/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import LocationViewer from "@/components/Locationviewer";
+import LazyLocationViewer from "@/components/LazyLocationViewer";
 
 // Types
 type AttendanceStatus = "PRESENT" | "ABSENT" | "LATE" | "HALF_DAY";
@@ -700,7 +700,8 @@ const AttendanceVerificationComponent: React.FC = () => {
                   <TabsContent value="checkin">
                     {
                       selectedRecord.checkInLocation  &&
-                      <LocationViewer lat={selectedRecord?.checkInLocation?.split(",")[0]} lon={selectedRecord?.checkInLocation?.split(",")[1]} />
+                      <LazyLocationViewer lat={selectedRecord?.checkInLocation?.split(",")[0]} lon={selectedRecord?.checkInLocation?.split(",")[1]} />
+                      // <LocationViewer lat={selectedRecord?.checkInLocation?.split(",")[0]} lon={selectedRecord?.checkInLocation?.split(",")[1]} />
                     }
                     {
                       !selectedRecord.checkInLocation &&
@@ -714,7 +715,8 @@ const AttendanceVerificationComponent: React.FC = () => {
                   <TabsContent value="checkout">
                     {
                       selectedRecord.checkOutLocation  &&
-                      <LocationViewer lat={selectedRecord?.checkOutLocation?.split(",")[0]} lon={selectedRecord?.checkOutLocation?.split(",")[1]} />
+                      // <LocationViewer lat={selectedRecord?.checkOutLocation?.split(",")[0]} lon={selectedRecord?.checkOutLocation?.split(",")[1]} />
+                      <LazyLocationViewer lat={selectedRecord?.checkOutLocation?.split(",")[0]} lon={selectedRecord?.checkOutLocation?.split(",")[1]} />
                     }
                     {
                       !selectedRecord.checkOutLocation &&

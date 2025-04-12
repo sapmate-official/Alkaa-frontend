@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { MapPin } from "lucide-react";
-import { olaMaps } from "../services/OlaMap";
 
-const LocationViewer = ({ lat, lon,className }:{lat:string,lon:string,  className?: string;}) => {
+const LocationViewer = ({ lat, lon }: { lat: string, lon: string }) => {
   const [address, setAddress] = useState("");
   const mapRef = useRef(null);
   const mapInstanceRef = useRef<any>(null);
@@ -10,26 +9,31 @@ const LocationViewer = ({ lat, lon,className }:{lat:string,lon:string,  classNam
   
   useEffect(() => {
     if (lat && lon && mapRef.current && !mapInstanceRef.current) {
-      // Initialize map
-      mapInstanceRef.current = olaMaps.init({
-        style: "https://api.olamaps.io/tiles/vector/v1/styles/default-light-standard/style.json",
-        container: 'map',
-        center: [parseFloat(lon), parseFloat(lat)],
-        zoom: 15,
-      });
+      // Load both the map library and create the instance only when needed
+      import("../services/OlaMap").then(({ createOlaMaps }) => {
+        const olaMaps = createOlaMaps();
+        
+        // Initialize map
+        mapInstanceRef.current = olaMaps.init({
+          style: "https://api.olamaps.io/tiles/vector/v1/styles/default-light-standard/style.json",
+          container: 'map',
+          center: [parseFloat(lon), parseFloat(lat)],
+          zoom: 15,
+        });
 
-      // Add a marker after map is initialized
-      mapInstanceRef.current.on('load', () => {
-        if (!markerRef.current && mapInstanceRef.current) {
-          markerRef.current = olaMaps
-            .addMarker({ 
-              offset: [0, -15], 
-              anchor: 'bottom', 
-              color: '#FF5733' 
-            })
-            .setLngLat([parseFloat(lon), parseFloat(lat)])
-            .addTo(mapInstanceRef.current);
-        }
+        // Add a marker after map is initialized
+        mapInstanceRef.current.on('load', () => {
+          if (!markerRef.current && mapInstanceRef.current) {
+            markerRef.current = olaMaps
+              .addMarker({ 
+                offset: [0, -15], 
+                anchor: 'bottom', 
+                color: '#FF5733' 
+              })
+              .setLngLat([parseFloat(lon), parseFloat(lat)])
+              .addTo(mapInstanceRef.current);
+          }
+        });
       });
     }
   }, [lat, lon]);

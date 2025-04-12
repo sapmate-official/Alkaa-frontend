@@ -249,11 +249,11 @@ const PermissionManagementSystem = () => {
   }
 
   // Create a helper function to find category for a subcategory
-  const getCategoryForSubcategory = (subcategoryId: string) => {
-    const subcategory = subcategories.find(sub => sub.id === subcategoryId);
-    if (!subcategory) return null;
-    return categories.find(cat => cat.id === subcategory.categoryId);
-  }
+  // const getCategoryForSubcategory = (subcategoryId: string) => {
+  //   const subcategory = subcategories.find(sub => sub.id === subcategoryId);
+  //   if (!subcategory) return null;
+  //   return categories.find(cat => cat.id === subcategory.categoryId);
+  // }
 
   //render category tab
   const categoryTab = () => {

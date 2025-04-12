@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/table";
 import { AttendanceRecord } from '@/interface/general';
 import { useNavigate } from 'react-router-dom';
-import LocationViewer from '@/components/Locationviewer';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -25,8 +24,9 @@ import { useAtom } from 'jotai';
 import { permissionListAtom } from '@/store/atom';
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Clock, MapPin, Laptop, Calendar, UserCheck, ClipboardList, CheckCircle, XCircle, Plus, Minus, Layers, History } from "lucide-react";
+import { Clock, MapPin, Laptop, Calendar, UserCheck, ClipboardList, CheckCircle, XCircle, Layers, History } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import LazyLocationViewer from '@/components/LazyLocationViewer';
 
 interface SessionInfo {
   sessionNumber: number;
@@ -114,7 +114,6 @@ const AttendancePanel = () => {
     };
     checkCurrentSession();
   }, []);
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const handleCheckIn = async () => {
     if (!canMarkAttendance) {
@@ -582,10 +581,15 @@ const AttendancePanel = () => {
                 <div className="md:border-l md:pl-6 pt-4 md:pt-0">
                   <p className="text-sm font-medium mb-2">Location</p>
                   {location?.latitude && location.longitude ? (
-                    <LocationViewer
+                    // <LocationViewer
+                    //   lat={location?.latitude.toString()}
+                    //   lon={location?.longitude.toString()}
+                    //   // className="rounded-md overflow-hidden border h-32"
+                    // />
+                    <LazyLocationViewer
                       lat={location?.latitude.toString()}
                       lon={location?.longitude.toString()}
-                      className="rounded-md overflow-hidden border h-32"
+                      // className="rounded-md overflow-hidden border h-32"
                     />
                   ) : (
                     <div className="h-32 bg-gray-100 animate-pulse rounded-md flex items-center justify-center">

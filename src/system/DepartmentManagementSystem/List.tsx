@@ -156,7 +156,7 @@ const DepartmentSection = ({
 
 const ListOfDepartment = () => {
     const navigate = useNavigate();
-    const [allDepartments, setAllDepartments] = useState<Department[]>([]);
+    const [, setAllDepartments] = useState<Department[]>([]);
     const [loading, setLoading] = useState(false);
     const { user } = useAuth();
     const [permissions] = useAtom(permissionListAtom);
