@@ -21,22 +21,6 @@ const AUTH_REVALIDATE_EVENT = 'auth-revalidate';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const getCookieValue = (name: string): string | null => {
-    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-    return match ? match[2] : null;
-};
-
-const setCookieFromLocalStorage = (name: string, value: string, daysToExpire: number) => {
-    if (!value) return;
-
-    const date = new Date();
-    date.setTime(date.getTime() + daysToExpire * 24 * 60 * 60 * 1000);
-
-    document.cookie = `${name}=${value}; expires=${date.toUTCString()}; path=/; ${
-        process.env.NODE_ENV === "production" ? `domain=.alkaa.online; secure; ` : ""
-    }sameSite=lax`;
-};
-
 export const enhancedLocalStorage = {
     setItem: (key: string, value: string) => {
         localStorage.setItem(key, value);
@@ -66,25 +50,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     );
     const initializeAuth = async () => {
         try {
-            // First check if cookies are available
-            let accessToken = getCookieValue("accessToken");
-            let refreshToken = getCookieValue("refreshToken");
-
-            // If cookies are missing but localStorage has the tokens, restore cookies
-            if (!accessToken && !refreshToken) {
-                const storedAccessToken = enhancedLocalStorage.getItem("accessToken");
-                const storedRefreshToken = enhancedLocalStorage.getItem("refreshToken");
-
-                if (storedAccessToken && storedRefreshToken) {
-                    console.log("Restoring cookies from localStorage");
-                    // Set cookies with appropriate expiration (2 days for access, 7 days for refresh)
-                    setCookieFromLocalStorage("accessToken", storedAccessToken, 2);
-                    setCookieFromLocalStorage("refreshToken", storedRefreshToken, 7);
-
-                    accessToken = storedAccessToken;
-                }
-            }
-
+            // Only use localStorage for tokens, no cookie checking
+            const accessToken = enhancedLocalStorage.getItem("accessToken");
+            // const refreshToken = enhancedLocalStorage.getItem("refreshToken");
+            
             if (accessToken) {
                 await debouncedValidateToken(accessToken);
             } else {
@@ -104,7 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             }, { withCredentials: true });
             console.log(response);
             if (response.status === 200 && response.data.accessToken && response.data.refreshToken) {
-                // Store in localStorage as backup
+                // Store in localStorage
                 enhancedLocalStorage.setItem("accessToken", response.data.accessToken);
                 enhancedLocalStorage.setItem("refreshToken", response.data.refreshToken);
                 await validateToken(response.data.accessToken);
@@ -176,14 +145,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     };
     const validateToken = async (token: string) => {
         try {
-            // Add additional headers to work with service worker
             const response = await axios.get(`${backendDomain}/api/v1/general/validate-token`, {
                 headers: { 
-                    Authorization: `Bearer ${token}`,
-                    // 'Cache-Control': 'no-cache', // Bypass service worker caching
-                    // 'Pragma': 'no-cache'
+                    Authorization: `Bearer ${token}`
                 },
-                withCredentials: true // This sends cookies if available, but we don't rely solely on them
+                withCredentials: true 
             });
             
             if (response.status === 200 && response.data.user) {
@@ -208,7 +174,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                         return;
                     }
                     
-                    // This is the critical part - attempt refresh with token from localStorage
                     const currentPath = window.location.pathname;
                     if (!currentPath.includes('/auth/signin')) {
                         await refreshToken();
@@ -233,12 +198,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
     
         try {
-            // Include token both in body and authorization header for maximum compatibility
             const response = await axios.post(
                 `${backendDomain}/api/v1/general/refresh-token`, 
-                { refreshToken: refreshTokenValue },  // Include in body
+                { refreshToken: refreshTokenValue },
                 {
-                    headers: { Authorization: `Bearer ${refreshTokenValue}` }, // Include in header
+                    headers: { Authorization: `Bearer ${refreshTokenValue}` },
                     withCredentials: true
                 }
             );
