@@ -14,7 +14,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   BarChart,
   Bar,
@@ -108,7 +107,7 @@ interface PayslipDetailedViewProps {
   payslip: Payslip;
 }
 
-const PayslipDetailedView: React.FC<PayslipDetailedViewProps> = ({ statistics, payslip }) => {
+const PayslipDetailedView: React.FC<PayslipDetailedViewProps> = ({ statistics }) => {
   if (!statistics) return null;
 
   const {
@@ -116,7 +115,6 @@ const PayslipDetailedView: React.FC<PayslipDetailedViewProps> = ({ statistics, p
     salaryBreakdown,
     attendanceAnalysis,
     comparisons,
-    visualData
   } = statistics;
 
   // Format currency
@@ -266,7 +264,7 @@ const PayslipDetailedView: React.FC<PayslipDetailedViewProps> = ({ statistics, p
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    {salaryComponentsData.map((entry, index) => (
+                    {salaryComponentsData.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
@@ -345,7 +343,7 @@ const PayslipDetailedView: React.FC<PayslipDetailedViewProps> = ({ statistics, p
                     <YAxis />
                     <Tooltip />
                     <Bar dataKey="value" fill="#8884d8">
-                      {attendanceData.map((entry, index) => (
+                      {attendanceData.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Bar>

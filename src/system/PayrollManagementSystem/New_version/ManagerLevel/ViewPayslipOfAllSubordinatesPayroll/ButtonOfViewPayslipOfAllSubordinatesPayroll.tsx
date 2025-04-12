@@ -1,7 +1,6 @@
 import CheckPermission from '@/services/PermissionCheck'
 import { permissionListAtom } from '@/store/atom'
 import { useAtom } from 'jotai'
-import React from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const ButtonOfViewPayslipOfAllSubordinatesPayroll = () => {

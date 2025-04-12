@@ -2,7 +2,6 @@ import { Button } from '@/components/ui/button'
 import CheckPermission from '@/services/PermissionCheck'
 import { permissionListAtom } from '@/store/atom'
 import { useAtom } from 'jotai'
-import React from 'react'
 
 const ButtonOfSubordinateSalaryTransaction = () => {
     // this component will call the permission atom of this user and fetch the length of subordinates via api

@@ -140,12 +140,12 @@ const PayRollViewOwn = () => {
   }, [user, selectedMonth, selectedYear])
   
   // Function to check if payslip exists for the selected month/year
-  const checkPayslipExists = () => {
-    if (!statistics?.monthlySalaries?.length) return false
-    return statistics.monthlySalaries.some(
-      salary => salary.month === selectedMonth && salary.year === selectedYear
-    )
-  }
+  // const checkPayslipExists = () => {
+  //   if (!statistics?.monthlySalaries?.length) return false
+  //   return statistics.monthlySalaries.some(
+  //     salary => salary.month === selectedMonth && salary.year === selectedYear
+  //   )
+  // }
   
   // Function to download payslip as PDF
   const downloadPayslip = (salaryData: PayrollStatistics['monthlySalaries'][0]) => {
@@ -354,7 +354,7 @@ const PayRollViewOwn = () => {
                         dataKey="value"
                         label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                       >
-                        {pieChartData.map((entry, index) => (
+                        {pieChartData.map((_, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>

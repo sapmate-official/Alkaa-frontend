@@ -1,7 +1,7 @@
+import { Button } from '@/components/ui/button'
 import CheckPermission from '@/services/PermissionCheck'
 import { permissionListAtom } from '@/store/atom'
 import { useAtom } from 'jotai'
-import React from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const ButtonOfGenerateSubordinateSalaryPage = () => {
@@ -13,9 +13,9 @@ const ButtonOfGenerateSubordinateSalaryPage = () => {
     const navigate = useNavigate()
   return (
     <div>
-        <button onClick={()=>navigate("/p/new-payroll/subordinate/generate")} className='bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700'>
+        <Button onClick={()=>navigate("/p/new-payroll/subordinate/generate")} >
             Generate Salary of Subordinates
-        </button>
+        </Button>
     </div>
   )
 }

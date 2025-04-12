@@ -30,7 +30,7 @@ const HolidayManagementSystem = () => {
   const {toast} = useToast();
   const [permissionList]  = useAtom(permissionListAtom);
   const canManageHolidays = permissionList.some(permission => permission.key === 'holiday_manage');
-  const canViewHolidays = permissionList.some(permission => permission.key === 'holiday_view');
+  // const canViewHolidays = permissionList.some(permission => permission.key === 'holiday_view');
   // Set default tab based on permissions
   useEffect(() => {
     if (!canManageHolidays && activeTab === 'admin') {

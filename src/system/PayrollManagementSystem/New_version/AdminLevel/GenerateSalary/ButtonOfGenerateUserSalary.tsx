@@ -1,7 +1,7 @@
+import { Button } from '@/components/ui/button'
 import CheckPermission from '@/services/PermissionCheck'
 import { permissionListAtom } from '@/store/atom'
 import { useAtom } from 'jotai'
-import React from 'react'
 
 const ButtonOfGenerateUsersSalary = () => {
     // this component will render a button which will navigate to the generate salary page
@@ -11,9 +11,9 @@ const ButtonOfGenerateUsersSalary = () => {
     if (!hasPermission) return null
   return (
     <div>
-        <button className='bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700'>
+        <Button>
             Generate Salary of All Users
-        </button>
+        </Button>
     </div>
   )
 }

@@ -27,7 +27,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 
 // Icons
-import { Plus, Download, Send, Trash, Users } from 'lucide-react'
+import { Plus, Download, Trash, Users } from 'lucide-react'
 
 // Local components
 import ButtonOfUsersSalaryTransaction from '../Salarytransaction/ButtonOfUsersSalaryTransaction'

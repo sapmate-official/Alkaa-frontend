@@ -1,7 +1,7 @@
+import { Button } from '@/components/ui/button'
 import CheckPermission from '@/services/PermissionCheck'
 import { permissionListAtom } from '@/store/atom'
 import { useAtom } from 'jotai'
-import React from 'react'
 
 const ButtonOfUsersSalaryTransaction = () => {
     // this component will call the permission atom of this user and fetch the length of user via api
@@ -13,9 +13,9 @@ const ButtonOfUsersSalaryTransaction = () => {
     if(!hasPermission) return null
   return (
     <div>
-        <button className='bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700'>
+        <Button >
             Salary Transaction of All Users
-        </button>
+        </Button>
     </div>
   )
 }

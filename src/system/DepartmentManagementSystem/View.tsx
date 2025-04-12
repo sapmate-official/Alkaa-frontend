@@ -53,7 +53,7 @@ const SpecificDepartmentView = () => {
   const [permissions] = useAtom(permissionListAtom)
   const [employeeList, setEmployeeList] = useState<User[]>([])
   const [searchQuery, setSearchQuery] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
+  const [, setIsLoading] = useState(false)
   
   const hasChangeHeadPermission = CheckPermission("change_department_head", permissions)
   const isCurrentUserHead = department?.departmentHead?.id === user?.id

@@ -11,43 +11,59 @@ export default defineConfig({
     },
   },
   build: {
-    // Increase chunk size warning limit (temporary solution)
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 2000, // Increase to 2MB if needed
     rollupOptions: {
       output: {
-        // Configure manual chunks to separate vendor code
-        manualChunks: {
+        manualChunks: (id) => {
+          // Predefined chunks
+          if (id.includes('olamaps-web-sdk') || id.includes('/services/OlaMap')) {
+            return 'map-vendor';
+          }
+          
           // UI library chunks
-          'ui-components': [
-            '@radix-ui/react-accordion',
-            '@radix-ui/react-alert-dialog',
-            '@radix-ui/react-avatar',
-            '@radix-ui/react-checkbox',
-            '@radix-ui/react-collapsible',
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-label',
-            '@radix-ui/react-popover',
-            '@radix-ui/react-progress',
-            '@radix-ui/react-scroll-area',
-            '@radix-ui/react-select',
-            '@radix-ui/react-separator',
-            '@radix-ui/react-slot',
-            '@radix-ui/react-switch',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-toast',
-            '@radix-ui/react-tooltip',
-          ],
+          if (id.includes('@radix-ui/react-')) {
+            return 'ui-components';
+          }
+          
           // Chart and visualization chunks
-          'visualization': ['recharts'],
+          if (id.includes('recharts')) {
+            return 'visualization';
+          }
+          
           // Animation libraries
-          'animation': ['framer-motion'],
+          if (id.includes('framer-motion')) {
+            return 'animation';
+          }
+          
           // Core React chunks
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          if (['react', 'react-dom', 'react-router-dom'].some(pkg => id.includes(pkg))) {
+            return 'react-vendor';
+          }
+          
           // Form handling
-          'form-handling': ['react-hook-form', '@hookform/resolvers', 'zod'],
+          if (['react-hook-form', '@hookform/resolvers', 'zod'].some(pkg => id.includes(pkg))) {
+            return 'form-handling';
+          }
+          
           // Utility libraries
-          'utilities': ['date-fns', 'axios', 'clsx', 'tailwind-merge'],
+          if (['date-fns', 'axios', 'clsx', 'tailwind-merge'].some(pkg => id.includes(pkg))) {
+            return 'utilities';
+          }
+          
+          // App features
+          if (id.includes('src/features/auth')) {
+            return 'auth-feature';
+          }
+          
+          if (id.includes('src/features/dashboard')) {
+            return 'dashboard-feature';
+          }
+          
+          if (id.includes('src/features/settings')) {
+            return 'settings-feature';
+          }
+          
+          return undefined;
         }
       }
     }
@@ -55,20 +71,8 @@ export default defineConfig({
   server: {
     port: 5174,
     host: 'localhost',
-    // hmr: {
-    //   protocol: 'ws',
-    //   host: 'localhost',
-    //   port: 5174
-    // }
+   
   }
   
-  // server: {
-  //   host: '192.168.0.193',
-  //   // host: 'localhost'
-  //   // host: '127.0.0.1',
-  //   https: {
-  //     cert: fs.readFileSync('localhost.pem'),
-  //     key: fs.readFileSync('localhost-key.pem')
-  //   }
-  // }
+  
 })

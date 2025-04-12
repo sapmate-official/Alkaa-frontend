@@ -48,7 +48,7 @@ const PayrollViewAllEmployees = () => {
   const [selectedYear, setSelectedYear] = useState<string>('')
   const [selectedDepartment, setSelectedDepartment] = useState<string>('')
   const [departments, setDepartments] = useState<string[]>([])
-  const [userRoles, setUserRoles] = useState<string[]>([])
+  const [, setUserRoles] = useState<string[]>([])
   const [isOrgAdmin, setIsOrgAdmin] = useState(false)
   const [isManager, setIsManager] = useState(false)
 
