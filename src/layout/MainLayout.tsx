@@ -250,7 +250,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 export const Logo = () => {
   return (
     <Link
-      to="/"
+      to="/p/"
       className="flex items-center justify-start py-1 px-0 relative z-20 w-full"
     >
       <motion.div
