@@ -1,11 +1,10 @@
 import { userIdAtom } from "../store/atom";
 import axios, { AxiosError } from "axios";
 import { useAtom } from "jotai";
-import React, { createContext, useState, useContext, useEffect, useCallback } from "react";
+import React, { createContext, useState, useContext, useEffect } from "react";
 import { User } from "../interface/general";
 import { backendDomain } from "../lib/constant/Domain";
 import { useNavigate } from "react-router-dom";
-import debounce from 'lodash/debounce';
 import Loader from "@/components/Loader";
 
 interface AuthContextType {
@@ -16,22 +15,81 @@ interface AuthContextType {
     signIn: (email: string, password: string) => Promise<string | undefined>;
 }
 
-// Create a custom event name
-const AUTH_REVALIDATE_EVENT = 'auth-revalidate';
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const enhancedLocalStorage = {
-    setItem: (key: string, value: string) => {
-        localStorage.setItem(key, value);
-        if (key === 'accessToken' || key === 'refreshToken') {
-            window.dispatchEvent(new CustomEvent(AUTH_REVALIDATE_EVENT));
+// Simple token storage with events
+export const tokenStorage = {
+    setAccessToken: (token: string) => localStorage.setItem('accessToken', token),
+    getAccessToken: () => localStorage.getItem('accessToken'),
+    setRefreshToken: (token: string) => localStorage.setItem('refreshToken', token),
+    getRefreshToken: () => localStorage.getItem('refreshToken'),
+    clearTokens: () => {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+    },
+    isTokenExpired: (token: string) => {
+        if (!token) return true;
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            return payload.exp * 1000 < Date.now();
+        } catch (e) {
+            return true;
         }
-    },
-    removeItem: (key: string) => {
-        localStorage.removeItem(key);
-    },
-    getItem: (key: string) => localStorage.getItem(key),
+    }
+};
+
+// Configure axios interceptors
+const setupAxiosInterceptors = (navigate: ReturnType<typeof useNavigate>) => {
+    // Request interceptor
+    axios.interceptors.request.use(
+        (config) => {
+            const accessToken = tokenStorage.getAccessToken();
+            if (accessToken) {
+                config.headers.Authorization = `Bearer ${accessToken}`;
+            }
+            return config;
+        },
+        (error) => Promise.reject(error)
+    );
+
+    // Response interceptor for automatic token refresh
+    axios.interceptors.response.use(
+        (response) => response,
+        async (error) => {
+            const originalRequest = error.config;
+            
+            // If error is 401 and not a retry and we have a refresh token
+            if (error.response?.status === 401 && !originalRequest._retry && tokenStorage.getRefreshToken()) {
+                originalRequest._retry = true;
+                
+                try {
+                    // Get new tokens
+                    const refreshToken = tokenStorage.getRefreshToken();
+                    const response = await axios.post(
+                        `${backendDomain}/api/v1/general/refresh-token`,
+                        { refreshToken },
+                        { headers: { Authorization: `Bearer ${refreshToken}` } }
+                    );
+
+                    if (response.data.accessToken && response.data.refreshToken) {
+                        tokenStorage.setAccessToken(response.data.accessToken);
+                        tokenStorage.setRefreshToken(response.data.refreshToken);
+                        
+                        // Update header and retry
+                        originalRequest.headers.Authorization = `Bearer ${response.data.accessToken}`;
+                        return axios(originalRequest);
+                    }
+                } catch (refreshError) {
+                    // If refresh fails, redirect to login
+                    tokenStorage.clearTokens();
+                    navigate('/auth/signin');
+                    return Promise.reject(refreshError);
+                }
+            }
+            
+            return Promise.reject(error);
+        }
+    );
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -39,26 +97,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [ ,setUser_id] = useAtom<number | null>(userIdAtom);
+    const [, setUser_id] = useAtom<number | null>(userIdAtom);
     const navigate = useNavigate();
     const [isInitialized, setIsInitialized] = useState(false);
-    const debouncedValidateToken = useCallback(
-        debounce(async (token: string) => {
-            await validateToken(token);
-        }, 1000, { leading: true, trailing: false }),
-        []
-    );
+    
+    // Setup axios interceptors
+    useEffect(() => {
+        setupAxiosInterceptors(navigate);
+    }, [navigate]);
+
+    const validateToken = async () => {
+        try {
+            const accessToken = tokenStorage.getAccessToken();
+            if (!accessToken) {
+                throw new Error("No access token");
+            }
+            
+            // Check token expiration client-side first to avoid unnecessary API calls
+            if (tokenStorage.isTokenExpired(accessToken)) {
+                throw new Error("Token expired");
+            }
+
+            const response = await axios.get(`${backendDomain}/api/v1/general/validate-token`);
+            
+            if (response.status === 200 && response.data.user) {
+                setUser(response.data.user);
+                setUser_id(response.data.user?.userId);
+                return response.data.user;
+            } else {
+                throw new Error("Invalid token response");
+            }
+        } catch (error) {
+            // Don't need explicit error handling here as axios interceptor will handle 401s
+            // Just rethrow for the caller to handle other errors
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const initializeAuth = async () => {
         try {
-            // Only use localStorage for tokens, no cookie checking
-            const accessToken = enhancedLocalStorage.getItem("accessToken");
-            // const refreshToken = enhancedLocalStorage.getItem("refreshToken");
-            
-            if (accessToken) {
-                await debouncedValidateToken(accessToken);
+            if (tokenStorage.getAccessToken()) {
+                await validateToken();
             } else {
                 setUser(null);
                 navigate('/auth/signin');
+            }
+        } catch (error) {
+            console.error("Auth initialization error:", error);
+            // For non-401 errors, we may want to show a message
+            if (axios.isAxiosError(error) && error.response?.status !== 401) {
+                console.error("Error during authentication:", error.response?.data?.message);
             }
         } finally {
             setIsLoading(false);
@@ -68,42 +158,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     
     const signIn = async (email: string, password: string) => {
         try {
-            const response = await axios.post(`${backendDomain}/api/v1/general/login`, {
-                email,
-                password
-            }, { withCredentials: true });
-            
-            console.log("Login response:", response);
+            const response = await axios.post(
+                `${backendDomain}/api/v1/general/login`, 
+                { email, password }
+            );
             
             if (response.status === 200) {
-                // If tokens are in response body, store them in localStorage
                 if (response.data.accessToken && response.data.refreshToken) {
-                    enhancedLocalStorage.setItem("accessToken", response.data.accessToken);
-                    enhancedLocalStorage.setItem("refreshToken", response.data.refreshToken);
-                    await validateToken(response.data.accessToken);
-                } 
-                // If no tokens in body but status is 200, cookies might have been set
-                else if (response.data.user) {
-                    setUser(response.data.user);
-                    setUser_id(response.data.user?.userId);
-                    setIsLoading(false);
+                    tokenStorage.setAccessToken(response.data.accessToken);
+                    tokenStorage.setRefreshToken(response.data.refreshToken);
+                     await validateToken();
+                    return undefined; // No error
                 }
-            } else {
-                throw new Error("Invalid login response");
+                throw new Error("No tokens received");
             }
         } catch (error) {
-            
             if (axios.isAxiosError(error)) {
                 const axiosError = error as AxiosError;
                 if (axiosError.response?.status === 401) {
-                    console.error("Invalid email or password");
-                    
-                    return (axiosError?.response?.data as { message: string })?.message || "Invalid email or password";
-                } else {
-                    console.error("Login error:", error);
-                    return "Unexpected login error";
+                    return (axiosError?.response?.data as { message: string })?.message || 
+                           "Invalid email or password";
                 }
+                return "Unexpected login error";
             }
+            return "Login failed";
         }
     };
 
@@ -123,124 +201,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }, [isInitialized]);
 
     const logout = async () => {
-        const accessToken = enhancedLocalStorage.getItem("accessToken");
-        const refreshToken = enhancedLocalStorage.getItem("refreshToken");
-        
-        if (accessToken && refreshToken) {
-            try {
-                const response = await axios.post(
-                    `${backendDomain}/api/v1/general/logout`, 
-                    { refreshToken }, // Send refresh token in body
-                    {
-                        headers: { Authorization: `Bearer ${accessToken}` },
-                        withCredentials: true
-                    }
+        try {
+            const refreshToken = tokenStorage.getRefreshToken();
+            if (refreshToken) {
+                await axios.post(
+                    `${backendDomain}/api/v1/general/logout`,
+                    { refreshToken }
                 );
-                
-                if(response.status === 200) {
-                    setUser(null);
-                    enhancedLocalStorage.removeItem("accessToken");
-                    enhancedLocalStorage.removeItem("refreshToken");
-                    setIsLoading(false);
-                }
-            } catch (error) {
-                console.error("Logout error:", error);
-                // Still clear tokens on frontend in case of backend error
-                setUser(null);
-                enhancedLocalStorage.removeItem("accessToken");
-                enhancedLocalStorage.removeItem("refreshToken");
-                setIsLoading(false);
-                navigate('/auth/signin');
-            }
-        }
-    };
-
-    const validateToken = async (token: string) => {
-        try {
-            const response = await axios.get(`${backendDomain}/api/v1/general/validate-token`, {
-                headers: { 
-                    Authorization: `Bearer ${token}`
-                },
-                withCredentials: true 
-            });
-            
-            if (response.status === 200 && response.data.user) {
-                const updates = () => {
-                    setUser(response.data.user);
-                    setUser_id(response.data.user?.userId);
-                    setIsLoading(false);
-                };
-                updates();
-            } else {
-                throw new Error("Invalid token response");
             }
         } catch (error) {
-            if (axios.isAxiosError(error)) {
-                if (error.response?.status === 401) {
-                    if (error.response.data?.expired) {
-                        console.log("Token expired, attempting to refresh");
-                        await refreshToken();
-                        return; // Return here to avoid logging out
-                    }
-                    if (error.response.data?.message === "Organization is inactive") {
-                        setUser(null);
-                        logout();
-                        navigate('/auth/signin', { 
-                            state: { error: "Your organization is inactive. Please contact administrator." }
-                        });
-                        return;
-                    }
-                    
-                    const currentPath = window.location.pathname;
-                    if (!currentPath.includes('/auth/signin')) {
-                        console.log("Attempting to refresh token after 401 error");
-                        await refreshToken();
-                    } else {
-                        setUser(null);
-                        setIsLoading(false);
-                    }
-                } else {
-                    console.error("Token validation error:", error);
-                    logout();
-                    navigate('/auth/signin');
-                }
-            }
-        }
-    };
-
-    const refreshToken = async () => {
-        const refreshTokenValue = enhancedLocalStorage.getItem("refreshToken");
-        if (!refreshTokenValue) {
-            logout();
-            return;
-        }
-    
-        try {
-            const response = await axios.post(
-                `${backendDomain}/api/v1/general/refresh-token`, 
-                { refreshToken: refreshTokenValue },
-                {
-                    headers: { Authorization: `Bearer ${refreshTokenValue}` },
-                    withCredentials: true
-                }
-            );
-            
-            if (response.status === 200) {
-                // Handle both cookie-based and localStorage-based token approaches
-                if (response.data.accessToken && response.data.refreshToken) {
-                    enhancedLocalStorage.setItem("accessToken", response.data.accessToken);
-                    enhancedLocalStorage.setItem("refreshToken", response.data.refreshToken);
-                    await validateToken(response.data.accessToken);
-                } else {
-                    // Try to validate with the refreshToken we have, backend may have set cookies
-                    await validateToken(refreshTokenValue);
-                }
-            } else {
-                throw new Error("Invalid refresh token response");
-            }
-        } catch (error) {
-            console.error("Token refresh error:", error);
-            logout();
+            console.error("Logout error:", error);
+        } finally {
+            // Always clear tokens and user state
+            setUser(null);
+            tokenStorage.clearTokens();
+            setIsLoading(false);
             navigate('/auth/signin');
         }
     };
@@ -254,7 +229,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     };
     
     if (!isInitialized) {
-        return <Loader/>; // or a loading spinner
+        return <Loader/>;
     }
 
     return (
