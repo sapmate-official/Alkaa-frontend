@@ -65,18 +65,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             setIsInitialized(true);
         }
     };
+    
     const signIn = async (email: string, password: string) => {
         try {
             const response = await axios.post(`${backendDomain}/api/v1/general/login`, {
                 email,
                 password
             }, { withCredentials: true });
-            console.log(response);
-            if (response.status === 200 && response.data.accessToken && response.data.refreshToken) {
-                // Store in localStorage
-                enhancedLocalStorage.setItem("accessToken", response.data.accessToken);
-                enhancedLocalStorage.setItem("refreshToken", response.data.refreshToken);
-                await validateToken(response.data.accessToken);
+            
+            console.log("Login response:", response);
+            
+            if (response.status === 200) {
+                // If tokens are in response body, store them in localStorage
+                if (response.data.accessToken && response.data.refreshToken) {
+                    enhancedLocalStorage.setItem("accessToken", response.data.accessToken);
+                    enhancedLocalStorage.setItem("refreshToken", response.data.refreshToken);
+                    await validateToken(response.data.accessToken);
+                } 
+                // If no tokens in body but status is 200, cookies might have been set
+                else if (response.data.user) {
+                    setUser(response.data.user);
+                    setUser_id(response.data.user?.userId);
+                    setIsLoading(false);
+                }
             } else {
                 throw new Error("Invalid login response");
             }
@@ -94,7 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 }
             }
         }
-    }
+    };
 
     useEffect(() => {
         let isSubscribed = true;
@@ -143,6 +154,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             }
         }
     };
+
     const validateToken = async (token: string) => {
         try {
             const response = await axios.get(`${backendDomain}/api/v1/general/validate-token`, {
@@ -165,6 +177,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 if (error.response?.status === 401) {
+                    if (error.response.data?.expired) {
+                        console.log("Token expired, attempting to refresh");
+                        await refreshToken();
+                        return; // Return here to avoid logging out
+                    }
                     if (error.response.data?.message === "Organization is inactive") {
                         setUser(null);
                         logout();
@@ -176,6 +193,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                     
                     const currentPath = window.location.pathname;
                     if (!currentPath.includes('/auth/signin')) {
+                        console.log("Attempting to refresh token after 401 error");
                         await refreshToken();
                     } else {
                         setUser(null);
@@ -207,16 +225,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 }
             );
             
-            if (response.status === 200 && response.data.accessToken && response.data.refreshToken) {
-                enhancedLocalStorage.setItem("accessToken", response.data.accessToken);
-                enhancedLocalStorage.setItem("refreshToken", response.data.refreshToken);
-                await validateToken(response.data.accessToken);
+            if (response.status === 200) {
+                // Handle both cookie-based and localStorage-based token approaches
+                if (response.data.accessToken && response.data.refreshToken) {
+                    enhancedLocalStorage.setItem("accessToken", response.data.accessToken);
+                    enhancedLocalStorage.setItem("refreshToken", response.data.refreshToken);
+                    await validateToken(response.data.accessToken);
+                } else {
+                    // Try to validate with the refreshToken we have, backend may have set cookies
+                    await validateToken(refreshTokenValue);
+                }
             } else {
                 throw new Error("Invalid refresh token response");
             }
         } catch (error) {
             console.error("Token refresh error:", error);
             logout();
+            navigate('/auth/signin');
         }
     };
 
@@ -225,8 +250,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         isLoading,
         logout,
         reinitializeAuth: initializeAuth,
-        signIn: signIn
+        signIn
     };
+    
     if (!isInitialized) {
         return <Loader/>; // or a loading spinner
     }
