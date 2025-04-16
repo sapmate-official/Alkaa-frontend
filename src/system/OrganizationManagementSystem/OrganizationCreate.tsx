@@ -91,6 +91,8 @@ const OrganizationCreate = () => {
         ...orgForm,
         subscriptionEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year from now
       });
+      console.log('Organization created:', response?.data);
+      
       setOrganizationId(response?.data?.id);
       toast({
         title: "Organization created successfully",
@@ -151,10 +153,15 @@ const OrganizationCreate = () => {
   // Update Role Permissions
   const updateRolePermissions = async (roleId: string) => {
     try {
-      await axios.put(`${APIDictionary.role}`, {
+      // Transform the permission IDs into the required format
+      const formattedPermissions = selectedPermissions.map(permissionId => ({
+        permissionId
+      }));
+
+      await axios.put(`${APIDictionary.role}/${roleId}`, {
         id: roleId,
         orgId: organizationId,
-        permissions: selectedPermissions,
+        permissions: formattedPermissions,
         name: 'Org_Admin', // Maintain existing role name
         description: 'Organization Administrator', // Maintain existing description
         isDefault: false

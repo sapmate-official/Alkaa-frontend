@@ -581,9 +581,9 @@ const OrganizationManagementSystemRoutes = () => {
       <Route path='/' element={<OrganizationHome />} />
       <Route path='/create' element={<OrganizationCreate />} />
       <Route path='/:organizationId' element={
-        <PermissionRouteBasedOnKey requiredPermissions={['view_organization_basic_details']}>
+        // <PermissionRouteBasedOnKey requiredPermissions={['view_organization_basic_details']}>
           <SpecificOrganizationHome />
-        </PermissionRouteBasedOnKey>
+        // </PermissionRouteBasedOnKey>
       } />
     </Routes>
   )

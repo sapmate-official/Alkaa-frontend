@@ -628,7 +628,7 @@ const EmployeeManagement: React.FC = () => {
                                                                     id="department"
                                                                     value={selectedDepartment}
                                                                     onChange={(e) => setSelectedDepartment(e.target.value)}
-                                                                    className="w-full mt-1 p-2 border rounded-md"
+                                                                    className="w-full mt-1 p-2 border rounded-md bg-background"
                                                                 >
                                                                     <option value="">Select a department</option>
                                                                     {getAssignableDepartments().map((department) => (

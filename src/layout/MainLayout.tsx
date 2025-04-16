@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
-import { 
-  IconBuildingSkyscraper, 
+import {
+  IconBuildingSkyscraper,
   IconUserBolt,
   IconCalendarStats,
   IconLogout,
@@ -59,11 +59,24 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const { user, isLoading } = useAuth();
   const location = useLocation();
   const [permissionList] = useAtom(permissionListAtom);
+  const [leaveRequestsNumber, setLeaveRequestsNumber] = useState(0);
 
   const noSidebarPaths = ['/', '/auth/signin'];
   const shouldShowSidebar = !noSidebarPaths.includes(location.pathname) &&
     !location.pathname.startsWith('/reset-password');
 
+
+  const fetchLeaveRequests = async () => {
+    try {
+      const response = await axios.get(`${APIDictionary.leave_request}/manager/${user?.id}`, { withCredentials: true })
+      if (response.status === 200) {
+        setLeaveRequestsNumber(response.data.some((request: any) => request.status === "Pending") ? response.data.length : 0);
+      }
+    } catch (error) {
+      console.log("Error fetching leave requests", error);
+
+    }
+  }
   const fetchUserDetails = async () => {
     try {
       if (!user?.id) return;
@@ -81,6 +94,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   useEffect(() => {
     if (user && !isLoading) {
       fetchUserDetails();
+      fetchLeaveRequests()
     }
   }, [user, isLoading]);
 
@@ -124,9 +138,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           href: "/p/leavetype",
           icon: <Leaf className="h-5 w-5" />
         });
-      } else if (permission.key === "leave_request") {
+      } else if (permission.key === "leave_request" ) {
         baseLinks.push({
-          label: "Leave Request",
+          label: `Leave Request  ${leaveRequestsNumber > 0 ? `(${leaveRequestsNumber})` : ""}`,
           href: "/p/leaverequest",
           icon: <IconFileDescription className="h-5 w-5" />
         });
