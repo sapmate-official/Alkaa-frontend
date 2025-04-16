@@ -7,13 +7,12 @@ import { ToastProvider } from './components/ui/toast.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-      <ThemeProvider>
+    <ThemeProvider>
       <ToastProvider>
-      <App />
+        <App />
       </ToastProvider>
-      </ThemeProvider>
-  
-  </StrictMode>,
+    </ThemeProvider>
+  </StrictMode>
 )
 
 // Register service worker for PWA

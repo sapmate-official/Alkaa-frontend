@@ -258,6 +258,13 @@ const BankDetails = () => {
               <SalaryParameter userID={id} />
             </div>
           )}
+          {
+            !id && user?.id && (
+              <div className="h-fit">
+                <SalaryParameter userID={user?.id} />
+              </div>
+            )
+          }
         </div>
       </div>
     </div>

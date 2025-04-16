@@ -119,7 +119,7 @@ const PayrollViewEmployeeDetails = () => {
         const userResponse = await axios.get(`${APIDictionary.userProfile(user.id)}`)
         const hasViewAllPermission = userResponse.data.user.roles?.some((userRole: any) => 
           userRole.role.permissions?.some((perm: any) => 
-            perm.permission?.name === "payroll.view_all"
+            perm.permission?.key === "payroll.view_salary_slip_of_all"
           )
         )
         
