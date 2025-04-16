@@ -84,7 +84,7 @@ const PayrollViewAllEmployees = () => {
         // Check if user has org admin permissions
         const hasViewAllPermission = userData.roles?.some((userRole: any) => 
           userRole.role.permissions?.some((perm: any) => 
-            perm.permission?.name === "payroll.view_all"
+            perm.permission?.key === "view_salary_slip_of_all"
           )
         )
         

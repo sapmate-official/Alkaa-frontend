@@ -11,6 +11,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import {
@@ -28,7 +29,27 @@ import { Department, User } from '@/interface/general';
 import RoleAssignment from './RoleAssignment';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader, Sparkles } from 'lucide-react';
+import { 
+  Loader, 
+  Sparkles, 
+  User as UserIcon, 
+  Mail, 
+  Phone, 
+  Calendar, 
+  MapPin, 
+  CreditCard, 
+  Building, 
+  DollarSign, 
+  Percent, 
+  BriefcaseBusiness, 
+  ShieldCheck, 
+  BadgeCheck,
+  Users,
+  FileSpreadsheet,
+  Briefcase,
+  Calculator
+} from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const basicDetailsSchema = z.object({
   firstName: z.string().min(2, 'First name is required'),
@@ -40,8 +61,7 @@ const basicDetailsSchema = z.object({
   adharNumber: z.string().optional(),
   panNumber: z.string().optional(),
   employeeId: z.string().optional(),
-  hiredDate:z.string().nonempty('Hired Date is required'),  
-
+  hiredDate: z.string().nonempty('Hired Date is required'),
 });
 
 const bankDetailsSchema = z.object({
@@ -91,6 +111,7 @@ const CreateEmployeeNew = () => {
   const [useHeadAsManager, setUseHeadAsManager] = useState(false);
   const [employeeIdExists, setEmployeeIdExists] = useState(false);
   const [loading, setLoading] = useState(false);
+
   const fetchDepartments = async () => {
     try {
       const response = await axios.get(
@@ -144,7 +165,7 @@ const CreateEmployeeNew = () => {
       adharNumber: '',
       panNumber: '',
       employeeId: '',
-      hiredDate:'',
+      hiredDate: '',
 
       // Bank Details
       accountHolder: '',
@@ -168,6 +189,7 @@ const CreateEmployeeNew = () => {
       managerId: user?.id.toString()
     }
   });
+
   const fetchEmployeeId = async () => {
     try {
       if (!user?.orgId) {
@@ -191,7 +213,8 @@ const CreateEmployeeNew = () => {
         variant: "destructive",
       });
     }
-  }
+  };
+
   const checkEmployeeId = async (employeeId: string) => {
     try {
       if (!user?.orgId) {
@@ -202,7 +225,7 @@ const CreateEmployeeNew = () => {
         });
         return;
       }
-      if(!employeeId) {
+      if (!employeeId) {
         setEmployeeIdExists(false);
         return false;
       }
@@ -221,8 +244,7 @@ const CreateEmployeeNew = () => {
         variant: "destructive",
       });
     }
-  }
-  
+  };
 
   const onSubmit = async (data: any) => {
     try {
@@ -243,7 +265,7 @@ const CreateEmployeeNew = () => {
       console.log(form.getValues());
       console.log(data);
       data = form.getValues();
-      if(data.employeeId === '' || data.employeeId === null || data.employeeId === undefined) {
+      if (data.employeeId === '' || data.employeeId === null || data.employeeId === undefined) {
         data.employeeId = user?.id;
       }
       setLoading(true);
@@ -252,7 +274,6 @@ const CreateEmployeeNew = () => {
         orgId: user.orgId,
       });
       if (response.status == 201) {
-
         toast({
           title: 'Success',
           description: 'Employee created successfully',
@@ -266,15 +287,13 @@ const CreateEmployeeNew = () => {
           variant: 'destructive',
         });
       }
-
-      // Reset form and step
-    } catch (error:any) {
+    } catch (error: any) {
       toast({
         title: 'Error',
         description: error?.response?.data?.error || error?.response?.data?.message || 'Failed to create employee',
         variant: 'destructive',
       });
-    }finally {
+    } finally {
       setLoading(false);
     }
   };
@@ -284,142 +303,721 @@ const CreateEmployeeNew = () => {
       setCurrentStep(prev => prev - 1);
     }
   };
-  const renderRoleAssignmentStep = () => (
-    <div className="space-y-4">
-      <FormField
-      control={form.control}
-      name="departmentId"
-      render={({ field }) => (
-        <FormItem>
-        <FormLabel>Department</FormLabel>
-        <Select onValueChange={(value) => {
-          field.onChange(value);
-          // Reset head manager checkbox if department has no head
-          const selectedDept = departments?.find(dept => dept?.id === value);
-          if (!selectedDept?.headId) {
-          setUseHeadAsManager(false);
-          }
-        }} value={field.value}>
-          <FormControl>
-          <SelectTrigger>
-            <SelectValue placeholder="Select department" />
-          </SelectTrigger>
-          </FormControl>
-          <SelectContent>
-          {departments?.map((dept) => (
-            <SelectItem key={dept?.id} value={dept?.id}>
-            {dept?.name}
-            </SelectItem>
-          ))}
-          </SelectContent>
-        </Select>
-        <FormMessage />
-        </FormItem>
-      )}
-      />
 
-      <div className="flex items-center space-x-2">
-      <Checkbox
-        id="useHeadAsManager"
-        checked={useHeadAsManager}
-        disabled={!departments?.find(dept => dept?.id === form.getValues("departmentId"))?.headId}
-        onCheckedChange={(checked) => {
-        setUseHeadAsManager(checked as boolean);
-        if (checked) {
-          const selectedDept = departments?.find(
-          (dept) => dept?.id === form.getValues("departmentId")
-          );
-          if (selectedDept?.headId) {
-          form.setValue("managerId", selectedDept.headId);
-          }
-        } else {
-          form.setValue("managerId", user?.id);
-        }
-        }}
-      />
-      <label 
-        htmlFor="useHeadAsManager"
-        className={!departments?.find(dept => dept?.id === form.getValues("departmentId"))?.headId ? "text-muted-foreground" : ""}
+  const renderFormStep = () => {
+    return (
+      <motion.div
+        key={currentStep}
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -20 }}
+        transition={{ duration: 0.3 }}
       >
-        Use department head as manager
-      </label>
+        {currentStep === 0 && renderBasicDetailsStep()}
+        {currentStep === 1 && renderBankDetailsStep()}
+        {currentStep === 2 && renderSalaryDetailsStep()}
+        {currentStep === 3 && renderRoleAssignmentStep()}
+      </motion.div>
+    );
+  };
+
+  const renderBasicDetailsStep = () => (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="firstName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2">
+                <UserIcon className="h-4 w-4" />
+                First Name
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="John" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="lastName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2">
+                <UserIcon className="h-4 w-4" />
+                Last Name
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="Doe" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
 
-      {!useHeadAsManager && (
-      <FormField
-        control={form.control}
-        name="managerId"
-        render={({ field }) => (
-        <FormItem>
-          <FormLabel>Manager</FormLabel>
-          <Select onValueChange={field.onChange} value={field.value}>
-          <FormControl>
-            <SelectTrigger>
-            <SelectValue placeholder="Select manager" />
-            </SelectTrigger>
-          </FormControl>
-          <SelectContent>
-            {employees?.map((emp) => (
-            <SelectItem key={emp?.id} value={emp?.id}>
-              {`${emp?.firstName} ${emp?.lastName}`}
-            </SelectItem>
-            ))}
-          </SelectContent>
-          </Select>
-          <FormMessage />
-        </FormItem>
-        )}
-      />
-      )}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                Email
+              </FormLabel>
+              <FormControl>
+                <Input type="email" placeholder="john.doe@example.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="mobileNumber"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2">
+                <Phone className="h-4 w-4" />
+                Mobile Number
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="+91 9876543210" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="dateOfBirth"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                Date of Birth
+              </FormLabel>
+              <FormControl>
+                <Input type="date" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="hiredDate"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2">
+                <BriefcaseBusiness className="h-4 w-4" />
+                Hired Date
+              </FormLabel>
+              <FormControl>
+                <Input type="date" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
 
       <FormField
-      control={form.control}
-      name="roleIds"
-      render={({ field }) => (
-        <FormItem>
-        <FormLabel>Role</FormLabel>
-        <div className="space-y-2">
-          <RoleAssignment setRoleId={roleId => {
-          field.onChange([roleId]);
-          }} />
-        </div>
-        <FormMessage />
-        </FormItem>
-      )}
+        control={form.control}
+        name="address"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className="flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              Address
+            </FormLabel>
+            <FormControl>
+              <Textarea placeholder="Enter complete address" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="adharNumber"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2">
+                <BadgeCheck className="h-4 w-4" />
+                Aadhar Number
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="Optional" {...field} />
+              </FormControl>
+              <FormDescription className="text-xs">Optional</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="panNumber"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2">
+                <FileSpreadsheet className="h-4 w-4" />
+                PAN Number
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="Optional" {...field} />
+              </FormControl>
+              <FormDescription className="text-xs">Optional</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      <FormField
+        control={form.control}
+        name="employeeId"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className="flex items-center gap-2">
+              <Briefcase className="h-4 w-4" />
+              Employee ID
+            </FormLabel>
+            <div className="flex gap-2">
+              <FormControl className="flex-grow">
+                <Input
+                  {...field}
+                  onChange={async (e) => {
+                    field.onChange(e);
+                    await checkEmployeeId(e.target.value);
+                  }}
+                  className={`focus:ring-2 ${employeeIdExists ? "border-red-500 focus:ring-red-200" : "focus:ring-blue-200"}`}
+                  placeholder="EMP-001"
+                />
+              </FormControl>
+              <Button 
+                type="button"
+                onClick={fetchEmployeeId}
+                variant="outline"
+                className="hover:bg-primary hover:text-white transition-colors"
+              >
+                <Sparkles className="h-4 w-4 mr-1" />
+                <span className="hidden sm:inline">Generate</span>
+              </Button>
+            </div>
+            {employeeIdExists && (
+              <div className="text-sm text-red-500 mt-1 flex items-center gap-1">
+                <span className="text-xs">⚠️</span> This Employee ID already exists
+              </div>
+            )}
+            <FormMessage />
+          </FormItem>
+        )}
       />
     </div>
   );
+
+  const renderBankDetailsStep = () => (
+    <div className="space-y-6">
+      <div className="bg-muted/50 p-4 rounded-lg mb-6">
+        <h3 className="text-md font-medium mb-2 flex items-center gap-2">
+          <CreditCard className="h-4 w-4" />
+          Bank Account Information
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          Employee bank details are required for salary disbursement. Please ensure the information is accurate.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="accountHolder"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2">
+                <UserIcon className="h-4 w-4" />
+                Account Holder Name
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="Full name as per bank records" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="bankName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2">
+                <Building className="h-4 w-4" />
+                Bank Name
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="e.g., HDFC Bank, SBI" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="accountNumber"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4" />
+                Account Number
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="Bank account number" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="ifscCode"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2">
+                <Building className="h-4 w-4" />
+                IFSC Code
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="XXXX0000000" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+    </div>
+  );
+
+  const renderSalaryDetailsStep = () => (
+    <div className="space-y-6">
+      <div className="bg-muted/50 p-4 rounded-lg mb-6">
+        <h3 className="text-md font-medium mb-2 flex items-center gap-2">
+          <DollarSign className="h-4 w-4" />
+          Salary Structure
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          Define the employee's compensation structure including allowances and deductions.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="annualPackage"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2">
+                <DollarSign className="h-4 w-4" />
+                Annual Package
+              </FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  placeholder="0"
+                  {...field}
+                  onChange={e => {
+                    const value = parseFloat(e.target.value);
+                    field.onChange(value);
+                    // Calculate and update monthly salary
+                    if (!isNaN(value)) {
+                      const monthly = parseFloat((value / 12).toFixed(2));
+                      form.setValue('monthlySalary', monthly);
+                    }
+                  }}
+                  className="text-right"
+                />
+              </FormControl>
+              <div className="flex items-center mt-1 text-xs text-muted-foreground">
+                <Calculator className="h-3 w-3 mr-1" />
+                <span>Annual = Monthly × 12</span>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="monthlySalary"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2">
+                <DollarSign className="h-4 w-4" />
+                Monthly Salary
+              </FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  placeholder="0"
+                  {...field}
+                  onChange={e => {
+                    const value = parseFloat(e.target.value);
+                    field.onChange(value);
+                    // Calculate and update annual package
+                    if (!isNaN(value)) {
+                      const annual = parseFloat((value * 12).toFixed(2));
+                      form.setValue('annualPackage', annual);
+                    }
+                  }}
+                  className="text-right"
+                />
+              </FormControl>
+              <div className="flex items-center mt-1 text-xs text-muted-foreground">
+                <Calculator className="h-3 w-3 mr-1" />
+                <span>Monthly = Annual ÷ 12</span>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      <div className="border-t border-b border-muted py-4 my-6">
+        <h4 className="text-sm font-medium mb-4">Allowances (% of monthly salary)</h4>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <FormField
+            control={form.control}
+            name="hraPercentage"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                  <Percent className="h-4 w-4" />
+                  HRA Percentage
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    {...field}
+                    onChange={e => field.onChange(parseFloat(e.target.value))}
+                    className="text-right"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="daPercentage"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                  <Percent className="h-4 w-4" />
+                  DA Percentage
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    {...field}
+                    onChange={e => field.onChange(parseFloat(e.target.value))}
+                    className="text-right"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="taPercentage"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                  <Percent className="h-4 w-4" />
+                  TA Percentage
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    {...field}
+                    onChange={e => field.onChange(parseFloat(e.target.value))}
+                    className="text-right"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+      </div>
+
+      <div className="border-b border-muted pb-6">
+        <h4 className="text-sm font-medium mb-4">Deductions</h4>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <FormField
+            control={form.control}
+            name="pfPercentage"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                  <Percent className="h-4 w-4" />
+                  PF Percentage
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    {...field}
+                    onChange={e => field.onChange(parseFloat(e.target.value))}
+                    className="text-right"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="taxPercentage"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                  <Percent className="h-4 w-4" />
+                  Tax Percentage
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    {...field}
+                    onChange={e => field.onChange(parseFloat(e.target.value))}
+                    className="text-right"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="insuranceFixed"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4" />
+                  Insurance (Fixed)
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="0"
+                    {...field}
+                    onChange={e => field.onChange(parseFloat(e.target.value))}
+                    className="text-right"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderRoleAssignmentStep = () => (
+    <div className="space-y-6">
+      <div className="bg-muted/50 p-4 rounded-lg mb-6">
+        <h3 className="text-md font-medium mb-2 flex items-center gap-2">
+          <Users className="h-4 w-4" />
+          Organizational Position
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          Assign the employee to appropriate department and roles within the organization.
+        </p>
+      </div>
+      
+      <FormField
+        control={form.control}
+        name="departmentId"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className="flex items-center gap-2">
+              <Building className="h-4 w-4" />
+              Department
+            </FormLabel>
+            <Select onValueChange={(value) => {
+              field.onChange(value);
+              // Reset head manager checkbox if department has no head
+              const selectedDept = departments?.find(dept => dept?.id === value);
+              if (!selectedDept?.headId) {
+                setUseHeadAsManager(false);
+              }
+            }} value={field.value}>
+              <FormControl>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select department" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {departments?.map((dept) => (
+                  <SelectItem key={dept?.id} value={dept?.id}>
+                    {dept?.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <div className="p-4 border border-muted rounded-md">
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="useHeadAsManager"
+            checked={useHeadAsManager}
+            disabled={!departments?.find(dept => dept?.id === form.getValues("departmentId"))?.headId}
+            onCheckedChange={(checked) => {
+              setUseHeadAsManager(checked as boolean);
+              if (checked) {
+                const selectedDept = departments?.find(
+                  (dept) => dept?.id === form.getValues("departmentId")
+                );
+                if (selectedDept?.headId) {
+                  form.setValue("managerId", selectedDept.headId);
+                }
+              } else {
+                form.setValue("managerId", user?.id);
+              }
+            }}
+            className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+          />
+          <label 
+            htmlFor="useHeadAsManager"
+            className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${!departments?.find(dept => dept?.id === form.getValues("departmentId"))?.headId ? "text-muted-foreground" : ""}`}
+          >
+            Use department head as manager
+          </label>
+        </div>
+        
+        {!useHeadAsManager && (
+          <div className="mt-4">
+            <FormField
+              control={form.control}
+              name="managerId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2">
+                    <UserIcon className="h-4 w-4" />
+                    Manager
+                  </FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select manager" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {employees?.map((emp) => (
+                        <SelectItem key={emp?.id} value={emp?.id}>
+                          {`${emp?.firstName} ${emp?.lastName}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
+      </div>
+
+      <FormField
+        control={form.control}
+        name="roleIds"
+        render={({ field }) => (
+          <FormItem className="mt-4">
+            <FormLabel className="flex items-center gap-2 mb-2">
+              <Briefcase className="h-4 w-4" />
+              Role Assignment
+            </FormLabel>
+            <div className="space-y-2 border border-muted rounded-md p-4">
+              <RoleAssignment setRoleId={roleId => {
+                field.onChange([roleId]);
+              }} />
+            </div>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </div>
+  );
+
   return (
-    <div className="container mx-auto p-6 w-full h-full overflow-y-scroll">
-      <Card>
-        <CardHeader>
-          <CardTitle>Create New Employee</CardTitle>
+    <div className="mx-auto p-4 w-full h-full overflow-y-scroll">
+      <Card className="shadow-md border-muted/40">
+        <CardHeader className="bg-muted/10">
+          <CardTitle className="text-xl font-semibold text-center sm:text-left flex items-center gap-2">
+            <UserIcon className="h-5 w-5" />
+            Create New Employee
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          {/* Progress Indicator */}
+        <CardContent className="p-6">
+          {/* Enhanced Progress Indicator */}
           <div className="mb-8">
-            <div className="flex justify-between">
+            <div className="flex flex-wrap justify-between">
               {steps.map((step, index) => (
                 <div
                   key={step}
-                  className={`flex flex-col items-center ${index <= currentStep ? 'text-primary' : 'text-muted-foreground'
-                    }`}
+                  className={`flex flex-col items-center mb-4 ${
+                    index <= currentStep ? 'text-primary' : 'text-muted-foreground'
+                  }`}
                 >
                   <div
-                    className={`w-8 h-8 rounded-full border-2 flex items-center justify-center mb-2 ${index <= currentStep
-                      ? 'border-primary bg-primary text-white'
-                      : 'border-muted-foreground'
-                      }`}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all duration-300 ${
+                      index < currentStep
+                        ? 'bg-primary text-white'
+                        : index === currentStep
+                        ? 'border-2 border-primary bg-primary/10 text-primary'
+                        : 'border-2 border-muted-foreground/30 bg-muted/20'
+                    }`}
                   >
-                    {index + 1}
+                    {index < currentStep ? '✓' : index + 1}
                   </div>
-                  <span className="text-sm">{step}</span>
+                  <span className="text-sm font-medium">{step}</span>
                 </div>
               ))}
             </div>
-            <div className="mt-4 h-2 bg-secondary rounded-full">
+            <div className="mt-4 h-2 bg-muted/30 rounded-full overflow-hidden">
               <div
-                className="h-full bg-primary rounded-full transition-all"
+                className="h-full bg-primary rounded-full transition-all duration-500 ease-in-out"
                 style={{
                   width: `${((currentStep + 1) / steps.length) * 100}%`,
                 }}
@@ -430,418 +1028,33 @@ const CreateEmployeeNew = () => {
           {/* Form */}
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Step 1: Basic Details */}
-              {currentStep === 0 && (
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="firstName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>First Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="lastName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Last Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input type="email" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="mobileNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Mobile Number</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="dateOfBirth"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Date of Birth</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="hiredDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Hired Date</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="address"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Address</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="adharNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Aadhar Number (Optional)</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="panNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>PAN Number (Optional)</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="employeeId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Employee ID</FormLabel>
-                        <div className="flex gap-2">
-                          <FormControl className="flex-grow">
-                          <Input
-                            {...field}
-                            onChange={async (e) => {
-                              field.onChange(e);
-                              await checkEmployeeId(e.target.value);
-                            }}
-                            className={employeeIdExists ? "border-red-500" : ""}
-                          />
-                          </FormControl>
-                          <Button 
-                          type="button"
-                          onClick={fetchEmployeeId}
-                          variant="outline"
-                          >
-                            <Sparkles/>
-                          </Button>
-                        </div>
-                        {employeeIdExists && (
-                          <div className="text-sm text-red-500 mt-1">
-                            This Employee ID already exists
-                          </div>
-                        )}
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              )}
-
-              {/* Step 2: Bank Details */}
-              {currentStep === 1 && (
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="accountHolder"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Account Holder Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="accountNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Account Number</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="ifscCode"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>IFSC Code</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="bankName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Bank Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  {/* Add other bank details fields */}
-                </div>
-              )}
-
-              {/* Step 3: Salary Details */}
-              {/* Step 3: Salary Details */}
-              {currentStep === 2 && (
-                <div className="space-y-4 w-full h-full">
-                  <FormField
-                    control={form.control}
-                    name="annualPackage"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Annual Package</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            {...field}
-                            onChange={e => field.onChange(parseFloat(e.target.value))}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="monthlySalary"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Monthly Salary</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            {...field}
-                            onChange={e => field.onChange(parseFloat(e.target.value))}
-                            value={field.value}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="hraPercentage"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>HRA Percentage</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min="0"
-                            max="100"
-                            {...field}
-                            onChange={e => field.onChange(parseFloat(e.target.value))}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="daPercentage"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>DA Percentage</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min="0"
-                            max="100"
-                            {...field}
-                            onChange={e => field.onChange(parseFloat(e.target.value))}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="taPercentage"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>TA Percentage</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min="0"
-                            max="100"
-                            {...field}
-                            onChange={e => field.onChange(parseFloat(e.target.value))}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="pfPercentage"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>PF Percentage</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min="0"
-                            max="100"
-                            {...field}
-                            onChange={e => field.onChange(parseFloat(e.target.value))}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="taxPercentage"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tax Percentage</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min="0"
-                            max="100"
-                            {...field}
-                            onChange={e => field.onChange(parseFloat(e.target.value))}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="insuranceFixed"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Insurance Amount (Fixed)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min="0"
-                            {...field}
-                            onChange={e => field.onChange(parseFloat(e.target.value))}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              )}
-
-              {/* Step 4: Role Assignment */}
-              {currentStep === 3 && renderRoleAssignmentStep()}
+              {renderFormStep()}
 
               {/* Navigation Buttons */}
-              <div className="flex justify-between pt-4">
+              <div className="flex justify-between pt-6 border-t border-muted/30">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={onPrevious}
                   disabled={currentStep === 0}
+                  className="min-w-[100px] transition-all"
                 >
-                  Previous
+                  <span className="mr-2">←</span> Previous
                 </Button>
-                {
-                  !loading  && 
-                (<Button type="submit">
-                  {currentStep === steps.length - 1 ? 'Create Employee' : 'Next'}
-                </Button>)
-                }
-                {
-                  loading  && 
-                (
-                <Button className='' type="submit">
-                  <Loader className='animate-spin'/>
+                
+                <Button 
+                  type="submit" 
+                  className="min-w-[100px] bg-primary hover:bg-primary/90 transition-all"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <Loader className='animate-spin mr-2' />
+                  ) : currentStep === steps.length - 1 ? (
+                    <>Create Employee</>
+                  ) : (
+                    <>Next <span className="ml-2">→</span></>
+                  )}
                 </Button>
-                )
-                }
               </div>
             </form>
           </Form>
