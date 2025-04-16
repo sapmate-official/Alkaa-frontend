@@ -26,7 +26,6 @@ interface FormDataType {
   mobileNumber: string;
   dateOfBirth: string;
   hiredDate: string;
-  companyName: string;
   departmentId: string;
   annualPackage: string;
   monthlySalary: string;
@@ -77,7 +76,6 @@ const ProfileEdit = () => {
     mobileNumber: '',
     dateOfBirth: '',
     hiredDate: '',
-    companyName: '',
     departmentId: '',
     annualPackage: '',
     monthlySalary: '',
@@ -115,7 +113,6 @@ const ProfileEdit = () => {
           mobileNumber: userData?.mobileNumber || '',
           dateOfBirth: userData?.dateOfBirth?.split('T')[0] || '',
           hiredDate: userData?.hiredDate?.split('T')[0] || '',
-          companyName: userData?.companyName || '',
           departmentId: userData?.departmentId || '',
           annualPackage: userData?.annualPackage?.toString() || '',
           monthlySalary: userData?.monthlySalary?.toString() || '',
@@ -166,10 +163,32 @@ const ProfileEdit = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value || ''
-    }));
+    
+    // Calculate corresponding value based on which field was changed
+    if (name === 'annualPackage' && value) {
+      const annualValue = parseFloat(value);
+      const monthlyValue = (annualValue / 12).toFixed(2);
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        monthlySalary: monthlyValue
+      }));
+    } else if (name === 'monthlySalary' && value) {
+      const monthlyValue = parseFloat(value);
+      const annualValue = (monthlyValue * 12).toFixed(2);
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        annualPackage: annualValue
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value || ''
+      }));
+    }
   };
 
   const handleSelectChange = (name: keyof FormDataType, value: string) => {
@@ -372,22 +391,7 @@ const ProfileEdit = () => {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="companyName">Company Name *</Label>
-                <Select
-                  value={formData.companyName || ''}
-                  onValueChange={(value) => handleSelectChange('companyName', value)}
-                  disabled={!canEditEmployeeInfo && !canEditSubordinatesEmployeeInfo && !canEditAllUserEmployeeInfo}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select company" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="company1">Company 1</SelectItem>
-                    <SelectItem value="company2">Company 2</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              
 
               <div className="space-y-2">
                 <Label htmlFor="departmentId">Department *</Label>
