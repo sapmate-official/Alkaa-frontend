@@ -128,6 +128,12 @@ const EmployeeManagement: React.FC = () => {
         }
     }, [isDialogOpen])
 
+    // Add these new states for deletion process
+    const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+    const [deleteConfirmStep, setDeleteConfirmStep] = useState(1);
+    const [confirmationEmail, setConfirmationEmail] = useState('');
+    const [isDeleting, setIsDeleting] = useState(false);
+
     // Fetch employees data
     const fetchEmployees = async () => {
         setIsLoading(prev => ({ ...prev, employees: true }))
@@ -386,6 +392,55 @@ const EmployeeManagement: React.FC = () => {
         }
     };
 
+    // Add this new function for hard deletion
+    const handleHardDeleteUser = async () => {
+        if (!selectedEmployee) return;
+        
+        // Check if user has permission to delete users
+        if (!hasPermission('delete_user')) {
+            toast({
+                title: "Permission Denied",
+                description: "You don't have permission to delete users",
+                variant: "destructive"
+            });
+            return;
+        }
+        
+        setIsDeleting(true);
+        try {
+            await axios.delete(`${APIDictionary.user}`, {
+                data: { id: selectedEmployee.id },
+                withCredentials: true
+            });
+            
+            // Update local state
+            const updatedEmployees = employees.filter(emp => emp.id !== selectedEmployee.id);
+            setEmployees(updatedEmployees);
+            setFilteredEmployees(updatedEmployees);
+            
+            // Close all dialogs and show success message
+            setShowDeleteConfirmation(false);
+            setDeleteConfirmStep(1);
+            setConfirmationEmail('');
+            setIsDialogOpen(false);
+            
+            toast({
+                title: "Success",
+                description: "User has been permanently deleted",
+                variant: "default"
+            });
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            toast({
+                title: "Error",
+                description: "Failed to delete user. Please try again.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     return (
         <div className="container mx-auto p-4 h-full overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
@@ -604,6 +659,25 @@ const EmployeeManagement: React.FC = () => {
                                                     </p>
                                                 </div>
                                             </div>
+
+                                            {/* Add Hard Delete section at the bottom of the profile tab */}
+                                            {hasPermission('delete_user') && (
+                                                <div className="mt-8 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                                    <h3 className="text-lg font-medium text-red-600 dark:text-red-400 mb-2">Danger Zone</h3>
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                                        Permanently delete this user and all associated data. This action cannot be undone.
+                                                    </p>
+                                                    <button
+                                                        onClick={() => {
+                                                            setShowDeleteConfirmation(true);
+                                                            setDeleteConfirmStep(1);
+                                                        }}
+                                                        className="w-full py-2 px-4 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                                                    >
+                                                        Hard Delete User
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 
@@ -765,6 +839,112 @@ const EmployeeManagement: React.FC = () => {
                                 Close
                             </button>
                         </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {/* Delete Confirmation Dialog */}
+            {showDeleteConfirmation && createPortal(
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
+                    <div 
+                        className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg w-full max-w-md max-h-[90vh] overflow-y-auto"
+                        role="dialog"
+                        aria-modal="true"
+                    >
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-semibold text-red-600 dark:text-red-400">
+                                {deleteConfirmStep === 1 ? "Confirm Deletion" : "Final Verification"}
+                            </h2>
+                            <button 
+                                onClick={() => setShowDeleteConfirmation(false)}
+                                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+                                aria-label="Close dialog"
+                                disabled={isDeleting}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </button>
+                        </div>
+
+                        {deleteConfirmStep === 1 ? (
+                            <div className="space-y-4">
+                                <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-md">
+                                    <p className="text-sm text-red-600 dark:text-red-400 font-medium">
+                                        Warning: This action cannot be undone
+                                    </p>
+                                    <p className="text-sm mt-2">
+                                        You are about to permanently delete {selectedEmployee?.firstName} {selectedEmployee?.lastName} and all associated data including:
+                                    </p>
+                                    <ul className="list-disc list-inside text-sm mt-2 space-y-1">
+                                        <li>User profile information</li>
+                                        <li>Role assignments and permissions</li>
+                                        <li>Attendance records</li>
+                                        <li>Leave records and balances</li>
+                                        <li>Salary records and transactions</li>
+                                        <li>All other related data</li>
+                                    </ul>
+                                </div>
+
+                                <div className="flex justify-end space-x-3 mt-4">
+                                    <button
+                                        onClick={() => setShowDeleteConfirmation(false)}
+                                        className="py-2 px-4 border border-gray-300 rounded-md hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
+                                        disabled={isDeleting}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={() => setDeleteConfirmStep(2)}
+                                        className="py-2 px-4 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none"
+                                        disabled={isDeleting}
+                                    >
+                                        Continue to Verification
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <p className="text-sm">
+                                    To confirm deletion, please type the employee's email address:
+                                    <span className="font-bold block mt-1">{selectedEmployee?.email}</span>
+                                </p>
+
+                                <div>
+                                    <label htmlFor="confirmEmail" className="sr-only">Confirm Email</label>
+                                    <input
+                                        type="email"
+                                        id="confirmEmail"
+                                        placeholder="Type email to confirm"
+                                        value={confirmationEmail}
+                                        onChange={(e) => setConfirmationEmail(e.target.value)}
+                                        className="w-full p-2 border rounded-md bg-background"
+                                        disabled={isDeleting}
+                                    />
+                                </div>
+
+                                <div className="flex justify-end space-x-3 mt-4">
+                                    <button
+                                        onClick={() => setDeleteConfirmStep(1)}
+                                        className="py-2 px-4 border border-gray-300 rounded-md hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
+                                        disabled={isDeleting}
+                                    >
+                                        Back
+                                    </button>
+                                    <button
+                                        onClick={handleHardDeleteUser}
+                                        className="py-2 px-4 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                        disabled={isDeleting || confirmationEmail !== selectedEmployee?.email}
+                                    >
+                                        {isDeleting ? (
+                                            <>
+                                                <Loader2 className="h-4 w-4 animate-spin mr-2 inline" />
+                                                Deleting...
+                                            </>
+                                        ) : "Permanently Delete User"}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>,
                 document.body
