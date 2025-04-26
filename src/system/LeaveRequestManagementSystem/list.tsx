@@ -50,7 +50,7 @@ const LeaveRequestList = () => {
   const [permissionList] = useAtom(permissionListAtom)
 
   const checkPermissions = () => {
-    setCanCreateLeaveRequest(permissionList.some(permission => permission.key === 'leave_request_create'))
+    setCanCreateLeaveRequest(permissionList.some(permission => permission.key === 'leave_request'))
     setCanApproveLeaveRequest(
       permissionList.some(permission=>permission.key === 'approve_leave') || permissionList.some(permission => permission.key === 'leave_request_approve')
     )
