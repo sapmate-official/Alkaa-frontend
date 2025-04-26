@@ -56,23 +56,39 @@ const RoleAssignment:React.FC<RoleAssignmentProps> = ({setRoleId}) => {
 
   const handleCreateRole = async () => {
     try {
-      await axios.post(`${APIDictionary.role}`, {
+      const response = await axios.post(`${APIDictionary.role}`, {
         orgId: user?.orgId,
         name: newRoleName,
         description: newRoleDescription,
-        permissions: selectedPermissions
+        permissions: selectedPermissions.map(permissionId => ({ permissionId }))
       }, { withCredentials: true })
       
+      // Get the newly created role ID from the response
+      const newRoleId = response.data?.id
+      
       FetchRoles() // Refresh roles after creation
+      
+      // If we got a role ID back and we have the setRoleId function,
+      // automatically select the newly created role
+      if (newRoleId && setRoleId) {
+        setSelectedRole(newRoleId)
+        setRoleId(newRoleId)
+      }
+      
       setNewRoleName('')
       setNewRoleDescription('')
       setSelectedPermissions([])
       toast({
         title: 'Success',
-        description: 'Role created successfully'
+        description: 'Role created successfully and selected'
       })
     } catch (error) {
       console.error(error)
+      toast({
+        title: 'Error',
+        description: 'Failed to create role',
+        variant: 'destructive'
+      })
     }
   }
 

@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
+import { Checkbox } from "@/components/ui/checkbox"
 
 interface LeaveType {
   id: string;
@@ -26,6 +27,7 @@ interface FormData {
   startDate: Date | null;
   endDate: Date | null;
   reason: string;
+  isSameDayLeave?: boolean; // New property
 }
 
 const LeaveRequestCreate = () => {
@@ -37,9 +39,11 @@ const LeaveRequestCreate = () => {
     leaveTypeId: '',
     startDate: null,
     endDate: null,
-    reason: ''
+    reason: '',
+    isSameDayLeave: false
   })
   const [leaveBalance, setLeaveBalance] = useState<number | null>(null)
+  const [isSameDayLeave, setIsSameDayLeave] = useState(false)
   const navigate = useNavigate()
 
   // Fetch leave types
@@ -63,6 +67,18 @@ const LeaveRequestCreate = () => {
       fetchLeaveTypes()
     }
   }, [user?.orgId])
+
+  useEffect(() => {
+    if (isSameDayLeave) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      setFormData(prev => ({
+        ...prev,
+        startDate: today,
+        endDate: today
+      }));
+    }
+  }, [isSameDayLeave]);
 
   const validateLeaveBalance = async () => {
     try {
@@ -147,7 +163,8 @@ const LeaveRequestCreate = () => {
           leaveTypeId: '',
           startDate: null,
           endDate: null,
-          reason: ''
+          reason: '',
+          isSameDayLeave: false
         })
         navigate("/p/leaverequest");
       }
@@ -283,53 +300,78 @@ const LeaveRequestCreate = () => {
               </div>
 
               <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium flex items-center gap-2">
-                      <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                      Start Date
-                    </label>
-                    <div className="border rounded-md p-3">
-                      <Calendar
-                        mode="single"
-                        selected={formData.startDate || undefined}
-                        onSelect={(date) => setFormData(prev => ({ ...prev, startDate: date || null }))}
-                        disabled={(date) => date < new Date() || (formData.endDate ? date > formData.endDate : false)}
-                        className="w-full"
-                      />
-                      
-                      {formData.startDate && (
-                        <div className="flex items-center justify-center mt-2 gap-2 text-sm font-medium text-primary">
-                          <Clock className="h-3 w-3" />
-                          {format(formData.startDate, "EEEE, MMMM d, yyyy")}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium flex items-center gap-2">
-                      <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                      End Date
-                    </label>
-                    <div className="border rounded-md p-3">
-                      <Calendar
-                        mode="single"
-                        selected={formData.endDate || undefined}
-                        onSelect={(date) => setFormData(prev => ({ ...prev, endDate: date || null }))}
-                        disabled={(date) => date < (formData.startDate || new Date())}
-                        className="w-full"
-                      />
-                      
-                      {formData.endDate && (
-                        <div className="flex items-center justify-center mt-2 gap-2 text-sm font-medium text-primary">
-                          <Clock className="h-3 w-3" />
-                          {format(formData.endDate, "EEEE, MMMM d, yyyy")}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                <div className="flex items-center space-x-2 mb-4">
+                  <Checkbox
+                    id="same-day-leave"
+                    checked={isSameDayLeave}
+                    onCheckedChange={(checked) => {
+                      setIsSameDayLeave(checked === true);
+                    }}
+                  />
+                  <label 
+                    htmlFor="same-day-leave" 
+                    className="text-sm font-medium cursor-pointer"
+                  >
+                    Apply for today only
+                  </label>
                 </div>
+
+                {!isSameDayLeave ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                        Start Date
+                      </label>
+                      <div className="border rounded-md p-3">
+                        <Calendar
+                          mode="single"
+                          selected={formData.startDate || undefined}
+                          onSelect={(date) => setFormData(prev => ({ ...prev, startDate: date || null }))}
+                          disabled={(date) => date < new Date() || (formData.endDate ? date > formData.endDate : false)}
+                          className="w-full"
+                        />
+                        
+                        {formData.startDate && (
+                          <div className="flex items-center justify-center mt-2 gap-2 text-sm font-medium text-primary">
+                            <Clock className="h-3 w-3" />
+                            {format(formData.startDate, "EEEE, MMMM d, yyyy")}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                        End Date
+                      </label>
+                      <div className="border rounded-md p-3">
+                        <Calendar
+                          mode="single"
+                          selected={formData.endDate || undefined}
+                          onSelect={(date) => setFormData(prev => ({ ...prev, endDate: date || null }))}
+                          disabled={(date) => date < (formData.startDate || new Date())}
+                          className="w-full"
+                        />
+                        
+                        {formData.endDate && (
+                          <div className="flex items-center justify-center mt-2 gap-2 text-sm font-medium text-primary">
+                            <Clock className="h-3 w-3" />
+                            {format(formData.endDate, "EEEE, MMMM d, yyyy")}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-muted/30 p-4 rounded-lg border">
+                    <p className="text-sm flex items-center gap-2">
+                      <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                      <span>Leave will be applied for today: {format(new Date(), "EEEE, MMMM d, yyyy")}</span>
+                    </p>
+                  </div>
+                )}
                 
                 <div className="bg-muted/30 p-4 rounded-lg border mt-4">
                   <h3 className="font-medium mb-2">Request Summary</h3>
