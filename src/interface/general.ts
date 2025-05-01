@@ -475,3 +475,13 @@ export interface PayrollStatistics {
     };
   };
 }
+
+export interface PermissionPreset {
+  id: string;
+  name: string;
+  description?: string;
+  orgId: string;
+  permissions: string[]; 
+  createdAt: Date;
+  updatedAt: Date;
+}

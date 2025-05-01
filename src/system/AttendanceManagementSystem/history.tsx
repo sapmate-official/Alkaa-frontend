@@ -4,7 +4,7 @@ import { AttendanceSession } from '@/types/attendance';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { format } from 'date-fns';
+import { format, isToday } from 'date-fns';
 import {
   Accordion,
   AccordionContent,
@@ -15,8 +15,9 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAtom } from 'jotai';
 import { permissionListAtom } from '@/store/atom';
-import { CalendarX2, Clock, UserCheck } from 'lucide-react';
+import { CalendarX2, Clock, MapPin, UserCheck } from 'lucide-react';
 import { motion } from "framer-motion";
+import { DayPicker } from 'react-day-picker';
 
 interface GroupedSessions {
   [date: string]: AttendanceSession[];
@@ -37,6 +38,8 @@ const AttendanceHistory = () => {
   const [users, setUsers] = useState<UserOption[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedDaySessions, setSelectedDaySessions] = useState<AttendanceSession[]>([]);
 
   // Check permissions
   const hasViewSubordinatesPermission = permissionList.some(p => p.key === 'view_subordinates_attendance');
@@ -57,7 +60,6 @@ const AttendanceHistory = () => {
       }
 
       const response = await axios.get(endpoint, { withCredentials: true });
-      // Filter out the current user to prevent duplication
       const fetchedUsers = response.data
         .filter((u: any) => u.id !== user.id)
         .map((u: any) => ({
@@ -67,7 +69,6 @@ const AttendanceHistory = () => {
           department: u.department?.name || 'Unassigned'
         }));
       
-      // Add current user at the beginning
       const currentUser = {
         id: user.id,
         name: `${user.firstName || ''} ${user.lastName || ''} (Me)`.trim(),
@@ -93,12 +94,10 @@ const AttendanceHistory = () => {
   const fetchAttendanceHistory = async () => {
     setIsLoading(true);
     try {
-      // Use the selected user ID or fall back to the current user's ID
       const targetUserId = (canViewOthers && selectedUserId) ? selectedUserId : user?.id;
       const response = await axios.get(`${APIDictionary.attendance}/user/${targetUserId}`, { withCredentials: true });
       const sessions = response.data;
       
-      // Group sessions by date
       const grouped = sessions.reduce((acc: GroupedSessions, session: AttendanceSession) => {
         const date = format(new Date(session.date), 'yyyy-MM-dd');
         if (!acc[date]) {
@@ -110,6 +109,11 @@ const AttendanceHistory = () => {
       }, {});
       
       setGroupedAttendance(grouped);
+
+      if (selectedDate) {
+        const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+        setSelectedDaySessions(grouped[formattedDate] || []);
+      }
     } catch (error) {
       console.error('Error fetching attendance:', error);
     } finally {
@@ -122,6 +126,16 @@ const AttendanceHistory = () => {
       fetchAttendanceHistory();
     }
   }, [selectedUserId]);
+
+  const handleDateSelect = (date: Date | undefined) => {
+    setSelectedDate(date);
+    if (date) {
+      const formattedDate = format(date, 'yyyy-MM-dd');
+      setSelectedDaySessions(groupedAttendance[formattedDate] || []);
+    } else {
+      setSelectedDaySessions([]);
+    }
+  };
 
   const calculateTotalDuration = (sessions: AttendanceSession[]) => {
     const totalMinutes = sessions.reduce((acc, session) => {
@@ -141,14 +155,12 @@ const AttendanceHistory = () => {
     return format(new Date(dateString), 'hh:mm a');
   };
 
-  // Get currently selected user name
   const getSelectedUserName = () => {
     if (!selectedUserId) return '';
     const selectedUser = users.find(u => u.id === selectedUserId);
     return selectedUser ? selectedUser.name : '';
   };
 
-  // Get status color for styling
   const getStatusColor = (status: string) => {
     switch(status) {
       case 'COMPLETED': return { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200', accent: '#10b981' };
@@ -157,7 +169,13 @@ const AttendanceHistory = () => {
     }
   };
 
-  // Render skeleton loaders during loading state
+  const attendanceDates = Object.keys(groupedAttendance).map(dateStr => new Date(dateStr));
+  const attendanceModifier = attendanceDates.reduce((acc: Record<string, Date>, date) => {
+    const dateKey = format(date, 'yyyy-MM-dd');
+    acc[dateKey] = date;
+    return acc;
+  }, {});
+
   const renderSkeletons = () => {
     return Array(3).fill(0).map((_, i) => (
       <div key={i} className="animate-pulse mb-4 border rounded-lg p-3">
@@ -183,6 +201,103 @@ const AttendanceHistory = () => {
     ));
   };
 
+  const renderSelectedDateDetails = () => {
+    if (!selectedDate || selectedDaySessions.length === 0) {
+      return (
+        <div className="text-center text-gray-500 py-6">
+          <p className="text-sm">No attendance records for this date</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-3 mt-2">
+        <h3 className="font-medium text-gray-700">
+          {format(selectedDate, 'EEEE, dd MMMM yyyy')}
+          {isToday(selectedDate) && <Badge className="ml-2 bg-blue-500">Today</Badge>}
+        </h3>
+        <p className="text-sm text-gray-500 flex items-center gap-1.5">
+          <Clock className="h-4 w-4" />
+          Total time: {calculateTotalDuration(selectedDaySessions)}
+        </p>
+        <div className="space-y-3 mt-4">
+          {selectedDaySessions.map((session) => {
+            const statusColor = getStatusColor(session?.status || '');
+            return (
+              <Card 
+                key={session.id} 
+                className="overflow-hidden border-l-4 hover:shadow-md transition-shadow" 
+                style={{ borderLeftColor: statusColor.accent }}
+              >
+                <CardContent className="p-4">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex justify-between">
+                      <p className="text-sm font-medium">Session {session?.sessionNumber}</p>
+                      <Badge 
+                        variant="outline" 
+                        className={`text-xs ${statusColor.bg} ${statusColor.text} ${statusColor.border}`}
+                      >
+                        {session?.status}
+                      </Badge>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-xs text-gray-500">Check-in</p>
+                        <p className="text-sm font-medium">{formatTime(session?.checkInTime)}</p>
+                        {session?.checkInLocation && (
+                          <div className="flex items-center gap-1 mt-1 text-xs text-gray-500">
+                            <MapPin className="h-3 w-3" />
+                            <span className="truncate max-w-[200px]">
+                              {typeof session.checkInLocation === 'string' 
+                                ? session.checkInLocation 
+                                : (session.checkInLocation as any)?.address || 'Location data unavailable'}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div>
+                        <p className="text-xs text-gray-500">Check-out</p>
+                        <p className={`text-sm font-medium ${!session?.checkOutTime ? 'text-amber-500' : ''}`}>
+                          {formatTime(session?.checkOutTime)}
+                        </p>
+                        {session?.checkOutLocation && (
+                          <div className="flex items-center gap-1 mt-1 text-xs text-gray-500">
+                            <MapPin className="h-3 w-3" />
+                            <span className="truncate max-w-[200px]">
+                              {typeof session.checkOutLocation === 'string' 
+                                ? session.checkOutLocation 
+                                : (session.checkOutLocation as any)?.address || 'Location data unavailable'}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {session?.duration?.hours !== undefined && (
+                      <div className="flex items-center gap-1.5 text-xs text-gray-600 mt-1">
+                        <Clock className="h-3 w-3" />
+                        <span>Duration: {session?.duration?.hours?.toFixed(1)}h</span>
+                      </div>
+                    )}
+                    
+                    {session?.notes && (
+                      <div className="text-xs text-gray-600 mt-1 border-t pt-2">
+                        <p className="font-medium mb-1">Notes:</p>
+                        <p>{session.notes}</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="p-3 sm:p-4 md:p-6 w-full mx-auto overflow-y-scroll">
       <motion.div 
@@ -193,7 +308,6 @@ const AttendanceHistory = () => {
       >
         <h2 className="text-xl sm:text-2xl font-bold">Attendance History</h2>
         
-        {/* User selection dropdown */}
         {canViewOthers && users.length > 0 && (
           <motion.div 
             initial={{ opacity: 0 }}
@@ -220,7 +334,6 @@ const AttendanceHistory = () => {
         )}
       </motion.div>
       
-      {/* Display user name when viewing others */}
       {canViewOthers && selectedUserId !== user?.id && (
         <motion.div 
           initial={{ opacity: 0 }}
@@ -256,101 +369,165 @@ const AttendanceHistory = () => {
           </Card>
         </motion.div>
       ) : (
-        <div className="overflow-x-auto">
-          <Accordion type="single" collapsible className="space-y-3 sm:space-y-4 min-w-full">
-            {Object.entries(groupedAttendance)
-              .sort(([dateA], [dateB]) => new Date(dateB).getTime() - new Date(dateA).getTime())
-              .map(([date, sessions], index) => (
-                <motion.div
-                  key={date}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
-                >
-                  <AccordionItem value={date} className="border rounded-lg shadow-sm hover:shadow-md transition-all duration-200">
-                    <AccordionTrigger className="hover:no-underline p-3 sm:p-4 w-full group">
-                      <div className="w-full overflow-hidden">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-2 sm:gap-4">
-                          <h3 className="text-base sm:text-lg font-medium truncate flex items-center gap-2">
-                            <span className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-                              {new Date(date).getDate()}
-                            </span>
-                            <span>
-                              {format(new Date(date), 'EEEE, dd MMMM yyyy')}
-                            </span>
-                          </h3>
-                          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                            <Badge variant="outline" className="whitespace-nowrap text-xs sm:text-sm flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {calculateTotalDuration(sessions)}
-                            </Badge>
-                            <Badge className="whitespace-nowrap text-xs sm:text-sm">
-                              {sessions.length} {sessions.length === 1 ? 'Session' : 'Sessions'}
-                            </Badge>
+        <div className="flex flex-col lg:flex-row gap-6">
+          <div className="lg:w-1/2 overflow-x-auto">
+            <Accordion type="single" collapsible className="space-y-3 sm:space-y-4 min-w-full">
+              {Object.entries(groupedAttendance)
+                .sort(([dateA], [dateB]) => new Date(dateB).getTime() - new Date(dateA).getTime())
+                .map(([date, sessions], index) => (
+                  <motion.div
+                    key={date}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                  >
+                    <AccordionItem value={date} className="border rounded-lg shadow-sm hover:shadow-md transition-all duration-200">
+                      <AccordionTrigger className="hover:no-underline p-3 sm:p-4 w-full group">
+                        <div className="w-full overflow-hidden">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-2 sm:gap-4">
+                            <h3 className="text-base sm:text-lg font-medium truncate flex items-center gap-2">
+                              <span className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                                {new Date(date).getDate()}
+                              </span>
+                              <span>
+                                {format(new Date(date), 'EEEE, dd MMMM yyyy')}
+                              </span>
+                            </h3>
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                              <Badge variant="outline" className="whitespace-nowrap text-xs sm:text-sm flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {calculateTotalDuration(sessions)}
+                              </Badge>
+                              <Badge className="whitespace-nowrap text-xs sm:text-sm">
+                                {sessions.length} {sessions.length === 1 ? 'Session' : 'Sessions'}
+                              </Badge>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="px-2 sm:px-4 pb-3 overflow-x-auto">
-                      <div className="space-y-3 mt-2 min-w-[300px]">
-                        {sessions.map((session, idx) => {
-                          const statusColor = getStatusColor(session?.status || '');
-                          return (
-                            <motion.div
-                              key={session.id} 
-                              initial={{ opacity: 0, x: -5 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: idx * 0.05 }}
-                            >
-                              <Card 
+                      </AccordionTrigger>
+                      <AccordionContent className="px-2 sm:px-4 pb-3 overflow-x-auto">
+                        <div className="space-y-3 mt-2 min-w-[300px]">
+                          {sessions.map((session, idx) => {
+                            const statusColor = getStatusColor(session?.status || '');
+                            return (
+                              <motion.div
                                 key={session.id} 
-                                className="overflow-hidden border-l-4 hover:shadow-md transition-shadow" 
-                                style={{ borderLeftColor: statusColor.accent }}
+                                initial={{ opacity: 0, x: -5 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: idx * 0.05 }}
                               >
-                                <CardContent className="p-4 overflow-x-auto">
-                                  <div className="flex flex-col sm:flex-row justify-between gap-3 min-w-[280px]">
-                                    <div className="min-w-0 flex gap-3">
-                                      <div className="w-8 h-8 rounded-full bg-primary/5 flex items-center justify-center text-sm text-primary shrink-0">
-                                        {session?.sessionNumber || '-'}
-                                      </div>
-                                      <div>
-                                        <p className="text-sm font-semibold">Session {session?.sessionNumber}</p>
-                                        <div className="text-xs sm:text-sm text-gray-500 mt-1 flex items-center gap-1">
-                                          <Clock className="h-3 w-3" />
-                                          <span className="font-medium">{formatTime(session?.checkInTime)}</span>
-                                          <span className="mx-1">→</span>
-                                          <span className={`${!session?.checkOutTime ? 'text-amber-500' : ''} font-medium`}>
-                                            {formatTime(session?.checkOutTime)}
-                                          </span>
+                                <Card 
+                                  key={session.id} 
+                                  className="overflow-hidden border-l-4 hover:shadow-md transition-shadow" 
+                                  style={{ borderLeftColor: statusColor.accent }}
+                                >
+                                  <CardContent className="p-4 overflow-x-auto">
+                                    <div className="flex flex-col sm:flex-row justify-between gap-3 min-w-[280px]">
+                                      <div className="min-w-0 flex gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-primary/5 flex items-center justify-center text-sm text-primary shrink-0">
+                                          {session?.sessionNumber || '-'}
+                                        </div>
+                                        <div>
+                                          <p className="text-sm font-semibold">Session {session?.sessionNumber}</p>
+                                          <div className="text-xs sm:text-sm text-gray-500 mt-1 flex items-center gap-1">
+                                            <Clock className="h-3 w-3" />
+                                            <span className="font-medium">{formatTime(session?.checkInTime)}</span>
+                                            <span className="mx-1">→</span>
+                                            <span className={`${!session?.checkOutTime ? 'text-amber-500' : ''} font-medium`}>
+                                              {formatTime(session?.checkOutTime)}
+                                            </span>
+                                          </div>
                                         </div>
                                       </div>
-                                    </div>
-                                    <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0">
-                                      {session?.duration?.hours !== undefined && (
-                                        <Badge variant="secondary" className="text-xs whitespace-nowrap flex items-center gap-1">
-                                          <Clock className="h-3 w-3" />
-                                          {session?.duration?.hours?.toFixed(1)}h
+                                      <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0">
+                                        {session?.duration?.hours !== undefined && (
+                                          <Badge variant="secondary" className="text-xs whitespace-nowrap flex items-center gap-1">
+                                            <Clock className="h-3 w-3" />
+                                            {session?.duration?.hours?.toFixed(1)}h
+                                          </Badge>
+                                        )}
+                                        <Badge 
+                                          variant="outline" 
+                                          className={`text-xs whitespace-nowrap ${statusColor.bg} ${statusColor.text} ${statusColor.border}`}
+                                        >
+                                          {session?.status}
                                         </Badge>
-                                      )}
-                                      <Badge 
-                                        variant="outline" 
-                                        className={`text-xs whitespace-nowrap ${statusColor.bg} ${statusColor.text} ${statusColor.border}`}
-                                      >
-                                        {session?.status}
-                                      </Badge>
+                                      </div>
                                     </div>
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            </motion.div>
-                          );
-                        })}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
+                                  </CardContent>
+                                </Card>
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </motion.div>
+                ))}
+            </Accordion>
+          </div>
+          
+          <div className="lg:w-1/2">
+            <Card className="p-4 border shadow-sm">
+              <div className="flex flex-col gap-4">
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="flex justify-center"
+                >
+                  <style dangerouslySetInnerHTML={{ 
+                    __html: `
+                      .rdp-day_selected:not([disabled]) { 
+                        background-color: var(--primary);
+                        color: white;
+                      }
+                      .rdp-day_today:not(.rdp-day_outside) { 
+                        font-weight: bold;
+                        border: 1px solid var(--primary);
+                      }
+                      .attendance-day:not(.rdp-day_selected):not([disabled]) {
+                        background-color: rgba(16, 185, 129, 0.15);
+                        color: rgb(6, 95, 70);
+                      }
+                    `
+                  }} />
+                  <DayPicker
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={handleDateSelect}
+                    modifiers={{
+                      'attendance-day': Object.values(attendanceModifier)
+                    }}
+                    modifiersClassNames={{
+                      'attendance-day': 'attendance-day'
+                    }}
+                    className="border-b pb-4"
+                    showOutsideDays
+                  />
                 </motion.div>
-              ))}
-          </Accordion>
+                
+                <div className="flex items-center justify-center gap-4 text-xs">
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 bg-primary rounded-full"></div>
+                    <span>Selected</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 bg-green-100 rounded-full border border-green-600"></div>
+                    <span>Has Attendance</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-full border border-gray-400"></div>
+                    <span>Today</span>
+                  </div>
+                </div>
+                
+                <div className="mt-4 border-t pt-4">
+                  {renderSelectedDateDetails()}
+                </div>
+              </div>
+            </Card>
+          </div>
         </div>
       )}
     </div>

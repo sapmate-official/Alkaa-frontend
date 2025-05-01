@@ -44,4 +44,5 @@ export const APIDictionary = {
     holiday_type_by_org: (orgId:string) => `${backendDomain}/api/v2/holiday-type/${orgId}`,
     OrganizationSettings: () => `${backendDomain}/api/v3/settings`,
     SalaryRecordExistence: (userId: string, month: number, year: number) => `${backendDomain}/api/v2/salary/user/${userId}/monthly/${month}/year/${year}`,
+    permissionPreset: `${backendDomain}/api/v3/permission-preset`,
 };

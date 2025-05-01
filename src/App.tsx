@@ -462,7 +462,7 @@ const AttendanceManagementSystem = () => {
 
       } />
       <Route path='/past-not-checked-days' element={
-        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['view_subordinates_attendance', 'view_all_user_attendance']}>
+        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['modify_past_attendance']}>
           <PastNotCheckedDays />
         </PermissionRouteBasedOnKey>
 
