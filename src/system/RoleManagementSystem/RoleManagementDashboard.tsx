@@ -28,6 +28,7 @@ import { useAuth } from '@/services/AuthContext';
 import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
 import { Permission, Role, User } from '@/interface/general';
+import PermissionPresetManager from './PermissionPresetManager';
 
 interface LoadingButtonProps extends ButtonProps {
   loading: boolean;
@@ -66,6 +67,17 @@ const RolesPermissionsManagement = () => {
     }
   }, [selectedRole]);
 
+  const handleSelectPreset = (permissionIds: string[]) => {
+    // When creating a new role
+    if (isCreateRoleDialogOpen) {
+      setNewRolePermissions(permissionIds);
+    }
+    // When editing an existing role
+    else if (selectedRole) {
+      setEditedPermissions(permissionIds);
+    }
+  };
+
   const fetchPermission = async () => {
     try {
       const response = await axios.get(`${APIDictionary.permission}/org/${user?.orgId}`);
@@ -78,7 +90,8 @@ const RolesPermissionsManagement = () => {
         variant: 'destructive'
       });
     }
-  }
+  };
+
   const fetchRole = async () => {
     setIsLoading(prev => ({ ...prev, fetch: true }));
     try {
@@ -100,15 +113,15 @@ const RolesPermissionsManagement = () => {
     try {
       const response = await axios.get(`${APIDictionary.user}/org/${user?.orgId}`,{
         withCredentials: true
-      })
-      setUsers(response.data)
+      });
+      setUsers(response.data);
     } catch (error) {
-      console.log(error)
+      console.log(error);
       toast({
         title: 'Error',
         description: 'Failed to fetch users',
         variant: 'destructive'
-      })
+      });
     }
   };
 
@@ -145,24 +158,24 @@ const RolesPermissionsManagement = () => {
     }
   };
 
-  const updateUsersRole =async (userId:string,prevRoleId:string,roleId:string) => {
+  const updateUsersRole = async (userId: string, prevRoleId: string, roleId: string) => {
     try {
-      await axios.put(`${APIDictionary.user}/${userId}/role/${prevRoleId}/${roleId}`)
+      await axios.put(`${APIDictionary.user}/${userId}/role/${prevRoleId}/${roleId}`);
       toast({
         title: 'Success',
         description: 'User role updated successfully',
         variant: 'default'
-      })
+      });
     } catch (error) {
-      console.log(error)
+      console.log(error);
       toast({
         title: 'Error',
         description: 'Failed to update user role',
         variant: 'destructive'
-      })
-      
+      });
     }
-  }
+  };
+
   const updateRole = async (permissions: string[], roleId: string) => {
     try {
       const rolePermissions = permissions.map(permId => ({
@@ -174,34 +187,34 @@ const RolesPermissionsManagement = () => {
         title: 'Success',
         description: 'Role updated successfully',
         variant: 'default'
-      })
+      });
     } catch (error) { 
-      console.log(error)
+      console.log(error);
       toast({
         title: 'Error',
         description: 'Failed to update role',
         variant: 'destructive'
-      })
-      
+      });
     }
-  }
-  const deleteRole =async (roleId:string) => {
+  };
+
+  const deleteRole = async (roleId: string) => {
     try {
-      await axios.delete(`${APIDictionary.role}/${roleId}`)
+      await axios.delete(`${APIDictionary.role}/${roleId}`);
       toast({
         title: 'Success',
         description: 'Role deleted successfully',
         variant: 'default'
-      })
+      });
     } catch (error) {
-      console.log(error)
+      console.log(error);
       toast({
         title: 'Error',
         description: 'Failed to delete role',
         variant: 'destructive'
-      })
+      });
     }
-  }
+  };
 
   const handleRolePermissionToggle = (permissionId: string) => {
     setEditedPermissions(prev => 
@@ -225,8 +238,6 @@ const RolesPermissionsManagement = () => {
     }
   };
 
-
-
   const handleDeleteRole = async (roleId: string) => {
     setIsLoading(prev => ({ ...prev, delete: true }));
     try {
@@ -239,10 +250,10 @@ const RolesPermissionsManagement = () => {
     }
   };
 
-  const handleUserRoleChange = async (userId: string,prevRoleId:string, roleId: string) => {
+  const handleUserRoleChange = async (userId: string, prevRoleId: string, roleId: string) => {
     setIsLoading(prev => ({ ...prev, userUpdate: true }));
     try {
-      await updateUsersRole(userId.toString(),prevRoleId?prevRoleId:'null', roleId);
+      await updateUsersRole(userId.toString(), prevRoleId ? prevRoleId : 'null', roleId);
       fetchUser(); // Refresh users after role update
     } catch (error) {
       console.error(error);
@@ -257,50 +268,129 @@ const RolesPermissionsManagement = () => {
       {children}
     </Button>
   );
+
   // Update the create role dialog content
   const createRoleDialogContent = (
-    <DialogContent >
+    <DialogContent className="sm:max-w-[95vw] md:max-w-[90vw] lg:max-w-4xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle>Create New Role</DialogTitle>
       </DialogHeader>
-      <div className="space-y-4">
-        <Input 
-          placeholder="Role Name" 
-          value={newRoleName}
-          onChange={(e) => setNewRoleName(e.target.value)}
-        />
-        <div className="grid grid-cols-2 gap-1  overflow-y-scroll h-40">
-          {permissions.map(permission => (
-            <div key={permission.id} className="flex items-center space-x-2">
-              <Checkbox 
-                id={permission.id}
-                checked={newRolePermissions.includes(permission.id)}
-                onCheckedChange={(checked) => {
-                  setNewRolePermissions(prev => 
-                    checked 
-                      ? [...prev, permission.id]
-                      : prev.filter(p => p !== permission.id)
-                  );
-                }}
-              />
-              <label htmlFor={permission.id} className="text-sm font-medium leading-none">
-                {permission.name}
-              </label>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="space-y-4">
+          <Input 
+            placeholder="Role Name" 
+            value={newRoleName}
+            onChange={(e) => setNewRoleName(e.target.value)}
+          />
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <h3 className="text-sm font-medium">Select Permissions</h3>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setNewRolePermissions([])}
+              >
+                Clear All
+              </Button>
             </div>
-          ))}
+            <div className="h-[300px] md:h-[400px] overflow-y-auto border rounded p-2">
+              {permissions.map(permission => (
+                <div key={permission.id} className="flex items-center space-x-2 py-1">
+                  <Checkbox 
+                    id={`create-${permission.id}`}
+                    checked={newRolePermissions.includes(permission.id)}
+                    onCheckedChange={(checked) => {
+                      setNewRolePermissions(prev => 
+                        checked 
+                          ? [...prev, permission.id]
+                          : prev.filter(p => p !== permission.id)
+                      );
+                    }}
+                  />
+                  <label htmlFor={`create-${permission.id}`} className="text-sm">
+                    {permission.name}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+          <LoadingButton 
+            className="w-full" 
+            onClick={createRole}
+            loading={isLoading.create}
+          >
+            Create Role
+          </LoadingButton>
         </div>
-        <LoadingButton 
-          className="w-full" 
-          onClick={createRole}
-          loading={isLoading.create}
-        >
-          Create Role
-        </LoadingButton>
+        <div className="overflow-y-auto max-h-[500px]">
+          <PermissionPresetManager 
+            permissions={permissions} 
+            onSelectPreset={handleSelectPreset} 
+          />
+        </div>
       </div>
     </DialogContent>
   );
 
-
+  // Similarly, update the permissions dialog for existing roles
+  const permissionsDialogContent = (
+    <DialogContent className="sm:max-w-[95vw] md:max-w-[90vw] lg:max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle>Edit Role Permissions: {selectedRole?.name}</DialogTitle>
+      </DialogHeader>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div>
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-sm font-medium">Permissions</h3>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setEditedPermissions([])}
+            >
+              Clear All
+            </Button>
+          </div>
+          <div className="h-[300px] md:h-[400px] overflow-y-auto border rounded p-2">
+            {permissions.map(permission => (
+              <div key={permission.id} className="flex items-center space-x-2 py-1">
+                <Checkbox
+                  id={permission.id}
+                  checked={editedPermissions.includes(permission.id)}
+                  onCheckedChange={() => handleRolePermissionToggle(permission.id)}
+                />
+                <label 
+                  htmlFor={permission.id} 
+                  className="text-sm"
+                >
+                  {permission.name}
+                </label>
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-end space-x-2 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setSelectedRole(null)}
+            >
+              Cancel
+            </Button>
+            <LoadingButton
+              onClick={handleSavePermissions}
+              loading={isLoading.update}
+            >
+              Save Changes
+            </LoadingButton>
+          </div>
+        </div>
+        <div className="overflow-y-auto max-h-[500px]">
+          <PermissionPresetManager 
+            permissions={permissions} 
+            onSelectPreset={handleSelectPreset} 
+          />
+        </div>
+      </div>
+    </DialogContent>
+  );
 
   const getUserRoleName = (user: User) => {
     return user.roles?.[0]?.role.name ?? 'No Role';
@@ -309,46 +399,6 @@ const RolesPermissionsManagement = () => {
   const getCurrentRoleId = (user: User) => {
     return user.roles?.[0]?.roleId ?? '';
   };
-
-  const permissionsDialogContent = (
-    <DialogContent className="max-w-2xl">
-      <DialogHeader>
-        <DialogTitle>Edit Role Permissions: {selectedRole?.name}</DialogTitle>
-      </DialogHeader>
-      <div className="grid grid-cols-2 gap-1 overflow-y-scroll h-60">
-        {permissions.map(permission => (
-          <div key={permission.id} className="flex items-center space-x-2">
-            <Checkbox
-              id={permission.id}
-              checked={editedPermissions.includes(permission.id)}
-              onCheckedChange={() => handleRolePermissionToggle(permission.id)}
-            />
-            <label 
-              htmlFor={permission.id} 
-              className="text-sm font-medium leading-none"
-            >
-              {permission.name}
-            </label>
-          </div>
-        ))}
-      </div>
-      <div className="flex justify-end space-x-2 mt-4">
-        <Button
-          variant="outline"
-          onClick={() => setSelectedRole(null)}
-        >
-          Cancel
-        </Button>
-        <LoadingButton
-          onClick={handleSavePermissions}
-          loading={isLoading.update}
-        >
-          Save Changes
-        </LoadingButton>
-      </div>
-    </DialogContent>
-  );
-
 
   return (
     <div className="p-6 space-y-6 w-full overflow-y-scroll h-full">
@@ -451,7 +501,7 @@ const RolesPermissionsManagement = () => {
                   <TableCell>
                     <select 
                       value={getCurrentRoleId(user)}
-                      onChange={(e) => handleUserRoleChange(user?.id,getCurrentRoleId(user), e.target.value)}
+                      onChange={(e) => handleUserRoleChange(user?.id, getCurrentRoleId(user), e.target.value)}
                       className="border rounded px-2 py-1 bg-white dark:bg-neutral-800"
                       disabled={isLoading.userUpdate}
                     >

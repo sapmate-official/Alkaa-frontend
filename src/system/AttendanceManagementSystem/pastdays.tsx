@@ -59,6 +59,7 @@ const PastNotCheckedDays = () => {
     const { location } = useGeolocation();
     const [reportData, setReportData] = useState<ReportData>({ "Task 1": "", "Task 2": "" });
     const [taskCount, setTaskCount] = useState<number>(2);
+    const [endingSessionId, setEndingSessionId] = useState<string | null>(null);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -102,14 +103,16 @@ const PastNotCheckedDays = () => {
     // Simplified handleEndSession function with manual validation
     const handleEndSession = async (values: z.infer<typeof formSchema>) => {
         if (!selectedSession) return;
-        
+
+        setEndingSessionId(values.attendanceId); // Start loader
+
         try {
             const checkInDate = new Date(selectedSession.checkInTime);
             const [hours, minutes] = values.checkOutTime.split(':');
-            
+
             const checkOutDate = new Date(checkInDate);
             checkOutDate.setHours(parseInt(hours), parseInt(minutes), 0);
-            
+
             // Simple validation for checkout time
             if (checkOutDate <= checkInDate) {
                 toast({
@@ -117,6 +120,7 @@ const PastNotCheckedDays = () => {
                     description: "Check-out time must be after check-in time",
                     variant: "destructive",
                 });
+                setEndingSessionId(null);
                 return;
             }
 
@@ -127,12 +131,12 @@ const PastNotCheckedDays = () => {
             }, {
                 withCredentials: true
             });
-            
+
             toast({
                 title: "Success",
                 description: "Session ended successfully",
             });
-            
+
             setOpenDialogs(prev => ({ ...prev, [values.attendanceId]: false }));
             fetchData();
         } catch (error) {
@@ -142,6 +146,8 @@ const PastNotCheckedDays = () => {
                 description: "Failed to end session",
                 variant: "destructive",
             });
+        } finally {
+            setEndingSessionId(null); // Stop loader
         }
     };
 
@@ -287,7 +293,7 @@ const PastNotCheckedDays = () => {
     };
 
     return (
-        <div className="w-full p-4 bg-background shadow-md overflow-y-auto">
+        <div className="w-full p-4 bg-background shadow-md overflow-y-auto h-screen">
             <div className="flex justify-between mb-4">
                 <h2 className="text-2xl font-bold">Past Unchecked Sessions</h2>
                 <Button onClick={() => setIsAddNewDialogOpen(true)} variant="default">
@@ -295,11 +301,11 @@ const PastNotCheckedDays = () => {
                 </Button>
             </div>
             
-            <Card className="mt-4 w-full">
+            <Card className="mt-4 w-full flex-grow">
                 <CardHeader>
                     <CardTitle>Past Unchecked Sessions</CardTitle>
                 </CardHeader>
-                <CardContent className="max-h-[600px] overflow-y-auto">
+                <CardContent className="overflow-y-auto" style={{ maxHeight: "calc(100vh - 200px)" }}>
                     {loading ? (
                         <div className="text-center py-4">Loading...</div>
                     ) : data.length === 0 ? (
@@ -352,6 +358,7 @@ const PastNotCheckedDays = () => {
                                                                 <Input
                                                                     type="time"
                                                                     {...form.register('checkOutTime')}
+                                                                    disabled={endingSessionId === session.id}
                                                                 />
                                                                 {form.formState.errors.checkOutTime && (
                                                                     <p className="text-sm text-red-500">{form.formState.errors.checkOutTime.message}</p>
@@ -362,10 +369,15 @@ const PastNotCheckedDays = () => {
                                                                 <Textarea
                                                                     {...form.register('notes')}
                                                                     placeholder="Why wasn't the session checked out?"
+                                                                    disabled={endingSessionId === session.id}
                                                                 />
                                                             </div>
-                                                            <Button type="submit" className="w-full">
-                                                                Submit
+                                                            <Button 
+                                                                type="submit" 
+                                                                className="w-full"
+                                                                disabled={endingSessionId === session.id}
+                                                            >
+                                                                {endingSessionId === session.id ? "Processing..." : "Submit"}
                                                             </Button>
                                                         </form>
                                                     </Form>

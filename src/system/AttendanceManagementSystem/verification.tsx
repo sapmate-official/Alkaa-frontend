@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { format } from "date-fns";
 import {
   Card,
@@ -52,6 +52,8 @@ import axios from "axios";
 import { useAuth } from "@/services/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import LazyLocationViewer from "@/components/LazyLocationViewer";
+import { useAtomValue } from 'jotai';
+import { permissionListAtom } from '@/store/atom';
 
 // Types
 type AttendanceStatus = "PRESENT" | "ABSENT" | "LATE" | "HALF_DAY";
@@ -93,9 +95,11 @@ interface AttendanceRecord {
 }
 
 const AttendanceVerificationComponent: React.FC = () => {
-  const { user } = useAuth()
-  const { toast } = useToast()
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const permissionList = useAtomValue(permissionListAtom);
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
+  const [, setLoading] = useState<boolean>(false);
   const [selectedRecord, setSelectedRecord] = useState<AttendanceRecord | null>(null);
   const [selectedReport, setSelectedReport] = useState<any>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -115,15 +119,50 @@ const AttendanceVerificationComponent: React.FC = () => {
   // Bulk verification state
   const [selectedRecordIds, setSelectedRecordIds] = useState<string[]>([]);
   const [bulkActionNote, setBulkActionNote] = useState("");
-  const fetchAttendanceManagerVerificationRecords = async () => {
-    try {
-      const response = await axios.get(`${APIDictionary.attendance}/manager/verification/${user?.id}`, {
-        withCredentials: true,
-      });
-      if (response.data) {
-        
-        setRecords(response.data);
 
+  // Check for permissions
+  const hasVerifyAllPermission = useMemo(() => {
+    return permissionList.some(permission => 
+      permission.key === 'view_all_user_attendance'
+    );
+  }, [permissionList]);
+
+  const hasVerifySubordinatesPermission = useMemo(() => {
+    return permissionList.some(permission => 
+      permission.key === 'view_subordinates_attendance'
+    );
+  }, [permissionList]);
+
+  // Modified fetch function that checks permissions
+  const fetchAttendanceRecords = async () => {
+    if (!user?.id) return;
+    
+    setLoading(true);
+    try {
+      let response;
+      
+      if (hasVerifyAllPermission) {
+        // User can verify all attendance records
+        response = await axios.get(`${APIDictionary.attendance}/admin/verification/${user.id}`, {
+          withCredentials: true,
+        });
+      } else if (hasVerifySubordinatesPermission) {
+        // User can only verify subordinates' attendance
+        response = await axios.get(`${APIDictionary.attendance}/manager/verification/${user.id}`, {
+          withCredentials: true,
+        });
+      } else {
+        // User has no verification permissions
+        toast({
+          title: "Access Denied",
+          description: "You don't have permission to verify attendance records.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (response?.data) {
+        setRecords(response.data);
       }
     } catch (error) {
       console.error("Failed to fetch attendance records:", error);
@@ -131,42 +170,53 @@ const AttendanceVerificationComponent: React.FC = () => {
         title: "Failed to fetch attendance records",
         description: "An error occurred while fetching attendance records. Please try again later.",
         variant: "destructive",
-      })
+      });
+    } finally {
+      setLoading(false);
     }
-  }
+  };
+  
   useEffect(() => {
-    fetchAttendanceManagerVerificationRecords();
-  }, []);
+    fetchAttendanceRecords();
+  }, [user?.id, hasVerifyAllPermission, hasVerifySubordinatesPermission]);
 
-  const postverficiationCall = async (attendanceId: string, verificationStatus: AttendanceVerificationStatus) => {
+  const postVerificationCall = async (attendanceId: string, verificationStatus: AttendanceVerificationStatus) => {
     try {
-      const response = await axios.post(`${APIDictionary.attendance}/manager/verification`, {
+      let endpoint = `${APIDictionary.attendance}/manager/verification`;
+      
+      // Use admin endpoint if user has permission to verify all
+      if (hasVerifyAllPermission) {
+        endpoint = `${APIDictionary.attendance}/admin/verification`;
+      }
+      
+      const response = await axios.post(endpoint, {
         userId: user?.id,
         attendanceId,
         verificationStatus,
       }, {
         withCredentials: true,
       });
+      
       if (response.data) {
-        fetchAttendanceManagerVerificationRecords();
+        fetchAttendanceRecords();
         toast({
           title: "Attendance record verified",
           description: "The attendance record has been successfully verified.",
           variant: "default",
-        })
+        });
       }
-    }
-    catch (error) {
+    } catch (error) {
       console.error("Failed to verify attendance record:", error);
       toast({
         title: "Failed to verify attendance record",
         description: "An error occurred while verifying the attendance record. Please try again later.",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
+
   const verifyAttendance = (id: string, status: AttendanceVerificationStatus, notes: string) => {
-    postverficiationCall(id, status)
+    postVerificationCall(id, status);
     setRecords(
       records.map((record) =>
         record.id === id
@@ -181,7 +231,7 @@ const AttendanceVerificationComponent: React.FC = () => {
   const bulkVerifyAttendance = (status: AttendanceVerificationStatus) => {
     records
       .filter((record) => selectedRecordIds.includes(record.id))
-      .forEach((record) => postverficiationCall(record.id, status));
+      .forEach((record) => postVerificationCall(record.id, status));
     setRecords(
       records.map((record) =>
         selectedRecordIds.includes(record.id)
@@ -207,12 +257,10 @@ const AttendanceVerificationComponent: React.FC = () => {
     setSelectedRecordIds([]);
   };
 
-  // Add this new function to check if verification actions are allowed
   const isVerificationDisabled = (status: AttendanceVerificationStatus): boolean => {
     return status === "VERIFIED" || status === "REJECTED";
   };
 
-  // Get unique users from records
   const uniqueUsers = Array.from(new Set(records.map(record => record.userId)))
     .map(userId => {
       const user = records.find(record => record.userId === userId)?.user;
@@ -221,17 +269,10 @@ const AttendanceVerificationComponent: React.FC = () => {
     .filter((user): user is { id: string; name: string } => user !== null);
 
   const filteredRecords = records.filter((record) => {
-    // Filter by date range
     const recordDate = new Date(record.date);
     const isInDateRange = recordDate >= startDate && recordDate <= endDate;
-
-    // Filter by user
     const userMatch = selectedUsers.length === 0 || selectedUsers.includes(record.userId);
-
-    // Filter by status
     const statusMatch = statusFilter === "all" || record.status === statusFilter;
-
-    // Filter by verification status
     const verificationMatch =
       verificationFilter === "all" ||
       record.verificationStatus === verificationFilter;
@@ -239,7 +280,6 @@ const AttendanceVerificationComponent: React.FC = () => {
     return isInDateRange && userMatch && statusMatch && verificationMatch;
   });
 
-  // Group records by date and user
   const groupedRecords: Record<string, Record<string, AttendanceRecord[]>> = {};
 
   filteredRecords.forEach(record => {
@@ -261,7 +301,6 @@ const AttendanceVerificationComponent: React.FC = () => {
     setSelectedRecord(record);
     console.log(record);
     
-    // Parse report content if available
     if (record.UserDailyReport && record.UserDailyReport.length > 0) {
       try {
         const reportData = typeof record.UserDailyReport[0].reportContent === 'string' 
@@ -309,7 +348,7 @@ const AttendanceVerificationComponent: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto py-8 overflow-y-scroll h-full">
+    <div className="w-full px-6 py-8 overflow-y-auto h-full">
       <Card>
         <CardHeader>
           <CardTitle>Employee Attendance Verification</CardTitle>
@@ -557,7 +596,6 @@ const AttendanceVerificationComponent: React.FC = () => {
                                       />
                                     </TableCell>
                                     <TableCell className="font-medium">
-                                      {/* Always show the user name for better clarity */}
                                       <div>{record.user.name}</div>
                                       <div className="text-xs text-gray-500">
                                         {record.user.department}
@@ -630,7 +668,6 @@ const AttendanceVerificationComponent: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Details Dialog */}
       {selectedRecord && (
         <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
           <DialogContent className="max-w-3xl max-h-screen overflow-y-auto">
@@ -701,7 +738,6 @@ const AttendanceVerificationComponent: React.FC = () => {
                     {
                       selectedRecord.checkInLocation  &&
                       <LazyLocationViewer lat={selectedRecord?.checkInLocation?.split(",")[0]} lon={selectedRecord?.checkInLocation?.split(",")[1]} />
-                      // <LocationViewer lat={selectedRecord?.checkInLocation?.split(",")[0]} lon={selectedRecord?.checkInLocation?.split(",")[1]} />
                     }
                     {
                       !selectedRecord.checkInLocation &&
@@ -715,7 +751,6 @@ const AttendanceVerificationComponent: React.FC = () => {
                   <TabsContent value="checkout">
                     {
                       selectedRecord.checkOutLocation  &&
-                      // <LocationViewer lat={selectedRecord?.checkOutLocation?.split(",")[0]} lon={selectedRecord?.checkOutLocation?.split(",")[1]} />
                       <LazyLocationViewer lat={selectedRecord?.checkOutLocation?.split(",")[0]} lon={selectedRecord?.checkOutLocation?.split(",")[1]} />
                     }
                     {
@@ -732,7 +767,6 @@ const AttendanceVerificationComponent: React.FC = () => {
               </div>
             </div>
 
-            {/* Enhanced Daily Report section with better formatting */}
             {selectedReport && (
               <div className="mt-6 border-t pt-4">
                 <h3 className="text-lg font-medium mb-2">Daily Task Report</h3>
