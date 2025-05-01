@@ -553,7 +553,7 @@ const ProfileRoutes = () => {
       </PermissionRouteBasedOnKey>
       } />
       <Route path="/edit/bank/:id" element={
-      <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['update_bank_all_user', 'update_bank_subordinates']}>
+      <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['update_bank_all_user']}>
         <BankDetails />
       </PermissionRouteBasedOnKey>
       } />
