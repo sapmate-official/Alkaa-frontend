@@ -37,7 +37,7 @@ const SIDEBAR_LINK_RANKING: Record<string, number> = {
   "Leave Request": 9,
   "Leave Balance": 10,
   "Holiday": 11,
-  "New Payroll": 12,
+  "Payroll": 12,
   "Notification": 13,
   "Logout": 14
 };
@@ -186,7 +186,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         });
       } else if (permission?.key === "view_salary_slip_to_myself") {
         baseLinks.push({
-          label: "New Payroll",
+          label: "Payroll",
           href: "/p/new-payroll",
           icon: <IconCoin className="h-5 w-5" />
         });
