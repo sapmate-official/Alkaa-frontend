@@ -87,6 +87,7 @@ const MainGenerateSubordinateSalaryPage = lazy(() => import('./system/PayrollMan
 const MainSubordinateSalaryTransactionPage = lazy(() => import('./system/PayrollManagementSystem/New_version/ManagerLevel/Salarytransaction/MainSubordinateSalaryTransactionPage'));
 const MainGenerateUsersSalaryPage = lazy(() => import('./system/PayrollManagementSystem/New_version/AdminLevel/GenerateSalary/MainGenerateUserSalaryPage'));
 const MainCompOfViewPayslipOfAllUsersPayroll = lazy(() => import('./system/PayrollManagementSystem/New_version/AdminLevel/ViewPayslipOfAllUsersPayroll/MainCompOfViewPayslipOfAllUsersPayroll'));
+const MainAllUsersSalaryTransactionPage = lazy(() => import('./system/PayrollManagementSystem/New_version/AdminLevel/Salarytransaction/MainSalaryUsersTransactionPage.tsx'));
 
 // Custom loading fallback
 const LoadingFallback = () => <div className="flex items-center justify-center min-h-screen"><Loader /></div>;
@@ -377,6 +378,14 @@ const NewPayrollManagementSystem = () => {
         element={
           <PermissionRouteBasedOnKey requiredPermissions={["send_salary_to_subordinates"]}>
             <MainSubordinateSalaryTransactionPage />
+          </PermissionRouteBasedOnKey>
+        }
+      />
+      <Route
+        path='/admin/transaction'
+        element={
+          <PermissionRouteBasedOnKey requiredPermissions={["send_salary_to_all"]}>
+            <MainAllUsersSalaryTransactionPage />
           </PermissionRouteBasedOnKey>
         }
       />
