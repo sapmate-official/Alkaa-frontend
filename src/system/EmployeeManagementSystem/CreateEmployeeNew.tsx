@@ -304,6 +304,21 @@ const CreateEmployeeNew = () => {
     }
   };
 
+  const handleDepartmentsUpdated = (updatedDepartments: any[]) => {
+    // Use the properly typed Department interface from your import
+    setDepartments(updatedDepartments as Department[]);
+    
+    // If there are departments and none is currently selected, select the first one
+    if (updatedDepartments.length > 0 && !form.getValues('departmentId')) {
+      form.setValue('departmentId', updatedDepartments[0].id);
+    }
+    
+    toast({
+      title: 'Departments Updated',
+      description: 'The department list has been refreshed',
+    });
+  };
+
   const renderFormStep = () => {
     return (
       <motion.div
@@ -969,9 +984,12 @@ const CreateEmployeeNew = () => {
               Role Assignment
             </FormLabel>
             <div className="space-y-2 border border-muted rounded-md p-4">
-              <RoleAssignment setRoleId={roleId => {
-                field.onChange([roleId]);
-              }} />
+              <RoleAssignment 
+                setRoleId={roleId => {
+                  field.onChange([roleId]);
+                }}
+                onDepartmentCreated={handleDepartmentsUpdated}
+              />
             </div>
             <FormMessage />
           </FormItem>
