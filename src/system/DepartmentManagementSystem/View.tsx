@@ -30,6 +30,7 @@ import { Input } from '@/components/ui/input'
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { 
@@ -86,45 +87,23 @@ interface Department {
 }
 
 const MemberAvatar = ({ user }: { user: User }) => (
-  <Tooltip>
-    <TooltipTrigger asChild>
-      <Avatar className="h-9 w-9 border-2 border-background">
-        <AvatarImage src="" alt={`${user.firstName} ${user.lastName}`} />
-        <AvatarFallback className="text-xs">
-          {user.firstName?.[0]}{user.lastName?.[0]}
-        </AvatarFallback>
-      </Avatar>
-    </TooltipTrigger>
-    <TooltipContent>
-      <div className="text-sm font-medium">{user.firstName} {user.lastName}</div>
-      <div className="text-xs text-muted-foreground">{user.email}</div>
-    </TooltipContent>
-  </Tooltip>
+  <TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Avatar className="h-9 w-9 border-2 border-background">
+          <AvatarImage src="" alt={`${user.firstName} ${user.lastName}`} />
+          <AvatarFallback className="text-xs">
+            {user.firstName?.[0]}{user.lastName?.[0]}
+          </AvatarFallback>
+        </Avatar>
+      </TooltipTrigger>
+      <TooltipContent>
+        <div className="text-sm font-medium">{user.firstName} {user.lastName}</div>
+        <div className="text-xs text-muted-foreground">{user.email}</div>
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
 );
-
-// const MemberListItem = ({ user, onClick }: { user: User, onClick: () => void }) => (
-//   <div 
-//     className="flex items-center justify-between p-3 hover:bg-accent rounded-md cursor-pointer transition-colors"
-//     onClick={onClick}
-//   >
-//     <div className="flex items-center space-x-3">
-//       <Avatar>
-//         <AvatarImage src="" />
-//         <AvatarFallback>
-//           {user?.firstName?.[0]}{user?.lastName?.[0]}
-//         </AvatarFallback>
-//       </Avatar>
-//       <div>
-//         <p className="font-medium">{user?.firstName} {user?.lastName}</p>
-//         <p className="text-sm text-muted-foreground">{user?.email}</p>
-//       </div>
-//     </div>
-//     <div className="flex items-center gap-2">
-//       {user.role && <Badge variant="outline">{user.role}</Badge>}
-//       <ChevronRight className="h-4 w-4 text-muted-foreground" />
-//     </div>
-//   </div>
-// );
 
 const SpecificDepartmentView = () => {
   const { id } = useParams()
