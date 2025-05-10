@@ -22,7 +22,7 @@ import {
 import { Button, ButtonProps } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { Trash2, Edit, PlusCircle, Loader2 } from 'lucide-react';
+import { Trash2, Edit, PlusCircle, Loader2, Search } from 'lucide-react';
 import { APIDictionary } from '@/api/v2/APIdict';
 import { useAuth } from '@/services/AuthContext';
 import axios from 'axios';
@@ -45,6 +45,8 @@ const RolesPermissionsManagement = () => {
   const [isCreateRoleDialogOpen, setIsCreateRoleDialogOpen] = useState(false);
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [editedPermissions, setEditedPermissions] = useState<string[]>([]);
+  const [permissionSearch, setPermissionSearch] = useState('');
+  const [createPermissionSearch, setCreatePermissionSearch] = useState('');
   const [isLoading, setIsLoading] = useState({
     create: false,
     update: false,
@@ -269,6 +271,15 @@ const RolesPermissionsManagement = () => {
     </Button>
   );
 
+  // Filter permissions based on search query
+  const filteredPermissions = permissions.filter(permission => 
+    permission.name.toLowerCase().includes(permissionSearch.toLowerCase())
+  );
+
+  const filteredCreatePermissions = permissions.filter(permission => 
+    permission.name.toLowerCase().includes(createPermissionSearch.toLowerCase())
+  );
+
   // Update the create role dialog content
   const createRoleDialogContent = (
     <DialogContent className="sm:max-w-[95vw] md:max-w-[90vw] lg:max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -293,8 +304,17 @@ const RolesPermissionsManagement = () => {
                 Clear All
               </Button>
             </div>
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="Search permissions..." 
+                className="pl-8"
+                value={createPermissionSearch}
+                onChange={(e) => setCreatePermissionSearch(e.target.value)}
+              />
+            </div>
             <div className="h-[300px] md:h-[400px] overflow-y-auto border rounded p-2">
-              {permissions.map(permission => (
+              {filteredCreatePermissions.map(permission => (
                 <div key={permission.id} className="flex items-center space-x-2 py-1">
                   <Checkbox 
                     id={`create-${permission.id}`}
@@ -312,6 +332,11 @@ const RolesPermissionsManagement = () => {
                   </label>
                 </div>
               ))}
+              {filteredCreatePermissions.length === 0 && (
+                <div className="text-center py-4 text-muted-foreground">
+                  No permissions found matching your search
+                </div>
+              )}
             </div>
           </div>
           <LoadingButton 
@@ -350,8 +375,17 @@ const RolesPermissionsManagement = () => {
               Clear All
             </Button>
           </div>
+          <div className="relative mb-2">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Search permissions..." 
+              className="pl-8"
+              value={permissionSearch}
+              onChange={(e) => setPermissionSearch(e.target.value)}
+            />
+          </div>
           <div className="h-[300px] md:h-[400px] overflow-y-auto border rounded p-2">
-            {permissions.map(permission => (
+            {filteredPermissions.map(permission => (
               <div key={permission.id} className="flex items-center space-x-2 py-1">
                 <Checkbox
                   id={permission.id}
@@ -366,6 +400,11 @@ const RolesPermissionsManagement = () => {
                 </label>
               </div>
             ))}
+            {filteredPermissions.length === 0 && (
+              <div className="text-center py-4 text-muted-foreground">
+                No permissions found matching your search
+              </div>
+            )}
           </div>
           <div className="flex justify-end space-x-2 mt-4">
             <Button

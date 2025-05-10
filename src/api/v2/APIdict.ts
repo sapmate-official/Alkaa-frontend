@@ -29,6 +29,7 @@ export const APIDictionary = {
     leave_balance: `${backendDomain}/api/v2/leave-balance`,
     attendance: `${backendDomain}/api/v2/attendance`,
     payroll: `${backendDomain}/api/v2/payroll`,
+    events: `${backendDomain}/api/v2/events`,
     bank: `${backendDomain}/api/v2/bank-details`,
     payrollParameters: (userId: string) => `${backendDomain}/api/v2/payroll/parameters/${userId}`,
     notification: `${backendDomain}/api/v2/notification`,

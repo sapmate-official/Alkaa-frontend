@@ -3,18 +3,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { APIDictionary } from '@/api/v2/APIdict';
 import { useAuth } from '@/services/AuthContext';
-import { Users, Clock, CalendarDays, Activity, AlertCircle } from 'lucide-react';
+import { Users, Clock, CalendarDays, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAtom } from 'jotai';
-import { dashboardDataAtom } from '@/store/atom';
+import { dashboardDataAtom, specialEventsAtom } from '@/store/atom';
 import { AttendanceRecord, User } from '@/interface/general';
+import { SpecialEvents } from '@/components/dashboard/SpecialEvents';
 
 const Home = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [dashboardData, setDashboardData] = useAtom(dashboardDataAtom);
+  const [specialEvents, setSpecialEvents] = useAtom(specialEventsAtom);
   const [attendanceData, setAttendanceData] = useState<Record<string, AttendanceRecord[]>>({});
   const [employeeList, setEmployee] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,14 +33,19 @@ const Home = () => {
           return;
         }
         
-        const [dashboardResponse, attendanceResponse] = await Promise.all([
+        const [dashboardResponse, attendanceResponse, specialEventsResponse] = await Promise.all([
           axios.get(`${APIDictionary.dashboard(user.id)}`, { withCredentials: true }),
-          axios.get(`${APIDictionary.attendance}/manager/live/${user?.id}`, { withCredentials: true })
+          axios.get(`${APIDictionary.attendance}/manager/live/${user?.id}`, { withCredentials: true }),
+          axios.get(`${APIDictionary.events}`, { withCredentials: true })
         ]);
         
         setAttendanceData(attendanceResponse?.data?.attendanceRecords || {});
         setEmployee(attendanceResponse?.data?.users || []);
         setDashboardData(dashboardResponse?.data);
+        
+        if (specialEventsResponse?.data?.success) {
+          setSpecialEvents(specialEventsResponse.data.data);
+        }
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       } finally {
@@ -47,7 +54,7 @@ const Home = () => {
     };
     
     fetchData();
-  }, [user, dashboardData, setDashboardData]);
+  }, [user, dashboardData, setDashboardData, setSpecialEvents]);
 
   // Add a refresh function for manual updates
   const refreshDashboard = async () => {
@@ -55,9 +62,10 @@ const Home = () => {
       setIsLoading(true);
       if (!user?.id) return;
 
-      const [dashboardResponse, attendanceResponse] = await Promise.all([
+      const [dashboardResponse, attendanceResponse, specialEventsResponse] = await Promise.all([
         axios.get(`${APIDictionary.dashboard(user.id)}`, { withCredentials: true }),
-        axios.get(`${APIDictionary.attendance}/manager/live/${user?.id}`, { withCredentials: true })
+        axios.get(`${APIDictionary.attendance}/manager/live/${user?.id}`, { withCredentials: true }),
+        axios.get(`${APIDictionary.events}`, { withCredentials: true })
       ]);
       
       setAttendanceData(attendanceResponse?.data?.attendanceRecords || {});
@@ -65,6 +73,10 @@ const Home = () => {
       
       setEmployee(attendanceResponse?.data?.users || []);
       setDashboardData(dashboardResponse.data);
+      
+      if (specialEventsResponse?.data?.success) {
+        setSpecialEvents(specialEventsResponse.data.data);
+      }
     } catch (error) {
       console.error('Error refreshing dashboard data:', error);
     } finally {
@@ -110,15 +122,15 @@ const Home = () => {
     </tr>
   );
 
-  const ActivitySkeleton = () => (
-    <div className="flex items-start space-x-4">
-      <Skeleton className="h-5 w-5 rounded-full" />
-      <div className="space-y-2 w-full">
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-3 w-24" />
-      </div>
-    </div>
-  );
+  // const ActivitySkeleton = () => (
+  //   <div className="flex items-start space-x-4">
+  //     <Skeleton className="h-5 w-5 rounded-full" />
+  //     <div className="space-y-2 w-full">
+  //       <Skeleton className="h-4 w-full" />
+  //       <Skeleton className="h-3 w-24" />
+  //     </div>
+  //   </div>
+  // );
 
   const QuickActionSkeleton = () => (
     <Card>
@@ -268,35 +280,8 @@ const Home = () => {
           </CardContent>
         </Card>
 
-        <Card className="col-span-1">
-          <CardHeader>
-            <CardTitle>Recent Activities</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {isLoading ? (
-                [...Array(5)].map((_, index) => (
-                  <ActivitySkeleton key={index} />
-                ))
-              ) : (
-                (dashboardData?.recentActivities || []).map((activity, index) => (
-                  <div key={index} className="flex items-start space-x-4">
-                    <AlertCircle className="h-5 w-5 mt-0.5 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm font-medium">{activity.title}</p>
-                      <p className="text-sm text-muted-foreground">{activity.timestamp}</p>
-                    </div>
-                  </div>
-                ))
-              )}
-              {!isLoading && dashboardData?.recentActivities?.length === 0 && (
-                <div className="text-center py-4 text-muted-foreground">
-                  No recent activities
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        {/* Special Events Display */}
+        <SpecialEvents events={specialEvents} isLoading={isLoading} />
       </div>
 
       {/* Quick Actions */}
