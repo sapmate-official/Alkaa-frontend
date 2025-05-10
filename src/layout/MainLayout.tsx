@@ -6,11 +6,11 @@ import {
   IconLogout,
   IconBuildingBank,
   IconId,
-  IconUsers,
   IconFileDescription,
   IconBellRinging,
   IconCalendarEvent,
   IconCoin,
+  IconReceipt2,
   // IconReceipt2 // Add this import
 } from '@tabler/icons-react';
 import { Link, useLocation } from 'react-router-dom';
@@ -29,7 +29,7 @@ import { permissionListAtom } from '@/store/atom';
 const SIDEBAR_LINK_RANKING: Record<string, number> = {
   "Organization": 1,
   "Permission": 2,
-  "Employees": 3,
+  // "Employees": 3,
   "Department": 4,
   "Roles & Permission": 5,
   "Profile": 6,
@@ -192,20 +192,21 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           href: "/p/new-payroll",
           icon: <IconCoin className="h-5 w-5" />
         });
-      } else if (permission?.key === "view_employee_management") {
-        baseLinks.push({
-          label: "Employees",
-          href: "/p/employee/manage",
-          icon: <IconUsers className="h-5 w-5" />
-        });
-      }
-      //  else if (permission?.key === "view_billing") {
+      } 
+      // else if (permission?.key === "view_employee_management") {
       //   baseLinks.push({
-      //     label: "Billing",
-      //     href: "/p/billing",
-      //     icon: <IconReceipt2 className="h-5 w-5" />
+      //     label: "Employees",
+      //     href: "/p/employee/manage",
+      //     icon: <IconUsers className="h-5 w-5" />
       //   });
       // }
+       else if (permission?.key === "view_billing") {
+        baseLinks.push({
+          label: "Billing",
+          href: "/p/billing",
+          icon: <IconReceipt2 className="h-5 w-5" />
+        });
+      }
     }
 
     // Sort links based on their ranking
