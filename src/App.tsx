@@ -17,6 +17,12 @@ const Home = lazy(() => import('./page/public/Home'));
 const LandingPage = lazy(() => import('./page/public/LandingPage'));
 const SetPassword = lazy(() => import('./page/public/SetPassword'));
 const SignIn = lazy(() => import('./page/public/auth/SignIn'));
+const BillPayment = lazy(() => import('./system/BillingManagementSystem/BillPayment.tsx'));
+
+// Billing components
+const BillingDashboard = lazy(() => import('./system/BillingManagementSystem/BillingDashboard'));
+const BillHistory = lazy(() => import('./system/BillingManagementSystem/BillHistory'));
+const BillDetails = lazy(() => import('./system/BillingManagementSystem/BillDetails'));
 
 // Layout
 const MainLayout = lazy(() => import('./layout/MainLayout').then(module => ({ default: module.MainLayout })));
@@ -101,6 +107,8 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/reset-password/:token" element={<SetPassword />} />
           <Route path="/auth/signin" element={<AuthProvider><SignIn /></AuthProvider>} />
+          
+        
 
           {/* Protected Routes - Wrapped in AuthProvider */}
           <Route
@@ -254,6 +262,10 @@ const ClientRoute = () => {
         <PermissionRoute requireAll={false} requiredPermissions={['holiday.create', 'holiday.read', 'holiday.update', 'holiday.delete']}>
           <HolidayManagementSystem />
         </PermissionRoute>
+      } />
+      <Route path="/billing/*" element={
+          <BillingManagementSystem />
+       
       } />
 
       <Route path="/logout" element={<Logout />} />
@@ -571,6 +583,28 @@ const ProfileRoutes = () => {
         <BankDetails />
       </PermissionRouteBasedOnKey>
       } />
+    </Routes>
+  )
+}
+const BillingManagementSystem = () => {
+  return (
+    <Routes>
+      <Route path='/' element={
+        <PermissionRouteBasedOnKey requiredPermissions={['view_billing']}>
+          <BillingDashboard />
+        </PermissionRouteBasedOnKey>
+      } />
+      <Route path='/history' element={
+        <PermissionRouteBasedOnKey requiredPermissions={['view_billing']}>
+          <BillHistory />
+        </PermissionRouteBasedOnKey>
+      } />
+      <Route path='/bill/:id' element={
+        <PermissionRouteBasedOnKey requiredPermissions={['view_billing']}>
+          <BillDetails />
+        </PermissionRouteBasedOnKey>
+      } />
+      <Route path='/pay/:billId' element={<BillPayment />} />
     </Routes>
   )
 }
