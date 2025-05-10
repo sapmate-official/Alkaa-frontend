@@ -10,7 +10,8 @@ import {
   IconFileDescription,
   IconBellRinging,
   IconCalendarEvent,
-  IconCoin
+  IconCoin,
+  IconReceipt2 // Add this import
 } from '@tabler/icons-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../services/AuthContext';
@@ -38,8 +39,9 @@ const SIDEBAR_LINK_RANKING: Record<string, number> = {
   "Leave Balance": 10,
   "Holiday": 11,
   "Payroll": 12,
-  "Notification": 13,
-  "Logout": 14
+  "Billing": 13, // Add this line
+  "Notification": 14,
+  "Logout": 15
 };
 
 interface MainLayoutProps {
@@ -195,6 +197,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           label: "Employees",
           href: "/p/employee/manage",
           icon: <IconUsers className="h-5 w-5" />
+        });
+      } else if (permission?.key === "view_billing") {
+        baseLinks.push({
+          label: "Billing",
+          href: "/p/billing",
+          icon: <IconReceipt2 className="h-5 w-5" />
         });
       }
     }

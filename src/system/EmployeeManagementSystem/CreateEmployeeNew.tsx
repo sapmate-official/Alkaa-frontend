@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -50,6 +50,7 @@ import {
   Calculator
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { debounce } from 'lodash';
 
 const basicDetailsSchema = z.object({
   firstName: z.string().min(2, 'First name is required'),
@@ -111,6 +112,9 @@ const CreateEmployeeNew = () => {
   const [useHeadAsManager, setUseHeadAsManager] = useState(false);
   const [employeeIdExists, setEmployeeIdExists] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [draftId, setDraftId] = useState<string | null>(null);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [isDraftModified, setIsDraftModified] = useState(false);
 
   const fetchDepartments = async () => {
     try {
@@ -243,6 +247,119 @@ const CreateEmployeeNew = () => {
         description: "Failed to fetch employees",
         variant: "destructive",
       });
+    }
+  };
+
+  // Load draft from localStorage on initial load
+  useEffect(() => {
+    const savedDraft = localStorage.getItem(`employee-draft-${user?.id}`);
+    if (savedDraft) {
+      try {
+        const parsedDraft = JSON.parse(savedDraft);
+        // Check if the draft is recent enough (e.g., within the last 24 hours)
+        const draftDate = new Date(parsedDraft.timestamp);
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        if (draftDate > yesterday) {
+          // Ask user if they want to restore the draft
+          if (window.confirm('Would you like to restore your previous draft?')) {
+            form.reset(parsedDraft.formData);
+            setCurrentStep(parsedDraft.step || 0);
+            setDraftId(parsedDraft.id || null);
+            setLastSaved(draftDate);
+          } else {
+            // Clear the localStorage if they don't want to restore
+            localStorage.removeItem(`employee-draft-${user?.id}`);
+          }
+        } else {
+          // Remove old drafts
+          localStorage.removeItem(`employee-draft-${user?.id}`);
+        }
+      } catch (error) {
+        console.error("Failed to parse saved draft:", error);
+      }
+    }
+  }, [user?.id]);
+
+  // Auto-save functionality with debounce
+  const autoSaveDraft = useCallback(
+    debounce(() => {
+      const formData = form.getValues();
+      const draftData = {
+        formData,
+        step: currentStep,
+        timestamp: new Date().toISOString(),
+        id: draftId
+      };
+      localStorage.setItem(`employee-draft-${user?.id}`, JSON.stringify(draftData));
+      setLastSaved(new Date());
+      setIsDraftModified(false);
+    }, 3000), // Auto-save after 3 seconds of inactivity
+    [form, currentStep, draftId, user?.id]
+  );
+  
+  // Watch for form changes to trigger auto-save
+  useEffect(() => {
+    const subscription = form.watch(() => {
+      setIsDraftModified(true);
+      autoSaveDraft();
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [form, autoSaveDraft]);
+
+  // Function to explicitly save draft to backend
+  const saveDraftToServer = async () => {
+    if (!user?.orgId) {
+      toast({
+        title: 'Error',
+        description: 'Organization ID not found',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      const formData = form.getValues();
+      
+      const endpoint = draftId 
+        ? `${APIDictionary.Organization}/employees/draft/${draftId}`
+        : `${APIDictionary.Organization}/employees/draft`;
+      
+      const method = draftId ? 'PUT' : 'POST';
+      
+      const response = await axios({
+        method,
+        url: endpoint,
+        data: {
+          formData,
+          step: currentStep,
+          orgId: user.orgId,
+          userId: user.id
+        },
+        withCredentials: true
+      });
+      
+      if (response.status === 201 || response.status === 200) {
+        setDraftId(response.data.id);
+        setLastSaved(new Date());
+        setIsDraftModified(false);
+        
+        toast({
+          title: 'Draft Saved',
+          description: 'Your progress has been saved. You can resume later.',
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error?.response?.data?.error || 'Failed to save draft',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1005,6 +1122,16 @@ const CreateEmployeeNew = () => {
           <CardTitle className="text-xl font-semibold text-center sm:text-left flex items-center gap-2">
             <UserIcon className="h-5 w-5" />
             Create New Employee
+            {lastSaved && !isDraftModified && (
+              <span className="ml-auto text-xs text-muted-foreground">
+                Last saved: {lastSaved.toLocaleTimeString()}
+              </span>
+            )}
+            {isDraftModified && (
+              <span className="ml-auto text-xs text-amber-500">
+                Unsaved changes
+              </span>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
@@ -1050,15 +1177,47 @@ const CreateEmployeeNew = () => {
 
               {/* Navigation Buttons */}
               <div className="flex justify-between pt-6 border-t border-muted/30">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onPrevious}
-                  disabled={currentStep === 0}
-                  className="min-w-[100px] transition-all"
-                >
-                  <span className="mr-2">←</span> Previous
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onPrevious}
+                    disabled={currentStep === 0}
+                    className="min-w-[100px] transition-all"
+                  >
+                    <span className="mr-2">←</span> Previous
+                  </Button>
+                  
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={saveDraftToServer}
+                    disabled={loading}
+                    className="min-w-[100px] transition-all"
+                  >
+                    {loading ? (
+                      <Loader className='animate-spin mr-2' />
+                    ) : (
+                      <>
+                        <svg 
+                          xmlns="http://www.w3.org/2000/svg" 
+                          className="h-4 w-4 mr-2" 
+                          fill="none" 
+                          viewBox="0 0 24 24" 
+                          stroke="currentColor"
+                        >
+                          <path 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round" 
+                            strokeWidth={2} 
+                            d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" 
+                          />
+                        </svg>
+                        Save Draft
+                      </>
+                    )}
+                  </Button>
+                </div>
                 
                 <Button 
                   type="submit" 
