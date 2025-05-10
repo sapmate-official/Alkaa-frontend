@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button"
 import { permissionListAtom } from '@/store/atom'
 import { useAtom } from 'jotai'
 import { motion } from 'framer-motion'
+import BankDetails from '@/components/BankDetails'
 
 const ProfileInfo = () => {
     const { id } = useParams()
@@ -96,6 +97,19 @@ const ProfileInfo = () => {
         }
     }
 
+    const canDisplayBankInfo = () => {
+        const isOwnProfile = !id || id === user?.id;
+        const isSubordinate = user?.id && profileInfo?.managerId === user?.id;
+
+        if (isOwnProfile) {
+            return true; // Users can always view their own bank details
+        } else if (isSubordinate) {
+            return hasPermission('view_bank_subordinates');
+        } else {
+            return hasPermission('view_bank_all_user');
+        }
+    };
+    
     if (isLoading) {
         return (
             <div className="container mx-auto p-6">
@@ -379,6 +393,10 @@ const ProfileInfo = () => {
                             </CardContent>
                         </Card>
                     </motion.div>
+                )}
+
+                {canDisplayBankInfo() && (
+                    <BankDetails userId={id || user?.id || ''} />
                 )}
             </div>
         </div>

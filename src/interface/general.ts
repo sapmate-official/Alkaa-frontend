@@ -139,9 +139,8 @@ export interface BankDetails {
   accountNumber: string;
   ifscCode: string;
   bankName: string;
-  createdAt: Date;
-  updatedAt: Date;
-  user: User;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface LeaveType {
