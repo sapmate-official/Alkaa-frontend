@@ -11,7 +11,7 @@ import {
   IconBellRinging,
   IconCalendarEvent,
   IconCoin,
-  IconReceipt2 // Add this import
+  // IconReceipt2 // Add this import
 } from '@tabler/icons-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../services/AuthContext';
@@ -198,13 +198,14 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           href: "/p/employee/manage",
           icon: <IconUsers className="h-5 w-5" />
         });
-      } else if (permission?.key === "view_billing") {
-        baseLinks.push({
-          label: "Billing",
-          href: "/p/billing",
-          icon: <IconReceipt2 className="h-5 w-5" />
-        });
       }
+      //  else if (permission?.key === "view_billing") {
+      //   baseLinks.push({
+      //     label: "Billing",
+      //     href: "/p/billing",
+      //     icon: <IconReceipt2 className="h-5 w-5" />
+      //   });
+      // }
     }
 
     // Sort links based on their ranking
