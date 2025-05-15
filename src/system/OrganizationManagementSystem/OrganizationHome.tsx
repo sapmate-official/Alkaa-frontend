@@ -60,7 +60,7 @@ const OrganizationHome = () => {
                             <div className="space-y-4">
                                 <div className="flex items-center text-sm">
                                     <Building2 className="mr-2 h-4 w-4" />
-                                    <span>Plan: {org?.subscriptionPlan}</span>
+                                    <span>Plan: {org?.subscriptionPlan?.name}</span>
                                 </div>
                                 <div className="flex items-center text-sm">
                                     <Users className="mr-2 h-4 w-4" />
