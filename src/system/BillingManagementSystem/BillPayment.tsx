@@ -37,6 +37,9 @@ interface BillDetails {
   subscriptionPlan: string;
   paidDate?: string;
   paymentReference?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 const BillPayment = () => {
@@ -56,7 +59,8 @@ const BillPayment = () => {
       try {
         setLoading(true);
         const response = await axios.get(APIV2Dictionary.billing.getPublicBill(billId || ''));
-        setBill(response.data);
+        const billData = response.data.data || response.data;
+        setBill(billData);
       } catch (err: any) {
         console.error('Error fetching bill details:', err);
         setError(err.response?.data?.message || 'Failed to load bill details');
@@ -223,7 +227,7 @@ const BillPayment = () => {
                 <Separator className="my-4" />
 
                 <h3 className="text-lg font-medium mb-3">Organization Details</h3>
-                <div className="space-y-2">
+                <div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Organization:</span>
                     <span>{bill.organizationName}</span>

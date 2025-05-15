@@ -4,14 +4,27 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import axios from "axios"
 import { useEffect, useState } from "react"
 import { useParams } from "react-router-dom"
+
+interface SubscriptionPlan {
+  id: string;
+  name: string;
+  description?: string;
+  monthlyPrice: number;
+  annualPrice: number;
+  maxUsers: number;
+  features?: any;
+}
+
 interface Organization {
   id: string;
   name: string;
   industry: string;
-  subscriptionPlan: string;
+  subscriptionPlanId: string;
+  subscriptionPlan: SubscriptionPlan;
   subscriptionEnd: string;
   isActive: boolean;
   settings: string;
@@ -23,6 +36,7 @@ const SpecificOrganizationHome = () => {
   const [organization, setOrganization] = useState<Organization | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState<Partial<Organization>>({})
+  const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([])
 
   const fetchOrganization = async () => {
     try {
@@ -34,6 +48,20 @@ const SpecificOrganizationHome = () => {
       toast({
         title: "Error",
         description: "Failed to fetch organization. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const fetchSubscriptionPlans = async () => {
+    try {
+      const response = await axios.get(`${APIDictionary.Organization}/subscription-plans`)
+      setSubscriptionPlans(response.data)
+    } catch (error) {
+      console.error('Failed to fetch subscription plans:', error)
+      toast({
+        title: "Error",
+        description: "Failed to fetch subscription plans. Please try again.",
         variant: "destructive",
       })
     }
@@ -82,6 +110,7 @@ const SpecificOrganizationHome = () => {
 
   useEffect(() => {
     fetchOrganization()
+    fetchSubscriptionPlans()
   }, [])
 
   if (!organization) return <div>Loading...</div>
@@ -128,11 +157,28 @@ const SpecificOrganizationHome = () => {
           </div>
           <div>
             <label className="text-sm font-medium">Subscription Plan</label>
-            <Input
-              value={formData.subscriptionPlan}
-              disabled={!isEditing}
-              onChange={(e) => setFormData({ ...formData, subscriptionPlan: e.target.value })}
-            />
+            {isEditing ? (
+              <Select 
+                value={formData.subscriptionPlanId} 
+                onValueChange={(value) => setFormData({ ...formData, subscriptionPlanId: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a subscription plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  {subscriptionPlans.map((plan) => (
+                    <SelectItem key={plan.id} value={plan.id}>
+                      {plan.name} - ${plan.monthlyPrice}/month
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                value={organization.subscriptionPlan?.name || 'No Plan'}
+                disabled
+              />
+            )}
           </div>
         </div>
       </CardContent>

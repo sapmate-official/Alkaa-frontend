@@ -12,7 +12,10 @@ export interface Organization {
   id: string;
   name: string;
   industry?: string;
-  subscriptionPlan: string;
+  logo?: string;
+  address?: string;
+  subscriptionPlanId?: string;
+  subscriptionPlan?: SubscriptionPlan;
   subscriptionStart: Date;
   subscriptionEnd?: Date;
   isActive: boolean;
@@ -26,6 +29,11 @@ export interface Organization {
   leaveTypes: LeaveType[];
   notificationTemplates: NotificationTemplate[];
   holidays: Holiday[];
+  holidayTypes: HolidayType[];
+  organizationSettings: OrganizationSettings[];
+  organizationAdmins: OrganizationAdmin[];
+  permissionPresets: PermissionPreset[];
+  billingRecords: BillingRecord[];
 }
 
 export interface Department {
@@ -91,7 +99,8 @@ export interface User {
   departmentId?: string;
   managerId?: string;
   email: string;
-  name?: string;
+  firstName?: string;
+  lastName?: string;
   hashedPassword?: string;
   refreshToken?: string;
   status: UserStatus;
@@ -118,9 +127,12 @@ export interface User {
   leaveBalances: LeaveBalance[];
   attendanceRecords: AttendanceRecord[];
   salaryRecords: SalaryRecord[];
+  salaryParameter?: SalaryParameter;
   notifications: Notification[];
-  firstName?: string;
-  lastName?: string;
+  pushSubscriptions: PushSubscription[];
+  sentTransactions: TransactionTable[];
+  receivedTransactions: TransactionTable[];
+  organizationAdmin: OrganizationAdmin[];
 }
 
 export interface UserRole {
@@ -274,6 +286,17 @@ export interface BackgroundJob {
   updatedAt: Date;
 }
 
+export interface HolidayType {
+  id: string;
+  orgId: string;
+  name: string;
+  policy?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  organization: Organization;
+  holidays: Holiday[];
+}
+
 export interface Holiday {
   id: string;
   orgId: string;
@@ -281,9 +304,103 @@ export interface Holiday {
   date: Date;
   description?: string;
   isOptional: boolean;
+  type?: string;
   createdAt: Date;
   updatedAt: Date;
   organization: Organization;
+  holidayType?: HolidayType;
+}
+
+export interface OrganizationAdmin {
+  id: string;
+  orgId: string;
+  adminId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  organization: Organization;
+  adminUser: User;
+}
+
+export interface OrganizationSettings {
+  id: string;
+  orgId: string;
+  settings: any;
+  createdAt: Date;
+  updatedAt: Date;
+  organization: Organization;
+}
+
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  description?: string;
+  monthlyPrice: number;
+  annualPrice: number;
+  maxUsers: number;
+  features?: any;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  organizations: Organization[];
+}
+
+export interface BillingRecord {
+  id: string;
+  organizationId: string;
+  month: number;
+  year: number;
+  activeUserCount: number;
+  pricePerUser: number;
+  totalAmount: number;
+  status: BillingStatus;
+  billDate: Date;
+  dueDate: Date;
+  paidDate?: Date;
+  paymentReference?: string;
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  organization: Organization;
+}
+
+export interface PushSubscription {
+  id: string;
+  userId: string;
+  endpoint: string;
+  keys: any;
+  expirationTime?: number;
+  createdAt: Date;
+  updatedAt: Date;
+  user: User;
+}
+
+export interface TransactionTable {
+  id: string;
+  senderUserId: string;
+  recieverUserId: string;
+  amount: number;
+  type: string;
+  createdAt: Date;
+  updatedAt: Date;
+  bankTransactionId?: string;
+  senderDetails: User;
+  recieverDetails: User;
+  salaryTransactions: SalaryTransactionTable[];
+}
+
+export interface SalaryTransactionTable {
+  id: string;
+  transactionId: string;
+  salaryRecordId: string;
+  salaryRecord: SalaryRecord;
+  transaction: TransactionTable;
+}
+
+export interface UserDailyReport {
+  id: string;
+  attendanceId: string;
+  reportContent: any;
+  attendance: AttendanceRecord;
 }
 
 export interface PermissionCategory {
@@ -379,6 +496,14 @@ export enum AttendanceVerificationStatus {
   VERIFIED = "VERIFIED",
   REJECTED = "REJECTED"
 }
+
+export enum BillingStatus {
+  PAID = "PAID",
+  UNPAID = "UNPAID",
+  OVERDUE = "OVERDUE",
+  CANCELLED = "CANCELLED"
+}
+
 export interface PayslipData {
   id: string;
   userId: string;
