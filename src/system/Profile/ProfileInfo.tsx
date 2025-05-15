@@ -197,14 +197,14 @@ const ProfileInfo = () => {
                                             ? 'text-red-700 bg-red-100 dark:bg-red-900 dark:text-red-200' 
                                             : ''
                                     }`}>
-                                        {profileInfo?.name?.split(' ')?.map(n => n?.[0])?.join('') || profileInfo?.email?.[0]?.toUpperCase()}
+                                        {profileInfo?.firstName?.charAt(0)} {profileInfo?.lastName?.charAt(0)}
                                     </AvatarFallback>
                                 </Avatar>
                                 <div className="space-y-2">
                                     <CardTitle className={`text-2xl font-bold ${
                                         profileInfo?.status !== 'active' ? 'text-red-700 dark:text-red-400' : ''
                                     }`}>
-                                        {profileInfo?.name || profileInfo?.email}
+                                        {profileInfo?.firstName} {profileInfo?.lastName}
                                     </CardTitle>
                                     <div className="flex items-center gap-3">
                                         <Badge variant={profileInfo?.status === 'active' ? 'default' : 'destructive'}
