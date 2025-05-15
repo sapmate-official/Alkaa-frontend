@@ -338,12 +338,12 @@ const BillDetails = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Price Per User:</span>
-                  <span>${bill.pricePerUser.toFixed(2)}</span>
+                  <span>₹{bill.pricePerUser.toFixed(2)}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between text-lg font-bold">
                   <span>Total Amount:</span>
-                  <span>${bill.totalAmount.toFixed(2)}</span>
+                  <span>₹{bill.totalAmount.toFixed(2)}</span>
                 </div>
               </div>
               
@@ -417,7 +417,7 @@ const BillDetails = () => {
           <DialogHeader>
             <DialogTitle>Pay Bill</DialogTitle>
             <DialogDescription>
-              Select a payment method to process your payment of ${bill.totalAmount.toFixed(2)}
+              Select a payment method to process your payment of ₹{bill.totalAmount.toFixed(2)}
             </DialogDescription>
           </DialogHeader>
           
@@ -488,7 +488,7 @@ const BillDetails = () => {
                   Processing...
                 </>
               ) : (
-                <>Pay ${bill.totalAmount.toFixed(2)}</>
+                <>Pay ₹{bill.totalAmount.toFixed(2)}</>
               )}
             </Button>
           </DialogFooter>

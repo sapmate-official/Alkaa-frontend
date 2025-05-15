@@ -316,7 +316,7 @@ const BillHistory = () => {
                         {bill.monthName} {bill.year}
                       </TableCell>
                       <TableCell>{bill.activeUserCount}</TableCell>
-                      <TableCell>${bill.totalAmount.toFixed(2)}</TableCell>
+                      <TableCell>₹{bill.totalAmount.toFixed(2)}</TableCell>
                       <TableCell>{getBillStatusBadge(bill.status)}</TableCell>
                       <TableCell>{formatDate(bill.dueDate)}</TableCell>
                       <TableCell className="text-right space-x-2">

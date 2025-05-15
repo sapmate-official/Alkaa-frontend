@@ -222,7 +222,7 @@ const BillingDashboard = () => {
             <CardTitle className="text-sm font-medium">Billed This Year</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${billing.totalBilledThisYear.toFixed(2)}</div>
+            <div className="text-2xl font-bold">₹{billing.totalBilledThisYear.toFixed(2)}</div>
           </CardContent>
         </Card>
         
@@ -231,7 +231,7 @@ const BillingDashboard = () => {
             <CardTitle className="text-sm font-medium">Unpaid Balance</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${billing.totalUnpaid.toFixed(2)}</div>
+            <div className="text-2xl font-bold">₹{billing.totalUnpaid.toFixed(2)}</div>
             {billing.unpaidCount > 0 && (
               <p className="text-sm text-gray-500">
                 {billing.unpaidCount} {billing.unpaidCount === 1 ? 'bill' : 'bills'} pending
@@ -310,7 +310,7 @@ const BillingDashboard = () => {
                   </div>
                   <div className="flex items-center gap-4">
                     <div>
-                      <div className="font-medium text-right">${bill.totalAmount.toFixed(2)}</div>
+                      <div className="font-medium text-right">₹{bill.totalAmount.toFixed(2)}</div>
                       <div className="text-right">
                         {getBillStatusBadge(bill.status)}
                       </div>
