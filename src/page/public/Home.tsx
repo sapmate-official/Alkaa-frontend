@@ -257,7 +257,7 @@ const Home = () => {
                         
                         return (
                           <tr key={employee.id} className="border-t border-gray-100">
-                            <td className="py-3">{employee.name}</td>
+                            <td className="py-3">{employee.firstName} {employee.lastName}</td>
                             <td className={`py-3 ${status === "Present" ? "text-green-600" : "text-red-600"}`}>
                               {status}
                             </td>
