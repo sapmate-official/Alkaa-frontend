@@ -84,7 +84,7 @@ export const SpecialEvents: React.FC<SpecialEventsProps> = ({ events, isLoading 
         navigate(`/p/billing/view/${event.entity.id}`)
         break
       case 'LEAVE_REQUEST':
-        navigate(`/p/leaverequest/manage`)
+        navigate(`/p/leaverequest/approve`)
         break
       case 'MONTH_END_VERIFICATION':
         navigate('/p/attendance/verification')
