@@ -27,7 +27,7 @@ const hasPermission = requireAll
 
 
   if (!hasPermission) {
-    return <Unauthorized />;
+    return <Unauthorized requiredPermissions={requiredPermissions} />;
   }
 
   return <>{children}</>;

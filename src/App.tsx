@@ -17,6 +17,12 @@ const Home = lazy(() => import('./page/public/Home'));
 const LandingPage = lazy(() => import('./page/public/LandingPage'));
 const SetPassword = lazy(() => import('./page/public/SetPassword'));
 const SignIn = lazy(() => import('./page/public/auth/SignIn'));
+const BillPayment = lazy(() => import('./system/BillingManagementSystem/BillPayment.tsx'));
+
+// Billing components
+const BillingDashboard = lazy(() => import('./system/BillingManagementSystem/BillingDashboard'));
+const BillHistory = lazy(() => import('./system/BillingManagementSystem/BillHistory'));
+const BillDetails = lazy(() => import('./system/BillingManagementSystem/BillDetails'));
 
 // Layout
 const MainLayout = lazy(() => import('./layout/MainLayout').then(module => ({ default: module.MainLayout })));
@@ -87,6 +93,7 @@ const MainGenerateSubordinateSalaryPage = lazy(() => import('./system/PayrollMan
 const MainSubordinateSalaryTransactionPage = lazy(() => import('./system/PayrollManagementSystem/New_version/ManagerLevel/Salarytransaction/MainSubordinateSalaryTransactionPage'));
 const MainGenerateUsersSalaryPage = lazy(() => import('./system/PayrollManagementSystem/New_version/AdminLevel/GenerateSalary/MainGenerateUserSalaryPage'));
 const MainCompOfViewPayslipOfAllUsersPayroll = lazy(() => import('./system/PayrollManagementSystem/New_version/AdminLevel/ViewPayslipOfAllUsersPayroll/MainCompOfViewPayslipOfAllUsersPayroll'));
+const MainAllUsersSalaryTransactionPage = lazy(() => import('./system/PayrollManagementSystem/New_version/AdminLevel/Salarytransaction/MainSalaryUsersTransactionPage.tsx'));
 
 // Custom loading fallback
 const LoadingFallback = () => <div className="flex items-center justify-center min-h-screen"><Loader /></div>;
@@ -100,6 +107,8 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/reset-password/:token" element={<SetPassword />} />
           <Route path="/auth/signin" element={<AuthProvider><SignIn /></AuthProvider>} />
+          
+        
 
           {/* Protected Routes - Wrapped in AuthProvider */}
           <Route
@@ -254,6 +263,10 @@ const ClientRoute = () => {
           <HolidayManagementSystem />
         </PermissionRoute>
       } />
+      <Route path="/billing/*" element={
+          <BillingManagementSystem />
+       
+      } />
 
       <Route path="/logout" element={<Logout />} />
     </Routes>
@@ -377,6 +390,14 @@ const NewPayrollManagementSystem = () => {
         element={
           <PermissionRouteBasedOnKey requiredPermissions={["send_salary_to_subordinates"]}>
             <MainSubordinateSalaryTransactionPage />
+          </PermissionRouteBasedOnKey>
+        }
+      />
+      <Route
+        path='/admin/transaction'
+        element={
+          <PermissionRouteBasedOnKey requiredPermissions={["send_salary_to_all"]}>
+            <MainAllUsersSalaryTransactionPage />
           </PermissionRouteBasedOnKey>
         }
       />
@@ -562,6 +583,28 @@ const ProfileRoutes = () => {
         <BankDetails />
       </PermissionRouteBasedOnKey>
       } />
+    </Routes>
+  )
+}
+const BillingManagementSystem = () => {
+  return (
+    <Routes>
+      <Route path='/' element={
+        <PermissionRouteBasedOnKey requiredPermissions={['view_billing']}>
+          <BillingDashboard />
+        </PermissionRouteBasedOnKey>
+      } />
+      <Route path='/history' element={
+        <PermissionRouteBasedOnKey requiredPermissions={['view_billing']}>
+          <BillHistory />
+        </PermissionRouteBasedOnKey>
+      } />
+      <Route path='/bill/:id' element={
+        <PermissionRouteBasedOnKey requiredPermissions={['view_billing']}>
+          <BillDetails />
+        </PermissionRouteBasedOnKey>
+      } />
+      <Route path='/pay/:billId' element={<BillPayment />} />
     </Routes>
   )
 }
