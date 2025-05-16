@@ -122,7 +122,7 @@ const AlkaaLandingPage: React.FC = () => {
             <a href="#testimonials" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Testimonials</a>
             <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
             <Button onClick={()=>navigate("/auth/signin")} variant="outline">Log in</Button>
-            <Button>Start Free Trial</Button>
+            <Button onClick={()=>navigate("/auth/signup")}>Get Started</Button>
           </nav>
           
           {/* Mobile menu button */}
@@ -186,9 +186,8 @@ const AlkaaLandingPage: React.FC = () => {
                 Pricing
               </a>
               <div className="flex flex-col gap-2 pt-2">
-            <Button onClick={()=>navigate("/auth/signin")} variant="outline">Log in</Button>
-                
-                <Button>Start Free Trial</Button>
+                <Button onClick={()=>navigate("/auth/signin")} variant="outline">Log in</Button>
+                <Button onClick={()=>navigate("/auth/signup")}>Get Started</Button>
               </div>
             </nav>
           </div>
@@ -208,16 +207,16 @@ const AlkaaLandingPage: React.FC = () => {
                   Alkaa provides a comprehensive solution for HR teams to manage employees, track performance, and boost productivity.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                  <Button className="text-base px-8 py-6">Start Free Trial</Button>
+                  <Button onClick={()=>navigate("/auth/signup")} className="text-base px-8 py-6">Get Started</Button>
                   <Button variant="outline" className="text-base px-8 py-6">
                     Book a Demo
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </div>
                 <div className="flex items-center gap-2 pt-2">
-                  <p className="text-sm text-muted-foreground">No credit card required</p>
+                  <p className="text-sm text-muted-foreground">Enterprise-grade security</p>
                   <span className="text-muted-foreground">•</span>
-                  <p className="text-sm text-muted-foreground">14-day free trial</p>
+                  <p className="text-sm text-muted-foreground">Full HR suite</p>
                 </div>
               </div>
               <div className="md:w-1/2">
@@ -315,44 +314,46 @@ const AlkaaLandingPage: React.FC = () => {
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple, Transparent Pricing</h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Choose the plan that works best for your organization. All plans include a 14-day free trial.
+                Choose the plan that works best for your organization.
               </p>
             </div>
             
             <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
               <PricingTier
                 title="Starter"
-                price="$7"
+                price="₹499"
                 description="Perfect for small teams just getting started"
                 features={[
-                  "Up to 25 employees",
+                  "Up to 20 employees",
                   "Employee directory",
                   "Basic attendance tracking",
                   "Leave management",
                   "Email support",
-                  "Mobile app access"
+                  "Mobile app access",
+                  "₹5,988 billed annually"
                 ]}
-                buttonText="Start Free Trial"
+                buttonText="Get Started"
               />
               <PricingTier
                 title="Professional"
-                price="$12"
+                price="₹899"
                 description="Ideal for growing businesses"
                 features={[
-                  "Up to 100 employees",
+                  "Up to 60 employees",
                   "Everything in Starter",
                   "Performance management",
                   "Advanced reporting",
                   "Onboarding workflows",
                   "Priority support",
-                  "API access"
+                  "API access",
+                  "₹10,788 billed annually"
                 ]}
-                buttonText="Start Free Trial"
+                buttonText="Get Started"
                 highlighted={true}
               />
               <PricingTier
                 title="Enterprise"
-                price="Custom"
+                price="₹1,499"
                 description="For large organizations with complex needs"
                 features={[
                   "Unlimited employees",
@@ -361,7 +362,8 @@ const AlkaaLandingPage: React.FC = () => {
                   "Dedicated account manager",
                   "SSO & advanced security",
                   "Custom workflows",
-                  "24/7 phone support"
+                  "24/7 phone support",
+                  "₹17,988 billed annually"
                 ]}
                 buttonText="Contact Sales"
               />
@@ -378,8 +380,8 @@ const AlkaaLandingPage: React.FC = () => {
                 Join thousands of companies that use Alkaa to streamline their employee management and boost productivity.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button className="bg-white text-primary hover:bg-white/90 text-base px-8 py-6">
-                  Start Your Free Trial
+                <Button onClick={()=>navigate("/auth/signup")} className="bg-white text-primary hover:bg-white/90 text-base px-8 py-6">
+                  Get Started Today
                 </Button>
                 <Button className="bg-transparent border border-white hover:bg-white/10 text-base px-8 py-6">
                   Schedule a Demo
