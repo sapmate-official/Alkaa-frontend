@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import { 
   Card, 
   CardContent, 
@@ -8,19 +8,22 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
-
-  CheckCircleIcon, 
-
-  Users,
   Calendar,
   ChartPie,
   Clock,
   Building2,
   MessageCircle,
-  ArrowRight
+  ArrowRight,
+  Loader2,
+  Users
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import EnhancedDashboardPreview from './DashboardPreview';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { backendDomain } from '@/lib/constant/Domain';
+import { useToast } from '@/hooks/use-toast';
 
 interface FeatureCardProps {
   title: string;
@@ -63,39 +66,44 @@ interface PricingTierProps {
   title: string;
   price: string;
   description: string;
-  features: string[];
+  billingInfo: string;
   buttonText: string;
   highlighted?: boolean;
+  popularTag?: boolean;
 }
 
 const PricingTier: React.FC<PricingTierProps> = ({ 
   title, 
   price, 
   description, 
-  features, 
+  billingInfo,
   buttonText, 
-  highlighted = false 
+  highlighted = false,
+  popularTag = false
 }) => (
-  <Card className={`border ${highlighted ? 'border-primary bg-secondary/50' : 'border-border bg-card'} h-full flex flex-col`}>
-    <CardHeader>
-      <CardTitle>{title}</CardTitle>
+  <Card className={`border ${highlighted ? 'border-primary bg-secondary/50' : 'border-border bg-card'} h-full flex flex-col relative`}>
+    {popularTag && (
+      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-white px-4 py-1 rounded-full text-sm font-medium">
+        Most Popular
+      </div>
+    )}
+    <CardHeader className="pb-2">
+      <CardTitle className="text-xl">{title}</CardTitle>
       <CardDescription>{description}</CardDescription>
     </CardHeader>
-    <CardContent className="flex-1 flex flex-col">
-      <div className="mb-4">
-        <span className="text-3xl font-bold">{price}</span>
-        {price !== 'Custom' && <span className="text-muted-foreground">/month</span>}
+    <CardContent className="flex-1 flex flex-col justify-between">
+      <div>
+        <div className="mb-6">
+          <span className="text-4xl font-bold">{price}</span>
+          {price !== 'Custom' && <span className="text-muted-foreground">/month</span>}
+          <p className="text-sm text-muted-foreground mt-1">{billingInfo}</p>
+        </div>
+        <div className="py-4">
+          <p className="text-center font-medium">All Features Included</p>
+        </div>
       </div>
-      <ul className="space-y-2 mb-6 flex-1">
-        {features.map((feature, index) => (
-          <li key={index} className="flex items-start">
-            <CheckCircleIcon className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" />
-            <span className="text-sm">{feature}</span>
-          </li>
-        ))}
-      </ul>
       <Button 
-        className={`w-full ${highlighted ? 'bg-primary hover:bg-primary/90 text-white' : 'bg-secondary text-foreground hover:bg-secondary/80'}`}
+        className={`w-full mt-4 ${highlighted ? 'bg-primary hover:bg-primary/90 text-white' : 'bg-secondary text-foreground hover:bg-secondary/80'}`}
       >
         {buttonText}
       </Button>
@@ -103,12 +111,242 @@ const PricingTier: React.FC<PricingTierProps> = ({
   </Card>
 );
 
+interface DemoDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  formData: {
+    name: string;
+    company: string;
+    phoneNumber: string;
+    email: string;
+  };
+  formErrors: {
+    name: string;
+    company: string;
+    phoneNumber: string;
+    email: string;
+  };
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleDemoRequest: (e: React.FormEvent) => void;
+  isSubmitting: boolean;
+}
+
+// Memoized dialog component to prevent unnecessary re-renders
+const DemoRequestDialog = memo(({
+  open,
+  onOpenChange,
+  formData,
+  formErrors,
+  handleInputChange,
+  handleDemoRequest,
+  isSubmitting
+}: DemoDialogProps) => (
+  <Dialog open={open} onOpenChange={onOpenChange}>
+    <DialogContent className="sm:max-w-[425px]">
+      <DialogHeader>
+        <DialogTitle>Request a Demo</DialogTitle>
+        <DialogDescription>
+          Fill out the form below and our team will contact you to schedule a personalized demo.
+        </DialogDescription>
+      </DialogHeader>
+      <form onSubmit={handleDemoRequest} className="space-y-4 mt-4">
+        <div className="space-y-2">
+          <Label htmlFor="name">Full Name</Label>
+          <Input 
+            id="name" 
+            name="name" 
+            placeholder="John Doe" 
+            value={formData.name}
+            onChange={handleInputChange}
+            className={formErrors.name ? "border-red-500" : ""}
+          />
+          {formErrors.name && <p className="text-sm text-red-500">{formErrors.name}</p>}
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="company">Company Name</Label>
+          <Input 
+            id="company" 
+            name="company" 
+            placeholder="Acme Inc." 
+            value={formData.company}
+            onChange={handleInputChange}
+            className={formErrors.company ? "border-red-500" : ""}
+          />
+          {formErrors.company && <p className="text-sm text-red-500">{formErrors.company}</p>}
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="phoneNumber">Phone Number</Label>
+          <Input 
+            id="phoneNumber" 
+            name="phoneNumber" 
+            placeholder="+91 98765 43210" 
+            value={formData.phoneNumber}
+            onChange={handleInputChange}
+            className={formErrors.phoneNumber ? "border-red-500" : ""}
+          />
+          {formErrors.phoneNumber && <p className="text-sm text-red-500">{formErrors.phoneNumber}</p>}
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input 
+            id="email" 
+            name="email" 
+            type="email" 
+            placeholder="john@example.com" 
+            value={formData.email}
+            onChange={handleInputChange}
+            className={formErrors.email ? "border-red-500" : ""}
+          />
+          {formErrors.email && <p className="text-sm text-red-500">{formErrors.email}</p>}
+        </div>
+        
+        <div className="pt-4 flex justify-end">
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Submitting...
+              </>
+            ) : 'Request Demo'}
+          </Button>
+        </div>
+      </form>
+    </DialogContent>
+  </Dialog>
+));
+
+DemoRequestDialog.displayName = "DemoRequestDialog";
+
 const AlkaaLandingPage: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const navigate = useNavigate()
+  const [demoDialogOpen, setDemoDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    company: '',
+    phoneNumber: '',
+    email: ''
+  });
+  const [formErrors, setFormErrors] = useState({
+    name: '',
+    company: '',
+    phoneNumber: '',
+    email: ''
+  });
+  
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  // Use useCallback to memoize handlers so they don't cause re-renders
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prevData => ({
+      ...prevData,
+      [name]: value
+    }));
+    
+    setFormErrors(prevErrors => {
+      if (prevErrors[name as keyof typeof prevErrors]) {
+        return {
+          ...prevErrors,
+          [name]: ''
+        };
+      }
+      return prevErrors;
+    });
+  }, []);
+  
+  const validateForm = useCallback(() => {
+    let valid = true;
+    const newErrors = { ...formErrors };
+    
+    if (!formData.name.trim()) {
+      newErrors.name = 'Name is required';
+      valid = false;
+    }
+    
+    if (!formData.company.trim()) {
+      newErrors.company = 'Company name is required';
+      valid = false;
+    }
+    
+    if (!formData.phoneNumber.trim()) {
+      newErrors.phoneNumber = 'Phone number is required';
+      valid = false;
+    } else if (!/^\d{10}$/.test(formData.phoneNumber.replace(/\D/g, ''))) {
+      newErrors.phoneNumber = 'Please enter a valid phone number';
+      valid = false;
+    }
+    
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+      valid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+      valid = false;
+    }
+    
+    setFormErrors(newErrors);
+    return valid;
+  }, [formData, formErrors]);
+  
+  const handleDemoRequest = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      const response = await fetch(`${backendDomain}/api/v2/public/demo-request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        toast({
+          title: "Demo Request Submitted",
+          description: "We'll contact you soon to schedule your demo!",
+          variant: "default"
+        });
+        setDemoDialogOpen(false);
+        setFormData({
+          name: '',
+          company: '',
+          phoneNumber: '',
+          email: ''
+        });
+      } else {
+        toast({
+          title: "Submission Failed",
+          description: data.error || "Please try again later.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Error submitting demo request:", error);
+      toast({
+        title: "Submission Error",
+        description: "Unable to submit your request. Please try again later.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [formData, toast, validateForm]);
+
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Navigation */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 max-w-screen-xl items-center justify-between">
           <div className="flex items-center gap-2">
@@ -116,7 +354,6 @@ const AlkaaLandingPage: React.FC = () => {
             <span className="text-xl font-bold">Alkaa</span>
           </div>
           
-          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
             <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Features</a>
             <a href="#testimonials" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Testimonials</a>
@@ -125,7 +362,6 @@ const AlkaaLandingPage: React.FC = () => {
             <Button onClick={()=>navigate("/auth/signup")}>Get Started</Button>
           </nav>
           
-          {/* Mobile menu button */}
           <div className="md:hidden">
             <Button 
               variant="outline" 
@@ -160,7 +396,6 @@ const AlkaaLandingPage: React.FC = () => {
           </div>
         </div>
         
-        {/* Mobile Navigation */}
         {mobileMenuOpen && (
           <div className="md:hidden p-4 border-t border-border/40 bg-background">
             <nav className="flex flex-col gap-4">
@@ -195,7 +430,6 @@ const AlkaaLandingPage: React.FC = () => {
       </header>
 
       <main className="flex-1">
-        {/* Hero Section */}
         <section className="py-20 md:py-32">
           <div className="container max-w-screen-xl px-4 md:px-8">
             <div className="flex flex-col md:flex-row gap-8 items-center">
@@ -208,7 +442,11 @@ const AlkaaLandingPage: React.FC = () => {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 pt-4">
                   <Button onClick={()=>navigate("/auth/signup")} className="text-base px-8 py-6">Get Started</Button>
-                  <Button variant="outline" className="text-base px-8 py-6">
+                  <Button 
+                    variant="outline" 
+                    className="text-base px-8 py-6"
+                    onClick={() => setDemoDialogOpen(true)}
+                  >
                     Book a Demo
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -221,16 +459,15 @@ const AlkaaLandingPage: React.FC = () => {
               </div>
               <div className="md:w-1/2">
                 <div className="relative h-64 md:h-96 w-full rounded-lg overflow-hidden bg-secondary">
-                <div className="scale-[0.7] origin-top-left h-[143%] w-[143%]">
-      <EnhancedDashboardPreview />
-    </div>
+                  <div className="scale-[0.7] origin-top-left h-[143%] w-[143%]">
+                    <EnhancedDashboardPreview />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Features Section */}
         <section id="features" className="py-20 bg-secondary/30">
           <div className="container max-w-screen-xl px-4 md:px-8">
             <div className="text-center mb-16">
@@ -275,7 +512,6 @@ const AlkaaLandingPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Testimonials Section */}
         <section id="testimonials" className="py-20">
           <div className="container max-w-screen-xl px-4 md:px-8">
             <div className="text-center mb-16">
@@ -308,70 +544,53 @@ const AlkaaLandingPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Pricing Section */}
         <section id="pricing" className="py-20 bg-secondary/30">
           <div className="container max-w-screen-xl px-4 md:px-8">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple, Transparent Pricing</h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Choose the plan that works best for your organization.
+                Choose the plan that works best for your organization size.
               </p>
             </div>
             
             <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
               <PricingTier
-                title="Starter"
+                title="Basic"
                 price="₹499"
-                description="Perfect for small teams just getting started"
-                features={[
-                  "Up to 20 employees",
-                  "Employee directory",
-                  "Basic attendance tracking",
-                  "Leave management",
-                  "Email support",
-                  "Mobile app access",
-                  "₹5,988 billed annually"
-                ]}
+                description="Up to 20 employees"
+                billingInfo="₹5,988 billed annually"
                 buttonText="Get Started"
               />
               <PricingTier
-                title="Professional"
+                title="Growth"
                 price="₹899"
-                description="Ideal for growing businesses"
-                features={[
-                  "Up to 60 employees",
-                  "Everything in Starter",
-                  "Performance management",
-                  "Advanced reporting",
-                  "Onboarding workflows",
-                  "Priority support",
-                  "API access",
-                  "₹10,788 billed annually"
-                ]}
+                description="Up to 100 employees"
+                billingInfo="₹10,788 billed annually"
                 buttonText="Get Started"
                 highlighted={true}
+                popularTag={true}
               />
               <PricingTier
                 title="Enterprise"
-                price="₹1,499"
-                description="For large organizations with complex needs"
-                features={[
-                  "Unlimited employees",
-                  "Everything in Professional",
-                  "Custom integrations",
-                  "Dedicated account manager",
-                  "SSO & advanced security",
-                  "Custom workflows",
-                  "24/7 phone support",
-                  "₹17,988 billed annually"
-                ]}
+                price="Custom"
+                description="Unlimited employees"
+                billingInfo="Contact sales for custom pricing"
                 buttonText="Contact Sales"
               />
+            </div>
+            
+            <div className="text-center mt-12 max-w-2xl mx-auto">
+              <p className="text-muted-foreground">
+                All plans include <span className="font-medium text-foreground">full access to all features</span> including employee management, 
+                attendance tracking, performance reviews, and more.
+              </p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Need a custom solution? <a href="#" className="text-primary hover:underline">Contact our sales team</a> for personalized pricing.
+              </p>
             </div>
           </div>
         </section>
 
-        {/* CTA Section */}
         <section className="py-20">
           <div className="container max-w-screen-xl px-4 md:px-8">
             <div className="bg-primary rounded-lg py-12 px-6 md:p-12 text-white text-center">
@@ -383,7 +602,10 @@ const AlkaaLandingPage: React.FC = () => {
                 <Button onClick={()=>navigate("/auth/signup")} className="bg-white text-primary hover:bg-white/90 text-base px-8 py-6">
                   Get Started Today
                 </Button>
-                <Button className="bg-transparent border border-white hover:bg-white/10 text-base px-8 py-6">
+                <Button 
+                  className="bg-transparent border border-white hover:bg-white/10 text-base px-8 py-6"
+                  onClick={() => setDemoDialogOpen(true)}
+                >
                   Schedule a Demo
                 </Button>
               </div>
@@ -392,7 +614,6 @@ const AlkaaLandingPage: React.FC = () => {
         </section>
       </main>
 
-      {/* Footer */}
       <footer className="bg-secondary/50 border-t border-border py-12">
         <div className="container max-w-screen-xl px-4 md:px-8">
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-8">
@@ -466,6 +687,16 @@ const AlkaaLandingPage: React.FC = () => {
           </div>
         </div>
       </footer>
+
+      <DemoRequestDialog 
+        open={demoDialogOpen}
+        onOpenChange={setDemoDialogOpen}
+        formData={formData}
+        formErrors={formErrors}
+        handleInputChange={handleInputChange}
+        handleDemoRequest={handleDemoRequest}
+        isSubmitting={isSubmitting}
+      />
     </div>
   );
 };
