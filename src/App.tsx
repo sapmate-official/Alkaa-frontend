@@ -67,12 +67,10 @@ const PastNotCheckedDays = lazy(() => import('./system/AttendanceManagementSyste
 
 // Notification Management
 const ListOfNotification = lazy(() => import('./system/NotificationManagementSystem/ListOfNotification'));
-const ListOfNotificationTemplate = lazy(() => import('./system/NotificationManagementSystem/ListOfNotificationTemplate'));
-const NotificationTemplateCreate = lazy(() => import('./system/NotificationManagementSystem/NotificationTemplateCreate'));
 
 // Employee Management
-const CreateEmployeeNew = lazy(() => import('./system/EmployeeManagementSystem/CreateEmployeeNew'));
-const EmployeeManagement = lazy(() => import('./system/EmployeeManagementSystem/EmployeeManagement'));
+// const CreateEmployeeNew = lazy(() => import('./system/EmployeeManagementSystem/CreateEmployeeNew'));
+// const EmployeeManagement = lazy(() => import('./system/EmployeeManagementSystem/EmployeeManagement'));
 
 // Department Management
 const ListOfDepartment = lazy(() => import('./system/DepartmentManagementSystem/List'));
@@ -241,11 +239,11 @@ const ClientRoute = () => {
 
       } />
 
-      <Route path="/employee/*" element={
+      {/* <Route path="/employee/*" element={
         <PermissionRouteBasedOnKey requiredPermissions={['create_user', 'Read User Details', 'Update User Details', 'Delete User']}>
           <EmployeeManagementSystem />
         </PermissionRouteBasedOnKey>
-      } />
+      } /> */}
 
       <Route path="/department/*" element={
         <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['view_all_department_info', 'view_own_department_info', 'create_new_department', 'edit_department']}>
@@ -259,7 +257,7 @@ const ClientRoute = () => {
         </PermissionRouteBasedOnKey>
       } />
       <Route path="/holiday/*" element={
-        <PermissionRoute requireAll={false} requiredPermissions={['holiday.create', 'holiday.read', 'holiday.update', 'holiday.delete']}>
+        <PermissionRoute requireAll={false} requiredPermissions={['create_holiday','view_holiday','update_holiday','delete_holiday']}>
           <HolidayManagementSystem />
         </PermissionRoute>
       } />
@@ -282,25 +280,21 @@ const RolePermissionManagementSystem = () => {
 const DepartmentManagementSystem = () => {
   return (
     <Routes>
-      {/* <Route path='/' element={
-        <PermissionRoute requiredPermissions={['department.read']}>
-          <SpecificDepartmentView />
-        </PermissionRoute>
-      } /> */}
+
       <Route path='/' element={
-        <PermissionRouteBasedOnKey requiredPermissions={['view_all_department_info', 'view_own_department_info']}>
+        <PermissionRouteBasedOnKey requiredPermissions={['view_all_department_info', 'view_own_department_info','view_list_of_department ']}>
           <ListOfDepartment />
         </PermissionRouteBasedOnKey>
       } />
       <Route path='/create' element={
-        <PermissionRoute requiredPermissions={['department.create']}>
+        <PermissionRouteBasedOnKey requiredPermissions={['create_new_department']}>
           <CreateDepartment />
-        </PermissionRoute>
+        </PermissionRouteBasedOnKey>
       } />
       <Route path='/:id' element={
-        <PermissionRoute requiredPermissions={['department.read']}>
+        <PermissionRouteBasedOnKey requiredPermissions={['view_own_department_info','view_all_department_info']}>
           <SpecificDepartmentView />
-        </PermissionRoute>
+        </PermissionRouteBasedOnKey>
       } />
       <Route path='/:id/edit' element={
         <PermissionRouteBasedOnKey requiredPermissions={['edit_department']}>
@@ -310,22 +304,22 @@ const DepartmentManagementSystem = () => {
     </Routes>
   )
 }
-const EmployeeManagementSystem = () => {
-  return (
-    <Routes>
-      <Route path='/create' element={
-        <PermissionRouteBasedOnKey requiredPermissions={['create_user']}>
-          <CreateEmployeeNew />
-        </PermissionRouteBasedOnKey>
-      } />
-      <Route path='/manage' element={
-        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['view_employee_management']}>
-          <EmployeeManagement />
-        </PermissionRouteBasedOnKey>
-      } />
-    </Routes>
-  )
-}
+// const EmployeeManagementSystem = () => {
+//   return (
+//     <Routes>
+//       <Route path='/create' element={
+//         <PermissionRouteBasedOnKey requiredPermissions={['create_user']}>
+//           <CreateEmployeeNew />
+//         </PermissionRouteBasedOnKey>
+//       } />
+//       <Route path='/manage' element={
+//         <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['view_employee_management']}>
+//           <EmployeeManagement />
+//         </PermissionRouteBasedOnKey>
+//       } />
+//     </Routes>
+//   )
+// }
 const SpecificOrganizationManagementSystem = () => {
   return (
     <Routes>
@@ -341,11 +335,9 @@ const NotificationManagementSystem = () => {
   return (
     <Routes>
       <Route path='/' element={
-        <PermissionRoute requiredPermissions={['notification.read_template']}>
           <ListOfNotification />
-        </PermissionRoute>
       } />
-      <Route path='/template' element={
+      {/* <Route path='/template' element={
         <PermissionRoute requiredPermissions={['notification.read_template']}>
           <ListOfNotificationTemplate />
         </PermissionRoute>
@@ -354,7 +346,7 @@ const NotificationManagementSystem = () => {
         <PermissionRoute requiredPermissions={['notification.create_template']}>
           <NotificationTemplateCreate />
         </PermissionRoute>
-      } />
+      } /> */}
     </Routes>
   )
 }

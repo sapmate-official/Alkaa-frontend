@@ -27,6 +27,7 @@ const LeaveRequestApprove = () => {
     const fetchLeaveRequests = async () => {
         try {
             const response = await axios.get(`${APIDictionary.leave_request}/manager/${user?.id}`, { withCredentials: true })
+            console.log(response.data)
             if (response.status === 200) {
                 setLeaveRequests(response.data)
             }
