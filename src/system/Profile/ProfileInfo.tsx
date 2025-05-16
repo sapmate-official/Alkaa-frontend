@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button"
 import { permissionListAtom } from '@/store/atom'
 import { useAtom } from 'jotai'
 import { motion } from 'framer-motion'
+import BankDetails from '@/components/BankDetails'
 
 const ProfileInfo = () => {
     const { id } = useParams()
@@ -96,6 +97,19 @@ const ProfileInfo = () => {
         }
     }
 
+    const canDisplayBankInfo = () => {
+        const isOwnProfile = !id || id === user?.id;
+        const isSubordinate = user?.id && profileInfo?.managerId === user?.id;
+
+        if (isOwnProfile) {
+            return true; // Users can always view their own bank details
+        } else if (isSubordinate) {
+            return hasPermission('view_bank_subordinates');
+        } else {
+            return hasPermission('view_bank_all_user');
+        }
+    };
+    
     if (isLoading) {
         return (
             <div className="container mx-auto p-6">
@@ -183,14 +197,14 @@ const ProfileInfo = () => {
                                             ? 'text-red-700 bg-red-100 dark:bg-red-900 dark:text-red-200' 
                                             : ''
                                     }`}>
-                                        {profileInfo?.name?.split(' ')?.map(n => n?.[0])?.join('') || profileInfo?.email?.[0]?.toUpperCase()}
+                                        {profileInfo?.firstName?.charAt(0)} {profileInfo?.lastName?.charAt(0)}
                                     </AvatarFallback>
                                 </Avatar>
                                 <div className="space-y-2">
                                     <CardTitle className={`text-2xl font-bold ${
                                         profileInfo?.status !== 'active' ? 'text-red-700 dark:text-red-400' : ''
                                     }`}>
-                                        {profileInfo?.name || profileInfo?.email}
+                                        {profileInfo?.firstName} {profileInfo?.lastName}
                                     </CardTitle>
                                     <div className="flex items-center gap-3">
                                         <Badge variant={profileInfo?.status === 'active' ? 'default' : 'destructive'}
@@ -379,6 +393,10 @@ const ProfileInfo = () => {
                             </CardContent>
                         </Card>
                     </motion.div>
+                )}
+
+                {canDisplayBankInfo() && (
+                    <BankDetails userId={id || user?.id || ''} />
                 )}
             </div>
         </div>

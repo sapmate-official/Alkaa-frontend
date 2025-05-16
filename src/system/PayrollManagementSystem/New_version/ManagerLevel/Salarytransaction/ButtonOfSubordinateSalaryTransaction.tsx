@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button'
 import CheckPermission from '@/services/PermissionCheck'
 import { permissionListAtom } from '@/store/atom'
 import { useAtom } from 'jotai'
+import { useNavigate } from 'react-router-dom'
 
 const ButtonOfSubordinateSalaryTransaction = () => {
     // this component will call the permission atom of this user and fetch the length of subordinates via api
@@ -11,9 +12,10 @@ const ButtonOfSubordinateSalaryTransaction = () => {
     const [permissions] = useAtom(permissionListAtom)
     const hasPermission = CheckPermission("send_salary_to_subordinates",permissions)
     if(!hasPermission) return null
+  const navigate = useNavigate()
   return (
     <div>
-        <Button >
+        <Button onClick={()=>navigate("/p/new-payroll/subordinate/transaction ")}>
             Salary Transaction
         </Button>
     </div>

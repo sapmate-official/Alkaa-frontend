@@ -17,11 +17,22 @@ import { Progress } from '@/components/ui/progress';
 import { APIV2Dictionary } from '@/api/v2/Api2Dicts';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
+interface SubscriptionPlan {
+  id: string;
+  name: string;
+  description?: string;
+  monthlyPrice: number;
+  annualPrice: number;
+  maxUsers: number;
+  features?: any;
+}
+
 interface OrganizationType {
   id: string;
   name: string;
   industry: string;
-  subscriptionPlan: string;
+  subscriptionPlanId: string;
+  subscriptionPlan: SubscriptionPlan;
   subscriptionStart: string;
   subscriptionEnd: string;
   isActive: boolean;
@@ -234,7 +245,7 @@ const SpecificOrganizationView = () => {
                 <>
                   <div>
                     <h3 className="font-medium">Subscription</h3>
-                    <p className="text-sm text-muted-foreground">{organization?.subscriptionPlan}</p>
+                    <p className="text-sm text-muted-foreground">{organization?.subscriptionPlan?.name || 'No Plan'}</p>
                   </div>
                   <div>
                     <h3 className="font-medium">Subscription Period</h3>
@@ -551,12 +562,12 @@ const SpecificOrganizationView = () => {
                       </div>
                         <div className="flex justify-between items-center p-3 bg-muted/30 rounded-md">
                         <span>Subscription Plan</span>
-                        {organization?.subscriptionPlan === "PRO" ? (
+                        {organization?.subscriptionPlan?.name === "PRO" ? (
                           <Badge variant="outline" className="bg-gradient-to-r from-amber-500 to-yellow-300 text-black font-medium border-amber-400">
-                          {organization?.subscriptionPlan}
+                          {organization?.subscriptionPlan?.name}
                           </Badge>
                         ) : (
-                          <Badge variant="outline">{organization?.subscriptionPlan}</Badge>
+                          <Badge variant="outline">{organization?.subscriptionPlan?.name || 'No Plan'}</Badge>
                         )}
                         </div>
                       <div className="flex justify-between items-center p-3 bg-muted/30 rounded-md">

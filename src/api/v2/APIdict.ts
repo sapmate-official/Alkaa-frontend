@@ -1,6 +1,5 @@
 import { backendDomain } from "@/lib/constant/Domain";
 
-
 export const APIDictionary = {
     setPassword: `${backendDomain}/api/v1/general/set-password`,
     leaveTypeList: `${backendDomain}/api/v1/leave/type`,
@@ -30,6 +29,7 @@ export const APIDictionary = {
     leave_balance: `${backendDomain}/api/v2/leave-balance`,
     attendance: `${backendDomain}/api/v2/attendance`,
     payroll: `${backendDomain}/api/v2/payroll`,
+    events: `${backendDomain}/api/v2/events`,
     bank: `${backendDomain}/api/v2/bank-details`,
     payrollParameters: (userId: string) => `${backendDomain}/api/v2/payroll/parameters/${userId}`,
     notification: `${backendDomain}/api/v2/notification`,
@@ -45,4 +45,9 @@ export const APIDictionary = {
     OrganizationSettings: () => `${backendDomain}/api/v3/settings`,
     SalaryRecordExistence: (userId: string, month: number, year: number) => `${backendDomain}/api/v2/salary/user/${userId}/monthly/${month}/year/${year}`,
     permissionPreset: `${backendDomain}/api/v3/permission-preset`,
+
+    // Bank Endpoints
+    bankDetails: (userId: string) => `${backendDomain}/api/v2/bank-details/${userId}`,
+    bankDetailsByUserId: (userId: string) => `${backendDomain}/api/v2/bank-details/user/${userId}`,
+    allBankDetails: () => `${backendDomain}/api/v2/bank-details`,
 };

@@ -212,7 +212,7 @@ const EmployeeAttendanceDashboard: React.FC = () => {
             case 'PRESENT':
                 return currentSessionRecord.checkOutTime !== undefined
                     ? (isDark ? 'bg-blue-950/50' : 'bg-blue-100')
-                    : (isDark ? 'bg-green-950/50' : 'bg-green-100');
+                    : (isDark ? 'bg-green-800/40' : 'bg-green-200'); // Stronger green for active check-ins
             case 'LATE':
                 return isDark ? 'bg-yellow-950/50' : 'bg-yellow-100';
             case 'ABSENT':

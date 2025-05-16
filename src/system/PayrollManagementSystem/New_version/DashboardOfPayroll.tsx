@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/services/AuthContext'
 import axios from 'axios'
 import { APIV3Dictionary } from '@/api/v3/Api3Dicts'
+import { useAtom } from 'jotai'
+import { specialEventsAtom } from '@/store/atom'
+import { SpecialEvents } from '@/components/dashboard/SpecialEvents'
 import {
   Card,
   CardContent,
@@ -19,9 +22,7 @@ import { MonthAndYearSelector } from './ui/MonthYearPicker'
 import { PayslipListItem } from './ui/Payslip'
 import { getStatusBadgeVariant } from './utils/Badgevariant'
 import PayslipViewer from './ui/PayslipViewer'
-
-
-
+import { APIDictionary } from '@/api/v2/APIdict'
 
 const DashboardOfPayroll = () => {
   const { user } = useAuth();
@@ -29,6 +30,7 @@ const DashboardOfPayroll = () => {
   const [payslips, setPayslips] = useState<PayslipData[]>([]);
   const [selectedPayslip, setSelectedPayslip] = useState<PayslipData | null>(null);
   const [payslipStatistics, setPayslipStatistics] = useState<PayrollStatistics | null>(null);
+  const [specialEvents, setSpecialEvents] = useAtom(specialEventsAtom);
 
   // Current date for default values
   const currentDate = new Date();
@@ -38,7 +40,6 @@ const DashboardOfPayroll = () => {
   // State for month/year selection
   const [selectedMonth, setSelectedMonth] = useState<number>(currentMonth);
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
-
 
   // Generate arrays for months and years (for dropdowns)
   const months = [
@@ -59,24 +60,23 @@ const DashboardOfPayroll = () => {
   // Generate last 5 years for dropdown
   const years = Array.from({ length: 6 }, (_, i) => currentYear - i);
 
-  // Fetch payslips when component mounts or month/year changes
+  // Fetch payslips and special events when component mounts or month/year changes
   useEffect(() => {
-    if (!user?.id) return;
-
-    const fetchPayslips = async () => {
-      setIsLoading(true);
+    const fetchData = async () => {
       try {
-        // Fetch payslips for the current user (passing 'undefined' for userId to get own payslips)
-        const response = await axios.get(
+        setIsLoading(true);
+
+        // Fetch payslips
+        const payslipResponse = await axios.get(
           APIV3Dictionary.payroll.getPayslip(selectedMonth, selectedYear),
           { withCredentials: true }
         );
 
-        if (response.data.success && response.data.data.length > 0) {
-          setPayslips(response.data.data);
+        if (payslipResponse.data.success && payslipResponse.data.data.length > 0) {
+          setPayslips(payslipResponse.data.data);
 
           // Set the first payslip as selected by default
-          const firstPayslip = response.data.data[0];
+          const firstPayslip = payslipResponse.data.data[0];
           setSelectedPayslip(firstPayslip);
 
           // Fetch statistics for the first payslip
@@ -88,11 +88,29 @@ const DashboardOfPayroll = () => {
           setSelectedPayslip(null);
           setPayslipStatistics(null);
         }
+
+        // Fetch special events
+        const eventsResponse = await axios.get(APIDictionary.events, { withCredentials: true });
+        if (eventsResponse.data.success) {
+          // Filter to only show payroll-related events
+            interface Event {
+            type: string;
+            entity?: {
+              payrollRelated?: boolean;
+            };
+            }
+            
+            const payrollEvents = eventsResponse.data.data.filter(
+            (event: Event) => event.type === 'BILL' || 
+                (event.type === 'MONTH_END_VERIFICATION' && event.entity?.payrollRelated)
+            );
+          setSpecialEvents(payrollEvents);
+        }
       } catch (error) {
-        console.error('Error fetching payslips:', error);
+        console.error('Error fetching payroll dashboard data:', error);
         toast({
           title: 'Error',
-          description: 'Failed to fetch payslip data. Please try again.',
+          description: 'Failed to fetch payroll dashboard data. Please try again.',
           variant: 'destructive',
         });
       } finally {
@@ -100,7 +118,9 @@ const DashboardOfPayroll = () => {
       }
     };
 
-    fetchPayslips();
+    if (user?.id) {
+      fetchData();
+    }
   }, [user?.id, selectedMonth, selectedYear]);
 
   // Function to fetch payslip statistics
@@ -138,9 +158,6 @@ const DashboardOfPayroll = () => {
       maximumFractionDigits: 0
     }).format(amount);
   };
-
-  // Function to get status badge variant
-
 
   // Function to download payslip
   const downloadPayslip = () => {
@@ -294,6 +311,10 @@ const DashboardOfPayroll = () => {
           </div>
         </div>
       )}
+
+      <div className="space-y-6">
+        <SpecialEvents events={specialEvents} isLoading={isLoading} />
+      </div>
     </div>
   )
 }

@@ -6,11 +6,12 @@ import {
   IconLogout,
   IconBuildingBank,
   IconId,
-  IconUsers,
   IconFileDescription,
   IconBellRinging,
   IconCalendarEvent,
-  IconCoin
+  IconCoin,
+  IconReceipt2,
+  // IconReceipt2 // Add this import
 } from '@tabler/icons-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../services/AuthContext';
@@ -28,7 +29,7 @@ import { permissionListAtom } from '@/store/atom';
 const SIDEBAR_LINK_RANKING: Record<string, number> = {
   "Organization": 1,
   "Permission": 2,
-  "Employees": 3,
+  // "Employees": 3,
   "Department": 4,
   "Roles & Permission": 5,
   "Profile": 6,
@@ -37,9 +38,10 @@ const SIDEBAR_LINK_RANKING: Record<string, number> = {
   "Leave Request": 9,
   "Leave Balance": 10,
   "Holiday": 11,
-  "New Payroll": 12,
-  "Notification": 13,
-  "Logout": 14
+  "Payroll": 12,
+  "Billing": 13, // Add this line
+  "Notification": 14,
+  "Logout": 15
 };
 
 interface MainLayoutProps {
@@ -186,15 +188,23 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         });
       } else if (permission?.key === "view_salary_slip_to_myself") {
         baseLinks.push({
-          label: "New Payroll",
+          label: "Payroll",
           href: "/p/new-payroll",
           icon: <IconCoin className="h-5 w-5" />
         });
-      } else if (permission?.key === "view_employee_management") {
+      } 
+      // else if (permission?.key === "view_employee_management") {
+      //   baseLinks.push({
+      //     label: "Employees",
+      //     href: "/p/employee/manage",
+      //     icon: <IconUsers className="h-5 w-5" />
+      //   });
+      // }
+       else if (permission?.key === "view_billing") {
         baseLinks.push({
-          label: "Employees",
-          href: "/p/employee/manage",
-          icon: <IconUsers className="h-5 w-5" />
+          label: "Billing",
+          href: "/p/billing",
+          icon: <IconReceipt2 className="h-5 w-5" />
         });
       }
     }
