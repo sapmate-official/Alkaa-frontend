@@ -12,13 +12,17 @@ import { dashboardDataAtom, specialEventsAtom } from '@/store/atom';
 import { AttendanceRecord, User } from '@/interface/general';
 import { SpecialEvents } from '@/components/dashboard/SpecialEvents';
 
+interface ModifiedUser extends User {
+  name: string;
+}
+
 const Home = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [dashboardData, setDashboardData] = useAtom(dashboardDataAtom);
   const [specialEvents, setSpecialEvents] = useAtom(specialEventsAtom);
   const [attendanceData, setAttendanceData] = useState<Record<string, AttendanceRecord[]>>({});
-  const [employeeList, setEmployee] = useState<User[]>([]);
+  const [employeeList, setEmployee] = useState<ModifiedUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -257,7 +261,7 @@ const Home = () => {
                         
                         return (
                           <tr key={employee.id} className="border-t border-gray-100">
-                            <td className="py-3">{employee.firstName} {employee.lastName}</td>
+                            <td className="py-3">{employee.name}</td>
                             <td className={`py-3 ${status === "Present" ? "text-green-600" : "text-red-600"}`}>
                               {status}
                             </td>
