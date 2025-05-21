@@ -310,58 +310,58 @@ const CreateEmployeeNew = () => {
   }, [form, autoSaveDraft]);
 
   // Function to explicitly save draft to backend
-  const saveDraftToServer = async () => {
-    if (!user?.orgId) {
-      toast({
-        title: 'Error',
-        description: 'Organization ID not found',
-        variant: 'destructive',
-      });
-      return;
-    }
+  // const saveDraftToServer = async () => {
+  //   if (!user?.orgId) {
+  //     toast({
+  //       title: 'Error',
+  //       description: 'Organization ID not found',
+  //       variant: 'destructive',
+  //     });
+  //     return;
+  //   }
     
-    try {
-      setLoading(true);
-      const formData = form.getValues();
+  //   try {
+  //     setLoading(true);
+  //     const formData = form.getValues();
       
-      const endpoint = draftId 
-        ? `${APIDictionary.Organization}/employees/draft/${draftId}`
-        : `${APIDictionary.Organization}/employees/draft`;
+  //     const endpoint = draftId 
+  //       ? `${APIDictionary.Organization}/employees/draft/${draftId}`
+  //       : `${APIDictionary.Organization}/employees/draft`;
       
-      const method = draftId ? 'PUT' : 'POST';
+  //     const method = draftId ? 'PUT' : 'POST';
       
-      const response = await axios({
-        method,
-        url: endpoint,
-        data: {
-          formData,
-          step: currentStep,
-          orgId: user.orgId,
-          userId: user.id
-        },
-        withCredentials: true
-      });
+  //     const response = await axios({
+  //       method,
+  //       url: endpoint,
+  //       data: {
+  //         formData,
+  //         step: currentStep,
+  //         orgId: user.orgId,
+  //         userId: user.id
+  //       },
+  //       withCredentials: true
+  //     });
       
-      if (response.status === 201 || response.status === 200) {
-        setDraftId(response.data.id);
-        setLastSaved(new Date());
-        setIsDraftModified(false);
+  //     if (response.status === 201 || response.status === 200) {
+  //       setDraftId(response.data.id);
+  //       setLastSaved(new Date());
+  //       setIsDraftModified(false);
         
-        toast({
-          title: 'Draft Saved',
-          description: 'Your progress has been saved. You can resume later.',
-        });
-      }
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error?.response?.data?.error || 'Failed to save draft',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  //       toast({
+  //         title: 'Draft Saved',
+  //         description: 'Your progress has been saved. You can resume later.',
+  //       });
+  //     }
+  //   } catch (error: any) {
+  //     toast({
+  //       title: 'Error',
+  //       description: error?.response?.data?.error || 'Failed to save draft',
+  //       variant: 'destructive',
+  //     });
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const onSubmit = async (data: any) => {
     try {
@@ -1188,7 +1188,7 @@ const CreateEmployeeNew = () => {
                     <span className="mr-2">←</span> Previous
                   </Button>
                   
-                  <Button
+                  {/* <Button
                     type="button"
                     variant="secondary"
                     onClick={saveDraftToServer}
@@ -1216,7 +1216,7 @@ const CreateEmployeeNew = () => {
                         Save Draft
                       </>
                     )}
-                  </Button>
+                  </Button> */}
                 </div>
                 
                 <Button 
