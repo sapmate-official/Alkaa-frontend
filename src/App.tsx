@@ -10,6 +10,7 @@ import { permissionListAtom } from './store/atom';
 import PermissionRoute from './components/RouteSecurityWrapper/PermissionRoute';
 import PermissionRouteBasedOnKey from './components/RouteSecurityWrapper/PermissionBasedOnKey';
 import { Toaster } from './components/ui/toaster';
+import CreateEmployeeNew from './system/EmployeeManagementSystem/CreateEmployeeNew.tsx';
 
 // Lazy loaded components
 // Public pages
@@ -239,11 +240,11 @@ const ClientRoute = () => {
 
       } />
 
-      {/* <Route path="/employee/*" element={
+      <Route path="/employee/*" element={
         <PermissionRouteBasedOnKey requiredPermissions={['create_user', 'Read User Details', 'Update User Details', 'Delete User']}>
           <EmployeeManagementSystem />
         </PermissionRouteBasedOnKey>
-      } /> */}
+      } />
 
       <Route path="/department/*" element={
         <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['view_all_department_info', 'view_own_department_info', 'create_new_department', 'edit_department']}>
@@ -304,22 +305,22 @@ const DepartmentManagementSystem = () => {
     </Routes>
   )
 }
-// const EmployeeManagementSystem = () => {
-//   return (
-//     <Routes>
-//       <Route path='/create' element={
-//         <PermissionRouteBasedOnKey requiredPermissions={['create_user']}>
-//           <CreateEmployeeNew />
-//         </PermissionRouteBasedOnKey>
-//       } />
-//       <Route path='/manage' element={
-//         <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['view_employee_management']}>
-//           <EmployeeManagement />
-//         </PermissionRouteBasedOnKey>
-//       } />
-//     </Routes>
-//   )
-// }
+const EmployeeManagementSystem = () => {
+  return (
+    <Routes>
+      <Route path='/create' element={
+        <PermissionRouteBasedOnKey requiredPermissions={['create_user']}>
+          <CreateEmployeeNew />
+        </PermissionRouteBasedOnKey>
+      } />
+      {/* <Route path='/manage' element={
+        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['view_employee_management']}>
+          <EmployeeManagement />
+        </PermissionRouteBasedOnKey>
+      } /> */}
+    </Routes>
+  )
+}
 const SpecificOrganizationManagementSystem = () => {
   return (
     <Routes>
