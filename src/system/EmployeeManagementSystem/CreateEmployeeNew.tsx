@@ -57,6 +57,7 @@ const basicDetailsSchema = z.object({
   lastName: z.string().min(2, 'Last name is required'),
   email: z.string().email('Invalid email address'),
   mobileNumber: z.string().min(10, 'Invalid mobile number'),
+  emergencyContact: z.string().optional(),
   dateOfBirth: z.string().min(1, 'Date of birth is required'),
   address: z.string().min(1, 'Address is required'),
   adharNumber: z.string().optional(),
@@ -164,6 +165,7 @@ const CreateEmployeeNew = () => {
       lastName: '',
       email: '',
       mobileNumber: '',
+      emergencyContact: '',
       dateOfBirth: '',
       address: '',
       adharNumber: '',
@@ -515,6 +517,22 @@ const CreateEmployeeNew = () => {
               <FormLabel className="flex items-center gap-2">
                 <Phone className="h-4 w-4" />
                 Mobile Number
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="+91 9876543210" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="emergencyContact"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2">
+                <Phone className="h-4 w-4" />
+                Emergency Phone Number
               </FormLabel>
               <FormControl>
                 <Input placeholder="+91 9876543210" {...field} />

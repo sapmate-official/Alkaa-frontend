@@ -273,6 +273,17 @@ const ProfileInfo = () => {
                                         </div>
                                     </div>
                                 )}
+                                {profileInfo?.emergencyContact && (
+                                    <div className="flex items-start gap-3">
+                                        <div className="rounded-full bg-primary/10 p-2 mt-1">
+                                            <PhoneIcon className="w-4 h-4 text-primary" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-sm text-muted-foreground font-medium">Emergency Phone Number</p>
+                                            <p className="font-medium">{profileInfo?.emergencyContact}</p>
+                                        </div>
+                                    </div>
+                                )}
                                 
                                 {profileInfo?.address && (
                                     <div className="flex items-start gap-3 sm:col-span-2">
