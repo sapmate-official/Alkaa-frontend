@@ -24,6 +24,7 @@ interface FormDataType {
   adharNumber: string;
   panNumber: string;
   mobileNumber: string;
+  emergencyContact?: string;
   dateOfBirth: string;
   hiredDate: string;
   departmentId: string;
@@ -74,6 +75,7 @@ const ProfileEdit = () => {
     adharNumber: '',
     panNumber: '',
     mobileNumber: '',
+    emergencyContact: '',
     dateOfBirth: '',
     hiredDate: '',
     departmentId: '',
@@ -111,6 +113,7 @@ const ProfileEdit = () => {
           adharNumber: userData?.adharNumber || '',
           panNumber: userData?.panNumber || '',
           mobileNumber: userData?.mobileNumber || '',
+          emergencyContact: userData?.emergencyContact || '',
           dateOfBirth: userData?.dateOfBirth?.split('T')[0] || '',
           hiredDate: userData?.hiredDate?.split('T')[0] || '',
           departmentId: userData?.departmentId || '',
@@ -329,6 +332,17 @@ const ProfileEdit = () => {
                   id="mobileNumber"
                   name="mobileNumber"
                   value={formData.mobileNumber}
+                  onChange={handleChange}
+                  disabled={!canEditPersonalInfo && !canEditSubordinatesInfo && !canEditAllUserInfo}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="emergencyContact">Emergency Phone Number *</Label>
+                <Input
+                required
+                  id="emergencyContact"
+                  name="emergencyContact"
+                  value={formData.emergencyContact}
                   onChange={handleChange}
                   disabled={!canEditPersonalInfo && !canEditSubordinatesInfo && !canEditAllUserInfo}
                 />
