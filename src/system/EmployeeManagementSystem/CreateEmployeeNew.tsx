@@ -57,7 +57,7 @@ const basicDetailsSchema = z.object({
   lastName: z.string().min(2, 'Last name is required'),
   email: z.string().email('Invalid email address'),
   mobileNumber: z.string().min(10, 'Invalid mobile number'),
-  emergencyContact: z.string().optional(),
+  emergencyContact: z.string(),
   dateOfBirth: z.string().min(1, 'Date of birth is required'),
   address: z.string().min(1, 'Address is required'),
   adharNumber: z.string().optional(),
