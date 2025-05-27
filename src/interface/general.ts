@@ -108,6 +108,7 @@ export interface User {
   dateOfBirth?: Date;
   address?: string;
   mobileNumber?: string;
+  emergencyContact?: string;
   adharNumber?: string;
   panNumber?: string;
   employeeId?: string;
