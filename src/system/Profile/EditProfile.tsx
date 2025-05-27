@@ -337,8 +337,9 @@ const ProfileEdit = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="emergencyContact">Emergency Phone Number </Label>
+                <Label htmlFor="emergencyContact">Emergency Phone Number *</Label>
                 <Input
+                required
                   id="emergencyContact"
                   name="emergencyContact"
                   value={formData.emergencyContact}
