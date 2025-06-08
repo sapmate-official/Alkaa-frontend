@@ -10,89 +10,89 @@ import { permissionListAtom } from './store/atom';
 import PermissionRoute from './components/RouteSecurityWrapper/PermissionRoute';
 import PermissionRouteBasedOnKey from './components/RouteSecurityWrapper/PermissionBasedOnKey';
 import { Toaster } from './components/ui/toaster';
-import CreateEmployeeNew from './system/EmployeeManagementSystem/CreateEmployeeNew.tsx';
+import CreateEmployeeNew from './page/private/system/EmployeeManagementSystem/CreateEmployeeNew.tsx';
 
 // Lazy loaded components
 // Public pages
-const Home = lazy(() => import('./page/public/Home'));
+const Home = lazy(() => import('./page/private/Home.tsx'));
 const LandingPage = lazy(() => import('./page/public/LandingPage'));
 const SetPassword = lazy(() => import('./page/public/SetPassword'));
 const SignIn = lazy(() => import('./page/public/auth/SignIn'));
-const BillPayment = lazy(() => import('./system/BillingManagementSystem/BillPayment.tsx'));
+const BillPayment = lazy(() => import('./page/private/system/BillingManagementSystem/BillPayment.tsx'));
 
 // Billing components
-const BillingDashboard = lazy(() => import('./system/BillingManagementSystem/BillingDashboard'));
-const BillHistory = lazy(() => import('./system/BillingManagementSystem/BillHistory'));
-const BillDetails = lazy(() => import('./system/BillingManagementSystem/BillDetails'));
+const BillingDashboard = lazy(() => import('./page/private/system/BillingManagementSystem/BillingDashboard'));
+const BillHistory = lazy(() => import('./page/private/system/BillingManagementSystem/BillHistory'));
+const BillDetails = lazy(() => import('./page/private/system/BillingManagementSystem/BillDetails'));
 
 // Layout
-const MainLayout = lazy(() => import('./layout/MainLayout').then(module => ({ default: module.MainLayout })));
+const MainLayout = lazy(() => import('./page/private/layout/MainLayout').then(module => ({ default: module.MainLayout })));
 
 // Private pages
 const Logout = lazy(() => import('./page/private/Logout'));
 
 // Profile System
-const ProfileInfo = lazy(() => import('./system/Profile/ProfileInfo'));
-const ProfileEdit = lazy(() => import('./system/Profile/EditProfile'));
-const BankDetails = lazy(() => import('./system/Profile/BankDetails'));
+const ProfileInfo = lazy(() => import('./page/private/system/Profile/ProfileInfo'));
+const ProfileEdit = lazy(() => import('./page/private/system/Profile/EditProfile'));
+const BankDetails = lazy(() => import('./page/private/system/Profile/BankDetails'));
 
 // Organization Management
-const OrganizationHome = lazy(() => import('./system/OrganizationManagementSystem/OrganizationHome'));
-const OrganizationCreate = lazy(() => import('./system/OrganizationManagementSystem/OrganizationCreate'));
-const SpecificOrganizationHome = lazy(() => import('./system/OrganizationManagementSystem/SpecificOrganizationHome'));
-const SpecificOrganizationView = lazy(() => import('./system/SpecificOrganizationManagementSystem/View'));
-const OrganizationSettings = lazy(() => import('./system/SpecificOrganizationManagementSystem/OrganizationSettings'));
+const OrganizationHome = lazy(() => import('./page/private/system/OrganizationManagementSystem/OrganizationHome'));
+const OrganizationCreate = lazy(() => import('./page/private/system/OrganizationManagementSystem/OrganizationCreate'));
+const SpecificOrganizationHome = lazy(() => import('./page/private/system/OrganizationManagementSystem/SpecificOrganizationHome'));
+const SpecificOrganizationView = lazy(() => import('./page/private/system/SpecificOrganizationManagementSystem/View'));
+const OrganizationSettings = lazy(() => import('./page/private/system/SpecificOrganizationManagementSystem/OrganizationSettings'));
 
 // Permission Management
-const PermissionCreate = lazy(() => import('./system/PermissionManagementSystem/PermissionCreate'));
-const PermissionManagement = lazy(() => import('./system/PermissionManagementSystem/PermissionManagementSystem'));
+const PermissionCreate = lazy(() => import('./page/private/system/PermissionManagementSystem/PermissionCreate'));
+const PermissionManagement = lazy(() => import('./page/private/system/PermissionManagementSystem/PermissionManagementSystem'));
 
 // LeaveType Management
-const LeaveTypeList = lazy(() => import('./system/LeaveTypeManagementSystem/List'));
-const CreateLeaveType = lazy(() => import('./system/LeaveTypeManagementSystem/Create'));
-const EditLeaveType = lazy(() => import('./system/LeaveTypeManagementSystem/Edit'));
+const LeaveTypeList = lazy(() => import('./page/private/system/LeaveTypeManagementSystem/List'));
+const CreateLeaveType = lazy(() => import('./page/private/system/LeaveTypeManagementSystem/Create'));
+const EditLeaveType = lazy(() => import('./page/private/system/LeaveTypeManagementSystem/Edit'));
 
 // LeaveRequest Management
-const LeaveRequestCreate = lazy(() => import('./system/LeaveRequestManagementSystem/Create'));
-const LeaveRequestList = lazy(() => import('./system/LeaveRequestManagementSystem/list'));
-const EditLeaveRequest = lazy(() => import('./system/LeaveRequestManagementSystem/Edit'));
-const LeaveRequestApprove = lazy(() => import('./system/LeaveRequestManagementSystem/approve'));
-const ViewLeaveBalance = lazy(() => import('./system/LeaveBalanceManagementSystem/view'));
+const LeaveRequestCreate = lazy(() => import('./page/private/system/LeaveRequestManagementSystem/Create'));
+const LeaveRequestList = lazy(() => import('./page/private/system/LeaveRequestManagementSystem/list'));
+const EditLeaveRequest = lazy(() => import('./page/private/system/LeaveRequestManagementSystem/Edit'));
+const LeaveRequestApprove = lazy(() => import('./page/private/system/LeaveRequestManagementSystem/approve'));
+const ViewLeaveBalance = lazy(() => import('./page/private/system/LeaveBalanceManagementSystem/view'));
 
 // Attendance Management
-const AttendancePanel = lazy(() => import('./system/AttendanceManagementSystem/panel'));
-const AttendanceHistory = lazy(() => import('./system/AttendanceManagementSystem/history'));
-const AttendanceVerificationComponent = lazy(() => import('./system/AttendanceManagementSystem/verification'));
-const AttendanceLivePanel = lazy(() => import('./system/AttendanceManagementSystem/livePanel'));
-const PastNotCheckedDays = lazy(() => import('./system/AttendanceManagementSystem/pastdays'));
+const AttendancePanel = lazy(() => import('./page/private/system/AttendanceManagementSystem/panel'));
+const AttendanceHistory = lazy(() => import('./page/private/system/AttendanceManagementSystem/history'));
+const AttendanceVerificationComponent = lazy(() => import('./page/private/system/AttendanceManagementSystem/verification'));
+const AttendanceLivePanel = lazy(() => import('./page/private/system/AttendanceManagementSystem/livePanel'));
+const PastNotCheckedDays = lazy(() => import('./page/private/system/AttendanceManagementSystem/pastdays'));
 
 // Notification Management
-const ListOfNotification = lazy(() => import('./system/NotificationManagementSystem/ListOfNotification'));
+const ListOfNotification = lazy(() => import('./page/private/system/NotificationManagementSystem/ListOfNotification'));
 
 // Employee Management
-// const CreateEmployeeNew = lazy(() => import('./system/EmployeeManagementSystem/CreateEmployeeNew'));
-// const EmployeeManagement = lazy(() => import('./system/EmployeeManagementSystem/EmployeeManagement'));
+// const CreateEmployeeNew = lazy(() => import('./page/private/system/EmployeeManagementSystem/CreateEmployeeNew'));
+// const EmployeeManagement = lazy(() => import('./page/private/system/EmployeeManagementSystem/EmployeeManagement'));
 
 // Department Management
-const ListOfDepartment = lazy(() => import('./system/DepartmentManagementSystem/List'));
-const CreateDepartment = lazy(() => import('./system/DepartmentManagementSystem/Create'));
-const SpecificDepartmentView = lazy(() => import('./system/DepartmentManagementSystem/View'));
-const SpecificDepartmentEdit = lazy(() => import('./system/DepartmentManagementSystem/Edit'));
+const ListOfDepartment = lazy(() => import('./page/private/system/DepartmentManagementSystem/List'));
+const CreateDepartment = lazy(() => import('./page/private/system/DepartmentManagementSystem/Create'));
+const SpecificDepartmentView = lazy(() => import('./page/private/system/DepartmentManagementSystem/View'));
+const SpecificDepartmentEdit = lazy(() => import('./page/private/system/DepartmentManagementSystem/Edit'));
 
 // Role Management
-const RolesPermissionsManagement = lazy(() => import('./system/RoleManagementSystem/RoleManagementDashboard'));
+const RolesPermissionsManagement = lazy(() => import('./page/private/system/RoleManagementSystem/RoleManagementDashboard'));
 
 // Holiday Management
-const HolidayManagementSystem = lazy(() => import('./system/HolidayManagementSystem/HolidayDashboard'));
+const HolidayManagementSystem = lazy(() => import('./page/private/system/HolidayManagementSystem/HolidayDashboard'));
 
 // Payroll Management
-const DashboardOfPayroll = lazy(() => import('./system/PayrollManagementSystem/New_version/DashboardOfPayroll'));
-const MainCompOfViewPayslipOfAllSubordinatesPayroll = lazy(() => import('./system/PayrollManagementSystem/New_version/ManagerLevel/ViewPayslipOfAllSubordinatesPayroll/MainCompOfViewPayslipOfAllSubordinatesPayroll'));
-const MainGenerateSubordinateSalaryPage = lazy(() => import('./system/PayrollManagementSystem/New_version/ManagerLevel/GenerateSalary/MainGenerateSubordinateSalaryPage'));
-const MainSubordinateSalaryTransactionPage = lazy(() => import('./system/PayrollManagementSystem/New_version/ManagerLevel/Salarytransaction/MainSubordinateSalaryTransactionPage'));
-const MainGenerateUsersSalaryPage = lazy(() => import('./system/PayrollManagementSystem/New_version/AdminLevel/GenerateSalary/MainGenerateUserSalaryPage'));
-const MainCompOfViewPayslipOfAllUsersPayroll = lazy(() => import('./system/PayrollManagementSystem/New_version/AdminLevel/ViewPayslipOfAllUsersPayroll/MainCompOfViewPayslipOfAllUsersPayroll'));
-const MainAllUsersSalaryTransactionPage = lazy(() => import('./system/PayrollManagementSystem/New_version/AdminLevel/Salarytransaction/MainSalaryUsersTransactionPage.tsx'));
+const DashboardOfPayroll = lazy(() => import('./page/private/system/PayrollManagementSystem/New_version/DashboardOfPayroll'));
+const MainCompOfViewPayslipOfAllSubordinatesPayroll = lazy(() => import('./page/private/system/PayrollManagementSystem/New_version/ManagerLevel/ViewPayslipOfAllSubordinatesPayroll/MainCompOfViewPayslipOfAllSubordinatesPayroll'));
+const MainGenerateSubordinateSalaryPage = lazy(() => import('./page/private/system/PayrollManagementSystem/New_version/ManagerLevel/GenerateSalary/MainGenerateSubordinateSalaryPage'));
+const MainSubordinateSalaryTransactionPage = lazy(() => import('./page/private/system/PayrollManagementSystem/New_version/ManagerLevel/Salarytransaction/MainSubordinateSalaryTransactionPage'));
+const MainGenerateUsersSalaryPage = lazy(() => import('./page/private/system/PayrollManagementSystem/New_version/AdminLevel/GenerateSalary/MainGenerateUserSalaryPage'));
+const MainCompOfViewPayslipOfAllUsersPayroll = lazy(() => import('./page/private/system/PayrollManagementSystem/New_version/AdminLevel/ViewPayslipOfAllUsersPayroll/MainCompOfViewPayslipOfAllUsersPayroll'));
+const MainAllUsersSalaryTransactionPage = lazy(() => import('./page/private/system/PayrollManagementSystem/New_version/AdminLevel/Salarytransaction/MainSalaryUsersTransactionPage.tsx'));
 
 // Custom loading fallback
 const LoadingFallback = () => <div className="flex items-center justify-center min-h-screen"><Loader /></div>;
@@ -258,9 +258,9 @@ const ClientRoute = () => {
         </PermissionRouteBasedOnKey>
       } />
       <Route path="/holiday/*" element={
-        <PermissionRoute requireAll={false} requiredPermissions={['create_holiday','view_holiday','update_holiday','delete_holiday']}>
+        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['create_holiday','view_holiday','update_holiday','delete_holiday']}>
           <HolidayManagementSystem />
-        </PermissionRoute>
+        </PermissionRouteBasedOnKey>
       } />
       <Route path="/billing/*" element={
           <BillingManagementSystem />
