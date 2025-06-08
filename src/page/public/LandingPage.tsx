@@ -55,6 +55,7 @@ interface PricingTierProps {
   buttonText: string;
   highlighted?: boolean;
   popularTag?: boolean;
+  onButtonClick?: () => void;
 }
 
 const PricingTier: React.FC<PricingTierProps> = ({ 
@@ -64,7 +65,8 @@ const PricingTier: React.FC<PricingTierProps> = ({
   billingInfo,
   buttonText, 
   highlighted = false,
-  popularTag = false
+  popularTag = false,
+  onButtonClick
 }) => (
   <Card className={`border ${highlighted ? 'border-primary bg-secondary/50' : 'border-border bg-card'} h-full flex flex-col relative`}>
     {popularTag && (
@@ -86,8 +88,8 @@ const PricingTier: React.FC<PricingTierProps> = ({
         <div className="py-4">
           <p className="text-center font-medium">All Features Included</p>
         </div>
-      </div>
-      <Button 
+      </div>      <Button 
+        onClick={onButtonClick}
         className={`w-full mt-4 ${highlighted ? 'bg-primary hover:bg-primary/90 text-white' : 'bg-secondary text-foreground hover:bg-secondary/80'}`}
       >
         {buttonText}
@@ -344,7 +346,7 @@ const AlkaaLandingPage: React.FC = () => {
             <a href="#testimonials" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Testimonials</a>
             <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
             <Button onClick={()=>navigate("/auth/signin")} variant="outline">Log in</Button>
-            <Button onClick={()=>navigate("/auth/signup")}>Get Started</Button>
+            <Button onClick={()=>setDemoDialogOpen(true)}>Get Started</Button>
           </nav>
           
           <div className="md:hidden">
@@ -410,18 +412,17 @@ const AlkaaLandingPage: React.FC = () => {
                 <Button onClick={()=>navigate("/auth/signup")}>Get Started</Button>
               </div>
             </nav>
-          </div>        )}      </header>      <main className="flex-1">
-        {/* New Enhanced Product Introduction */}
-        <ProductIntroSection />
+          </div>        )}      </header>      <main className="flex-1">        {/* New Enhanced Product Introduction */}
+        <ProductIntroSection onRequestDemo={() => setDemoDialogOpen(true)} />
         
         {/* Problem-Solution Storytelling */}
-        <ProblemSolutionSection />
+        <ProblemSolutionSection onRequestDemo={() => setDemoDialogOpen(true)} />
 
         {/* Interactive Demo Section */}
-        <InteractiveDemoSection />
+        <InteractiveDemoSection onRequestDemo={() => setDemoDialogOpen(true)} />
 
         {/* Enhanced Customer Success Stories */}
-        <CustomerSuccessSection />
+        <CustomerSuccessSection onRequestDemo={() => setDemoDialogOpen(true)} />
 
         {/* Original Hero Section - Enhanced */}
         <section className="py-20 md:py-32 bg-gradient-to-b from-secondary/30 to-background">
@@ -523,14 +524,14 @@ const AlkaaLandingPage: React.FC = () => {
                 Choose the plan that works best for your organization size.
               </p>
             </div>
-            
-            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
               <PricingTier
                 title="Basic"
                 price="₹499"
                 description="Up to 20 employees"
                 billingInfo="₹5,988 billed annually"
                 buttonText="Get Started"
+                onButtonClick={() => navigate("/auth/signup")}
               />
               <PricingTier
                 title="Growth"
@@ -540,6 +541,7 @@ const AlkaaLandingPage: React.FC = () => {
                 buttonText="Get Started"
                 highlighted={true}
                 popularTag={true}
+                onButtonClick={() => navigate("/auth/signup")}
               />
               <PricingTier
                 title="Enterprise"
@@ -547,6 +549,7 @@ const AlkaaLandingPage: React.FC = () => {
                 description="Unlimited employees"
                 billingInfo="Contact sales for custom pricing"
                 buttonText="Contact Sales"
+                onButtonClick={() => setDemoDialogOpen(true)}
               />
             </div>
             
@@ -554,9 +557,8 @@ const AlkaaLandingPage: React.FC = () => {
               <p className="text-muted-foreground">
                 All plans include <span className="font-medium text-foreground">full access to all features</span> including employee management, 
                 attendance tracking, performance reviews, and more.
-              </p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Need a custom solution? <a href="#" className="text-primary hover:underline">Contact our sales team</a> for personalized pricing.
+              </p>              <p className="text-sm text-muted-foreground mt-2">
+                Need a custom solution? <button onClick={() => setDemoDialogOpen(true)} className="text-primary hover:underline">Contact our sales team</button> for personalized pricing.
               </p>
             </div>
           </div>

@@ -50,7 +50,11 @@ const storySteps: StoryStep[] = [
   }
 ];
 
-export const ProductIntroSection: React.FC = () => {
+interface ProductIntroSectionProps {
+  onRequestDemo?: () => void;
+}
+
+export const ProductIntroSection: React.FC<ProductIntroSectionProps> = ({ onRequestDemo }) => {
   const [activeStep, setActiveStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -159,9 +163,7 @@ export const ProductIntroSection: React.FC = () => {
               <div className="text-sm text-muted-foreground">{item.label}</div>
             </Card>
           ))}
-        </motion.div>
-
-        {/* Call to Action */}
+        </motion.div>        {/* Call to Action */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -169,11 +171,20 @@ export const ProductIntroSection: React.FC = () => {
           className="text-center"
         >
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="text-base px-8 py-6">
+            <Button 
+              size="lg" 
+              className="text-base px-8 py-6"
+              onClick={onRequestDemo}
+            >
               Start Your Transformation
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
-            <Button variant="outline" size="lg" className="text-base px-8 py-6">
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="text-base px-8 py-6"
+              onClick={onRequestDemo}
+            >
               Watch 2-Min Demo
               <PlayCircle className="ml-2 h-4 w-4" />
             </Button>

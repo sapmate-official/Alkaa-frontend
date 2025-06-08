@@ -119,7 +119,11 @@ const problemSolutions: ProblemSolution[] = [
   }
 ];
 
-export const ProblemSolutionSection: React.FC = () => {
+interface ProblemSolutionSectionProps {
+  onRequestDemo?: () => void;
+}
+
+export const ProblemSolutionSection: React.FC<ProblemSolutionSectionProps> = ({ onRequestDemo }) => {
   const [activeCategory, setActiveCategory] = useState(0);
   const [showSolution, setShowSolution] = useState(false);
 
@@ -306,8 +310,11 @@ export const ProblemSolutionSection: React.FC = () => {
           <h3 className="text-2xl font-bold mb-4">Ready to Transform Your HR Operations?</h3>
           <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
             Join thousands of companies that have already eliminated HR headaches with Alkaa
-          </p>
-          <Button size="lg" className="text-base px-8 py-6">
+          </p>          <Button 
+            size="lg" 
+            className="text-base px-8 py-6"
+            onClick={onRequestDemo}
+          >
             Start Your Transformation Today
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
