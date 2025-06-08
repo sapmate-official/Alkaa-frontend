@@ -104,7 +104,11 @@ const successStories: SuccessStory[] = [
   }
 ];
 
-export const CustomerSuccessSection: React.FC = () => {
+interface CustomerSuccessSectionProps {
+  onRequestDemo?: () => void;
+}
+
+export const CustomerSuccessSection: React.FC<CustomerSuccessSectionProps> = ({ onRequestDemo }) => {
   const [activeStory, setActiveStory] = useState(0);
   const [showDetails, setShowDetails] = useState(false);
 
@@ -287,12 +291,20 @@ export const CustomerSuccessSection: React.FC = () => {
           <h3 className="text-2xl font-bold mb-4">Ready to Create Your Success Story?</h3>
           <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
             Join these successful companies and transform your HR operations with Alkaa
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="text-base px-8 py-6">
+          </p>          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button 
+              size="lg" 
+              className="text-base px-8 py-6"
+              onClick={onRequestDemo}
+            >
               Start Your Free Trial
             </Button>
-            <Button variant="outline" size="lg" className="text-base px-8 py-6">
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="text-base px-8 py-6"
+              onClick={onRequestDemo}
+            >
               Schedule a Demo
             </Button>
           </div>

@@ -58,7 +58,11 @@ const demoFeatures: DemoFeature[] = [
   }
 ];
 
-export const InteractiveDemoSection: React.FC = () => {
+interface InteractiveDemoSectionProps {
+  onRequestDemo?: () => void;
+}
+
+export const InteractiveDemoSection: React.FC<InteractiveDemoSectionProps> = ({ onRequestDemo }) => {
   const [activeFeature, setActiveFeature] = useState(demoFeatures[0].id);
   const [deviceView, setDeviceView] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   
@@ -204,16 +208,18 @@ export const InteractiveDemoSection: React.FC = () => {
               </div>
             </Card>
           </div>
-        </div>
-
-        {/* CTA */}
+        </div>        {/* CTA */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
           className="text-center mt-12"
         >
-          <Button size="lg" className="text-base px-8 py-6">
+          <Button 
+            size="lg" 
+            className="text-base px-8 py-6"
+            onClick={onRequestDemo}
+          >
             Try All Features Free for 14 Days
           </Button>
           <p className="text-sm text-muted-foreground mt-2">
