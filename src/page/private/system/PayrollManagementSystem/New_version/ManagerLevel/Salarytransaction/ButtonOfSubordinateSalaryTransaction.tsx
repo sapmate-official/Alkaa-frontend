@@ -15,7 +15,7 @@ const ButtonOfSubordinateSalaryTransaction = () => {
   const navigate = useNavigate()
   return (
     <div>
-        <Button onClick={()=>navigate("/p/new-payroll/subordinate/transaction ")}>
+        <Button onClick={()=>navigate("/p/new-payroll/subordinate/transaction")}>
             Salary Transaction
         </Button>
     </div>
