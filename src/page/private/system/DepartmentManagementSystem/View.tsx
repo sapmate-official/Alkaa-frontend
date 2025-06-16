@@ -212,7 +212,7 @@ const SpecificDepartmentView = () => {
     : null;
   
   return (
-    <div className="container mx-auto p-4 space-y-6">
+    <div className=" w-full mx-auto p-4 space-y-6 overflow-auto">
       {/* Breadcrumb and actions */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
         <div className="flex items-center gap-2">
