@@ -714,7 +714,7 @@ const MainSubordinateSalaryTransactionPage: React.FC = () => {
   }
 
   return (
-    <div className="container p-4 mx-auto overflow-y-auto">
+    <div className=" p-4 w-full px-4 overflow-y-auto">
       {userId && payrollId ? (
         <Button 
           variant="outline" 
