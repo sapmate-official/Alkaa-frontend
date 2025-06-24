@@ -47,6 +47,9 @@ const OrganizationSettings = lazy(() => import('./page/private/system/SpecificOr
 const PermissionCreate = lazy(() => import('./page/private/system/PermissionManagementSystem/PermissionCreate'));
 const PermissionManagement = lazy(() => import('./page/private/system/PermissionManagementSystem/PermissionManagementSystem'));
 
+// Activity Log Management
+const ActivityLogsManagement = lazy(() => import('./page/private/system/ActivityLogManagementSystem/ActivityLogsManagement.tsx'));
+
 // LeaveType Management
 const LeaveTypeList = lazy(() => import('./page/private/system/LeaveTypeManagementSystem/List'));
 const CreateLeaveType = lazy(() => import('./page/private/system/LeaveTypeManagementSystem/Create'));
@@ -262,6 +265,13 @@ const ClientRoute = () => {
           <HolidayManagementSystem />
         </PermissionRouteBasedOnKey>
       } />
+      
+      <Route path="/activity-logs" element={
+        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['view_all_activities', 'view_subordinate_activities']}>
+          <ActivityLogsManagement />
+        </PermissionRouteBasedOnKey>
+      } />
+      
       <Route path="/billing/*" element={
           <BillingManagementSystem />
        

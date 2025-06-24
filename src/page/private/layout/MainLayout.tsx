@@ -16,7 +16,7 @@ import {
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../services/AuthContext';
 import { Sidebar, SidebarBody, SidebarLink } from '@/components/ui/sidebar';
-import { Leaf, User2Icon, ShieldCheck, UserCog } from 'lucide-react';
+import { Leaf, User2Icon, ShieldCheck, UserCog, Activity } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { APIDictionary } from '@/api/v2/APIdict';
@@ -38,10 +38,11 @@ const SIDEBAR_LINK_RANKING: Record<string, number> = {
   "Leave Request": 9,
   "Leave Balance": 10,
   "Holiday": 11,
-  "Payroll": 12,
-  "Billing": 13, // Add this line
-  "Notification": 14,
-  "Logout": 15
+  "Activity Logs": 12,
+  "Payroll": 13,
+  "Billing": 14,
+  "Notification": 15,
+  "Logout": 16
 };
 
 interface MainLayoutProps {
@@ -185,6 +186,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           label: "Holiday",
           href: "/p/holiday",
           icon: <IconCalendarEvent className="h-5 w-5" />
+        });
+      } else if (permission?.key === "view_all_activities" || permission?.key === "view_subordinate_activities") {
+        if (baseLinks.some(link => link.label === "Activity Logs")) continue;
+        baseLinks.push({
+          label: "Activity Logs",
+          href: "/p/activity-logs",
+          icon: <Activity className="h-5 w-5" />
         });
       } else if (permission?.key === "view_salary_slip_to_myself") {
         baseLinks.push({
