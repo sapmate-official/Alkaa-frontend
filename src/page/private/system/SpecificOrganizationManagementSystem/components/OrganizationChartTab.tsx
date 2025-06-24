@@ -191,8 +191,8 @@ const OrganizationChartFlow = ({
   onUserClick,
   onAdminStatusChange 
 }: OrganizationChartFlowProps) => {
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node<CustomNodeData>>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+  const [, setNodes, onNodesChange] = useNodesState<Node<CustomNodeData>>([]);
+  const [, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState<UserData[]>([]);
   const [isOrgAdmin, setIsOrgAdmin] = useState(false);
