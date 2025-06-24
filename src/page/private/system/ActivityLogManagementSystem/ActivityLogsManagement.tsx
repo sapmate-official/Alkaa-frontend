@@ -14,8 +14,6 @@ import {
   Filter, 
   Search, 
   User, 
-  Calendar, 
-  Eye, 
   AlertCircle,
   TrendingUp,
   Users,
