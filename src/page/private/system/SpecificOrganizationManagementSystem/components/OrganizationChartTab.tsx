@@ -55,6 +55,7 @@ interface CustomNodeData {
   canViewDetails: boolean;
   isCurrentUser?: boolean;
   subordinateCount: number;
+  [key: string]: unknown; // Added to satisfy React Flow generic constraint
 }
 
 // Custom Node Component for User
@@ -190,8 +191,8 @@ const OrganizationChartFlow = ({
   onUserClick,
   onAdminStatusChange 
 }: OrganizationChartFlowProps) => {
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node<CustomNodeData>>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState<UserData[]>([]);
   const [isOrgAdmin, setIsOrgAdmin] = useState(false);
@@ -317,7 +318,7 @@ const OrganizationChartFlow = ({
   };
 
   const { flowNodes, flowEdges } = useMemo(() => {
-    if (users.length === 0) return { flowNodes: [], flowEdges: [] };
+    if (users.length === 0) return { flowNodes: [] as Node<CustomNodeData>[], flowEdges: [] as Edge[] };
 
     // Create a map for quick lookup
     const userMap = new Map(users.map(user => [user.id, user]));
@@ -341,7 +342,7 @@ const OrganizationChartFlow = ({
 
     // Build hierarchy with better positioning
     const processedUsers = new Set<string>();
-    const nodes: Node[] = [];
+    const nodes: Node<CustomNodeData>[] = [];
     const edges: Edge[] = [];
     
     // Layout configuration - more spread out for better visibility
@@ -651,7 +652,7 @@ const OrganizationChartFlow = ({
         </Button>
       </div>
 
-      <ReactFlow
+      <ReactFlow<Node<CustomNodeData>, Edge>
         nodes={flowNodes}
         edges={flowEdges}
         onNodesChange={onNodesChange}
