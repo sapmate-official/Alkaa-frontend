@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BuildingLibraryIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { motion } from 'framer-motion';
 import { backendDomain } from '@/lib/constant/Domain';
+import { Link } from 'react-router-dom';
 
 type BankDetail = {
   id: string;
@@ -127,6 +128,9 @@ const BankDetails = ({ userId }: BankDetailsProps) => {
           <p className="text-sm text-muted-foreground">
             No bank account information has been added yet.
           </p>
+          <Link to="/p/profile/edit/bank" className="text-primary hover:underline">
+            Add Bank Details
+          </Link>
         </CardContent>
       </Card>
     );

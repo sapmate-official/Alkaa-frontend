@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { backendDomain } from "@/lib/constant/Domain";
 import { useAuth } from "@/services/AuthContext";
+import axios from "axios";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
@@ -28,20 +29,21 @@ const CreateLeaveType = () => {
     const onSubmit = async (data: any) => {
         try {
             if(!user?.orgId) return null;
-            const response = await fetch(`${backendDomain}/api/v2/leave-type`, {
-                method: 'POST',
-                headers: {  
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
+            const response = await axios.post(
+                `${backendDomain}/api/v2/leave-type`,
+                {
                     ...data,
                     orgId: user?.organization?.id ?? null
-                }),
-            });
+                },
+                {
+                    withCredentials: true,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
 
-            if (!response?.ok) {
-                throw new Error('Failed to create leave type');
-            }
+            
             navigate('/p/leavetype');
             toast?.({
                 title: "Success",
