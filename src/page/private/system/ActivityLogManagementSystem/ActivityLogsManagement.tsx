@@ -13,7 +13,7 @@ import {
   Activity, 
   Filter, 
   Search, 
-  User, 
+  User,
   AlertCircle,
   TrendingUp,
   Users,
