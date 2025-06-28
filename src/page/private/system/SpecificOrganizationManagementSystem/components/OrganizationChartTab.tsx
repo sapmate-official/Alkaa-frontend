@@ -346,9 +346,9 @@ const OrganizationChartFlow = ({
     const edges: Edge[] = [];
     
     // Layout configuration - more spread out for better visibility
-    const LEVEL_HEIGHT = 220;
+    const LEVEL_HEIGHT = 320;
     const NODE_WIDTH = 240;
-    const HORIZONTAL_SPACING = 80;
+    const HORIZONTAL_SPACING = 250;
 
     const buildManagerSubordinateHierarchy = (
       userId: string, 
