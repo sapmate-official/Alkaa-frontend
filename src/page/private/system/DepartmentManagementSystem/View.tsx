@@ -148,10 +148,10 @@ const SpecificDepartmentView = () => {
         response = await axios.get(`${APIDictionary.department}/${user.Department[0].id}`)
         setDepartment(response.data)
         if (!response.data) {
-          navigate("/p/department/list")
+          navigate("/p/department/")
         }
       } else {
-        navigate("/p/department/list")
+        navigate("/p/department/")
       }
     } catch (error) {
       console.error('Error fetching department:', error)
@@ -160,7 +160,7 @@ const SpecificDepartmentView = () => {
         description: 'Failed to load department information',
         variant: 'destructive'
       })
-      navigate("/p/department/list")
+      navigate("/p/department/")
     } finally {
       setIsLoading(false)
     }
@@ -219,7 +219,7 @@ const SpecificDepartmentView = () => {
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => navigate("/p/department/list")}
+            onClick={() => navigate("/p/department/")}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />

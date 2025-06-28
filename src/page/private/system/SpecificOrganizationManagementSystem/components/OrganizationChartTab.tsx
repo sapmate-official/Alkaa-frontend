@@ -55,19 +55,19 @@ interface CustomNodeData {
   canViewDetails: boolean;
   isCurrentUser?: boolean;
   subordinateCount: number;
-  [key: string]: unknown; // Added to satisfy React Flow generic constraint
+  [key: string]: unknown;
 }
 
 // Custom Node Component for User
 const UserNode = ({ data }: { data: CustomNodeData }) => {
   const { user, onUserClick, canViewDetails, isCurrentUser, subordinateCount } = data;
   
-  const getNodeColor = () => {
-    if (isCurrentUser) return 'bg-purple-50 border-purple-400 shadow-purple-200';
-    if (user.isHead) return 'bg-red-50 border-red-300 shadow-red-200';
-    if (user.isManager) return 'bg-green-50 border-green-300 shadow-green-200';
-    return 'bg-blue-50 border-blue-300 shadow-blue-200';
-  };
+const getNodeColor = () => {
+  if (isCurrentUser) return { bg: 'bg-purple-50', border: 'border-purple-400', shadow: '0 4px 24px 0 rgba(168, 85, 247, 0.15)' };
+  if (user.isHead) return { bg: 'bg-red-50', border: 'border-red-300', shadow: '0 4px 24px 0 rgba(239, 68, 68, 0.15)' };
+  if (user.isManager) return { bg: 'bg-green-50', border: 'border-green-300', shadow: '0 4px 24px 0 rgba(34, 197, 94, 0.15)' };
+  return { bg: 'bg-blue-50', border: 'border-blue-300', shadow: '0 4px 24px 0 rgba(59, 130, 246, 0.15)' };
+};
 
   const getBadgeColor = () => {
     if (user.isHead) return 'bg-red-500 text-white';
@@ -87,6 +87,7 @@ const UserNode = ({ data }: { data: CustomNodeData }) => {
       onUserClick(user.id);
     }
   };
+  const { bg, border, shadow } = getNodeColor();
 
   return (
     <div className="relative">
@@ -94,10 +95,11 @@ const UserNode = ({ data }: { data: CustomNodeData }) => {
       
       <div
         className={`
-          relative bg-white rounded-xl border-2 shadow-lg hover:shadow-xl transition-all duration-300 
+          relative bg-white rounded-xl border-2 hover:shadow-xl transition-all duration-300 
           cursor-pointer min-w-[200px] max-w-[220px] p-4 transform hover:scale-105
-          ${getNodeColor()}
+          ${bg} ${border}
         `}
+        style={{ boxShadow: shadow }}
         onClick={handleClick}
       >
         <div className="flex flex-col items-center text-center">
@@ -348,14 +350,15 @@ const OrganizationChartFlow = ({
     // Layout configuration - more spread out for better visibility
     const LEVEL_HEIGHT = 320;
     const NODE_WIDTH = 240;
-    const HORIZONTAL_SPACING = 250;
+    const HORIZONTAL_SPACING = 280; // Increased spacing between siblings
 
     const buildManagerSubordinateHierarchy = (
       userId: string, 
       level: number = 0, 
       parentX: number = 0, 
       siblingIndex: number = 0, 
-      totalSiblings: number = 1
+      totalSiblings: number = 1,
+      isMainBranch: boolean = true // Track if this is the main branch or sibling branch
     ) => {
       if (processedUsers.has(userId)) return;
       processedUsers.add(userId);
@@ -363,10 +366,20 @@ const OrganizationChartFlow = ({
       const user = userMap.get(userId);
       if (!user) return;
 
-      // Calculate position - center the current user at level 0
-      const baseX = totalSiblings === 1 ? parentX : 
-                   parentX + (siblingIndex - (totalSiblings - 1) / 2) * (NODE_WIDTH + HORIZONTAL_SPACING);
-      const x = baseX;
+      // Calculate position - improved positioning for siblings
+      let x: number;
+      if (level === 0) {
+        // Current user at center
+        x = parentX;
+      } else if (isMainBranch) {
+        // Direct subordinates - center them under their manager
+        x = totalSiblings === 1 ? parentX : 
+            parentX + (siblingIndex - (totalSiblings - 1) / 2) * (NODE_WIDTH + HORIZONTAL_SPACING);
+      } else {
+        // Siblings - position them on same level but offset
+        x = parentX + (siblingIndex - (totalSiblings - 1) / 2) * (NODE_WIDTH + HORIZONTAL_SPACING);
+      }
+
       const y = level * LEVEL_HEIGHT;
 
       // Count subordinates
@@ -416,12 +429,13 @@ const OrganizationChartFlow = ({
             level + 1, 
             x, 
             index, 
-            user.subordinates!.length
+            user.subordinates!.length,
+            true // This is the main branch
           );
         });
       }
 
-      // Process manager (above current user) - only for the starting user
+      // Process manager and siblings (only for the starting user)
       if (level === 0 && user.managerId && !processedUsers.has(user.managerId)) {
         const manager = userMap.get(user.managerId);
         if (manager) {
@@ -443,7 +457,7 @@ const OrganizationChartFlow = ({
           // Create edge from manager to current user
           edges.push({
             id: `${user.managerId}-${userId}`,
-            source: user.managerId,
+            source: user.managerId || '',
             target: userId,
             type: 'smoothstep',
             animated: false,
@@ -461,20 +475,144 @@ const OrganizationChartFlow = ({
 
           processedUsers.add(user.managerId);
 
-          // Process manager's other subordinates (siblings of current user)
-          if (manager.subordinates) {
-            manager.subordinates.forEach((sibling, index) => {
+          // Process manager's subordinates (siblings of current user) - IMPROVED CLARITY
+          if (manager.subordinates && manager.subordinates.length > 1) {
+            const siblings = manager.subordinates.filter(sub => {
+              const siblingId = typeof sub === 'string' ? sub : sub.id;
+              return siblingId !== userId;
+            });
+
+            siblings.forEach((sibling, index) => {
               const siblingId = typeof sibling === 'string' ? sibling : sibling.id;
-              if (siblingId !== userId && !processedUsers.has(siblingId)) {
-                // Position siblings to the left and right of current user
-                const siblingOffset = (index + 1) * (NODE_WIDTH + HORIZONTAL_SPACING);
-                const siblingX = x + (index % 2 === 0 ? siblingOffset : -siblingOffset);
-                buildManagerSubordinateHierarchy(siblingId, 0, siblingX, 0, 1);
+              if (!processedUsers.has(siblingId)) {
+                // Position siblings at the same level as current user (level 0)
+                const siblingSpacing = NODE_WIDTH + HORIZONTAL_SPACING;
+                const totalSiblingsIncludingCurrent = manager.subordinates!.length;
+                const currentUserIndex = manager.subordinates!.findIndex(sub => {
+                  const subId = typeof sub === 'string' ? sub : sub.id;
+                  return subId === userId;
+                });
+                
+                // Calculate sibling position relative to current user
+                let siblingOffsetIndex = index;
+                if (index >= currentUserIndex) {
+                  siblingOffsetIndex = index + 1; // Account for current user position
+                }
+                
+                const offsetFromCenter = (siblingOffsetIndex - currentUserIndex) * siblingSpacing;
+                const siblingX = x + offsetFromCenter;
+
+                // Add sibling node
+                const siblingUser = userMap.get(siblingId);
+                if (siblingUser) {
+                  nodes.push({
+                    id: siblingId,
+                    type: 'userNode',
+                    position: { x: siblingX, y: 0 }, // Same level as current user
+                    data: {
+                      user: siblingUser,
+                      onUserClick,
+                      canViewDetails: canViewDetailedInfo,
+                      isCurrentUser: siblingId === currentUserId,
+                      subordinateCount: siblingUser.subordinates?.length || 0
+                    }
+                  });
+
+                  // CLEANER EDGE LOGIC - Use step edges with waypoints for clarity
+                  const managerY = -LEVEL_HEIGHT;
+                  
+                  // Create edge from manager to sibling with custom waypoints to avoid crossing
+                  const waypoints = [];
+                  
+                  // Calculate horizontal distance from manager to sibling
+                  const horizontalDistance = Math.abs(siblingX - x);
+                  
+                  if (horizontalDistance > NODE_WIDTH) {
+                    // For siblings with significant horizontal offset, use step-down approach
+                    edges.push({
+                      id: `${user.managerId}-${siblingId}`,
+                      source: user.managerId || '',
+                      target: siblingId,
+                      type: 'step', // Changed to step for cleaner L-shaped connections
+                      animated: false,
+                      markerEnd: {
+                        type: MarkerType.ArrowClosed,
+                        width: 18,
+                        height: 18,
+                        color: '#64748b'
+                      },
+                      style: {
+                        stroke: '#64748b',
+                        strokeWidth: 2,
+                        // Add slight transparency to distinguish from main hierarchy
+                        strokeOpacity: 0.8,
+                      },
+                      // Custom styling for sibling connections
+                      className: 'sibling-edge'
+                    });
+                  } else {
+                    // For closer siblings, use smoothstep
+                    edges.push({
+                      id: `${user.managerId}-${siblingId}`,
+                      source: user.managerId || '',
+                      target: siblingId,
+                      type: 'smoothstep',
+                      animated: false,
+                      markerEnd: {
+                        type: MarkerType.ArrowClosed,
+                        width: 18,
+                        height: 18,
+                        color: '#64748b'
+                      },
+                      style: {
+                        stroke: '#64748b',
+                        strokeWidth: 2,
+                      }
+                    });
+                  }
+
+                  processedUsers.add(siblingId);
+
+                  // Process sibling's subordinates recursively with clear edges
+                  if (siblingUser.subordinates && siblingUser.subordinates.length > 0) {
+                    siblingUser.subordinates.forEach((subSubordinate, subIndex) => {
+                      const subSubordinateId = typeof subSubordinate === 'string' ? subSubordinate : subSubordinate.id;
+                      
+                      // Create direct edge from sibling to their subordinate - always clear
+                      edges.push({
+                        id: `${siblingId}-${subSubordinateId}`,
+                        source: siblingId,
+                        target: subSubordinateId,
+                        type: 'smoothstep',
+                        animated: false,
+                        markerEnd: {
+                          type: MarkerType.ArrowClosed,
+                          width: 20,
+                          height: 20,
+                          color: '#64748b'
+                        },
+                        style: {
+                          stroke: '#64748b',
+                          strokeWidth: 2,
+                        }
+                      });
+
+                      buildManagerSubordinateHierarchy(
+                        subSubordinateId,
+                        1, // One level below sibling
+                        siblingX,
+                        subIndex,
+                        siblingUser.subordinates!.length,
+                        true
+                      );
+                    });
+                  }
+                }
               }
             });
           }
 
-          // Also try to show manager's manager (grandparent)
+          // Also show manager's manager (grandparent) if exists
           if (manager.managerId && !processedUsers.has(manager.managerId)) {
             const grandManager = userMap.get(manager.managerId);
             if (grandManager) {
@@ -524,8 +662,8 @@ const OrganizationChartFlow = ({
     const unprocessedUsers = users.filter(user => !processedUsers.has(user.id));
     unprocessedUsers.forEach((user, index) => {
       if (!user.managerId) { // Only add users without managers as separate roots
-        const rootX = (index + 1) * (NODE_WIDTH + HORIZONTAL_SPACING) * 2;
-        buildManagerSubordinateHierarchy(user.id, 0, rootX, 0, 1);
+        const rootX = (index + 1) * (NODE_WIDTH + HORIZONTAL_SPACING) * 3; // More spacing for separate roots
+        buildManagerSubordinateHierarchy(user.id, 0, rootX, 0, 1, true);
       }
     });
 

@@ -11,9 +11,7 @@ interface PermissionRouteProps {
 
 const PermissionRouteBasedOnKey = ({ children, requiredPermissions, requireAll = false }: PermissionRouteProps) => {
   const [permissionList] = useAtom(permissionListAtom);
-  console.log("Permission List: ", permissionList);
-  console.log("Required Permissions: ", requiredPermissions);
-  console.log("Require All: ", requireAll);
+  
   
 const hasPermission = requireAll
     ? requiredPermissions.every(permission => 
