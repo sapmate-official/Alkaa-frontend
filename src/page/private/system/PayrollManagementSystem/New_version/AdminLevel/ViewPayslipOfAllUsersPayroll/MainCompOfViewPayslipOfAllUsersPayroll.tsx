@@ -25,14 +25,15 @@ import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Progress } from '@/components/ui/progress'
 
 // Icons
-import { Plus, Download, Trash, Users } from 'lucide-react'
+import { Plus, Download, Trash, Users, Calendar, Clock, UserCheck, UserX, Award, TrendingUp } from 'lucide-react'
 
 // Local components
 import ButtonOfUsersSalaryTransaction from '../Salarytransaction/ButtonOfUsersSalaryTransaction'
 import ButtonOfGenerateUsersSalary from '../GenerateSalary/ButtonOfGenerateUserSalary'
-import PayslipDetailedView from './PayslipDetailedView'
+import PayslipDetailedView, {PayslipStatistics} from './PayslipDetailedView'
 import { MonthYearPicker } from '../../ui/MonthYearPicker'
 import { useAuth } from '@/services/AuthContext'
 import { APIDictionary } from '@/api/v2/APIdict'
@@ -79,42 +80,12 @@ interface PayslipResponse {
   data: Payslip[];
 }
 
-interface PayslipStatistics {
-  basicInfo: {
-    salaryRecordId: string;
-    month: number;
-    monthName: string;
-    year: number;
-    employee: {
-      id: string;
-      name: string;
-      employeeId: string;
-      department?: string;
-    };
-    status: string;
-    processedAt?: string;
-    paymentInfo: {
-      mode?: string;
-      reference?: string;
-      remarks?: string;
-    };
-  };
-  salaryBreakdown: {
-    basicSalary: number;
-    totalAllowances: number;
-    allowanceDetails: Record<string, number>;
-    totalDeductions: number;
-    deductionDetails: Record<string, number>;
-    netSalary: number;
-    taxAmount: number;
-    additionalPayments: {
-      incentive: number;
-      bonus: number;
-    };
-  };
-  attendanceAnalysis: {
-    totalDaysInMonth: number;
-    workingDays: number;
+interface PreStatisticsData {
+  userId: string;
+  month: number;
+  year: number;
+  workingDays: number;
+  attendanceStats: {
     presentDays: number;
     halfDays: number;
     absentDays: number;
@@ -122,30 +93,30 @@ interface PayslipStatistics {
     unpaidLeaveDays: number;
     attendancePercentage: number;
   };
-  comparisons: {
-    earningsRatio: number;
-    previousMonth?: {
-      difference: number;
-      percentageChange: number;
-    };
-    yearToDateEarnings: number;
-  };
-  visualData: {
-    earningsVsDeductions: {
-      earnings: number;
-      deductions: number;
-    };
-    salaryComponents: {
-      basic: number;
-      allowances: number;
-      deductions: number;
-      net: number;
-    };
-  };
+  verifiedAttendance: number;
+  unverifiedAttendance: number;
+  leaveStats: LeaveStats[];
+  userName: string;
+  department: string;
+  organization: string;
 }
+
+interface PreStatisticsResponse {
+  success: boolean;
+  message: string;
+  data: PreStatisticsData;
+}
+
+interface LeaveStats {
+  leaveType: string;
+  count: number;
+  dates: string[];
+}
+
 
 interface StatisticsResponse {
   success: boolean;
+  message: string;
   data: PayslipStatistics;
 }
 
@@ -158,6 +129,7 @@ const MainCompOfViewPayslipOfAllUsersPayroll = () => {
   const [users, setUsers] = useState<User[]>([])
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [payslips, setPayslips] = useState<Payslip[]>([])
+  const [preStatistics, setPreStatistics] = useState<PreStatisticsData | null>(null)
   const [selectedPayslip, setSelectedPayslip] = useState<Payslip | null>(null)
   const [statistics, setStatistics] = useState<PayslipStatistics | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
@@ -210,6 +182,16 @@ const MainCompOfViewPayslipOfAllUsersPayroll = () => {
         )
         if (response.data?.success) {
           setPayslips(response.data.data || [])
+          if(response.data?.data.length == 0){
+            const preStatsResponse = await axios.get<PreStatisticsResponse>(
+                APIV3Dictionary.payroll.preStatistics(month, year, selectedUser.id),{
+                  withCredentials: true,
+                })
+            console.log('Pre Statistics Response:', preStatsResponse.data)
+            if (preStatsResponse.data?.success) {
+              setPreStatistics(preStatsResponse.data.data)
+            }
+          }
         }
       } catch (error) {
         console.error('Error fetching payslips:', error)
@@ -252,7 +234,7 @@ const MainCompOfViewPayslipOfAllUsersPayroll = () => {
       setLoading(false)
     }
   }
-  
+
   // Handle generate salary
   const handleGenerateSalary = async () => {
     if (!selectedUser) return
@@ -275,6 +257,8 @@ const MainCompOfViewPayslipOfAllUsersPayroll = () => {
       )
       if (response.data?.success) {
         setPayslips(response.data.data || [])
+
+
       }
     } catch (error) {
       console.error('Error generating salary:', error)
@@ -355,31 +339,35 @@ const MainCompOfViewPayslipOfAllUsersPayroll = () => {
   }
   
   return (
-    <div className="h-[100dvh] overflow-hidden flex flex-col w-screen">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-2 md:p-4">
-        <h1 className="text-xl md:text-2xl font-bold">View Payslips of All Users</h1>
-        <div className="flex flex-wrap gap-2 md:gap-4">
-          <ButtonOfGenerateUsersSalary />
-          <ButtonOfUsersSalaryTransaction />
+    <div className="h-screen overflow-hidden flex flex-col">
+      {/* Header */}
+      <div className="flex-shrink-0 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4">
+          <h1 className="text-xl md:text-2xl font-bold">View Payslips of All Users</h1>
+          <div className="flex flex-wrap gap-2 md:gap-4">
+            <ButtonOfGenerateUsersSalary />
+            <ButtonOfUsersSalaryTransaction />
+          </div>
         </div>
       </div>
       
-      <div className="flex-1 overflow-auto p-2 md:p-4">
-        <div className="flex flex-col md:grid md:grid-cols-12 gap-4 md:gap-6 h-full">
-          {/* Left panel: User list */}
-          <Card className="md:col-span-4 order-2 md:order-1 h-[40vh] md:h-full">
-            <CardHeader className="bg-primary">
-              <CardTitle className="text-white flex items-center text-base md:text-lg">
-                <Users className="mr-2 h-4 w-4 md:h-5 md:w-5" />
-                Employees
+      {/* Main Content Area */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left Panel - Fixed and Scrollable */}
+        <div className="w-80 flex-shrink-0 border-r bg-background">
+          <Card className="h-full rounded-none border-0">
+            <CardHeader className="bg-primary text-primary-foreground flex-shrink-0">
+              <CardTitle className="flex items-center text-lg">
+                <Users className="mr-2 h-5 w-5" />
+                Employees ({users.length})
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-0 h-[calc(100%-56px)]"> {/* Subtract header height */}
+            <CardContent className="p-0 flex-1 overflow-hidden">
               <ScrollArea className="h-full">
                 {userLoading ? (
                   <div className="flex flex-col gap-2 p-4">
                     {[1, 2, 3, 4, 5].map((n) => (
-                      <Skeleton key={n} className="h-12 w-full" />
+                      <Skeleton key={n} className="h-16 w-full" />
                     ))}
                   </div>
                 ) : (
@@ -389,16 +377,23 @@ const MainCompOfViewPayslipOfAllUsersPayroll = () => {
                         <button
                           key={user.id}
                           onClick={() => handleSelectUser(user)}
-                          className={`w-full px-4 py-3 text-left hover:bg-muted/50 transition-colors flex flex-col ${
-                            selectedUser?.id === user.id ? 'bg-muted' : ''
+                          className={`w-full px-4 py-4 text-left hover:bg-muted/50 transition-colors flex flex-col gap-2 ${
+                            selectedUser?.id === user.id ? 'bg-muted border-r-2 border-primary' : ''
                           }`}
                         >
-                          <span className="font-medium">
+                          <span className="font-medium text-sm">
                             {user.firstName || ''} {user.lastName || ''}
                           </span>
-                          <span className="text-sm text-muted-foreground">
-                            Employee ID: {user.employeeId || 'N/A'}
-                          </span>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-xs text-muted-foreground">
+                              ID: {user.employeeId || 'N/A'}
+                            </span>
+                            {user.department?.name && (
+                              <span className="text-xs text-muted-foreground">
+                                Dept: {user.department.name}
+                              </span>
+                            )}
+                          </div>
                         </button>
                       ))
                     ) : (
@@ -411,53 +406,59 @@ const MainCompOfViewPayslipOfAllUsersPayroll = () => {
               </ScrollArea>
             </CardContent>
           </Card>
-          
-          {/* Right panel: Payslip list and details */}
-          <Card className="md:col-span-8 order-1 md:order-2 h-[40vh] md:h-full">
-            <CardHeader className="bg-primary flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <CardTitle className="text-white text-base md:text-lg">
-                {selectedUser 
-                  ? `Payslips for ${selectedUser.firstName || ''} ${selectedUser.lastName || ''}` 
-                  : 'Select an employee'}
-              </CardTitle>
-              
-              <div className="w-full md:w-auto">
-                <MonthYearPicker
-                  month={month}
-                  year={year}
-                  onMonthChange={setMonth}
-                  onYearChange={setYear}
-                  color="white"
-                />
+        </div>
+        
+        {/* Right Panel - Fixed to Screen */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <Card className="flex-1 rounded-none border-0">
+            <CardHeader className="bg-primary text-primary-foreground flex-shrink-0">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <CardTitle className="text-lg">
+                  {selectedUser 
+                    ? `Payslips for ${selectedUser.firstName || ''} ${selectedUser.lastName || ''}` 
+                    : 'Select an employee to view payslips'}
+                </CardTitle>
+                
+                <div className="w-full md:w-auto">
+                  <MonthYearPicker
+                    month={month}
+                    year={year}
+                    onMonthChange={setMonth}
+                    onYearChange={setYear}
+                    color="white"
+                  />
+                </div>
               </div>
             </CardHeader>
             
-            <CardContent className="p-0 h-[calc(100%-88px)]"> {/* Subtract header height */}
+            <CardContent className="p-0 flex-1 overflow-hidden">
               <ScrollArea className="h-full">
-                {selectedUser && (
-                  <div className="p-2 md:p-4">
+                {selectedUser ? (
+                  <div className="p-4">
                     {payslips.length === 0 && (
-                      <Button 
-                        variant="default" 
-                        className="mb-4 w-full md:w-auto"
-                        onClick={handleGenerateSalary}
-                        disabled={loading}
-                      >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Generate Salary
-                      </Button>
+                      <div className="mb-4">
+                        <Button 
+                          variant="default" 
+                          className="w-full md:w-auto"
+                          onClick={handleGenerateSalary}
+                          disabled={loading}
+                        >
+                          <Plus className="mr-2 h-4 w-4" />
+                          Generate Salary for {getMonthName(month)} {year}
+                        </Button>
+                      </div>
                     )}
                     
                     {payslipLoading ? (
                       <div className="flex justify-center p-8">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                       </div>
-                    ) : (
+                    ) : payslips.length > 0 ? (
                       <div className="overflow-x-auto">
                         <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead>Month-Year</TableHead>
+                              <TableHead>Period</TableHead>
                               <TableHead>Basic Salary</TableHead>
                               <TableHead>Net Salary</TableHead>
                               <TableHead>Status</TableHead>
@@ -465,79 +466,214 @@ const MainCompOfViewPayslipOfAllUsersPayroll = () => {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {payslips.length > 0 ? (
-                              payslips.map((payslip) => (
-                                <TableRow 
-                                  key={payslip.id} 
-                                  className={`cursor-pointer text-sm md:text-base ${
-                                    selectedPayslip?.id === payslip.id ? 'bg-muted/50' : ''
-                                  }`}
-                                  onClick={() => handleSelectPayslip(payslip)}
-                                >
-                                  <TableCell className="whitespace-nowrap">
-                                    {getMonthName(payslip.month)} {payslip.year}
-                                  </TableCell>
-                                  <TableCell className="whitespace-nowrap">
-                                    ₹{payslip.basicSalary.toLocaleString()}
-                                  </TableCell>
-                                  <TableCell className="whitespace-nowrap">
-                                    ₹{payslip.netSalary.toLocaleString()}
-                                  </TableCell>
-                                  <TableCell>
-                                    <Badge variant={
-                                      payslip.status === 'PAID' 
-                                        ? 'success' 
-                                        : payslip.status === 'PENDING' 
-                                          ? 'secondary' 
-                                          : 'destructive'
-                                    }>
-                                      {payslip.status}
-                                    </Badge>
-                                  </TableCell>
-                                  <TableCell>
-                                    <div className="flex flex-wrap items-center gap-2">
+                            {payslips.map((payslip) => (
+                              <TableRow 
+                                key={payslip.id} 
+                                className={`cursor-pointer ${
+                                  selectedPayslip?.id === payslip.id ? 'bg-muted/50' : ''
+                                }`}
+                                onClick={() => handleSelectPayslip(payslip)}
+                              >
+                                <TableCell className="whitespace-nowrap">
+                                  {getMonthName(payslip.month)} {payslip.year}
+                                </TableCell>
+                                <TableCell className="whitespace-nowrap">
+                                  ₹{payslip.basicSalary.toLocaleString()}
+                                </TableCell>
+                                <TableCell className="whitespace-nowrap">
+                                  ₹{payslip.netSalary.toLocaleString()}
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant={
+                                    payslip.status === 'PAID' 
+                                      ? 'success' 
+                                      : payslip.status === 'PENDING' 
+                                        ? 'secondary' 
+                                        : 'destructive'
+                                  }>
+                                    {payslip.status}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDownloadPayslip(payslip);
+                                      }}
+                                    >
+                                      <Download className="h-4 w-4" />
+                                    </Button>
+                                    
+                                    {payslip.status !== 'PAID' && (
                                       <Button 
                                         size="sm" 
                                         variant="outline"
-                                        className="px-2 py-1 h-8"
+                                        className="text-destructive border-destructive hover:bg-destructive/10"
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          handleDownloadPayslip(payslip);
+                                          handleDeletePayslip(payslip);
                                         }}
                                       >
-                                        <Download className="h-4 w-4" />
-                                        <span className="sr-only md:not-sr-only md:ml-1">PDF</span>
+                                        <Trash className="h-4 w-4" />
                                       </Button>
-                                      
-                                      {payslip.status !== 'PAID' && (
-                                        <Button 
-                                          size="sm" 
-                                          variant="outline"
-                                          className="px-2 py-1 h-8 text-destructive border-destructive hover:bg-destructive/10"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDeletePayslip(payslip);
-                                          }}
-                                        >
-                                          <Trash className="h-4 w-4" />
-                                          <span className="sr-only md:not-sr-only md:ml-1">Delete</span>
-                                        </Button>
-                                      )}
-                                    </div>
-                                  </TableCell>
-                                </TableRow>
-                              ))
-                            ) : (
-                              <TableRow>
-                                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                                  No payslips found
+                                    )}
+                                  </div>
                                 </TableCell>
                               </TableRow>
-                            )}
+                            ))}
                           </TableBody>
                         </Table>
                       </div>
+                    ) : (
+                      /* Enhanced Pre-statistics Display */
+                      <div className="space-y-6">
+                        <div className="text-center">
+                          <h3 className="text-lg font-medium mb-2">No Payslips Found</h3>
+                          <p className="text-sm text-muted-foreground mb-4">
+                            No salary has been generated for {getMonthName(month)} {year}
+                          </p>
+                        </div>
+
+                        {preStatistics && (
+                          <div className="max-w-4xl mx-auto space-y-6">
+                            {/* Employee Info Header */}
+                            <Card className="border-l-4 border-l-primary">
+                              <CardHeader className="pb-3">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <CardTitle className="text-lg">{preStatistics.userName}</CardTitle>
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                      {preStatistics.department} • {preStatistics.organization}
+                                    </p>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="text-sm font-medium">Period</p>
+                                    <p className="text-sm text-muted-foreground">
+                                      {getMonthName(preStatistics.month)} {preStatistics.year}
+                                    </p>
+                                  </div>
+                                </div>
+                              </CardHeader>
+                            </Card>
+
+                            {/* Attendance Overview */}
+                            <Card>
+                              <CardHeader>
+                                <CardTitle className="flex items-center text-base">
+                                  <Clock className="mr-2 h-4 w-4" />
+                                  Attendance Summary
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                                  <div className="text-center p-3 bg-blue-50 rounded-lg border">
+                                    <Calendar className="h-6 w-6 mx-auto mb-2 text-blue-600" />
+                                    <p className="text-2xl font-bold text-blue-600">{preStatistics.workingDays}</p>
+                                    <p className="text-xs text-muted-foreground">Working Days</p>
+                                  </div>
+                                  <div className="text-center p-3 bg-green-50 rounded-lg border">
+                                    <UserCheck className="h-6 w-6 mx-auto mb-2 text-green-600" />
+                                    <p className="text-2xl font-bold text-green-600">{preStatistics.attendanceStats.presentDays}</p>
+                                    <p className="text-xs text-muted-foreground">Present</p>
+                                  </div>
+                                  <div className="text-center p-3 bg-yellow-50 rounded-lg border">
+                                    <Clock className="h-6 w-6 mx-auto mb-2 text-yellow-600" />
+                                    <p className="text-2xl font-bold text-yellow-600">{preStatistics.attendanceStats.halfDays}</p>
+                                    <p className="text-xs text-muted-foreground">Half Days</p>
+                                  </div>
+                                  <div className="text-center p-3 bg-red-50 rounded-lg border">
+                                    <UserX className="h-6 w-6 mx-auto mb-2 text-red-600" />
+                                    <p className="text-2xl font-bold text-red-600">{preStatistics.attendanceStats.absentDays}</p>
+                                    <p className="text-xs text-muted-foreground">Absent</p>
+                                  </div>
+                                </div>
+
+                                {/* Attendance Percentage */}
+                                <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4 mb-4">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="font-medium">Attendance Percentage</span>
+                                    <Badge 
+                                      variant={preStatistics.attendanceStats.attendancePercentage >= 80 ? 'default' : 'destructive'}
+                                      className="text-sm"
+                                    >
+                                      {preStatistics.attendanceStats.attendancePercentage.toFixed(1)}%
+                                    </Badge>
+                                  </div>
+                                  <div className="w-full bg-secondary rounded-full h-2">
+                                    <div 
+                                      className={`h-2 rounded-full transition-all ${
+                                        preStatistics.attendanceStats.attendancePercentage >= 80 
+                                          ? 'bg-green-500' 
+                                          : preStatistics.attendanceStats.attendancePercentage >= 60
+                                            ? 'bg-yellow-500'
+                                            : 'bg-red-500'
+                                      }`}
+                                      style={{ width: `${Math.min(preStatistics.attendanceStats.attendancePercentage, 100)}%` }}
+                                    ></div>
+                                  </div>
+                                </div>
+
+                                {/* Leave Details */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div className="text-center p-3 bg-blue-50 rounded-lg border">
+                                    <Award className="h-5 w-5 mx-auto mb-2 text-blue-600" />
+                                    <p className="text-lg font-semibold text-blue-600">{preStatistics.attendanceStats.paidLeaveDays}</p>
+                                    <p className="text-xs text-muted-foreground">Paid Leave Days</p>
+                                  </div>
+                                  <div className="text-center p-3 bg-orange-50 rounded-lg border">
+                                    <TrendingUp className="h-5 w-5 mx-auto mb-2 text-orange-600" />
+                                    <p className="text-lg font-semibold text-orange-600">{preStatistics.attendanceStats.unpaidLeaveDays}</p>
+                                    <p className="text-xs text-muted-foreground">Unpaid Leave Days</p>
+                                  </div>
+                                </div>
+
+                                {/* Leave Types Breakdown */}
+                                {preStatistics.leaveStats && preStatistics.leaveStats.length > 0 && (
+                                  <div className="mt-4">
+                                    <h4 className="font-medium mb-3">Leave Breakdown</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                      {preStatistics.leaveStats.map((leave, index) => (
+                                        <div key={index} className="flex justify-between items-center p-2 bg-muted rounded">
+                                          <span className="text-sm">{leave.leaveType}</span>
+                                          <Badge variant="outline">{leave.count} days</Badge>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Verification Status */}
+                                <div className="mt-4 pt-4 border-t">
+                                  <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div className="flex justify-between">
+                                      <span>Verified Attendance:</span>
+                                      <span className="font-medium text-green-600">{preStatistics.verifiedAttendance}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span>Unverified Attendance:</span>
+                                      <span className="font-medium text-orange-600">{preStatistics.unverifiedAttendance}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </div>
+                        )}
+                      </div>
                     )}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-64">
+                    <div className="text-center">
+                      <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                      <p className="text-lg font-medium">No Employee Selected</p>
+                      <p className="text-sm text-muted-foreground">
+                        Please select an employee from the left panel to view their payslips
+                      </p>
+                    </div>
                   </div>
                 )}
               </ScrollArea>
