@@ -37,7 +37,7 @@ interface Payslip {
   netSalary: number;
 }
 
-interface PayslipStatistics {
+export interface PayslipStatistics {
   basicInfo: {
     salaryRecordId: string;
     month: number;
