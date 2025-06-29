@@ -25,7 +25,6 @@ import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Progress } from '@/components/ui/progress'
 
 // Icons
 import { Plus, Download, Trash, Users, Calendar, Clock, UserCheck, UserX, Award, TrendingUp } from 'lucide-react'
