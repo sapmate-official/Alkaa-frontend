@@ -29,7 +29,12 @@ export default defineConfig({
             return 'pdf-vendor';
           }
           
-          if (id.includes('recharts') || id.includes('d3')) {
+          // Split recharts to avoid circular dependency issues
+          if (id.includes('recharts')) {
+            return 'recharts-vendor';
+          }
+          
+          if (id.includes('d3')) {
             return 'visualization';
           }
           
@@ -104,7 +109,8 @@ export default defineConfig({
       '@radix-ui/react-select',
       '@radix-ui/react-tabs',
       'jotai',
-      'framer-motion'
+      'framer-motion',
+      'recharts'
     ],
     exclude: [
       'olamaps-web-sdk',

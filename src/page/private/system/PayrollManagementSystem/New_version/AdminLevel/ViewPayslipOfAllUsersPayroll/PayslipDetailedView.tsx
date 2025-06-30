@@ -25,7 +25,7 @@ import {
   Tooltip,
   XAxis,
   YAxis,
-} from 'recharts';
+} from '@/components/charts';
 
 // Types
 interface Payslip {
