@@ -38,7 +38,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from '@/components/ui/drawer'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from '@/components/charts'
 import { Download, FileText, Trash2, AlertTriangle } from 'lucide-react'
 import { 
   Dialog, 

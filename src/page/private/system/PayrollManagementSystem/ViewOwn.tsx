@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { jsPDF } from "jspdf"
 import "jspdf-autotable"
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from '@/components/charts'
 import { Download, FileText, TrendingUp } from "lucide-react"
 import { toast } from '@/hooks/use-toast'
 
