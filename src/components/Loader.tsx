@@ -1,47 +1,36 @@
 import React from 'react';
-import styled, { keyframes } from 'styled-components';
 
-const spin = keyframes`
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-`;
+interface LoaderProps {
+  text?: string;
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
+}
 
-const LoaderWrapper = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 200px;
-  width: 100%;
-  height: 100%;
-`;
+// Lightweight, CSS-only loader component
+const Loader: React.FC<LoaderProps> = ({ 
+  text = "Loading...", 
+  size = 'lg',
+  className = '' 
+}) => {
+  const sizeClasses = {
+    sm: 'h-4 w-4',
+    md: 'h-6 w-6', 
+    lg: 'h-8 w-8'
+  };
 
-const SpinnerContainer = styled.div`
-  display: inline-block;
-  position: relative;
-  width: 64px;
-  height: 64px;
-`;
-
-const Spinner = styled.div`
-  box-sizing: border-box;
-  display: block;
-  position: absolute;
-  width: 51px;
-  height: 51px;
-  margin: 6px;
-  border: 6px solid #1976d2;
-  border-radius: 50%;
-  animation: ${spin} 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-  border-color: #1976d2 transparent transparent transparent;
-`;
-
-const Loader: React.FC = () => {
   return (
-    <LoaderWrapper>
-      <SpinnerContainer>
-        <Spinner />
-      </SpinnerContainer>
-    </LoaderWrapper>
+    <div className={`flex flex-col items-center justify-center min-h-[200px] w-full h-full ${className}`}>
+      <div 
+        className={`${sizeClasses[size]} border-2 border-primary border-t-transparent rounded-full animate-spin`}
+        role="status"
+        aria-label="Loading"
+      />
+      {text && (
+        <p className="text-sm text-muted-foreground mt-3 animate-pulse">
+          {text}
+        </p>
+      )}
+    </div>
   );
 };
 

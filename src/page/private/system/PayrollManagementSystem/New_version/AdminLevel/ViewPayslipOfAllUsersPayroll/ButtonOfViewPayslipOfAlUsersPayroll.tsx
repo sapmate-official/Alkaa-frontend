@@ -11,7 +11,7 @@ const ButtonOfViewPayslipOfAllUsersPayroll = () => {
     const navigate = useNavigate()
   return (
     <div>
-        <button onClick={()=>navigate("/p/new-payroll/admin/payslip")} className='bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700'>
+        <button onClick={()=>navigate("/payroll/admin/payslip")} className='bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700'>
             View Payslip of All Users
         </button>
     </div>

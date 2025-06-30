@@ -80,7 +80,7 @@ export default function LeaveTypeList() {
     }, [user]);
 
     const handleEdit = (id: string) => {
-        navigate(`/p/leavetype/edit/${id}`);
+        navigate(`/leave/type/edit/${id}`);
     };
 
     return (
@@ -88,7 +88,7 @@ export default function LeaveTypeList() {
            <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold">Leave Types</h2>
                 <Button 
-                    onClick={()=>navigate("/p/leavetype/create")}
+                    onClick={()=>navigate("/leave/type/create")}
                     className="flex items-center gap-2"
                 >
                     <Plus className="h-4 w-4" />

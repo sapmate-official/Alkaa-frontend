@@ -149,7 +149,7 @@ const CreateDepartment = () => {
         description: "You don't have permission to create departments",
         variant: "destructive"
       })
-      navigate('/p/department')
+      navigate('/department')
       return
     }
 
@@ -165,7 +165,7 @@ const CreateDepartment = () => {
         setDepartments(deptResponse?.data || [])
 
         // Fetch employees
-        const empResponse = await axios.get(`${APIDictionary.Organization}/employees/${user?.orgId}`)
+        const empResponse = await axios.get(`${APIDictionary.Organization}/employee-list/${user?.orgId}`)
         setEmployees(empResponse?.data || [])
       } catch (error) {
         console.error('Error fetching data:', error)
@@ -207,7 +207,7 @@ const CreateDepartment = () => {
       })
       
       // Navigate to the new department
-      navigate(`/p/department/${response.data.id}`)
+      navigate(`/department/${response.data.id}`)
     } catch (error: any) {
       console.error('Error creating department:', error)
       
@@ -229,7 +229,7 @@ const CreateDepartment = () => {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink onClick={()=>navigate("/p/department")} className='cursor-pointer'>Departments</BreadcrumbLink>
+            <BreadcrumbLink onClick={()=>navigate("/department")} className='cursor-pointer'>Departments</BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
@@ -240,7 +240,7 @@ const CreateDepartment = () => {
 
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Create New Department</h1>
-        <Button variant="outline" onClick={() => navigate('/p/department')}>
+        <Button variant="outline" onClick={() => navigate('/department')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to List
         </Button>

@@ -139,7 +139,7 @@ const ClientRoute = () => {
         </PermissionRouteBasedOnKey>
       } />
 
-      <Route path="/payroll/*" element={
+      <Route path="/new-payroll/*" element={
         <PermissionRouteBasedOnKey requiredPermissions={['view_salary_slip_to_myself ']}>
           <PayrollModule />
         </PermissionRouteBasedOnKey>

@@ -15,7 +15,7 @@ const ButtonOfUsersSalaryTransaction = () => {
     if(!hasPermission) return null
   return (
     <div>
-        <Button onClick={()=> navigate('/p/new-payroll/admin/transaction')}>
+        <Button onClick={()=> navigate('/payroll/admin/transaction')}>
             Salary Transaction of All Users
         </Button>
     </div>

@@ -132,7 +132,7 @@ const BillingDashboard = () => {
         <Button 
           variant="outline" 
           className="flex items-center"
-          onClick={() => navigate('/p/billing/history')}
+          onClick={() => navigate('/billing/history')}
         >
           <FileText className="mr-2 h-4 w-4" />
           View All Bills
@@ -140,7 +140,7 @@ const BillingDashboard = () => {
         {dashboardData?.billing?.latestBill && (
           <Button 
             className="flex items-center"
-            onClick={() => navigate(`/p/billing/bill/${dashboardData.billing.latestBill.id}`)}
+            onClick={() => navigate(`/billing/bill/${dashboardData.billing.latestBill.id}`)}
           >
             <Receipt className="mr-2 h-4 w-4" />
             Latest Bill
@@ -318,7 +318,7 @@ const BillingDashboard = () => {
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      onClick={() => navigate(`/p/billing/bill/${bill.id}`)}
+                      onClick={() => navigate(`/billing/bill/${bill.id}`)}
                     >
                       <FileText className="h-4 w-4" />
                     </Button>
@@ -332,7 +332,7 @@ const BillingDashboard = () => {
           <Button 
             variant="ghost" 
             className="w-full" 
-            onClick={() => navigate('/p/billing/history')}
+            onClick={() => navigate('/billing/history')}
           >
             View All Bills
           </Button>

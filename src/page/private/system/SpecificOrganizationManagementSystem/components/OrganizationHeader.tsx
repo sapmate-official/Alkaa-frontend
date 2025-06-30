@@ -48,7 +48,7 @@ export const OrganizationHeader = ({
                 {canViewDetailedInfo && (
                   <Settings 
                     className="cursor-pointer" 
-                    onClick={() => navigate('/p/organization/settings')} 
+                    onClick={() => navigate('/organization/settings')} 
                   />
                 )}
               </div>

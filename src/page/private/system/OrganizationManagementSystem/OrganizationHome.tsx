@@ -38,7 +38,7 @@ const OrganizationHome = () => {
                     <h1 className="text-3xl font-bold">Organizations</h1>
                     <p className="text-muted-foreground">Manage your organizations and their settings</p>
                 </div>
-                <Button onClick={() => navigate('/p/organization/create')}>
+                <Button onClick={() => navigate('/organization/create')}>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Create Organization
                 </Button>
@@ -73,7 +73,7 @@ const OrganizationHome = () => {
                                 <Button 
                                     variant="outline" 
                                     className="w-full mt-4"
-                                    onClick={() => navigate(`/p/organization/${org?.id}`)}
+                                    onClick={() => navigate(`/organization/${org?.id}`)}
                                 >
                                     View Details
                                 </Button>

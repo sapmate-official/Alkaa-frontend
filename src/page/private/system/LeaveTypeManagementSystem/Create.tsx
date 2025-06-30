@@ -29,7 +29,7 @@ const CreateLeaveType = () => {
     const onSubmit = async (data: any) => {
         try {
             if(!user?.orgId) return null;
-            const response = await axios.post(
+            await axios.post(
                 `${backendDomain}/api/v2/leave-type`,
                 {
                     ...data,
@@ -44,7 +44,7 @@ const CreateLeaveType = () => {
             );
 
             
-            navigate('/p/leavetype');
+            navigate('/leave/type');
             toast?.({
                 title: "Success",
                 description: "Leave type created successfully",

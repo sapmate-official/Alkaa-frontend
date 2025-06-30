@@ -335,7 +335,7 @@ const ListOfDepartment = () => {
     ])
 
     const handleDepartmentClick = (id: string) => {
-        navigate(`/p/department/${id}`)
+        navigate(`/department/${id}`)
     }
 
     const toggleSortDirection = () => {
@@ -368,7 +368,7 @@ const ListOfDepartment = () => {
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-bold">Departments</h1>
                     {canCreateDepartment && (
-                        <Button onClick={() => navigate("/p/department/create")}>
+                        <Button onClick={() => navigate("/department/create")}>
                             <PlusCircle className="h-4 w-4 mr-2" />
                             Create Department
                         </Button>
@@ -377,7 +377,7 @@ const ListOfDepartment = () => {
                 <EmptyState 
                     message="You don't have access to view any departments." 
                     canCreate={canCreateDepartment}
-                    onCreateClick={() => navigate("/p/department/create")}
+                    onCreateClick={() => navigate("/department/create")}
                 />
             </div>
         )
@@ -504,7 +504,7 @@ const ListOfDepartment = () => {
                         
                         {/* Create department button */}
                         {canCreateDepartment && (
-                            <Button onClick={() => navigate("/p/department/create")}>
+                            <Button onClick={() => navigate("/department/create")}>
                                 <PlusCircle className="h-4 w-4 mr-2" />
                                 Create
                             </Button>
@@ -533,7 +533,7 @@ const ListOfDepartment = () => {
                     <EmptyState 
                         message={searchQuery ? "No departments match your search" : "No departments found"} 
                         canCreate={canCreateDepartment}
-                        onCreateClick={() => navigate("/p/department/create")}
+                        onCreateClick={() => navigate("/department/create")}
                     />
                 ) : (
                     <>

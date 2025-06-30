@@ -116,7 +116,7 @@ const SpecificOrganizationView = () => {
   }, [user,permissions]);
 
   const handleUserClick = (userId: string) => {
-    navigate(`/p/profile/${userId}`);
+    navigate(`/profile/${userId}`);
   };
 
   if (isLoading.org) {

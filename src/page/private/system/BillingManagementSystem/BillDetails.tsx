@@ -233,7 +233,7 @@ const BillDetails = () => {
     <div className="space-y-6 w-full overflow-y-auto">
       <div className="flex items-center justify-between">
         <div className="flex items-center">
-          <Button variant="ghost" onClick={() => navigate('/p/billing/history')} className="mr-4">
+          <Button variant="ghost" onClick={() => navigate('/billing/history')} className="mr-4">
             <ChevronLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
@@ -392,7 +392,7 @@ const BillDetails = () => {
           )}
         </CardContent>
         <CardFooter className="flex justify-between gap-2 pt-6 border-t">
-          <Button variant="outline" onClick={() => navigate('/p/billing')}>
+          <Button variant="outline" onClick={() => navigate('/billing')}>
             <ChevronLeft className="mr-2 h-4 w-4" />
             Back to Dashboard
           </Button>

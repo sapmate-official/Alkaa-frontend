@@ -138,15 +138,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const initializeAuth = async () => {
         try {
-            if (tokenStorage.getAccessToken()) {
-                await validateToken();
-            } else {
+            const accessToken = tokenStorage.getAccessToken();
+            if (!accessToken) {
                 setUser(null);
-                navigate('/auth/signin');
+                setIsLoading(false);
+                return;
+            }
+
+            // Check token expiration client-side first to avoid unnecessary API calls
+            if (tokenStorage.isTokenExpired(accessToken)) {
+                // Try to refresh token if we have a refresh token
+                const refreshToken = tokenStorage.getRefreshToken();
+                if (refreshToken && !tokenStorage.isTokenExpired(refreshToken)) {
+                    try {
+                        const response = await axios.post(
+                            `${backendDomain}/api/v1/general/refresh-token`,
+                            { refreshToken },
+                            { headers: { Authorization: `Bearer ${refreshToken}` } }
+                        );
+
+                        if (response.data.accessToken && response.data.refreshToken) {
+                            tokenStorage.setAccessToken(response.data.accessToken);
+                            tokenStorage.setRefreshToken(response.data.refreshToken);
+                            await validateToken();
+                        } else {
+                            throw new Error("Invalid refresh response");
+                        }
+                    } catch (refreshError) {
+                        tokenStorage.clearTokens();
+                        setUser(null);
+                    }
+                } else {
+                    tokenStorage.clearTokens();
+                    setUser(null);
+                }
+            } else {
+                await validateToken();
             }
         } catch (error) {
             console.error("Auth initialization error:", error);
-            // For non-401 errors, we may want to show a message
             if (axios.isAxiosError(error) && error.response?.status !== 401) {
                 console.error("Error during authentication:", error.response?.data?.message);
             }
@@ -167,7 +197,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 if (response.data.accessToken && response.data.refreshToken) {
                     tokenStorage.setAccessToken(response.data.accessToken);
                     tokenStorage.setRefreshToken(response.data.refreshToken);
-                     await validateToken();
+                    await validateToken();
                     return undefined; // No error
                 }
                 throw new Error("No tokens received");

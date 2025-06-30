@@ -31,28 +31,46 @@ const Home = () => {
         setIsLoading(true);
         if (!user?.id) return;
         
-        // If we already have data, don't fetch again
+        // If we already have cached data, show it immediately and skip loading
         if (dashboardData) {
           setIsLoading(false);
+          // Still fetch fresh data in background but don't block UI
+          Promise.all([
+            axios.get(`${APIDictionary.attendance}/manager/live/${user?.id}`, { withCredentials: true }),
+            axios.get(`${APIDictionary.events}`, { withCredentials: true })
+          ]).then(([attendanceResponse, specialEventsResponse]) => {
+            setAttendanceData(attendanceResponse?.data?.attendanceRecords || {});
+            setEmployee(attendanceResponse?.data?.users || []);
+            if (specialEventsResponse?.data?.success) {
+              setSpecialEvents(specialEventsResponse.data.data);
+            }
+          }).catch(error => {
+            console.error('Error fetching background data:', error);
+          });
           return;
         }
         
-        const [dashboardResponse, attendanceResponse, specialEventsResponse] = await Promise.all([
-          axios.get(`${APIDictionary.dashboard(user.id)}`, { withCredentials: true }),
+        // Initial load - fetch essential data first for faster UI rendering
+        const dashboardResponse = await axios.get(`${APIDictionary.dashboard(user.id)}`, { withCredentials: true });
+        setDashboardData(dashboardResponse?.data);
+        setIsLoading(false); // Show UI immediately after essential data loads
+        
+        // Fetch non-critical data in parallel after UI is rendered
+        Promise.all([
           axios.get(`${APIDictionary.attendance}/manager/live/${user?.id}`, { withCredentials: true }),
           axios.get(`${APIDictionary.events}`, { withCredentials: true })
-        ]);
+        ]).then(([attendanceResponse, specialEventsResponse]) => {
+          setAttendanceData(attendanceResponse?.data?.attendanceRecords || {});
+          setEmployee(attendanceResponse?.data?.users || []);
+          if (specialEventsResponse?.data?.success) {
+            setSpecialEvents(specialEventsResponse.data.data);
+          }
+        }).catch(error => {
+          console.error('Error fetching additional data:', error);
+        });
         
-        setAttendanceData(attendanceResponse?.data?.attendanceRecords || {});
-        setEmployee(attendanceResponse?.data?.users || []);
-        setDashboardData(dashboardResponse?.data);
-        
-        if (specialEventsResponse?.data?.success) {
-          setSpecialEvents(specialEventsResponse.data.data);
-        }
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
-      } finally {
         setIsLoading(false);
       }
     };
@@ -156,8 +174,8 @@ const Home = () => {
           <Button onClick={refreshDashboard} variant="outline" size="sm" disabled={isLoading}>
             {isLoading ? 'Loading...' : 'Refresh'}
           </Button>
-          <Button onClick={() => navigate('/p/attendance')}>Mark Attendance</Button>
-          <Button onClick={() => navigate('/p/leaverequest/create')} variant="outline">
+          <Button onClick={() => navigate('/attendance')}>Mark Attendance</Button>
+          <Button onClick={() => navigate('/leave/request')} variant="outline">
             Request Leave
           </Button>
         </div>
@@ -304,19 +322,19 @@ const Home = () => {
                 title="View Profile"
                 description="Check and update your profile information"
                 icon={<Users className="h-6 w-6 text-primary" />}
-                onClick={() => navigate('/p/profile')}
+                onClick={() => navigate('/profile')}
               />
               <QuickActionCard
                 title="Leave Balance"
                 description="Check your remaining leave balance"
                 icon={<CalendarDays className="h-6 w-6 text-primary" />}
-                onClick={() => navigate('/p/leavebalance')}
+                onClick={() => navigate('/leave')}
               />
               <QuickActionCard
                 title="Attendance History"
                 description="View your attendance records"
                 icon={<Clock className="h-6 w-6 text-primary" />}
-                onClick={() => navigate('/p/attendance/history')}
+                onClick={() => navigate('/attendance')}
               />
             </>
           )}
