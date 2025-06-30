@@ -160,21 +160,52 @@ const DashboardOfPayroll = () => {
   };
 
   // Function to download payslip
-  const downloadPayslip = () => {
+  const downloadPayslip = async () => {
     if (!selectedPayslip) return;
 
     try {
-      // Create the download URL
-      const downloadUrl = APIV3Dictionary.payroll.downloadPayslip(selectedPayslip.id);
+      setIsLoading(true);
 
-      // Notify user
+      // Make authenticated request to download PDF
+      const response = await axios.get(
+        APIV3Dictionary.payroll.downloadPayslip(selectedPayslip.id),
+        { 
+          responseType: 'blob', 
+          withCredentials: true,
+          headers: {
+            'Accept': 'application/pdf'
+          },
+          params: {
+            format: 'html' // Use HTML-based PDF generation
+          }
+        }
+      );
+      
+      // Create a blob and generate download link
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create filename based on payslip data
+      const monthName = new Date(selectedPayslip.year, selectedPayslip.month - 1, 1)
+        .toLocaleString('default', { month: 'long' });
+      const fileName = `payslip-${user?.firstName || 'Employee'}-${user?.lastName || ''}-${monthName}-${selectedPayslip.year}.pdf`;
+      
+      // Create and trigger download
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      // Notify user of success
       toast({
-        title: 'Download initiated',
-        description: 'Your payslip download will begin shortly.',
+        title: 'Success',
+        description: 'Payslip downloaded successfully.',
       });
-
-      // Open the download in a new window/tab
-      window.open(downloadUrl, '_blank');
     } catch (error) {
       console.error('Error downloading payslip:', error);
       toast({
@@ -182,6 +213,8 @@ const DashboardOfPayroll = () => {
         description: 'Failed to download payslip. Please try again.',
         variant: 'destructive',
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 

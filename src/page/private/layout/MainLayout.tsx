@@ -105,12 +105,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     const baseLinks = userDetails?.superAdmin ? [
       {
         label: "Organization",
-        href: "/p/organization",
+        href: "/organization",
         icon: <IconBuildingBank className="h-5 w-5" />
       },
       {
         label: "Permission",
-        href: "/p/permission",
+        href: "/organization/permissions",
         icon: <ShieldCheck className="h-5 w-5" />
       }
     ] : [];
@@ -123,7 +123,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         if (!attendanceExists) {
           baseLinks.push({
             label: "Attendance",
-            href: "/p/attendance",
+            href: "/attendance",
             icon: <IconUserBolt className="h-5 w-5" />
           });
         }
@@ -131,73 +131,73 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         if (baseLinks.some(link => link.label === "Profile")) continue;
         baseLinks.push({
           label: "Profile",
-          href: "/p/profile",
+          href: "/profile",
           icon: <IconId className="h-5 w-5" />
         });
       } else if (permission?.key === "read_leave_type") {
         if (baseLinks.some(link => link.label === "Leave Type")) continue;
         baseLinks.push({
           label: "Leave Type",
-          href: "/p/leavetype",
+          href: "/leave/type",
           icon: <Leaf className="h-5 w-5" />
         });
       } else if (permission.key === "leave_request" ) {
         baseLinks.push({
           label: `Leave Request  ${leaveRequestsNumber > 0 ? `(${leaveRequestsNumber})` : ""}`,
-          href: "/p/leaverequest",
+          href: "/leave/request",
           icon: <IconFileDescription className="h-5 w-5" />
         });
       } else if (permission.key === "view_leave_balance") {
         if (baseLinks.some(link => link.label === "Leave Balance")) continue;
         baseLinks.push({
           label: "Leave Balance",
-          href: "/p/leavebalance",
+          href: "/leave/balance",
           icon: <IconCalendarStats className="h-5 w-5" />
         });
       } else if (permission.module === "Notification") {
         if (baseLinks.some(link => link.label === "Notification")) continue;
         baseLinks.push({
           label: "Notification",
-          href: "/p/notification",
+          href: "/system/notification",
           icon: <IconBellRinging className="h-5 w-5" />
         });
       } else if (permission.module === "Organization") {
         if (baseLinks.some(link => link.label === "Organization")) continue;
         baseLinks.push({
           label: "Organization",
-          href: "/p/organization",
+          href: "/organization",
           icon: <IconBuildingBank className="h-5 w-5" />
         });
       } else if (permission?.key === "view_own_department_info" || permission?.key === "view_list_of_department" || permission?.key === "view_all_department_info") {
         if (baseLinks.some(link => link.label === "Department")) continue;
         baseLinks.push({
           label: "Department",
-          href: "/p/department",
+          href: "/department",
           icon: <IconBuildingSkyscraper className="h-5 w-5" />
         });
       } else if (permission.name === "Manage User Roles") {
         baseLinks.push({
           label: "Roles & Permission",
-          href: "/p/role",
+          href: "/organization/roles",
           icon: <UserCog className="h-5 w-5" />
         });
       } else if (permission?.key === "view_holiday") {
         baseLinks.push({
           label: "Holiday",
-          href: "/p/holiday",
+          href: "/system/holiday",
           icon: <IconCalendarEvent className="h-5 w-5" />
         });
       } else if (permission?.key === "view_all_activities" || permission?.key === "view_subordinate_activities") {
         if (baseLinks.some(link => link.label === "Activity Logs")) continue;
         baseLinks.push({
           label: "Activity Logs",
-          href: "/p/activity-logs",
+          href: "/system/activity-logs",
           icon: <Activity className="h-5 w-5" />
         });
       } else if (permission?.key === "view_salary_slip_to_myself") {
         baseLinks.push({
           label: "Payroll",
-          href: "/p/new-payroll",
+          href: "/payroll",
           icon: <IconCoin className="h-5 w-5" />
         });
       } 
@@ -211,7 +211,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
        else if (permission?.key === "view_billing") {
         baseLinks.push({
           label: "Billing",
-          href: "/p/billing",
+          href: "/billing",
           icon: <IconReceipt2 className="h-5 w-5" />
         });
       }

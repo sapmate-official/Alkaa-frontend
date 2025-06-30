@@ -5,7 +5,7 @@ const ListOfNotificationTemplate = () => {
     const navigate = useNavigate()
     return (
         <div>
-            <Button onClick={() => navigate?.("/p/notification/template/create")}>Create Template</Button>
+            <Button onClick={() => navigate?.("/system/notification/template/create")}>Create Template</Button>
             ListOfNotificationTemplate
         </div>
     )

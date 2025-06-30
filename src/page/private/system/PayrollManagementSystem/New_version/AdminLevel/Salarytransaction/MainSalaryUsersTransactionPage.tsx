@@ -621,7 +621,7 @@ const MainSalaryUsersTransactionPage: React.FC = () => {
   };
 
   return (
-    <div className="container p-4 mx-auto overflow-y-auto">
+    <div className="p-4 w-full h-screen">
       <h1 className="text-3xl font-bold mb-6">Salary Transaction Management</h1>
       
       {/* Top section with month/year selection and report */}

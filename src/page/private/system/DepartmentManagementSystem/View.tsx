@@ -148,10 +148,10 @@ const SpecificDepartmentView = () => {
         response = await axios.get(`${APIDictionary.department}/${user.Department[0].id}`)
         setDepartment(response.data)
         if (!response.data) {
-          navigate("/p/department/")
+          navigate("/department/")
         }
       } else {
-        navigate("/p/department/")
+        navigate("/department/")
       }
     } catch (error) {
       console.error('Error fetching department:', error)
@@ -160,7 +160,7 @@ const SpecificDepartmentView = () => {
         description: 'Failed to load department information',
         variant: 'destructive'
       })
-      navigate("/p/department/")
+      navigate("/department/")
     } finally {
       setIsLoading(false)
     }
@@ -219,7 +219,7 @@ const SpecificDepartmentView = () => {
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => navigate("/p/department/")}
+            onClick={() => navigate("/department/")}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -255,7 +255,7 @@ const SpecificDepartmentView = () => {
                       Parent: <Button 
                         variant="link" 
                         className="p-0 h-auto text-sm"
-                        onClick={() => navigate(`/p/department/${department.parentDepartment?.id}`)}
+                        onClick={() => navigate(`/department/${department.parentDepartment?.id}`)}
                       >
                         {department.parentDepartment?.name}
                       </Button>
@@ -414,7 +414,7 @@ const SpecificDepartmentView = () => {
                     variant="ghost" 
                     size="sm" 
                     className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
-                    onClick={() => navigate(`/p/profile/${department?.departmentHead?.id}`)}
+                    onClick={() => navigate(`/profile/${department?.departmentHead?.id}`)}
                   >
                     View Profile
                   </Button>
@@ -478,7 +478,7 @@ const SpecificDepartmentView = () => {
                       <TableRow 
                         key={member.id} 
                         className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => navigate(`/p/profile/${member.id}`)}
+                        onClick={() => navigate(`/profile/${member.id}`)}
                       >
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">

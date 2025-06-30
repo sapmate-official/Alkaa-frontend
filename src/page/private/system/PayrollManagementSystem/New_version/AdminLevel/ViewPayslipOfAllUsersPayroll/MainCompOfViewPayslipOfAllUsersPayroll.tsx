@@ -37,6 +37,7 @@ import { MonthYearPicker } from '../../ui/MonthYearPicker'
 import { useAuth } from '@/services/AuthContext'
 import { APIDictionary } from '@/api/v2/APIdict'
 import { APIV3Dictionary } from '@/api/v3/Api3Dicts'
+import { usePayslipPDF } from '../../../../../../../hooks/usePayslipPDF.tsx'
 
 // Types
 interface User {
@@ -123,6 +124,9 @@ interface StatisticsResponse {
 const MainCompOfViewPayslipOfAllUsersPayroll = () => {
   
   const { user } = useAuth()
+  
+  // PDF generation hook - must be at component level
+  const { generatePayslipPDF } = usePayslipPDF()
   
   // State management
   const [users, setUsers] = useState<User[]>([])
@@ -306,29 +310,37 @@ const MainCompOfViewPayslipOfAllUsersPayroll = () => {
     }
   }
   
-  // Handle download payslip
+  // Handle download payslip with new frontend PDF generation
   const handleDownloadPayslip = async (payslip: Payslip) => {
     if (!payslip) return
     
     try {
-      const response = await axios.get(
-        APIV3Dictionary.payroll.downloadPayslip(payslip.id),
-        { responseType: 'blob',
-          withCredentials: true, // Include credentials for CORS requests
-         }
-      )
-      
-      // Create a download link
-      const url = window.URL.createObjectURL(new Blob([response.data]))
-      const link = document.createElement('a')
-      link.href = url
-      link.setAttribute('download', `payslip-${payslip.month}-${payslip.year}.pdf`)
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
+      // Use the new frontend PDF generation with preview modal
+      await generatePayslipPDF(payslip.id);
     } catch (error) {
-      console.error('Error downloading payslip:', error)
-      alert('Failed to download payslip. Please try again.')
+      console.error('Error generating payslip PDF:', error);
+      
+      // Fallback to old method if needed
+      try {
+        const response = await axios.get(
+          APIV3Dictionary.payroll.downloadPayslip(payslip.id),
+          { responseType: 'blob',
+            withCredentials: true, // Include credentials for CORS requests
+           }
+        )
+        
+        // Create a download link
+        const url = window.URL.createObjectURL(new Blob([response.data]))
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', `payslip-${payslip.month}-${payslip.year}.pdf`)
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+      } catch (fallbackError) {
+        console.error('Error downloading payslip (fallback):', fallbackError)
+        alert('Failed to download payslip. Please try again.')
+      }
     }
   }
   
@@ -338,7 +350,7 @@ const MainCompOfViewPayslipOfAllUsersPayroll = () => {
   }
   
   return (
-    <div className="h-screen overflow-hidden flex flex-col">
+    <div className="h-screen overflow-hidden flex flex-col w-screen px-4">
       {/* Header */}
       <div className="flex-shrink-0 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4">
@@ -353,58 +365,55 @@ const MainCompOfViewPayslipOfAllUsersPayroll = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left Panel - Fixed and Scrollable */}
-        <div className="w-80 flex-shrink-0 border-r bg-background">
-          <Card className="h-full rounded-none border-0">
-            <CardHeader className="bg-primary text-primary-foreground flex-shrink-0">
-              <CardTitle className="flex items-center text-lg">
-                <Users className="mr-2 h-5 w-5" />
-                Employees ({users.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0 flex-1 overflow-hidden">
-              <ScrollArea className="h-full">
-                {userLoading ? (
-                  <div className="flex flex-col gap-2 p-4">
-                    {[1, 2, 3, 4, 5].map((n) => (
-                      <Skeleton key={n} className="h-16 w-full" />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="divide-y">
-                    {users.length > 0 ? (
-                      users.map((user) => (
-                        <button
-                          key={user.id}
-                          onClick={() => handleSelectUser(user)}
-                          className={`w-full px-4 py-4 text-left hover:bg-muted/50 transition-colors flex flex-col gap-2 ${
-                            selectedUser?.id === user.id ? 'bg-muted border-r-2 border-primary' : ''
-                          }`}
-                        >
-                          <span className="font-medium text-sm">
-                            {user.firstName || ''} {user.lastName || ''}
+        <div className="w-80 flex-shrink-0 border-r bg-background flex flex-col overflow-hidden">
+          <div className="bg-primary text-primary-foreground p-4 flex-shrink-0">
+            <h3 className="flex items-center text-lg font-semibold">
+              <Users className="mr-2 h-5 w-5" />
+              Employees ({users.length})
+            </h3>
+          </div>
+          
+          <ScrollArea className="flex-1">
+            {userLoading ? (
+              <div className="flex flex-col gap-2 p-4">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <Skeleton key={n} className="h-16 w-full" />
+                ))}
+              </div>
+            ) : (
+              <div className="divide-y">
+                {users.length > 0 ? (
+                  users.map((user) => (
+                    <button
+                      key={user.id}
+                      onClick={() => handleSelectUser(user)}
+                      className={`w-full px-4 py-4 text-left hover:bg-muted/50 transition-colors flex flex-col gap-2 ${
+                        selectedUser?.id === user.id ? 'bg-muted border-r-2 border-primary' : ''
+                      }`}
+                    >
+                      <span className="font-medium text-sm">
+                        {user.firstName || ''} {user.lastName || ''}
+                      </span>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs text-muted-foreground">
+                          ID: {user.employeeId || 'N/A'}
+                        </span>
+                        {user.department?.name && (
+                          <span className="text-xs text-muted-foreground">
+                            Dept: {user.department.name}
                           </span>
-                          <div className="flex flex-col gap-1">
-                            <span className="text-xs text-muted-foreground">
-                              ID: {user.employeeId || 'N/A'}
-                            </span>
-                            {user.department?.name && (
-                              <span className="text-xs text-muted-foreground">
-                                Dept: {user.department.name}
-                              </span>
-                            )}
-                          </div>
-                        </button>
-                      ))
-                    ) : (
-                      <div className="p-4 text-center text-muted-foreground">
-                        No employees found
+                        )}
                       </div>
-                    )}
+                    </button>
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-muted-foreground">
+                    No employees found
                   </div>
                 )}
-              </ScrollArea>
-            </CardContent>
-          </Card>
+              </div>
+            )}
+          </ScrollArea>
         </div>
         
         {/* Right Panel - Fixed to Screen */}

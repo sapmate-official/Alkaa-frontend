@@ -81,16 +81,16 @@ export const SpecialEvents: React.FC<SpecialEventsProps> = ({ events, isLoading 
         // No action needed for birthdays
         break
       case 'BILL':
-        navigate(`/p/billing/view/${event.entity.id}`)
+        navigate(`/billing/view/${event.entity.id}`)
         break
       case 'LEAVE_REQUEST':
-        navigate(`/p/leaverequest/approve`)
+        navigate(`/leave/request/approve`)
         break
       case 'MONTH_END_VERIFICATION':
-        navigate('/p/attendance/verification')
+        navigate('/attendance/verification')
         break
       case 'INCOMPLETE_ATTENDANCE':
-        navigate('/p/attendance/pastdays')
+        navigate('/attendance/pastdays')
         break
     }
   }

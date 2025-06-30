@@ -5,9 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:clean": "npm run clean && npm run dev",
+    "dev:fast": "vite --force",
     "build": "tsc -b && vite build",
+    "build:analyze": "npm run build && npx vite-bundle-analyzer dist",
+    "build:prod": "NODE_ENV=production npm run build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "clean": "rm -rf dist node_modules/.vite",
+    "clean:all": "rm -rf dist node_modules/.vite node_modules && npm install"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -41,6 +47,7 @@
     "cmdk": "^1.1.1",
     "date-fns": "^3.6.0",
     "framer-motion": "^12.0.0-alpha.1",
+    "html2canvas": "^1.4.1",
     "jotai": "^2.11.1",
     "jspdf": "^3.0.1",
     "jspdf-autotable": "^5.0.2",

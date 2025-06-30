@@ -166,7 +166,7 @@ const LeaveRequestCreate = () => {
           reason: '',
           isSameDayLeave: false
         })
-        navigate("/p/leaverequest");
+        navigate("/leave/request");
       }
     } catch (error) {
       toast({
@@ -208,7 +208,7 @@ const LeaveRequestCreate = () => {
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbLink  onClick={()=>navigate("/p/leaverequest")}>Leave Requests</BreadcrumbLink>
+              <BreadcrumbLink  onClick={()=>navigate("/leave/request")}>Leave Requests</BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>Create Request</BreadcrumbItem>
@@ -226,7 +226,7 @@ const LeaveRequestCreate = () => {
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={() => navigate('/p/leaverequest')}
+              onClick={() => navigate('/leave/request')}
               className="flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" /> Back to Requests

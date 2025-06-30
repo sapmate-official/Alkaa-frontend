@@ -52,7 +52,7 @@ export const ButtonOfSpecificDepartmentEdit = ({id, user}: {
     <Button
       variant="outline"
       size="sm"
-      onClick={() => navigate(`/p/department/${id}/edit`)}
+      onClick={() => navigate(`/department/${id}/edit`)}
       className="flex items-center gap-2"
     >
       <Pencil className="h-4 w-4" />
@@ -113,7 +113,7 @@ const SpecificDepartmentEdit = () => {
         title: "Error",
         description: "Failed to fetch department details"
       })
-      navigate("/p/department/list")
+      navigate("/department/list")
     } finally {
       setIsLoading(false)
     }
@@ -164,7 +164,7 @@ const SpecificDepartmentEdit = () => {
         title: "Department deleted",
         description: "Department has been successfully deleted"
       })
-      navigate('/p/department/list')
+      navigate('/department/list')
     } catch (error) {
       console.error('Error deleting department:', error)
       toast({
@@ -189,7 +189,7 @@ const SpecificDepartmentEdit = () => {
         title: "Changes saved",
         description: "Department information has been updated successfully"
       })
-      navigate(`/p/department/${id}`)
+      navigate(`/department/${id}`)
     } catch (error) {
       console.error('Error updating department:', error)
       toast({
@@ -210,7 +210,7 @@ const SpecificDepartmentEdit = () => {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/p/department/list">Departments</BreadcrumbLink>
+            <BreadcrumbLink href="/department/list">Departments</BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
@@ -228,7 +228,7 @@ const SpecificDepartmentEdit = () => {
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => navigate(`/p/department/${id}`)}
+            onClick={() => navigate(`/department/${id}`)}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -330,7 +330,7 @@ const SpecificDepartmentEdit = () => {
               <Button 
                 type="button" 
                 variant="outline" 
-                onClick={() => navigate(`/p/department/${id}`)}
+                onClick={() => navigate(`/department/${id}`)}
               >
                 Cancel
               </Button>

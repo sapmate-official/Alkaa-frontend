@@ -35,7 +35,7 @@ export const AllUsersTab = ({
           </div>
           {canViewDetailedInfo && (
             <Button
-              onClick={() => navigate('/p/employee/create')}
+              onClick={() => navigate('/employee/create')}
               className="bg-primary hover:bg-primary/90"
             >
               Hire Employee

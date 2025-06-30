@@ -95,7 +95,7 @@ export const DepartmentsTab = ({
                       className={`border p-4 rounded-lg hover:bg-muted/50 cursor-pointer ${
                         canViewAllDepartments ? "" : "pointer-events-none"
                       }`}
-                      onClick={() => canViewAllDepartments && navigate(`/p/department/${dept.id}`)}
+                      onClick={() => canViewAllDepartments && navigate(`/department/${dept.id}`)}
                     >
                       <p className="font-medium">{dept.name}</p>
                       {canViewAllDepartments && (

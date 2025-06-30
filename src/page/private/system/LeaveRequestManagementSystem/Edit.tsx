@@ -44,7 +44,7 @@ const EditLeaveRequest = () => {
           description: "Failed to fetch leave request details",
           variant: "destructive"
         })
-        navigate('/p/leaverequest')
+        navigate('/leave/request')
       }
     }
 
@@ -75,7 +75,7 @@ const EditLeaveRequest = () => {
           title: "Success",
           description: "Leave request updated successfully"
         })
-        navigate('/p/leaverequest')
+        navigate('/leave/request')
       }
     } catch (error) {
       toast({
@@ -137,7 +137,7 @@ const EditLeaveRequest = () => {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => navigate('/p/leaverequest')}
+                    onClick={() => navigate('/leave/request')}
                   >
                     Cancel
                   </Button>

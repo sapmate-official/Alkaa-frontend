@@ -52,7 +52,7 @@ const ListOfNotification = () => {
                 <div className="flex gap-2">
                     <NotificationTest />
                     <NotificationSubscribe />
-                    <Button onClick={()=>navigate("/p/notification/template")}>
+                    <Button onClick={()=>navigate("/system/notification/template")}>
                         Create Template
                     </Button>
                 </div>

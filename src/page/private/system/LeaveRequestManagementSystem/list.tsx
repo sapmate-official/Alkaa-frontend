@@ -94,7 +94,7 @@ const LeaveRequestList = () => {
   }
 
   const handleEdit = (id: string) => {
-    navigate(`/p/leaverequest/edit/${id}`)
+    navigate(`/leave/request/edit/${id}`)
   }
 
   const handleDelete = async (id: string) => {
@@ -136,12 +136,12 @@ const LeaveRequestList = () => {
         <h2 className="text-3xl font-bold">My Leave Requests</h2>
         <div className='flex space-x-4'>
           {canCreateLeaveRequest && (
-            <Button onClick={() => navigate('/p/leaverequest/create')}>
+            <Button onClick={() => navigate('/leave/request/create')}>
               Create Leave Request
             </Button>
           )}
           {canApproveLeaveRequest && (
-            <Button onClick={() => navigate('/p/leaverequest/approve')}>
+            <Button onClick={() => navigate('/leave/request/approve')}>
               Approve Leave Request
             </Button>
           )}

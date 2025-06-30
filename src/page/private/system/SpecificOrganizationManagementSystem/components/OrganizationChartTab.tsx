@@ -487,7 +487,6 @@ const OrganizationChartFlow = ({
               if (!processedUsers.has(siblingId)) {
                 // Position siblings at the same level as current user (level 0)
                 const siblingSpacing = NODE_WIDTH + HORIZONTAL_SPACING;
-                const totalSiblingsIncludingCurrent = manager.subordinates!.length;
                 const currentUserIndex = manager.subordinates!.findIndex(sub => {
                   const subId = typeof sub === 'string' ? sub : sub.id;
                   return subId === userId;
@@ -519,10 +518,8 @@ const OrganizationChartFlow = ({
                   });
 
                   // CLEANER EDGE LOGIC - Use step edges with waypoints for clarity
-                  const managerY = -LEVEL_HEIGHT;
                   
                   // Create edge from manager to sibling with custom waypoints to avoid crossing
-                  const waypoints = [];
                   
                   // Calculate horizontal distance from manager to sibling
                   const horizontalDistance = Math.abs(siblingX - x);

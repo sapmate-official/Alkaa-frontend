@@ -165,7 +165,7 @@ const BillHistory = () => {
     return (
       <div className="space-y-6">
         <div className="flex items-center mb-6">
-          <Button variant="ghost" onClick={() => navigate('/p/billing')} className="mr-2">
+          <Button variant="ghost" onClick={() => navigate('/billing')} className="mr-2">
             <ChevronLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
@@ -192,7 +192,7 @@ const BillHistory = () => {
   if (error) {
     return (
       <div className="space-y-6">
-        <Button variant="ghost" onClick={() => navigate('/p/billing')}>
+        <Button variant="ghost" onClick={() => navigate('/billing')}>
           <ChevronLeft className="mr-2 h-4 w-4" />
           Back to Billing Dashboard
         </Button>
@@ -210,7 +210,7 @@ const BillHistory = () => {
     <div className="space-y-6 w-full overflow-y-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div className="flex items-center">
-          <Button variant="ghost" onClick={() => navigate('/p/billing')} className="mr-2">
+          <Button variant="ghost" onClick={() => navigate('/billing')} className="mr-2">
             <ChevronLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
@@ -323,7 +323,7 @@ const BillHistory = () => {
                         <Button 
                           variant="outline"
                           size="sm"
-                          onClick={() => navigate(`/p/billing/bill/${bill.id}`)}
+                          onClick={() => navigate(`/billing/bill/${bill.id}`)}
                         >
                           <FileText className="mr-2 h-4 w-4" />
                           View

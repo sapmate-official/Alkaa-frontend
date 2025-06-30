@@ -71,7 +71,7 @@ const BankDetails = () => {
         description: "You don't have permission to edit bank details.",
         variant: "destructive"
       });
-      navigate('/p/profile');
+      navigate('/profile');
       return;
     }
     

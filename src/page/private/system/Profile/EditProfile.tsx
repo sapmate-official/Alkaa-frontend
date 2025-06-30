@@ -132,7 +132,7 @@ const ProfileEdit = () => {
     };
     
     if (!canEditProfile) {
-      navigate('/p/profile');
+      navigate('/profile');
       return;
     }
     

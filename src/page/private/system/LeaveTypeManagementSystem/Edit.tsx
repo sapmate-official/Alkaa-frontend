@@ -55,7 +55,7 @@ const EditLeaveType = () => {
                     description: "Failed to fetch leave type",
                     variant: "destructive",
                 });
-                navigate('/p/leavetype');
+                navigate('/leave/type');
             }
         };
 
@@ -78,7 +78,7 @@ const EditLeaveType = () => {
                 title: "Success",
                 description: "Leave type updated successfully",
             });
-            navigate('/p/leavetype');
+            navigate('/leave/type');
         } catch (error) {
             toast({
                 title: "Error",
@@ -223,7 +223,7 @@ const EditLeaveType = () => {
                         <Button 
                             type="button" 
                             variant="outline"
-                            onClick={() => navigate('/p/leavetype')}
+                            onClick={() => navigate('/leave/type')}
                         >
                             Cancel
                         </Button>
