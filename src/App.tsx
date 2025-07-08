@@ -16,6 +16,7 @@ import RouteDict from './routes/RouteDict';
 import Home from './page/private/Home.tsx';
 import { MainLayout } from './page/private/layout/MainLayout';
 import RolesPermissionsManagement from './page/private/system/RoleManagementSystem/RoleManagementDashboard.tsx';
+import HolidayManagementSystem from './page/private/system/HolidayManagementSystem/HolidayDashboard.tsx';
 
 // Public pages
 const LandingPage = lazy(() => import('./page/public/LandingPage'));
@@ -168,12 +169,17 @@ const ClientRoute = () => {
           <ClientOrganizationModule />
         </PermissionRouteBasedOnKey>
       } />
+
       <Route path="/role/" element={
         <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['view_organization_basic_details', 'see_team_details', 'view_own_department_info', 'view_organization_detailed_info']}>
           <RolesPermissionsManagement />
         </PermissionRouteBasedOnKey>
       } />
-
+      <Route path="/holiday/" element={
+        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['view_organization_basic_details', 'see_team_details', 'view_own_department_info', 'view_organization_detailed_info']}>
+          <HolidayManagementSystem />
+        </PermissionRouteBasedOnKey>
+      } />
       <Route path="/system/*" element={<SystemModule />} />
 
       <Route path="/logout" element={<Logout />} />

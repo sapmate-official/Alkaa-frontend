@@ -137,7 +137,7 @@ const CreateEmployeeNew = () => {
   const fetchEmployees = async () => {
     try {
       const response = await axios.get(
-        `${APIDictionary.Organization}/employees/${user?.orgId}`,
+        `${APIDictionary.Organization}/employee-list/${user?.orgId}`,
         { withCredentials: true }
       );
       setEmployees(response.data || []);
