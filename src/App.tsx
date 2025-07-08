@@ -9,6 +9,7 @@ import { useAtom } from 'jotai';
 import { permissionListAtom } from './store/atom';
 import PermissionRouteBasedOnKey from './components/RouteSecurityWrapper/PermissionBasedOnKey';
 import { Toaster } from './components/ui/toaster';
+import RouteDict from './routes/RouteDict';
 
 // OPTIMIZED LAZY LOADING STRATEGY - GROUPED BY MODULES
 // Critical/Essential components (load immediately)
@@ -30,7 +31,8 @@ const BillingModule = lazy(() => import('./page/private/system/BillingManagement
 const LeaveModule = lazy(() => import('./page/private/system/LeaveManagementSystem/LeaveModule'));
 
 // Admin modules (less frequently used)
-const OrganizationModule = lazy(() => import('./page/private/system/OrganizationManagementSystem/OrganizationModule'));
+const OrganizationModule = lazy(() => import('./page/private/system/OrganizationManagementSystem/OrganizationModule')); // For Super Admin
+const ClientOrganizationModule = lazy(() => import('./page/private/system/SpecificOrganizationManagementSystem/ClientOrganizationModule')); // For Client
 const SystemModule = lazy(() => import('./page/private/system/SystemManagement/SystemModule'));
 
 // Individual components that don't fit into modules
@@ -49,7 +51,7 @@ function App() {
           <Route path="/reset-password/:token" element={<SetPassword />} />
           <Route path="/auth/signin" element={<AuthProvider><SignIn /></AuthProvider>} />
           
-          {/* Protected Routes - Wrapped in AuthProvider */}
+          {/* Protected Routes - All other routes that aren't public */}
           <Route
             path="/p/*"
             element={
@@ -111,7 +113,7 @@ const ProtectedRoute: React.FC = () => {
   }
 
   if (!user && !isLoading) {
-    return <Navigate to="/auth/signin" replace />;
+    return <Navigate to={RouteDict.SignInPage} replace />;
   }
 
   if (userDetails?.superAdmin) {
@@ -125,6 +127,7 @@ const ClientRoute = () => {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+      <Route path="/home" element={<Home />} />
       <Route path="/profile/*" element={<ProfileModule />} />
 
       <Route path="/leave/*" element={
@@ -161,7 +164,7 @@ const ClientRoute = () => {
 
       <Route path="/organization/*" element={
         <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['view_organization_basic_details', 'see_team_details', 'view_own_department_info', 'view_organization_detailed_info']}>
-          <OrganizationModule />
+          <ClientOrganizationModule />
         </PermissionRouteBasedOnKey>
       } />
 

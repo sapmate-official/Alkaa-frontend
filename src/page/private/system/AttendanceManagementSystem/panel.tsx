@@ -27,6 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Clock, MapPin, Laptop, Calendar, UserCheck, ClipboardList, CheckCircle, XCircle, Layers, History } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import LazyLocationViewer from '@/components/LazyLocationViewer';
+import RouteDict from '@/routes/RouteDict';
 
 interface SessionInfo {
   sessionNumber: number;
@@ -426,7 +427,7 @@ const AttendancePanel = () => {
         <div className='flex flex-wrap gap-3'>
           {canModifyPastAttendance && (
             <Button
-              onClick={() => router('/p/attendance/past-not-checked-days')}
+              onClick={() => router(RouteDict.Attendance.PastDays)}
               variant="outline"
               className="bg-indigo-600 hover:bg-indigo-700 text-white"
             >
@@ -443,7 +444,7 @@ const AttendancePanel = () => {
           {canViewOthersAttendance && (
             <>
               <Button
-                onClick={() => router('/p/attendance/live')}
+                onClick={() => router(RouteDict.Attendance.LivePanel)}
                 variant="outline"
                 className="bg-emerald-600 hover:bg-emerald-700 text-white"
               >
@@ -451,7 +452,7 @@ const AttendancePanel = () => {
                 Live Panel
               </Button>
               <Button
-                onClick={() => router('/p/attendance/verification')}
+                onClick={() => router(RouteDict.Attendance.Verification)}
                 variant="outline"
                 className="bg-amber-600 hover:bg-amber-700 text-white"
               >
@@ -463,7 +464,7 @@ const AttendancePanel = () => {
 
           {(canViewOwnAttendance || canViewOthersAttendance) && (
             <Button
-              onClick={() => router('/p/attendance/history')}
+              onClick={() => router(RouteDict.Attendance.History)}
               variant="outline"
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >

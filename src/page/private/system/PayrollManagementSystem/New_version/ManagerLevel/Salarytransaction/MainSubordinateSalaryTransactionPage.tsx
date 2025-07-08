@@ -9,6 +9,7 @@ import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 import { UserOptions } from "jspdf-autotable";
 import CheckPermission from '@/services/PermissionCheck';
+import RouteDict from '@/routes/RouteDict';
 import { permissionListAtom } from '@/store/atom';
 import { useAtom } from 'jotai';
 
@@ -124,7 +125,7 @@ const MainSubordinateSalaryTransactionPage: React.FC = () => {
         description: "You don't have permission to access this page.",
         variant: "destructive"
       });
-      navigate("/p/new-payroll");
+      navigate(RouteDict.NewPayroll.Base);
     }
   }, [hasPermission, navigate]);
   

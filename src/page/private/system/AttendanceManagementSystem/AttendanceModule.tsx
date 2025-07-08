@@ -15,7 +15,7 @@ const AttendanceModule = () => {
       <Route path="history" element={<AttendanceHistory />} />
       <Route path="verification" element={<AttendanceVerification />} />
       <Route path="live" element={<AttendanceLivePanel />} />
-      <Route path="past-not-checked-days" element={<PastNotCheckedDays />} />
+      <Route path="pastdays" element={<PastNotCheckedDays />} />
     </Routes>
   );
 };

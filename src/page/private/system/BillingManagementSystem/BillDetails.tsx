@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import RouteDict from '@/routes/RouteDict';
 import axios from 'axios';
 import {
   Card,
@@ -233,7 +234,7 @@ const BillDetails = () => {
     <div className="space-y-6 w-full overflow-y-auto">
       <div className="flex items-center justify-between">
         <div className="flex items-center">
-          <Button variant="ghost" onClick={() => navigate('/billing/history')} className="mr-4">
+          <Button variant="ghost" onClick={() => navigate(RouteDict.Billing.History)} className="mr-4">
             <ChevronLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
@@ -392,7 +393,7 @@ const BillDetails = () => {
           )}
         </CardContent>
         <CardFooter className="flex justify-between gap-2 pt-6 border-t">
-          <Button variant="outline" onClick={() => navigate('/billing')}>
+          <Button variant="outline" onClick={() => navigate(RouteDict.Billing.Base)}>
             <ChevronLeft className="mr-2 h-4 w-4" />
             Back to Dashboard
           </Button>

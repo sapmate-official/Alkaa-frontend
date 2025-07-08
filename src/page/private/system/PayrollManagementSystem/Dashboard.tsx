@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAtom } from 'jotai';
 import { specialEventsAtom } from '@/store/atom';
 import { SpecialEvents } from '@/components/dashboard/SpecialEvents';
+import RouteDict from '@/routes/RouteDict';
 import axios from 'axios';
 
 const PayrollDashboardForAllEmployee = () => {
@@ -76,11 +77,11 @@ const PayrollDashboardForAllEmployee = () => {
 
   const navigate = useNavigate();
   const generateSalary = async () => {
-    navigate("/p/payroll/generate");
+    navigate(RouteDict.Payroll.Generate);
   };
 
   const viewPayrollUsers = () => {
-    navigate("/p/payroll/users");
+    navigate(RouteDict.Payroll.ViewAllEmployees);
   };
 
   const sumObjectValues = (obj?: Record<string, number> | number) => 
