@@ -9,6 +9,7 @@ import { useAtom } from 'jotai';
 import { permissionListAtom } from './store/atom';
 import PermissionRouteBasedOnKey from './components/RouteSecurityWrapper/PermissionBasedOnKey';
 import { Toaster } from './components/ui/toaster';
+import RouteDict from './routes/RouteDict';
 
 // OPTIMIZED LAZY LOADING STRATEGY - GROUPED BY MODULES
 // Critical/Essential components (load immediately)
@@ -111,7 +112,7 @@ const ProtectedRoute: React.FC = () => {
   }
 
   if (!user && !isLoading) {
-    return <Navigate to="/auth/signin" replace />;
+    return <Navigate to={RouteDict.SignInPage} replace />;
   }
 
   if (userDetails?.superAdmin) {

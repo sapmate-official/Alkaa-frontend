@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { backendDomain } from '@/lib/constant/Domain';
 import { useToast } from '@/hooks/use-toast';
+import RouteDict from '@/routes/RouteDict';
 import ProductIntroSection from '@/components/intro/ProductIntroSection';
 import InteractiveDemoSection from '@/components/intro/InteractiveDemoSection';
 import ProblemSolutionSection from '@/components/intro/ProblemSolutionSection';
@@ -345,7 +346,7 @@ const AlkaaLandingPage: React.FC = () => {
             <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Features</a>
             <a href="#testimonials" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Testimonials</a>
             <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
-            <Button onClick={()=>navigate("/auth/signin")} variant="outline">Log in</Button>
+            <Button onClick={()=>navigate(RouteDict.SignInPage)} variant="outline">Log in</Button>
             <Button onClick={()=>setDemoDialogOpen(true)}>Get Started</Button>
           </nav>
           
@@ -408,8 +409,8 @@ const AlkaaLandingPage: React.FC = () => {
                 Pricing
               </a>
               <div className="flex flex-col gap-2 pt-2">
-                <Button onClick={()=>navigate("/auth/signin")} variant="outline">Log in</Button>
-                <Button onClick={()=>navigate("/auth/signup")}>Get Started</Button>
+                <Button onClick={()=>navigate(RouteDict.SignInPage)} variant="outline">Log in</Button>
+                <Button onClick={()=>navigate(RouteDict.SignUpPage)}>Get Started</Button>
               </div>
             </nav>
           </div>        )}      </header>      <main className="flex-1">        {/* New Enhanced Product Introduction */}
@@ -440,7 +441,7 @@ const AlkaaLandingPage: React.FC = () => {
                   See exactly how your HR operations will look with Alkaa's comprehensive dashboard and management tools.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                  <Button onClick={()=>navigate("/auth/signup")} className="text-base px-8 py-6">Get Started Free</Button>
+                  <Button onClick={()=>navigate(RouteDict.SignUpPage)} className="text-base px-8 py-6">Get Started Free</Button>
                   <Button 
                     variant="outline" 
                     className="text-base px-8 py-6"
@@ -531,7 +532,7 @@ const AlkaaLandingPage: React.FC = () => {
                 description="Up to 20 employees"
                 billingInfo="₹5,988 billed annually"
                 buttonText="Get Started"
-                onButtonClick={() => navigate("/auth/signup")}
+                onButtonClick={() => navigate(RouteDict.SignUpPage)}
               />
               <PricingTier
                 title="Growth"
@@ -541,7 +542,7 @@ const AlkaaLandingPage: React.FC = () => {
                 buttonText="Get Started"
                 highlighted={true}
                 popularTag={true}
-                onButtonClick={() => navigate("/auth/signup")}
+                onButtonClick={() => navigate(RouteDict.SignUpPage)}
               />
               <PricingTier
                 title="Enterprise"
@@ -572,7 +573,7 @@ const AlkaaLandingPage: React.FC = () => {
                 Join thousands of companies that use Alkaa to streamline their employee management and boost productivity.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button onClick={()=>navigate("/auth/signup")} className="bg-white text-primary hover:bg-white/90 text-base px-8 py-6">
+                <Button onClick={()=>navigate(RouteDict.SignUpPage)} className="bg-white text-primary hover:bg-white/90 text-base px-8 py-6">
                   Get Started Today
                 </Button>
                 <Button 

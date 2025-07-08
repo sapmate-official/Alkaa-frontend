@@ -3,6 +3,7 @@ import CheckPermission from '@/services/PermissionCheck'
 import { permissionListAtom } from '@/store/atom'
 import { useAtom } from 'jotai'
 import { useNavigate } from 'react-router-dom'
+import RouteDict from '@/routes/RouteDict'
 
 const ButtonOfGenerateSubordinateSalaryPage = () => {
     // this component will render a button which will navigate to the generate salary page
@@ -13,7 +14,7 @@ const ButtonOfGenerateSubordinateSalaryPage = () => {
     const navigate = useNavigate()
   return (
     <div>
-        <Button onClick={()=>navigate("/p/new-payroll/subordinate/generate")} >
+        <Button onClick={()=>navigate(RouteDict.NewPayroll.Generate)} >
             Generate Salary of Subordinates
         </Button>
     </div>

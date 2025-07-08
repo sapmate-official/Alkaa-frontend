@@ -14,6 +14,7 @@ import { Download, Eye, Search, UserCheck } from "lucide-react"
 import { jsPDF } from "jspdf"
 import "jspdf-autotable"
 import { toast } from "@/hooks/use-toast"
+import RouteDict from '@/routes/RouteDict'
 
 interface Employee {
   id: string;
@@ -124,7 +125,7 @@ const PayrollViewAllEmployees = () => {
           response = await axios.get(`${APIDictionary.payroll}/manager/employees`)
         } else {
           // If not admin or manager, navigate back to own payroll view
-          navigate('/p/payroll/own')
+          navigate(RouteDict.Payroll.ViewOwn)
           return
         }
         
@@ -182,7 +183,7 @@ const PayrollViewAllEmployees = () => {
 
   // Function to view a specific employee's payroll details
   const viewEmployeePayroll = (employeeId: string) => {
-    navigate(`/p/payroll/employee/${employeeId}`)
+    navigate(RouteDict.Dynamic.PayrollSlip(employeeId))
   }
 
   // Function to download payroll summary as PDF
@@ -257,7 +258,7 @@ const PayrollViewAllEmployees = () => {
         <CardContent className="p-8 text-center">
           <h2 className="text-xl font-bold mb-4">Access Restricted</h2>
           <p className="mb-4">You don't have permission to view employees' payroll data.</p>
-          <Button onClick={() => navigate('/p/payroll/own')}>
+          <Button onClick={() => navigate(RouteDict.Payroll.ViewOwn)}>
             View Your Payroll
           </Button>
         </CardContent>
@@ -272,7 +273,7 @@ const PayrollViewAllEmployees = () => {
         <div className="flex gap-2">
           <Button 
             variant="outline"
-            onClick={() => navigate('/p/payroll/own')}
+            onClick={() => navigate(RouteDict.Payroll.ViewOwn)}
           >
             <UserCheck className="mr-2 h-4 w-4" /> My Payroll
           </Button>

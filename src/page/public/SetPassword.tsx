@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from '@/hooks/use-toast';
 import { LoaderCircle } from 'lucide-react';
+import RouteDict from '@/routes/RouteDict';
 
 const SetPassword = () => {
   const { token } = useParams();
@@ -38,7 +39,7 @@ const SetPassword = () => {
         variant: "default",
       });
 
-      navigate('/auth/signin');
+      navigate(RouteDict.SignInPage);
     } catch (error) {
       toast({
         title: "Error",

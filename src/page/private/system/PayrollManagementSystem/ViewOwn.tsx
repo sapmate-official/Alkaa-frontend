@@ -14,6 +14,7 @@ import "jspdf-autotable"
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from '@/components/charts'
 import { Download, FileText, TrendingUp } from "lucide-react"
 import { toast } from '@/hooks/use-toast'
+import RouteDict from '@/routes/RouteDict'
 
 interface PayrollData {
   salaryRecords: Array<{
@@ -269,7 +270,7 @@ const PayRollViewOwn = () => {
         <h1 className="text-3xl font-bold tracking-tight">My Payroll Information</h1>
         <Button 
           variant="outline"
-          onClick={() => navigate('/p/payroll/all')}
+          onClick={() => navigate(RouteDict.Payroll.ViewAllEmployees)}
         >
           View All Employees' Payroll
         </Button>

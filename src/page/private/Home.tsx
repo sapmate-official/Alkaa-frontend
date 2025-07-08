@@ -6,6 +6,7 @@ import { useAuth } from '@/services/AuthContext';
 import { Users, Clock, CalendarDays, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import RouteDict from '@/routes/RouteDict';
 import axios from 'axios';
 import { useAtom } from 'jotai';
 import { dashboardDataAtom, specialEventsAtom } from '@/store/atom';
@@ -174,8 +175,8 @@ const Home = () => {
           <Button onClick={refreshDashboard} variant="outline" size="sm" disabled={isLoading}>
             {isLoading ? 'Loading...' : 'Refresh'}
           </Button>
-          <Button onClick={() => navigate('/attendance')}>Mark Attendance</Button>
-          <Button onClick={() => navigate('/leave/request')} variant="outline">
+          <Button onClick={() => navigate(RouteDict.Attendance.Base)}>Mark Attendance</Button>
+          <Button onClick={() => navigate(RouteDict.Leave.Request)} variant="outline">
             Request Leave
           </Button>
         </div>
@@ -322,19 +323,19 @@ const Home = () => {
                 title="View Profile"
                 description="Check and update your profile information"
                 icon={<Users className="h-6 w-6 text-primary" />}
-                onClick={() => navigate('/profile')}
+                onClick={() => navigate(RouteDict.Profile.Base)}
               />
               <QuickActionCard
                 title="Leave Balance"
                 description="Check your remaining leave balance"
                 icon={<CalendarDays className="h-6 w-6 text-primary" />}
-                onClick={() => navigate('/leave')}
+                onClick={() => navigate(RouteDict.Leave.Base)}
               />
               <QuickActionCard
                 title="Attendance History"
                 description="View your attendance records"
                 icon={<Clock className="h-6 w-6 text-primary" />}
-                onClick={() => navigate('/attendance')}
+                onClick={() => navigate(RouteDict.Attendance.Base)}
               />
             </>
           )}

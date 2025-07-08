@@ -1,7 +1,7 @@
 import { APIDictionary } from '@/api/v2/APIdict';
 import { useAuth } from '@/services/AuthContext'
 import axios from 'axios';
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from "@/components/ui/skeleton"
@@ -34,13 +34,15 @@ const SpecificOrganizationView = () => {
   const navigate = useNavigate();
 
   // Check permissions
-  const canViewBasicDetails = permissions?.some(p => p?.key === 'view_organization_basic_details');
-  const canViewTeamDetails = permissions?.some(p => p?.key === 'see_team_details');
-  const canViewOwnDepartment = permissions?.some(p => p?.key === 'view_own_department_info');
-  const canViewDepartmentList = permissions?.some(p => p?.key === 'view_list_of_department');
-  const canViewAllDepartments = permissions?.some(p => p?.key === 'view_all_department_info');
-  const canViewAllUsers = permissions?.some(p => p?.key === 'view_all_users');
-  const canViewDetailedInfo = permissions?.some(p => p?.key === 'view_organization_detailed_info');
+  const permissionChecks = useMemo(() => ({
+    canViewBasicDetails: permissions?.some(p => p?.key === 'view_organization_basic_details'),
+    canViewTeamDetails: permissions?.some(p => p?.key === 'see_team_details'),
+    canViewOwnDepartment: permissions?.some(p => p?.key === 'view_own_department_info'),
+    canViewDepartmentList: permissions?.some(p => p?.key === 'view_list_of_department'),
+    canViewAllDepartments: permissions?.some(p => p?.key === 'view_all_department_info'),
+    canViewAllUsers: permissions?.some(p => p?.key === 'view_all_users'),
+    canViewDetailedInfo: permissions?.some(p => p?.key === 'view_organization_detailed_info'),
+  }), [permissions]);
 
   const fetchOrganization = async () => {
     if (!user?.organization?.id) return;
@@ -62,18 +64,18 @@ const SpecificOrganizationView = () => {
     setIsLoading(prev => ({ ...prev, departments: true }));
     try {
       // Only fetch if user has permission
-      if (canViewDepartmentList || canViewAllDepartments || canViewOwnDepartment) {
+      if (permissionChecks.canViewDepartmentList || permissionChecks.canViewAllDepartments || permissionChecks.canViewOwnDepartment) {
         const response = await axios.get(`${APIDictionary.department}/org/${user.organization.id}`,
           {
             withCredentials: true,
           }
         );
         
-        if (canViewAllDepartments) {
+        if (permissionChecks.canViewAllDepartments) {
           setDepartments(response?.data || []);
         }
         
-        if (canViewOwnDepartment && user.departmentId) {
+        if (permissionChecks.canViewOwnDepartment && user.departmentId) {
           const userDept = response?.data?.find((dept: Department) => dept.id === user.departmentId);
           if (userDept) {
             setUserDepartment(userDept);
@@ -88,7 +90,7 @@ const SpecificOrganizationView = () => {
   };
 
   const fetchTeamMembers = async () => {
-    if (!canViewTeamDetails || !user?.id) return;
+    if (!permissionChecks.canViewTeamDetails || !user?.id) return;
     
     setIsLoading(prev => ({ ...prev, team: true }));
     try {
@@ -107,13 +109,29 @@ const SpecificOrganizationView = () => {
     }
   };
 
+  const fetchAllData = useCallback(async () => {
+    if (!user) return;
+    
+    setIsLoading({ org: true, departments: true, team: true });
+    
+    try {
+      const promises = [];
+      promises.push(fetchOrganization());
+      
+      if (permissionChecks.canViewTeamDetails) promises.push(fetchTeamMembers());
+      if (permissionChecks.canViewDepartmentList || permissionChecks.canViewAllDepartments) promises.push(fetchDepartments());
+      
+      await Promise.all(promises);
+    } finally {
+      setIsLoading({ org: false, departments: false, team: false });
+    }
+  }, [user, permissionChecks.canViewTeamDetails, permissionChecks.canViewDepartmentList, permissionChecks.canViewAllDepartments]);
+
   useEffect(() => {
     if (user) {
-      fetchOrganization();
-      fetchDepartments();
-      fetchTeamMembers();
+      fetchAllData();
     }
-  }, [user,permissions]);
+  }, [user]); 
 
   const handleUserClick = (userId: string) => {
     navigate(`/profile/${userId}`);
@@ -140,9 +158,9 @@ const SpecificOrganizationView = () => {
   }
 
   // If user has no permissions to view organization
-  if (!canViewBasicDetails && !canViewTeamDetails && !canViewOwnDepartment && 
-      !canViewDepartmentList && !canViewAllDepartments && !canViewAllUsers && 
-      !canViewDetailedInfo) {
+  if (!permissionChecks.canViewBasicDetails && !permissionChecks.canViewTeamDetails && !permissionChecks.canViewOwnDepartment && 
+      !permissionChecks.canViewDepartmentList && !permissionChecks.canViewAllDepartments && !permissionChecks.canViewAllUsers && 
+      !permissionChecks.canViewDetailedInfo) {
     return (
       <div className="flex flex-col items-center justify-center h-[70vh]">
         <div className="text-4xl text-gray-300 mb-4">🔒</div>
@@ -158,36 +176,36 @@ const SpecificOrganizationView = () => {
     <div className="w-full px-4 md:px-8 py-6 space-y-6 overflow-y-auto">
       <OrganizationHeader 
         organization={organization}
-        canViewBasicDetails={canViewBasicDetails}
-        canViewDetailedInfo={canViewDetailedInfo}
+        canViewBasicDetails={permissionChecks.canViewBasicDetails}
+        canViewDetailedInfo={permissionChecks.canViewDetailedInfo}
       />      {/* Tabs for different sections based on permissions */}
-      {(canViewAllUsers || canViewTeamDetails || canViewOwnDepartment || canViewDepartmentList) && (
-        <Tabs defaultValue={canViewAllUsers ? "all-users" : canViewTeamDetails ? "team" : "departments"}>
+      {(permissionChecks.canViewAllUsers || permissionChecks.canViewTeamDetails || permissionChecks.canViewOwnDepartment || permissionChecks.canViewDepartmentList) && (
+        <Tabs defaultValue={permissionChecks.canViewAllUsers ? "all-users" : permissionChecks.canViewTeamDetails ? "team" : "departments"}>
           <TabsList className="mb-4">
-            {canViewAllUsers && <TabsTrigger value="all-users">All Employees</TabsTrigger>}
-            {canViewTeamDetails && <TabsTrigger value="team">My Team</TabsTrigger>}
-            {(canViewOwnDepartment || canViewDepartmentList || canViewAllDepartments) && (
+            {permissionChecks.canViewAllUsers && <TabsTrigger value="all-users">All Employees</TabsTrigger>}
+            {permissionChecks.canViewTeamDetails && <TabsTrigger value="team">My Team</TabsTrigger>}
+            {(permissionChecks.canViewOwnDepartment || permissionChecks.canViewDepartmentList || permissionChecks.canViewAllDepartments) && (
               <TabsTrigger value="departments">Departments</TabsTrigger>
             )}
-            {(canViewDepartmentList || canViewAllDepartments) && (
+            {(permissionChecks.canViewDepartmentList || permissionChecks.canViewAllDepartments) && (
               <TabsTrigger value="org-chart">Organization Chart</TabsTrigger>
             )}
-            {canViewDetailedInfo && <TabsTrigger value="insights">Insights</TabsTrigger>}
+            {permissionChecks.canViewDetailedInfo && <TabsTrigger value="insights">Insights</TabsTrigger>}
           </TabsList>
 
           {/* All Users Tab */}
-          {canViewAllUsers && (
+          {permissionChecks.canViewAllUsers && (
             <TabsContent value="all-users">
               <AllUsersTab 
                 organization={organization}
-                canViewDetailedInfo={canViewDetailedInfo}
+                canViewDetailedInfo={permissionChecks.canViewDetailedInfo}
                 onUserClick={handleUserClick}
               />
             </TabsContent>
           )}
 
           {/* Team Tab */}
-          {canViewTeamDetails && (
+          {permissionChecks.canViewTeamDetails && (
             <TabsContent value="team">
               <TeamTab 
                 teamMembers={teamMembers}
@@ -196,35 +214,35 @@ const SpecificOrganizationView = () => {
               />
             </TabsContent>
           )}          {/* Departments Tab */}
-          {(canViewOwnDepartment || canViewDepartmentList || canViewAllDepartments) && (
+          {(permissionChecks.canViewOwnDepartment || permissionChecks.canViewDepartmentList || permissionChecks.canViewAllDepartments) && (
             <TabsContent value="departments">
               <DepartmentsTab 
                 departments={departments}
                 userDepartment={userDepartment}
                 isLoading={isLoading.departments}
-                canViewOwnDepartment={canViewOwnDepartment}
-                canViewDepartmentList={canViewDepartmentList}
-                canViewAllDepartments={canViewAllDepartments}
+                canViewOwnDepartment={permissionChecks.canViewOwnDepartment}
+                canViewDepartmentList={permissionChecks.canViewDepartmentList}
+                canViewAllDepartments={permissionChecks.canViewAllDepartments}
                 onUserClick={handleUserClick}
               />
             </TabsContent>
           )}
 
           {/* Organization Chart Tab */}
-          {(canViewDepartmentList || canViewAllDepartments) && (
+          {(permissionChecks.canViewDepartmentList || permissionChecks.canViewAllDepartments) && (
             <TabsContent value="org-chart">
               <OrganizationChartTab 
                 organization={organization}
-                canViewDetailedInfo={canViewDetailedInfo}
-                canViewAllDepartments={canViewAllDepartments}
-                canViewDepartmentList={canViewDepartmentList}
+                canViewDetailedInfo={permissionChecks.canViewDetailedInfo}
+                canViewAllDepartments={permissionChecks.canViewAllDepartments}
+                canViewDepartmentList={permissionChecks.canViewDepartmentList}
                 onUserClick={handleUserClick}
               />
             </TabsContent>
           )}
 
           {/* Insights Tab - Only for users with detailed org info permission */}
-          {canViewDetailedInfo && (
+          {permissionChecks.canViewDetailedInfo && (
             <TabsContent value="insights">
               <InsightsTab 
                 organization={organization}

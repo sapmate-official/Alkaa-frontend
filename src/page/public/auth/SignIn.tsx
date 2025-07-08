@@ -3,6 +3,7 @@ import { LoginForm } from "@/components/login-form"
 import { useAuth } from "@/services/AuthContext";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import RouteDict from "@/routes/RouteDict";
 
 export default function SignIn() {
   const navigate = useNavigate();
@@ -10,7 +11,7 @@ export default function SignIn() {
   
   useEffect(() => {
     if (user && !isLoading) {
-      navigate("/p/")
+      navigate(RouteDict.Protected)
     }
   }, [user, isLoading, navigate])
   
