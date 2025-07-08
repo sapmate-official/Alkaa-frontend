@@ -26,7 +26,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { Route, useNavigate } from 'react-router-dom'
+import {  useNavigate } from 'react-router-dom'
 import { ArrowLeft, Building, MapPin, FolderTree } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
 import {
