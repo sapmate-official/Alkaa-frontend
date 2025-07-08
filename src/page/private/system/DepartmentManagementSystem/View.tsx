@@ -125,7 +125,7 @@ const SpecificDepartmentView = () => {
 
   const fetchEmployeeList = async () => {
     try {
-      const response = await axios.get(`${APIDictionary.Organization}/employees/${user?.orgId}`)
+      const response = await axios.get(`${APIDictionary.Organization}/employee-list/${user?.orgId}`)
       setEmployeeList(response.data)
     } catch (error) {
       console.error('Error fetching employee list:', error)
