@@ -63,8 +63,8 @@ const EditLeaveRequest = () => {
       const response = await axios.put(
         `${APIDictionary.leave_request}/${id}`,
         {
-          startDate: leaveRequest.startDate.toISOString(),
-          endDate: leaveRequest.endDate.toISOString(),
+          startDate: leaveRequest.startDate.toLocaleDateString('en-CA'),
+          endDate: leaveRequest.endDate.toLocaleDateString('en-CA'),
           reason: leaveRequest.reason
         },
         { withCredentials: true }
