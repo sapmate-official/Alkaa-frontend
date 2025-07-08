@@ -15,6 +15,7 @@ import RouteDict from './routes/RouteDict';
 // Critical/Essential components (load immediately)
 import Home from './page/private/Home.tsx';
 import { MainLayout } from './page/private/layout/MainLayout';
+import RolesPermissionsManagement from './page/private/system/RoleManagementSystem/RoleManagementDashboard.tsx';
 
 // Public pages
 const LandingPage = lazy(() => import('./page/public/LandingPage'));
@@ -165,6 +166,11 @@ const ClientRoute = () => {
       <Route path="/organization/*" element={
         <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['view_organization_basic_details', 'see_team_details', 'view_own_department_info', 'view_organization_detailed_info']}>
           <ClientOrganizationModule />
+        </PermissionRouteBasedOnKey>
+      } />
+      <Route path="/role/" element={
+        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['view_organization_basic_details', 'see_team_details', 'view_own_department_info', 'view_organization_detailed_info']}>
+          <RolesPermissionsManagement />
         </PermissionRouteBasedOnKey>
       } />
 
