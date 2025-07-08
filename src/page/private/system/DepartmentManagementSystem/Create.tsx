@@ -26,7 +26,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { useNavigate } from 'react-router-dom'
+import { Route, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Building, MapPin, FolderTree } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
 import {
@@ -40,6 +40,7 @@ import {
 import { useAtom } from 'jotai'
 import { permissionListAtom } from '@/store/atom'
 import CheckPermission from '@/services/PermissionCheck'
+import RouteDict from '@/routes/RouteDict'
 
 interface Department {
   id: string
@@ -149,7 +150,7 @@ const CreateDepartment = () => {
         description: "You don't have permission to create departments",
         variant: "destructive"
       })
-      navigate('/department')
+      navigate(RouteDict.Department.Base)
       return
     }
 
@@ -229,7 +230,7 @@ const CreateDepartment = () => {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink onClick={()=>navigate("/department")} className='cursor-pointer'>Departments</BreadcrumbLink>
+            <BreadcrumbLink onClick={()=>navigate(RouteDict.Department.Base)} className='cursor-pointer'>Departments</BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
@@ -240,7 +241,7 @@ const CreateDepartment = () => {
 
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Create New Department</h1>
-        <Button variant="outline" onClick={() => navigate('/department')}>
+        <Button variant="outline" onClick={() => navigate(RouteDict.Department.Base)}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to List
         </Button>
