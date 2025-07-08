@@ -139,12 +139,12 @@ const LeaveRequestCreate = () => {
         return
       }
 
-      // Prepare request payload
+      // Prepare request payload with local date strings
       const requestData = {
         userId: user?.id,
         leaveTypeId: formData?.leaveTypeId,
-        startDate: formData?.startDate?.toISOString(),
-        endDate: formData?.endDate?.toISOString(),
+        startDate: formData?.startDate?.toLocaleDateString('en-CA'), // YYYY-MM-DD format
+        endDate: formData?.endDate?.toLocaleDateString('en-CA'), // YYYY-MM-DD format
         reason: formData?.reason
       }
 

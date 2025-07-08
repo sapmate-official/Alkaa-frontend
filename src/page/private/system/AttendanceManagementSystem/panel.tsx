@@ -128,15 +128,17 @@ const AttendancePanel = () => {
 
     setLoading(true);
     try {
-      const currentDate = new Date();
+      const currentDate = new Date(); // Client-side time
 
       const formattedDate = format(currentDate, 'yyyy-MM-dd');
 
       const checkInData = {
         date: formattedDate,
-        checkInTime: currentDate.toISOString(),
+        checkInTime: currentDate.toISOString(), // Client-side timestamp
         checkInLocation: location ? `${location?.latitude},${location?.longitude}` : '',
         notes: "",
+        clientTimestamp: currentDate.toISOString(), // Add explicit client timestamp
+        clientTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone // Add timezone info
       };
 
       const response = await axios.post(APIDictionary.checkIn, checkInData, {
@@ -153,12 +155,28 @@ const AttendancePanel = () => {
           totalHours: 0,
           status: response.data.status
         });
+        
+        toast({
+          title: "Checked in successfully",
+          description: `Session ${response.data.sessionNumber} started at ${format(currentDate, 'h:mm a')}`,
+          variant: "default"
+        });
       }
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error('Check-in failed:', error.response?.data?.message || error.message);
+        toast({
+          title: "Check-in failed",
+          description: error.response?.data?.message || "Please try again",
+          variant: "destructive"
+        });
       } else {
         console.error('Check-in failed:', error);
+        toast({
+          title: "Check-in failed",
+          description: "An unexpected error occurred",
+          variant: "destructive"
+        });
       }
     }
     setLoading(false);
@@ -176,16 +194,18 @@ const AttendancePanel = () => {
 
     setLoading(true);
     try {
-      const currentDate = new Date();
+      const currentDate = new Date(); // Client-side time
       const checkOutData = {
         userId: user?.id,
         date: format(currentDate, 'yyyy-MM-dd'),
-        checkOutTime: currentDate.toISOString(),
+        checkOutTime: currentDate.toISOString(), // Client-side timestamp
         checkOutLocation: location ? `${location?.latitude},${location?.longitude}` : '',
         notes: JSON.stringify(reportData),
         deviceInfo: JSON.stringify(deviceInfo),
         ipAddress,
         reportContent: JSON.stringify(reportData),
+        clientTimestamp: currentDate.toISOString(), // Add explicit client timestamp
+        clientTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone // Add timezone info
       };
 
       const response = await axios.post(APIDictionary.checkOut, checkOutData, {
@@ -206,7 +226,7 @@ const AttendancePanel = () => {
 
       toast({
         title: "Checked out successfully",
-        description: "Your daily report has been submitted",
+        description: `Session ended at ${format(currentDate, 'h:mm a')}. Your daily report has been submitted`,
         variant: "default"
       });
 

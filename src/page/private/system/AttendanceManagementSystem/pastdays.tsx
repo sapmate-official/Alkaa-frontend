@@ -104,12 +104,13 @@ const PastNotCheckedDays = () => {
     const handleEndSession = async (values: z.infer<typeof formSchema>) => {
         if (!selectedSession) return;
 
-        setEndingSessionId(values.attendanceId); // Start loader
+        setEndingSessionId(values.attendanceId);
 
         try {
             const checkInDate = new Date(selectedSession.checkInTime);
             const [hours, minutes] = values.checkOutTime.split(':');
 
+            // Use client-side time for checkout
             const checkOutDate = new Date(checkInDate);
             checkOutDate.setHours(parseInt(hours), parseInt(minutes), 0);
 
@@ -126,8 +127,10 @@ const PastNotCheckedDays = () => {
 
             await axios.post(`${APIDictionary.attendance}/check-out/past`, {
                 attendanceId: values.attendanceId,
-                checkOutTime: checkOutDate.toISOString(),
-                notes: values.notes
+                checkOutTime: checkOutDate.toISOString(), // Client timestamp
+                notes: values.notes,
+                clientTimestamp: new Date().toISOString(),
+                clientTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone
             }, {
                 withCredentials: true
             });
@@ -147,7 +150,7 @@ const PastNotCheckedDays = () => {
                 variant: "destructive",
             });
         } finally {
-            setEndingSessionId(null); // Stop loader
+            setEndingSessionId(null);
         }
     };
 
@@ -164,15 +167,16 @@ const PastNotCheckedDays = () => {
         try {
             setLoading(true);
             
-            // Prepare the date objects
+            // Prepare the date objects using client-side time
             const selectedDate = new Date(values.date);
+            const currentClientTime = new Date(); // For reference
             
-            // Create check-in datetime
+            // Create check-in datetime using client-side date
             const [checkInHours, checkInMinutes] = values.checkInTime.split(':');
             const checkInDateTime = new Date(selectedDate);
             checkInDateTime.setHours(parseInt(checkInHours), parseInt(checkInMinutes), 0);
             
-            // Create check-out datetime
+            // Create check-out datetime using client-side date
             const [checkOutHours, checkOutMinutes] = values.checkOutTime.split(':');
             const checkOutDateTime = new Date(selectedDate);
             checkOutDateTime.setHours(parseInt(checkOutHours), parseInt(checkOutMinutes), 0);
@@ -191,7 +195,7 @@ const PastNotCheckedDays = () => {
             // Format the location data
             const locationString = `${location.latitude},${location.longitude}`;
             
-            // Create payload
+            // Create payload with client timestamps
             const payload = {
                 date: format(selectedDate, 'yyyy-MM-dd'),
                 checkInTime: checkInDateTime.toISOString(),
@@ -199,7 +203,9 @@ const PastNotCheckedDays = () => {
                 checkOutTime: checkOutDateTime.toISOString(),
                 checkOutLocation: locationString,
                 notes: values.notes,
-                reportContent: JSON.stringify(reportData)
+                reportContent: JSON.stringify(reportData),
+                clientTimestamp: currentClientTime.toISOString(), // When the request was made
+                clientTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone
             };
             
              await axios.post(`${APIDictionary.attendance}/past-attendance`, payload, {
