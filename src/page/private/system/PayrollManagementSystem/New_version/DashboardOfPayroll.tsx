@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/services/AuthContext'
-import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { APIV3Dictionary } from '@/api/v3/Api3Dicts'
 import { useAtom } from 'jotai'
