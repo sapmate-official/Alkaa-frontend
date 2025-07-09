@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from '@/services/AuthContext'
 import axios from 'axios'
 import { useEffect, useState } from 'react'
-import { Route, useNavigate } from 'react-router-dom'
+import {  useNavigate } from 'react-router-dom'
 import { useAtom } from 'jotai'
 import { permissionListAtom } from '@/store/atom'
 import CheckPermission from '@/services/PermissionCheck'

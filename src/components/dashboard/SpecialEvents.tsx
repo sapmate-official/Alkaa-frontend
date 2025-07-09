@@ -85,7 +85,7 @@ export const SpecialEvents: React.FC<SpecialEventsProps> = ({ events, isLoading 
         navigate(RouteDict.Dynamic.BillDetails(event.entity.id))
         break
       case 'LEAVE_REQUEST':
-        navigate(RouteDict.Leave.Approval)
+        navigate(RouteDict.Leave.Requests.Approval)
         break
       case 'MONTH_END_VERIFICATION':
         navigate(RouteDict.Attendance.Verification)

@@ -176,7 +176,7 @@ const Home = () => {
             {isLoading ? 'Loading...' : 'Refresh'}
           </Button>
           <Button onClick={() => navigate(RouteDict.Attendance.Base)}>Mark Attendance</Button>
-          <Button onClick={() => navigate(RouteDict.Leave.Request)} variant="outline">
+          <Button onClick={() => navigate(RouteDict.Leave.Requests.Base)} variant="outline">
             Request Leave
           </Button>
         </div>
