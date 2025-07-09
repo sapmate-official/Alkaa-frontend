@@ -266,7 +266,7 @@ const DashboardOfPayroll = () => {
 
   return (
     <div className="w-screen px-8 py-6 space-y-6 h-screen overflow-y-auto">
-      {/* Breadcrumbs */}
+      
       
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
