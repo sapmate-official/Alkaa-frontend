@@ -18,6 +18,8 @@ export const APIDictionary = {
     userProfile: (id: string) => `${backendDomain}/api/v2/user/${id}`,
     updateProfile: (id: string) => `${backendDomain}/api/v2/user/${id}`,
     Organization: `${backendDomain}/api/v2/organization`,
+    OrganizationChart: (orgId: string) => `${backendDomain}/api/v2/organization/${orgId}/chart`,
+    OrganizationManagerChart: (orgId: string, userId?: string) => `${backendDomain}/api/v2/organization/${orgId}/manager-chart${userId ? `?userId=${userId}` : ''}`,
     Permission: `${backendDomain}/api/v2/permission`,
     role: `${backendDomain}/api/v2/role`,
     user: `${backendDomain}/api/v2/user`,
@@ -50,4 +52,9 @@ export const APIDictionary = {
     bankDetails: (userId: string) => `${backendDomain}/api/v2/bank-details/${userId}`,
     bankDetailsByUserId: (userId: string) => `${backendDomain}/api/v2/bank-details/user/${userId}`,
     allBankDetails: () => `${backendDomain}/api/v2/bank-details`,
+
+    // Activity Logs Endpoints
+    activityLogs: `${backendDomain}/api/v2/activity-logs`,
+    activityStats: `${backendDomain}/api/v2/activity-logs/stats`,
+    userRecentActivities: (targetUserId: string) => `${backendDomain}/api/v2/activity-logs/user/${targetUserId}/recent`,
 };

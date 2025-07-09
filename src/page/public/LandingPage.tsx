@@ -24,6 +24,11 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { backendDomain } from '@/lib/constant/Domain';
 import { useToast } from '@/hooks/use-toast';
+import RouteDict from '@/routes/RouteDict';
+import ProductIntroSection from '@/components/intro/ProductIntroSection';
+import InteractiveDemoSection from '@/components/intro/InteractiveDemoSection';
+import ProblemSolutionSection from '@/components/intro/ProblemSolutionSection';
+import CustomerSuccessSection from '@/components/intro/CustomerSuccessSection';
 
 interface FeatureCardProps {
   title: string;
@@ -43,25 +48,6 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ title, description, icon }) =
   </Card>
 );
 
-interface TestimonialProps {
-  quote: string;
-  author: string;
-  role: string;
-  company: string;
-}
-
-const Testimonial: React.FC<TestimonialProps> = ({ quote, author, role, company }) => (
-  <Card className="border border-border bg-card hover:shadow-md transition-shadow h-full flex flex-col">
-    <CardContent className="pt-6 flex-1 flex flex-col">
-      <p className="text-muted-foreground italic mb-4">"{quote}"</p>
-      <div className="mt-auto">
-        <p className="font-semibold">{author}</p>
-        <p className="text-sm text-muted-foreground">{role}, {company}</p>
-      </div>
-    </CardContent>
-  </Card>
-);
-
 interface PricingTierProps {
   title: string;
   price: string;
@@ -70,6 +56,7 @@ interface PricingTierProps {
   buttonText: string;
   highlighted?: boolean;
   popularTag?: boolean;
+  onButtonClick?: () => void;
 }
 
 const PricingTier: React.FC<PricingTierProps> = ({ 
@@ -79,7 +66,8 @@ const PricingTier: React.FC<PricingTierProps> = ({
   billingInfo,
   buttonText, 
   highlighted = false,
-  popularTag = false
+  popularTag = false,
+  onButtonClick
 }) => (
   <Card className={`border ${highlighted ? 'border-primary bg-secondary/50' : 'border-border bg-card'} h-full flex flex-col relative`}>
     {popularTag && (
@@ -101,8 +89,8 @@ const PricingTier: React.FC<PricingTierProps> = ({
         <div className="py-4">
           <p className="text-center font-medium">All Features Included</p>
         </div>
-      </div>
-      <Button 
+      </div>      <Button 
+        onClick={onButtonClick}
         className={`w-full mt-4 ${highlighted ? 'bg-primary hover:bg-primary/90 text-white' : 'bg-secondary text-foreground hover:bg-secondary/80'}`}
       >
         {buttonText}
@@ -358,8 +346,8 @@ const AlkaaLandingPage: React.FC = () => {
             <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Features</a>
             <a href="#testimonials" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Testimonials</a>
             <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
-            <Button onClick={()=>navigate("/auth/signin")} variant="outline">Log in</Button>
-            <Button onClick={()=>navigate("/auth/signup")}>Get Started</Button>
+            <Button onClick={()=>navigate(RouteDict.SignInPage)} variant="outline">Log in</Button>
+            <Button onClick={()=>setDemoDialogOpen(true)}>Get Started</Button>
           </nav>
           
           <div className="md:hidden">
@@ -421,27 +409,39 @@ const AlkaaLandingPage: React.FC = () => {
                 Pricing
               </a>
               <div className="flex flex-col gap-2 pt-2">
-                <Button onClick={()=>navigate("/auth/signin")} variant="outline">Log in</Button>
-                <Button onClick={()=>navigate("/auth/signup")}>Get Started</Button>
+                <Button onClick={()=>navigate(RouteDict.SignInPage)} variant="outline">Log in</Button>
+                <Button onClick={()=>navigate(RouteDict.SignUpPage)}>Get Started</Button>
               </div>
             </nav>
-          </div>
-        )}
-      </header>
+          </div>        )}      </header>      <main className="flex-1">        {/* New Enhanced Product Introduction */}
+        <ProductIntroSection onRequestDemo={() => setDemoDialogOpen(true)} />
+        
+        {/* Problem-Solution Storytelling */}
+        <ProblemSolutionSection onRequestDemo={() => setDemoDialogOpen(true)} />
 
-      <main className="flex-1">
-        <section className="py-20 md:py-32">
+        {/* Interactive Demo Section */}
+        <InteractiveDemoSection onRequestDemo={() => setDemoDialogOpen(true)} />
+
+        {/* Enhanced Customer Success Stories */}
+        <CustomerSuccessSection onRequestDemo={() => setDemoDialogOpen(true)} />
+
+        {/* Original Hero Section - Enhanced */}
+        <section className="py-20 md:py-32 bg-gradient-to-b from-secondary/30 to-background">
           <div className="container max-w-screen-xl px-4 md:px-8">
             <div className="flex flex-col md:flex-row gap-8 items-center">
               <div className="md:w-1/2 space-y-6">
+                <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-4">
+                  <Users className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium text-primary">Live Dashboard Preview</span>
+                </div>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                  Streamline Your <span className="text-primary">Employee Management</span>
+                  Experience the <span className="text-primary">Future of HR</span>
                 </h1>
                 <p className="text-lg text-muted-foreground">
-                  Alkaa provides a comprehensive solution for HR teams to manage employees, track performance, and boost productivity.
+                  See exactly how your HR operations will look with Alkaa's comprehensive dashboard and management tools.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                  <Button onClick={()=>navigate("/auth/signup")} className="text-base px-8 py-6">Get Started</Button>
+                  <Button onClick={()=>navigate(RouteDict.SignUpPage)} className="text-base px-8 py-6">Get Started Free</Button>
                   <Button 
                     variant="outline" 
                     className="text-base px-8 py-6"
@@ -458,7 +458,7 @@ const AlkaaLandingPage: React.FC = () => {
                 </div>
               </div>
               <div className="md:w-1/2">
-                <div className="relative h-64 md:h-96 w-full rounded-lg overflow-hidden bg-secondary">
+                <div className="relative h-64 md:h-96 w-full rounded-lg overflow-hidden bg-secondary shadow-2xl border border-border">
                   <div className="scale-[0.7] origin-top-left h-[143%] w-[143%]">
                     <EnhancedDashboardPreview />
                   </div>
@@ -510,37 +510,10 @@ const AlkaaLandingPage: React.FC = () => {
               />
             </div>
           </div>
-        </section>
-
-        <section id="testimonials" className="py-20">
+        </section>        <section id="testimonials" className="py-20">
           <div className="container max-w-screen-xl px-4 md:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Trusted by HR Leaders</h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                See what our customers have to say about how Alkaa has transformed their HR operations.
-              </p>
-            </div>
-            
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Testimonial
-                quote="Alkaa has completely transformed how we manage our team of 150+ employees. The interface is intuitive and the automation features save us countless hours each month."
-                author="Sarah Johnson"
-                role="HR Director"
-                company="TechNova Inc."
-              />
-              <Testimonial
-                quote="The onboarding workflow in Alkaa has reduced our new hire setup time by 70%. It's been a game-changer for our rapidly growing team."
-                author="Michael Chen"
-                role="People Operations Manager"
-                company="GrowthSync"
-              />
-              <Testimonial
-                quote="As a small business owner, I needed something comprehensive yet simple. Alkaa strikes that perfect balance and has scaled perfectly as we've grown from 10 to 50 employees."
-                author="Lisa Rodriguez"
-                role="CEO"
-                company="Bright Solutions"
-              />
-            </div>
+            {/* Replace the old testimonials section with the new CustomerSuccessSection */}
+            <CustomerSuccessSection />
           </div>
         </section>
 
@@ -552,14 +525,14 @@ const AlkaaLandingPage: React.FC = () => {
                 Choose the plan that works best for your organization size.
               </p>
             </div>
-            
-            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
               <PricingTier
                 title="Basic"
                 price="₹499"
                 description="Up to 20 employees"
                 billingInfo="₹5,988 billed annually"
                 buttonText="Get Started"
+                onButtonClick={() => navigate(RouteDict.SignUpPage)}
               />
               <PricingTier
                 title="Growth"
@@ -569,6 +542,7 @@ const AlkaaLandingPage: React.FC = () => {
                 buttonText="Get Started"
                 highlighted={true}
                 popularTag={true}
+                onButtonClick={() => navigate(RouteDict.SignUpPage)}
               />
               <PricingTier
                 title="Enterprise"
@@ -576,6 +550,7 @@ const AlkaaLandingPage: React.FC = () => {
                 description="Unlimited employees"
                 billingInfo="Contact sales for custom pricing"
                 buttonText="Contact Sales"
+                onButtonClick={() => setDemoDialogOpen(true)}
               />
             </div>
             
@@ -583,9 +558,8 @@ const AlkaaLandingPage: React.FC = () => {
               <p className="text-muted-foreground">
                 All plans include <span className="font-medium text-foreground">full access to all features</span> including employee management, 
                 attendance tracking, performance reviews, and more.
-              </p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Need a custom solution? <a href="#" className="text-primary hover:underline">Contact our sales team</a> for personalized pricing.
+              </p>              <p className="text-sm text-muted-foreground mt-2">
+                Need a custom solution? <button onClick={() => setDemoDialogOpen(true)} className="text-primary hover:underline">Contact our sales team</button> for personalized pricing.
               </p>
             </div>
           </div>
@@ -599,7 +573,7 @@ const AlkaaLandingPage: React.FC = () => {
                 Join thousands of companies that use Alkaa to streamline their employee management and boost productivity.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button onClick={()=>navigate("/auth/signup")} className="bg-white text-primary hover:bg-white/90 text-base px-8 py-6">
+                <Button onClick={()=>navigate(RouteDict.SignUpPage)} className="bg-white text-primary hover:bg-white/90 text-base px-8 py-6">
                   Get Started Today
                 </Button>
                 <Button 

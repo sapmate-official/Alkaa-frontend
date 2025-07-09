@@ -1,5 +1,5 @@
 import { useTheme } from '@/provider/ThemeProvider'
-import { IconSun, IconMoon } from '@tabler/icons-react'
+import { FaSun, FaMoon } from 'react-icons/fa'
 import { Button } from '@/components/ui/button'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSidebar } from '@/components/ui/sidebar'
@@ -24,7 +24,7 @@ export function ThemeToggle() {
             exit={{ opacity: 0, scale: 0.5 }}
             transition={{ duration: 1.5 }}
           >
-            <IconMoon className="h-5 w-5" />
+            <FaMoon className="h-5 w-5" />
           </motion.div>
         ) : (
           <motion.div
@@ -34,7 +34,7 @@ export function ThemeToggle() {
             exit={{ opacity: 0, scale: 0.5 }}
             transition={{ duration: 1.5 }}
           >
-            <IconSun className="h-5 w-5" />
+            <FaSun className="h-5 w-5" />
           </motion.div>
         )}
       </AnimatePresence>
