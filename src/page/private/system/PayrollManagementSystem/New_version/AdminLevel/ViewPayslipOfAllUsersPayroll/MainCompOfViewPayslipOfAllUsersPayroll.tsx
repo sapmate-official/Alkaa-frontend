@@ -351,6 +351,8 @@ const MainCompOfViewPayslipOfAllUsersPayroll = () => {
   
   return (
     <div className="h-screen overflow-hidden flex flex-col w-screen px-4">
+
+      
       {/* Header */}
       <div className="flex-shrink-0 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4">

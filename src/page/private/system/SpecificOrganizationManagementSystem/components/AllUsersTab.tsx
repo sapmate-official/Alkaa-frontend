@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { OrganizationType } from '../types';
+import RouteDict from '@/routes/RouteDict';
 
 interface AllUsersTabProps {
   organization: OrganizationType | null;
@@ -35,7 +36,7 @@ export const AllUsersTab = ({
           </div>
           {canViewDetailedInfo && (
             <Button
-              onClick={() => navigate('/employee/create')}
+              onClick={() => navigate(RouteDict.Employee.Create)}
               className="bg-primary hover:bg-primary/90"
             >
               Hire Employee

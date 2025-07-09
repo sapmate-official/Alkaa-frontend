@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { APIDictionary } from '../../../../api/v2/APIdict'
+import { APIDictionary } from '@/api/v2/APIdict'
 import axios from 'axios'
 import {
   Table,

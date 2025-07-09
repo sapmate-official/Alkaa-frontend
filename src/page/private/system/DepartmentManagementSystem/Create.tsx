@@ -57,6 +57,7 @@ interface Employee {
   employeeId: string
   role?: string
 }
+//warning: chunk-I5X52QIP.js?v=178ef040:42 Select is changing from uncontrolled to controlled. Components should not switch from controlled to uncontrolled (or vice versa). Decide between using a controlled or uncontrolled value for the lifetime of the component.
 
 // Extend the schema to be more strict and provide better validation
 const formSchema = z.object({
@@ -208,7 +209,7 @@ const CreateDepartment = () => {
       })
       
       // Navigate to the new department
-      navigate(`/department/${response.data.id}`)
+      navigate(RouteDict.Department.Details(response.data.id))
     } catch (error: any) {
       console.error('Error creating department:', error)
       

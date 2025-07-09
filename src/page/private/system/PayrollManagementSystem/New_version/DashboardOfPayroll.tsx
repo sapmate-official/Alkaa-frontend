@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/services/AuthContext'
+import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { APIV3Dictionary } from '@/api/v3/Api3Dicts'
 import { useAtom } from 'jotai'
@@ -26,6 +27,7 @@ import { APIDictionary } from '@/api/v2/APIdict'
 
 const DashboardOfPayroll = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [payslips, setPayslips] = useState<PayslipData[]>([]);
   const [selectedPayslip, setSelectedPayslip] = useState<PayslipData | null>(null);
@@ -266,6 +268,8 @@ const DashboardOfPayroll = () => {
 
   return (
     <div className="w-screen px-8 py-6 space-y-6 h-screen overflow-y-auto">
+      {/* Breadcrumbs */}
+      
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Payroll Dashboard</h1>
@@ -273,6 +277,7 @@ const DashboardOfPayroll = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          
           <ButtonOfViewPayslipOfAllSubordinatesPayroll />
           <ButtonOfViewPayslipOfAllUsersPayroll />
         </div>

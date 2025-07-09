@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from '@/services/AuthContext'
 import axios from 'axios'
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Route, useNavigate } from 'react-router-dom'
 import { useAtom } from 'jotai'
 import { permissionListAtom } from '@/store/atom'
 import CheckPermission from '@/services/PermissionCheck'
@@ -49,6 +49,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
+import RouteDict from '@/routes/RouteDict'
 
 interface Department {
     id: string
@@ -335,7 +336,7 @@ const ListOfDepartment = () => {
     ])
 
     const handleDepartmentClick = (id: string) => {
-        navigate(`/department/${id}`)
+        navigate(RouteDict.Department.Details(id))
     }
 
     const toggleSortDirection = () => {
@@ -368,7 +369,7 @@ const ListOfDepartment = () => {
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-bold">Departments</h1>
                     {canCreateDepartment && (
-                        <Button onClick={() => navigate("/p/department/create")}>
+                        <Button onClick={() => navigate(RouteDict.Department.Create)}>
                             <PlusCircle className="h-4 w-4 mr-2" />
                             Create Department
                         </Button>
@@ -377,7 +378,7 @@ const ListOfDepartment = () => {
                 <EmptyState 
                     message="You don't have access to view any departments." 
                     canCreate={canCreateDepartment}
-                    onCreateClick={() => navigate("/p/department/create")}
+                    onCreateClick={() => navigate(RouteDict.Department.Create)}
                 />
             </div>
         )
@@ -504,7 +505,7 @@ const ListOfDepartment = () => {
                         
                         {/* Create department button */}
                         {canCreateDepartment && (
-                            <Button onClick={() => navigate("/p/department/create")}>
+                            <Button onClick={() => navigate(RouteDict.Department.Create)}>
                                 <PlusCircle className="h-4 w-4 mr-2" />
                                 Create
                             </Button>
@@ -533,7 +534,7 @@ const ListOfDepartment = () => {
                     <EmptyState 
                         message={searchQuery ? "No departments match your search" : "No departments found"} 
                         canCreate={canCreateDepartment}
-                        onCreateClick={() => navigate("/department/create")}
+                        onCreateClick={() => navigate(RouteDict.Department.Create)}
                     />
                 ) : (
                     <>

@@ -11,6 +11,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Permission } from '@/interface/general';
+import RouteDict from '@/routes/RouteDict';
 import axios from 'axios';
 import React from 'react'
 import { useNavigate } from 'react-router-dom';
@@ -49,7 +50,7 @@ const PermissionHome = () => {
             <div className="flex justify-between items-center mb-4">
                 <h1 className="text-2xl font-bold">Permission Management</h1>
                 <Button 
-                    onClick={() => onClick('/p/permission/create')}
+                    onClick={() => onClick(RouteDict.Permission.Create)}
                 >
                     Create Permission
                 </Button>

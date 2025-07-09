@@ -15,6 +15,7 @@ import  { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { NotificationSubscribe } from '@/components/ui/NotificationSubscribe';
 import { NotificationTest } from '@/components/ui/NotificationTest';
+import RouteDict from '@/routes/RouteDict';
 
 interface Notification {
   id: string;
@@ -52,7 +53,7 @@ const ListOfNotification = () => {
                 <div className="flex gap-2">
                     <NotificationTest />
                     <NotificationSubscribe />
-                    <Button onClick={()=>navigate("/system/notification/template")}>
+                    <Button onClick={()=>navigate(RouteDict.Notification.TemplateCreate)}>
                         Create Template
                     </Button>
                 </div>

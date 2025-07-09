@@ -14,7 +14,7 @@ const ButtonOfGenerateSubordinateSalaryPage = () => {
     const navigate = useNavigate()
   return (
     <div>
-        <Button onClick={()=>navigate(RouteDict.NewPayroll.Generate)} >
+        <Button onClick={() => navigate(RouteDict.Payroll.Manager.Generate)} >
             Generate Salary of Subordinates
         </Button>
     </div>

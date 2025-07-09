@@ -1,18 +1,10 @@
 import { cn } from '@/lib/utils';
 import {
-  IconBuildingSkyscraper,
-  IconUserBolt,
-  IconCalendarStats,
-  IconLogout,
-  IconBuildingBank,
-  IconId,
-  IconFileDescription,
-  IconBellRinging,
-  IconCalendarEvent,
-  IconCoin,
-  IconReceipt2,
-  // IconReceipt2 // Add this import
-} from '@tabler/icons-react';
+  HiOutlineBuildingOffice2,
+} from 'react-icons/hi2';
+import { FaUserCheck, FaRegIdCard, FaRegBell, FaCoins, FaReceipt } from 'react-icons/fa';
+import { BsCalendarWeek, BsBank, BsFileText, BsCalendarEvent } from 'react-icons/bs';
+import { IoLogOutOutline } from 'react-icons/io5';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../services/AuthContext';
 import { Sidebar, SidebarBody, SidebarLink } from '@/components/ui/sidebar';
@@ -107,7 +99,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       {
         label: "Organization",
         href: RouteDict.Organization.Base,
-        icon: <IconBuildingBank className="h-5 w-5" />
+        icon: <BsBank className="h-5 w-5" />
       },
       {
         label: "Permission",
@@ -125,56 +117,56 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           baseLinks.push({
             label: "Attendance",
             href: RouteDict.Attendance.Base,
-            icon: <IconUserBolt className="h-5 w-5" />
+            icon: <FaUserCheck className="h-5 w-5" />
           });
         }
       } else if (permission.key === "view_personal_info_to_myself") {
         if (baseLinks.some(link => link.label === "Profile")) continue;
         baseLinks.push({
           label: "Profile",
-          href: RouteDict.Profile.Base,
-          icon: <IconId className="h-5 w-5" />
+          href: RouteDict.Profile.Info(user?.id || ""),
+          icon: <FaRegIdCard className="h-5 w-5" />
         });
       } else if (permission?.key === "read_leave_type") {
         if (baseLinks.some(link => link.label === "Leave Type")) continue;
         baseLinks.push({
           label: "Leave Type",
-          href: RouteDict.Leave.Types,
+          href: RouteDict.Leave.Types.List,
           icon: <Leaf className="h-5 w-5" />
         });
       } else if (permission.key === "leave_request" ) {
         baseLinks.push({
           label: `Leave Request  ${leaveRequestsNumber > 0 ? `(${leaveRequestsNumber})` : ""}`,
-          href: RouteDict.Leave.Request,
-          icon: <IconFileDescription className="h-5 w-5" />
+          href: RouteDict.Leave.Requests.Base,
+          icon: <BsFileText className="h-5 w-5" />
         });
       } else if (permission.key === "view_leave_balance") {
         if (baseLinks.some(link => link.label === "Leave Balance")) continue;
         baseLinks.push({
           label: "Leave Balance",
-          href: RouteDict.Leave.Balance,
-          icon: <IconCalendarStats className="h-5 w-5" />
+          href: RouteDict.Leave.Balance.Base,
+          icon: <BsCalendarWeek className="h-5 w-5" />
         });
       } else if (permission.module === "Notification") {
         if (baseLinks.some(link => link.label === "Notification")) continue;
         baseLinks.push({
           label: "Notification",
           href: RouteDict.Notification.Base,
-          icon: <IconBellRinging className="h-5 w-5" />
+          icon: <FaRegBell className="h-5 w-5" />
         });
       } else if (permission.module === "Organization") {
         if (baseLinks.some(link => link.label === "Organization")) continue;
         baseLinks.push({
           label: "Organization",
           href: RouteDict.Organization.Base,
-          icon: <IconBuildingBank className="h-5 w-5" />
+          icon: <BsBank className="h-5 w-5" />
         });
       } else if (permission?.key === "view_own_department_info" || permission?.key === "view_list_of_department" || permission?.key === "view_all_department_info") {
         if (baseLinks.some(link => link.label === "Department")) continue;
         baseLinks.push({
           label: "Department",
           href: RouteDict.Department.Base,
-          icon: <IconBuildingSkyscraper className="h-5 w-5" />
+          icon: <HiOutlineBuildingOffice2 className="h-5 w-5" />
         });
       } else if (permission.name === "Manage User Roles") {
         baseLinks.push({
@@ -186,20 +178,20 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         baseLinks.push({
           label: "Holiday",
           href: RouteDict.Holiday.Base,
-          icon: <IconCalendarEvent className="h-5 w-5" />
+          icon: <BsCalendarEvent className="h-5 w-5" />
         });
       } else if (permission?.key === "view_all_activities" || permission?.key === "view_subordinate_activities") {
         if (baseLinks.some(link => link.label === "Activity Logs")) continue;
         baseLinks.push({
           label: "Activity Logs",
-          href: RouteDict.ActivityLog.Base,
+          href: RouteDict.System.ActivityLogs,
           icon: <Activity className="h-5 w-5" />
         });
       } else if (permission?.key === "view_salary_slip_to_myself") {
         baseLinks.push({
           label: "Payroll",
           href: RouteDict.Payroll.Base,
-          icon: <IconCoin className="h-5 w-5" />
+          icon: <FaCoins className="h-5 w-5" />
         });
       } 
       // else if (permission?.key === "view_employee_management") {
@@ -213,7 +205,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         baseLinks.push({
           label: "Billing",
           href: RouteDict.Billing.Base,
-          icon: <IconReceipt2 className="h-5 w-5" />
+          icon: <FaReceipt className="h-5 w-5" />
         });
       }
     }
@@ -247,7 +239,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               {links.map((link, idx) => (
                 <SidebarLink key={idx} link={link} />
               ))}
-              <SidebarLink link={{ label: "Logout", href: RouteDict.Logout, icon: <IconLogout className="h-5 w-5" /> }} />
+              <SidebarLink link={{ label: "Logout", href: RouteDict.Logout, icon: <IoLogOutOutline className="h-5 w-5" /> }} />
             </div>
           </div>
           <div className={`flex ${open ? 'flex-row items-center' : 'flex-col items-center'} gap-2 mt-1 pt-2 border-t border-neutral-200 dark:border-neutral-700`}>

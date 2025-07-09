@@ -4,6 +4,7 @@ import axios from 'axios';
 import { APIV3Dictionary } from '@/api/v3/Api3Dicts';
 import { APIDictionary } from '@/api/v2/APIdict';
 import { useAuth } from '@/services/AuthContext';
+import PayrollBreadcrumbs from '../../ui/PayrollBreadcrumbs';
 import { format } from 'date-fns';
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
@@ -622,6 +623,9 @@ const MainSalaryUsersTransactionPage: React.FC = () => {
 
   return (
     <div className="p-4 w-full h-screen">
+      {/* Breadcrumbs */}
+      <PayrollBreadcrumbs />
+      
       <h1 className="text-3xl font-bold mb-6">Salary Transaction Management</h1>
       
       {/* Top section with month/year selection and report */}

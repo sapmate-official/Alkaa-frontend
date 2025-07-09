@@ -15,6 +15,7 @@ import { permissionListAtom } from '../../../../store/atom';
 import { Spinner } from "@/components/ui/spinner";
 import { AlertCircle, ArrowLeft, Save } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
+import RouteDict from '@/routes/RouteDict';
 
 interface FormDataType {
   firstName: string;
@@ -132,7 +133,7 @@ const ProfileEdit = () => {
     };
     
     if (!canEditProfile) {
-      navigate('/profile');
+      navigate(RouteDict.Profile.Base);
       return;
     }
     
@@ -480,7 +481,7 @@ const ProfileEdit = () => {
               type="button"
               variant="outline"
               onClick={() => {
-                const link = id ? `/p/profile/edit/bank/${id}` : '/p/profile/edit/bank';
+                const link = id ? RouteDict.Profile.EditBank(id) : RouteDict.Profile.EditBank(null);
                 navigate(link);
               }}
               className="flex-1"

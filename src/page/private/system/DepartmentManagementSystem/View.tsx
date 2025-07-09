@@ -6,12 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 
-import { 
-  Users, 
-  MapPin, 
-  IndianRupee, 
-  Search, 
-  ArrowLeft, 
+import {
+  Users,
+  MapPin,
+  IndianRupee,
+  Search,
+  ArrowLeft,
   FolderTree,
   UserCheck,
   Calendar,
@@ -33,7 +33,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { 
+import {
   Table,
   TableBody,
   TableCell,
@@ -51,6 +51,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import RouteDict from '@/routes/RouteDict'
 
 interface User {
   id: string;
@@ -117,7 +118,7 @@ const SpecificDepartmentView = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [confirmHeadChange, setConfirmHeadChange] = useState<User | null>(null)
   const [headChangeLoading, setHeadChangeLoading] = useState(false)
-  
+
   const hasChangeHeadPermission = CheckPermission("change_department_head", permissions)
   const isCurrentUserHead = department?.departmentHead?.id === user?.id
   const canChangeHead = isCurrentUserHead || hasChangeHeadPermission
@@ -148,10 +149,10 @@ const SpecificDepartmentView = () => {
         response = await axios.get(`${APIDictionary.department}/${user.Department[0].id}`)
         setDepartment(response.data)
         if (!response.data) {
-          navigate("/department/")
+          navigate(RouteDict.Department.Base)
         }
       } else {
-        navigate("/department/")
+        navigate(RouteDict.Department.Base)
       }
     } catch (error) {
       console.error('Error fetching department:', error)
@@ -160,7 +161,7 @@ const SpecificDepartmentView = () => {
         description: 'Failed to load department information',
         variant: 'destructive'
       })
-      navigate("/department/")
+      navigate(RouteDict.Department.Base)
     } finally {
       setIsLoading(false)
     }
@@ -174,8 +175,8 @@ const SpecificDepartmentView = () => {
     setHeadChangeLoading(true)
     try {
       const response = await axios.put(
-        `${APIDictionary.department}/${id}/head/${userId}`, 
-        {}, 
+        `${APIDictionary.department}/${id}/head/${userId}`,
+        {},
         { withCredentials: true }
       )
       toast({
@@ -196,30 +197,30 @@ const SpecificDepartmentView = () => {
     }
   }
 
-  const filteredEmployees = searchQuery 
-    ? employeeList.filter(emp => 
-        `${emp.firstName} ${emp.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        emp.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        emp.employeeId.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+  const filteredEmployees = searchQuery
+    ? employeeList.filter(emp =>
+      `${emp.firstName} ${emp.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      emp.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      emp.employeeId.toLowerCase().includes(searchQuery.toLowerCase())
+    )
     : employeeList
 
   if (isLoading || !department) return <Loader />
 
   // Format dates if available
-  const createdAt = department.createdAt 
-    ? new Date(department.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) 
+  const createdAt = department.createdAt
+    ? new Date(department.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
     : null;
-  
+
   return (
     <div className=" w-full mx-auto p-4 space-y-6 overflow-auto">
       {/* Breadcrumb and actions */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
         <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => navigate("/department/")}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(RouteDict.Department.Base)}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -252,13 +253,23 @@ const SpecificDepartmentView = () => {
                   <div className="flex items-center gap-1 text-muted-foreground">
                     <FolderTree className="h-3.5 w-3.5" />
                     <span className="text-sm">
-                      Parent: <Button 
-                        variant="link" 
-                        className="p-0 h-auto text-sm"
-                        onClick={() => navigate(`/department/${department.parentDepartment?.id}`)}
-                      >
-                        {department.parentDepartment?.name}
-                      </Button>
+                      {
+                        department.parentDepartment.id && department.parentDepartment.id != null && (
+                          <>
+                            Parent: <Button
+                              variant="link"
+                              className="p-0 h-auto text-sm"
+                              onClick={() => {
+                                if (department.parentDepartment?.id) {
+                                  navigate(RouteDict.Department.Details(department.parentDepartment.id))
+                                }
+                              }}
+                            >
+                              {department.parentDepartment?.name}
+                            </Button>
+                          </>
+                        )
+                      }
                     </span>
                   </div>
                 )}
@@ -360,9 +371,8 @@ const SpecificDepartmentView = () => {
                         filteredEmployees.map((emp) => (
                           <div
                             key={emp.id}
-                            className={`flex items-center justify-between p-2 hover:bg-muted rounded-md cursor-pointer ${
-                              department.departmentHead?.id === emp.id ? 'bg-muted' : ''
-                            }`}
+                            className={`flex items-center justify-between p-2 hover:bg-muted rounded-md cursor-pointer ${department.departmentHead?.id === emp.id ? 'bg-muted' : ''
+                              }`}
                             onClick={() => setConfirmHeadChange(emp)}
                           >
                             <div className="flex items-center space-x-2">
@@ -410,11 +420,11 @@ const SpecificDepartmentView = () => {
                   <Badge variant="outline">
                     {department?.departmentHead?.employeeId}
                   </Badge>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
-                    onClick={() => navigate(`/profile/${department?.departmentHead?.id}`)}
+                    onClick={() => department.departmentHead && navigate(RouteDict.Profile.Info(department.departmentHead.id))}
                   >
                     View Profile
                   </Button>
@@ -425,7 +435,7 @@ const SpecificDepartmentView = () => {
             <div className="flex items-center space-x-3 p-6 bg-muted/40 rounded-md border-dashed border-2 border-muted-foreground/20">
               <AlertCircle className="h-5 w-5 text-muted-foreground" />
               <p className="text-muted-foreground">
-                No department head assigned. 
+                No department head assigned.
                 {canChangeHead && " Use the 'Assign Head' button to appoint a leader."}
               </p>
             </div>
@@ -462,7 +472,7 @@ const SpecificDepartmentView = () => {
                   </Badge>
                 )}
               </div>
-                
+
               {/* Members table/list */}
               <div className="space-y-1 rounded-md border">
                 <Table>
@@ -475,10 +485,10 @@ const SpecificDepartmentView = () => {
                   </TableHeader>
                   <TableBody>
                     {department?.users?.map((member) => (
-                      <TableRow 
-                        key={member.id} 
+                      <TableRow
+                        key={member.id}
                         className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => navigate(`/profile/${member.id}`)}
+                        onClick={() => navigate(RouteDict.Profile.Info(member.id))}
                       >
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">

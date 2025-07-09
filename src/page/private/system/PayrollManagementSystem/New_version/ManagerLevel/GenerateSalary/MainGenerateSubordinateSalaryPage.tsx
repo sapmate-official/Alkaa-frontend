@@ -224,6 +224,7 @@ const MainGenerateSubordinateSalaryPage = () => {
   
   return (
     <div className="container mx-auto py-6">
+      
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

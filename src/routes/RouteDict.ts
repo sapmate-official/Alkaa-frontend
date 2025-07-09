@@ -16,8 +16,9 @@ const RouteDict = {
     // Profile Management
     Profile: {
         Base: "/p/profile",
-        Info: "/p/profile/info",
-        Edit: "/p/profile/edit",
+        Info: (id:string)=> id?`/p/profile/info/${id}`:"/p/profile/info",
+        Edit:(id:string | null)=> id?`/p/profile/edit/${id}`:"/p/profile/edit",
+        EditBank: (id:string | null)=> id?`/p/profile/edit-bank/${id}`:"/p/profile/edit-bank",
         BankDetails: "/p/profile/bank-details",
         SalaryParameter: "/p/profile/salary-parameter",
     },
@@ -47,13 +48,24 @@ const RouteDict = {
     // Leave Management System
     Leave: {
         Base: "/p/leave",
-        Request: "/p/leave/request",
-        Balance: "/p/leave/balance",
-        History: "/p/leave/history",
-        Approval: "/p/leave/approval",
-        Types: "/p/leave/types",
-        TypeCreate: "/p/leave/types/create",
-        TypeEdit: "/p/leave/types/edit/:id",
+        Dashboard: "/p/leave/dashboard",
+        Types:{
+            Base: "/p/leave/type",
+            List: "/p/leave/type",
+            Create: "/p/leave/type/create",
+            Edit: (id: string) => `/p/leave/type/edit/${id}`,
+        },
+        Requests: {
+            Base: "/p/leave/request",
+            List: "/p/leave/request",
+            Create: "/p/leave/request/create",
+            Edit: (id: string) => `/p/leave/request/edit/${id}`,
+            Approval: "/p/leave/request/approve",
+        },
+        Balance:{
+            Base: "/p/leave/balance",
+            View: "/p/leave/balance",
+        }
     },
 
     // Payroll Management System
@@ -67,15 +79,25 @@ const RouteDict = {
         ViewEmployeePayroll: "/p/payroll/view-employee/:id",
         ViewOwn: "/p/payroll/view-own",
         NewVersion: "/p/payroll/new-version",
-    },
-
-    // New Payroll System (Alternative)
-    NewPayroll: {
-        Base: "/p/new-payroll",
-        Dashboard: "/p/new-payroll/dashboard",
-        Generate: "/p/new-payroll/generate",
-        History: "/p/new-payroll/history",
-        ViewSlip: "/p/new-payroll/slip/:id",
+        Admin:{
+            Transaction: "/p/payroll/admin-transaction",
+            Payslip: "/p/payroll/admin-payslip",
+            Generate: "/p/payroll/admin/generate",
+        },
+        Manager:{
+            Transaction: "/p/payroll/subordinate-transaction",
+            Payslip: "/p/payroll/subordinate/payslip",
+            Generate: "/p/payroll/subordinate/generate",
+        },
+        // Legacy routes for backward compatibility
+        Legacy: {
+            SubordinatePayslip: "/p/payroll/subordinate/payslip",
+            SubordinateGenerate: "/p/payroll/subordinate/generate",
+            SubordinateTransaction: "/p/payroll/subordinate/transaction",
+            AdminPayslip: "/p/payroll/admin/payslip",
+            AdminGenerate: "/p/payroll/admin/generate",
+            AdminTransaction: "/p/payroll/admin/transaction",
+        }
     },
 
     // Department Management System
@@ -83,8 +105,8 @@ const RouteDict = {
         Base: "/p/department",
         List: "/p/department/list",
         Create: "/p/department/create",
-        Edit: "/p/department/edit/:id",
-        Details: "/p/department/:id",
+        Edit: (id: string) => `/p/department/edit/${id}`,
+        Details: (id: string) => `/p/department/${id}`,
         HeadAssignment: "/p/department/head-assignment",
     },
 
@@ -137,18 +159,18 @@ const RouteDict = {
     Billing: {
         Base: "/p/billing",
         Dashboard: "/p/billing/dashboard",
-        Details: "/p/billing/details/:id",
+        Details: (id: string) => `/p/billing/details/${id}`,
         History: "/p/billing/history",
-        Payment: "/p/billing/payment/:id",
-        Invoice: "/p/billing/invoice/:id",
+        Payment: (id: string) => `/p/billing/payment/${id}`,
+        Invoice: (id: string) => `/p/billing/invoice/${id}`,
     },
 
     // Notification Management System
     Notification: {
-        Base: "/p/notification",
+        Base: "/p/system/notification",
         List: "/p/notification/list",
         Templates: "/p/notification/templates",
-        TemplateCreate: "/p/notification/templates/create",
+        TemplateCreate: "/p/system/notification/templates/create",
         TemplateEdit: "/p/notification/templates/edit/:id",
         Settings: "/p/notification/settings",
         Send: "/p/notification/send",
@@ -162,40 +184,14 @@ const RouteDict = {
         UserActivities: "/p/activity-log/user/:userId",
     },
 
-    // Leave Request Management System
-    LeaveRequest: {
-        Base: "/p/leave-request",
-        List: "/p/leave-request/list",
-        Create: "/p/leave-request/create",
-        Details: "/p/leave-request/:id",
-        Approval: "/p/leave-request/approval",
-        MyRequests: "/p/leave-request/my-requests",
-        TeamRequests: "/p/leave-request/team-requests",
-    },
 
-    // Leave Balance Management System
-    LeaveBalance: {
-        Base: "/p/leave-balance",
-        View: "/p/leave-balance/view",
-        Adjust: "/p/leave-balance/adjust",
-        History: "/p/leave-balance/history",
-        UserBalance: "/p/leave-balance/user/:userId",
-    },
 
-    // Leave Type Management System
-    LeaveType: {
-        Base: "/p/leave-type",
-        List: "/p/leave-type/list",
-        Create: "/p/leave-type/create",
-        Edit: "/p/leave-type/edit/:id",
-        Settings: "/p/leave-type/settings",
-    },
 
     // System Management
     System: {
         Base: "/p/system",
         Settings: "/p/system/settings",
-        Logs: "/p/system/logs",
+        ActivityLogs: "/p/system/activity-logs",
         Maintenance: "/p/system/maintenance",
         Backup: "/p/system/backup",
         Updates: "/p/system/updates",
@@ -205,10 +201,11 @@ const RouteDict = {
     SuperAdmin: {
         Base: "/p/organization",
         Organizations: "/p/organization/list",
-        OrganizationDetails: "/p/organization/:id/details",
-        OrganizationUsers: "/p/organization/:id/users",
-        OrganizationAdmins: "/p/organization/:id/admins",
-        OrganizationBills: "/p/organization/:id/bills",
+        Create : "/p/organization/create",
+        OrganizationDetails: (id: string) => `/p/organization/${id}/details`,
+        OrganizationUsers: (id: string) => `/p/organization/${id}/users`,
+        OrganizationAdmins: (id: string) => `/p/organization/${id}/admins`,
+        OrganizationBills: (id: string) => `/p/organization/${id}/bills`,
         BillingStats: "/p/organization/billing/stats",
         SubscriptionPlans: "/p/organization/subscription-plans",
     },
@@ -232,14 +229,14 @@ const RouteDict = {
         DepartmentDetails: (deptId: string) => `/p/department/${deptId}`,
         RoleDetails: (roleId: string) => `/p/role/${roleId}`,
         PayrollSlip: (slipId: string) => `/p/payroll/slip/${slipId}`,
-        LeaveRequestDetails: (requestId: string) => `/p/leave-request/${requestId}`,
+        LeaveRequestDetails: (requestId: string) => `/p/leave/request/${requestId}`,
         BillDetails: (billId: string) => `/p/billing/${billId}`,
         HolidayDetails: (holidayId: string) => `/p/holiday/${holidayId}`,
         NotificationDetails: (notificationId: string) => `/p/notification/${notificationId}`,
         OrganizationDetails: (orgId: string) => `/p/organization/${orgId}`,
         PermissionDetails: (permissionId: string) => `/p/permission/${permissionId}`,
         ActivityLogUser: (userId: string) => `/p/activity-log/user/${userId}`,
-        LeaveBalanceUser: (userId: string) => `/p/leave-balance/user/${userId}`,
+        LeaveBalanceUser: (userId: string) => `/p/leave/balance/user/${userId}`,
         AttendanceUser: (userId: string) => `/p/attendance/user/${userId}`,
     },
 
@@ -268,9 +265,6 @@ const RouteDict = {
         Billing: "/p/billing",
         Notification: "/p/notification",
         ActivityLog: "/p/activity-log",
-        LeaveRequest: "/p/leave-request",
-        LeaveBalance: "/p/leave-balance",
-        LeaveType: "/p/leave-type",
         System: "/p/system",
     },
 

@@ -18,6 +18,7 @@ import {
   InsightsTab,
   OrganizationChartTab 
 } from './components';
+import RouteDict from '@/routes/RouteDict';
 
 const SpecificOrganizationView = () => {
   const [permissions] = useAtom(permissionListAtom)
@@ -134,7 +135,7 @@ const SpecificOrganizationView = () => {
   }, [user]); 
 
   const handleUserClick = (userId: string) => {
-    navigate(`/profile/${userId}`);
+    navigate(RouteDict.Profile.Info(userId));
   };
 
   if (isLoading.org) {

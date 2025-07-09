@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 import { Checkbox } from "@/components/ui/checkbox"
+import RouteDict from '@/routes/RouteDict'
 
 interface LeaveType {
   id: string;
@@ -166,7 +167,7 @@ const LeaveRequestCreate = () => {
           reason: '',
           isSameDayLeave: false
         })
-        navigate("/leave/request");
+        navigate(RouteDict.Leave.Requests.List);
       }
     } catch (error) {
       toast({
@@ -204,11 +205,11 @@ const LeaveRequestCreate = () => {
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink onClick={()=>navigate("/p")}>Dashboard</BreadcrumbLink>
+              <BreadcrumbLink onClick={()=>navigate(RouteDict.Home)}>Dashboard</BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbLink  onClick={()=>navigate("/leave/request")}>Leave Requests</BreadcrumbLink>
+              <BreadcrumbLink  onClick={()=>navigate(RouteDict.Leave.Requests.List)}>Leave Requests</BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>Create Request</BreadcrumbItem>
@@ -226,7 +227,7 @@ const LeaveRequestCreate = () => {
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={() => navigate('/leave/request')}
+              onClick={() => navigate(RouteDict.Leave.Requests.List)}
               className="flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" /> Back to Requests

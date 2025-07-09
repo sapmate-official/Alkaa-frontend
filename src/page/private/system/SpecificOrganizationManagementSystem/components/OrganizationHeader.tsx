@@ -4,6 +4,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Settings, Info, Lock, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { OrganizationType } from '../types';
+import RouteDict from '@/routes/RouteDict';
 
 interface OrganizationHeaderProps {
   organization: OrganizationType | null;
@@ -48,7 +49,7 @@ export const OrganizationHeader = ({
                 {canViewDetailedInfo && (
                   <Settings 
                     className="cursor-pointer" 
-                    onClick={() => navigate('/organization/settings')} 
+                    onClick={() => navigate(RouteDict.Organization.Settings)} 
                   />
                 )}
               </div>

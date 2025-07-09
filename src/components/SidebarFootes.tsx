@@ -1,5 +1,6 @@
 import { Avatar, AvatarFallback } from "@radix-ui/react-avatar";
-import { IconSun, IconMoon, IconLogout } from "@tabler/icons-react";
+import { FaSun, FaMoon } from "react-icons/fa";
+import { IoLogOutOutline } from "react-icons/io5";
 import { ChevronsUpDown } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import React from "react";
@@ -63,11 +64,11 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({ user, theme, setTheme, lo
                 onMouseLeave={() => setIsOpen(false)}
             >
                 <DropdownMenuItem onClick={handleThemeToggle}>
-                    {theme === 'dark' ? <IconSun className="mr-2 h-4 w-4" /> : <IconMoon className="mr-2 h-4 w-4" />}
+                    {theme === 'dark' ? <FaSun className="mr-2 h-4 w-4" /> : <FaMoon className="mr-2 h-4 w-4" />}
                     {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleLogout}>
-                    <IconLogout className="mr-2 h-4 w-4" />
+                    <IoLogOutOutline className="mr-2 h-4 w-4" />
                     Logout
                 </DropdownMenuItem>
             </DropdownMenuContent>
