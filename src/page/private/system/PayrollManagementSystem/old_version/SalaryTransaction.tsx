@@ -108,7 +108,7 @@ const [remarks, setRemarks] = useState<string>('');
 
   const stepTransition = {
     hidden: { opacity: 0, x: 20 },
-    visible: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 300, damping: 30 } },
+    visible: { opacity: 1, x: 0, transition: { type: "spring" as const, stiffness: 300, damping: 30 } },
     exit: { opacity: 0, x: -20, transition: { duration: 0.2 } }
   };
 
@@ -117,7 +117,7 @@ const [remarks, setRemarks] = useState<string>('');
       <motion.div 
         whileHover={{ scale: 1.05 }} 
         whileTap={{ scale: 0.95 }}
-        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+        transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
       >
         <Button 
           onClick={() => setIsDialogOpen(true)}
@@ -136,7 +136,7 @@ const [remarks, setRemarks] = useState<string>('');
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
-                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                transition={{ type: "spring" as const, stiffness: 300, damping: 25 }}
               >
                 <DialogHeader>
                   <DialogTitle>
@@ -378,7 +378,7 @@ const [remarks, setRemarks] = useState<string>('');
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
+                        transition={{ delay: 0.2, type: "spring" as const, stiffness: 300 }}
                       >
                         <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
                       </motion.div>
@@ -407,7 +407,7 @@ const [remarks, setRemarks] = useState<string>('');
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0 }}
-                    transition={{ type: "spring", stiffness: 500 }}
+                    transition={{ type: "spring" as const, stiffness: 500 }}
                   >
                     <Alert variant="destructive">
                       <AlertCircle className="h-4 w-4" />
