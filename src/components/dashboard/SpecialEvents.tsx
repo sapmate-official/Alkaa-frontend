@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
 import { SpecialEvent } from '@/store/atom'
+import RouteDict from '@/routes/RouteDict'
 
 interface SpecialEventsProps {
   events: SpecialEvent[]
@@ -81,16 +82,16 @@ export const SpecialEvents: React.FC<SpecialEventsProps> = ({ events, isLoading 
         // No action needed for birthdays
         break
       case 'BILL':
-        navigate(`/p/billing/view/${event.entity.id}`)
+        navigate(RouteDict.Dynamic.BillDetails(event.entity.id))
         break
       case 'LEAVE_REQUEST':
-        navigate(`/p/leaverequest/approve`)
+        navigate(RouteDict.Leave.Requests.Approval)
         break
       case 'MONTH_END_VERIFICATION':
-        navigate('/p/attendance/verification')
+        navigate(RouteDict.Attendance.Verification)
         break
       case 'INCOMPLETE_ATTENDANCE':
-        navigate('/p/attendance/pastdays')
+        navigate(RouteDict.Attendance.PastDays)
         break
     }
   }

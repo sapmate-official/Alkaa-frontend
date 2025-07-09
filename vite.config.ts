@@ -11,56 +11,81 @@ export default defineConfig({
     },
   },
   build: {
-    chunkSizeWarningLimit: 2000, // Increase to 2MB if needed
+    chunkSizeWarningLimit: 1000, // Reduce to 1MB for better performance
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // Predefined chunks
+          // Critical vendor chunks (load first)
+          if (['react', 'react-dom'].some(pkg => id.includes(pkg))) {
+            return 'react-vendor';
+          }
+          
+          // Large external libraries (separate chunks)
           if (id.includes('olamaps-web-sdk') || id.includes('/services/OlaMap')) {
             return 'map-vendor';
           }
           
-          // UI library chunks
-          if (id.includes('@radix-ui/react-')) {
-            return 'ui-components';
+          if (id.includes('html2canvas') || id.includes('jspdf')) {
+            return 'pdf-vendor';
           }
           
-          // Chart and visualization chunks
+          // Split recharts to avoid circular dependency issues
           if (id.includes('recharts')) {
+            return 'recharts-vendor';
+          }
+          
+          if (id.includes('d3')) {
             return 'visualization';
           }
           
-          // Animation libraries
           if (id.includes('framer-motion')) {
             return 'animation';
           }
           
-          // Core React chunks
-          if (['react', 'react-dom', 'react-router-dom'].some(pkg => id.includes(pkg))) {
-            return 'react-vendor';
+          // UI library chunks
+          if (id.includes('@radix-ui/react-') || id.includes('@tabler/icons')) {
+            return 'ui-components';
           }
           
-          // Form handling
+          // Routing and state management
+          if (['react-router-dom', 'jotai'].some(pkg => id.includes(pkg))) {
+            return 'routing-state';
+          }
+          
+          // Form and validation
           if (['react-hook-form', '@hookform/resolvers', 'zod'].some(pkg => id.includes(pkg))) {
             return 'form-handling';
           }
           
-          // Utility libraries
-          if (['date-fns', 'axios', 'clsx', 'tailwind-merge'].some(pkg => id.includes(pkg))) {
+          // Utilities (commonly used)
+          if (['date-fns', 'axios', 'clsx', 'tailwind-merge', 'lodash'].some(pkg => id.includes(pkg))) {
             return 'utilities';
           }
           
-          // App features
-          if (id.includes('src/features/auth')) {
-            return 'auth-feature';
+          // Feature-based chunks
+          if (id.includes('src/page/private/system/BillingManagement')) {
+            return 'billing-feature';
           }
           
-          if (id.includes('src/features/dashboard')) {
-            return 'dashboard-feature';
+          if (id.includes('src/page/private/system/PayrollManagement')) {
+            return 'payroll-feature';
           }
           
-          if (id.includes('src/features/settings')) {
-            return 'settings-feature';
+          if (id.includes('src/page/private/system/AttendanceManagement')) {
+            return 'attendance-feature';
+          }
+          
+          if (id.includes('src/page/private/system/EmployeeManagement') || 
+              id.includes('src/page/private/system/DepartmentManagement') ||
+              id.includes('src/page/private/system/OrganizationManagement')) {
+            return 'organization-feature';
+          }
+          
+          // System/admin features
+          if (id.includes('src/page/private/system/Permission') ||
+              id.includes('src/page/private/system/Role') ||
+              id.includes('src/page/private/system/ActivityLog')) {
+            return 'system-feature';
           }
           
           return undefined;
@@ -70,9 +95,31 @@ export default defineConfig({
   },
   server: {
     port: 5174,
-    host: 'localhost',
-   
+    host: '0.0.0.0',
+  },
+  // Optimize dependency pre-bundling for faster dev startup
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      'axios',
+      'date-fns',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-select',
+      '@radix-ui/react-tabs',
+      'jotai',
+      'framer-motion',
+      'recharts'
+    ],
+    exclude: [
+      'olamaps-web-sdk',
+      'html2canvas',
+      'jspdf'
+    ]
+  },
+  esbuild: {
+    // Remove console logs in production
+    drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
   }
-  
-  
 })
