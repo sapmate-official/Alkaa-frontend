@@ -18,6 +18,7 @@ import { Edit2, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAtom } from 'jotai'
 import { permissionListAtom } from '@/store/atom'
+import RouteDict from '@/routes/RouteDict'
 
 interface LeaveRequest {
   id: string
@@ -94,7 +95,7 @@ const LeaveRequestList = () => {
   }
 
   const handleEdit = (id: string) => {
-    navigate(`/leave/request/edit/${id}`)
+    navigate(RouteDict.Leave.Requests.Edit(id))
   }
 
   const handleDelete = async (id: string) => {
@@ -136,12 +137,12 @@ const LeaveRequestList = () => {
         <h2 className="text-3xl font-bold">My Leave Requests</h2>
         <div className='flex space-x-4'>
           {canCreateLeaveRequest && (
-            <Button onClick={() => navigate('/leave/request/create')}>
+            <Button onClick={() => navigate(RouteDict.Leave.Requests.Create)}>
               Create Leave Request
             </Button>
           )}
           {canApproveLeaveRequest && (
-            <Button onClick={() => navigate('/leave/request/approve')}>
+            <Button onClick={() => navigate(RouteDict.Leave.Requests.Approval)}>
               Approve Leave Request
             </Button>
           )}

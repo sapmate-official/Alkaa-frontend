@@ -35,6 +35,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import RouteDict from '@/routes/RouteDict'
+
+//warning : Warning: validateDOMNesting(...): <div> cannot appear as a descendant of <p>.
+
 
 export const ButtonOfSpecificDepartmentEdit = ({id, user}: {
   id?: string | undefined
@@ -52,7 +56,7 @@ export const ButtonOfSpecificDepartmentEdit = ({id, user}: {
     <Button
       variant="outline"
       size="sm"
-      onClick={() => navigate(`/department/${id}/edit`)}
+      onClick={() => navigate(RouteDict.Department.Edit(id))}
       className="flex items-center gap-2"
     >
       <Pencil className="h-4 w-4" />
@@ -113,7 +117,7 @@ const SpecificDepartmentEdit = () => {
         title: "Error",
         description: "Failed to fetch department details"
       })
-      navigate("/department/list")
+      navigate(RouteDict.Department.List)
     } finally {
       setIsLoading(false)
     }
@@ -164,7 +168,7 @@ const SpecificDepartmentEdit = () => {
         title: "Department deleted",
         description: "Department has been successfully deleted"
       })
-      navigate('/department/list')
+      navigate(RouteDict.Department.List)
     } catch (error) {
       console.error('Error deleting department:', error)
       toast({
@@ -189,7 +193,7 @@ const SpecificDepartmentEdit = () => {
         title: "Changes saved",
         description: "Department information has been updated successfully"
       })
-      navigate(`/department/${id}`)
+      navigate(RouteDict.Department.Edit(id || ''))
     } catch (error) {
       console.error('Error updating department:', error)
       toast({
@@ -210,11 +214,11 @@ const SpecificDepartmentEdit = () => {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/department/list">Departments</BreadcrumbLink>
+            <BreadcrumbLink href={RouteDict.Department.List}>Departments</BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink href={`/p/department/${id}`}>{department?.name || 'Department'}</BreadcrumbLink>
+            <BreadcrumbLink href={RouteDict.Department.Details(id || '')}>{department?.name || 'Department'}</BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
@@ -228,7 +232,7 @@ const SpecificDepartmentEdit = () => {
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => navigate(`/department/${id}`)}
+            onClick={() => navigate(RouteDict.Department.Edit(id || ''))}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />

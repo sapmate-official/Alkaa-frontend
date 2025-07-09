@@ -21,6 +21,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAtom } from 'jotai';
 import { permissionListAtom } from '@/store/atom';
 import { Landmark, SaveIcon } from 'lucide-react';
+import RouteDict from '@/routes/RouteDict';
 
 const BankDetails = () => {
   const form = useForm<IBankDetails>({
@@ -71,7 +72,7 @@ const BankDetails = () => {
         description: "You don't have permission to edit bank details.",
         variant: "destructive"
       });
-      navigate('/profile');
+      navigate(RouteDict.Profile.Base);
       return;
     }
     

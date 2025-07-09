@@ -15,9 +15,12 @@ import { permissionListAtom } from '@/store/atom'
 import { useAtom } from 'jotai'
 import { motion } from 'framer-motion'
 import BankDetails from '@/components/BankDetails'
+import RouteDict from '@/routes/RouteDict'
 
 const ProfileInfo = () => {
     const { id } = useParams()
+    console.log("Profile ID:", id);
+    
     const { user } = useAuth()
     const navigate = useNavigate()
     const [profileInfo, setProfileInfo] = useState<User>()
@@ -225,7 +228,7 @@ const ProfileInfo = () => {
                                     size="sm"
                                     className="flex items-center gap-2 hover:bg-primary/10"
                                     onClick={() => {
-                                        const link = isManager ? `/p/profile/edit/${id}` : `/p/profile/edit`
+                                        const link = isManager ? RouteDict.Profile.Edit(id ?? null) : RouteDict.Profile.Edit(null);
                                         navigate(link)
                                     }}
                                 >

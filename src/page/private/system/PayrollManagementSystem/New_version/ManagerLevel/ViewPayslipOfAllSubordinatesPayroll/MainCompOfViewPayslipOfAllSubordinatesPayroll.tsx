@@ -6,6 +6,7 @@ import { APIDictionary } from '@/api/v2/APIdict'
 import { APIV3Dictionary } from '@/api/v3/Api3Dicts'
 import ButtonOfSubordinateSalaryTransaction from '../Salarytransaction/ButtonOfSubordinateSalaryTransaction'
 import ButtonOfGenerateSubordinateSalaryPage from '../GenerateSalary/ButtonOfGenerateSubordinateSalaryPage'
+
 import { format } from 'date-fns'
 
 // Shadcn components
@@ -504,6 +505,8 @@ const MainCompOfViewPayslipOfAllSubordinatesPayroll = () => {
 
   return (
     <div className="space-y-6 w-full h-screen overflow-y-auto p-4">
+
+      
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Team Payroll Management</h2>
         <ButtonOfGenerateSubordinateSalaryPage />

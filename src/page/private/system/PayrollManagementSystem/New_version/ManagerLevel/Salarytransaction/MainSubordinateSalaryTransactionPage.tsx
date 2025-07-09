@@ -9,7 +9,6 @@ import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 import { UserOptions } from "jspdf-autotable";
 import CheckPermission from '@/services/PermissionCheck';
-import RouteDict from '@/routes/RouteDict';
 import { permissionListAtom } from '@/store/atom';
 import { useAtom } from 'jotai';
 
@@ -63,6 +62,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
 import { Loader2, Download, DollarSign, FileText, Users, CreditCard, ChevronLeft, ClipboardCopy } from 'lucide-react';
+import RouteDict from '@/routes/RouteDict';
 
 // Types
 interface Subordinate {
@@ -125,7 +125,7 @@ const MainSubordinateSalaryTransactionPage: React.FC = () => {
         description: "You don't have permission to access this page.",
         variant: "destructive"
       });
-      navigate(RouteDict.NewPayroll.Base);
+      navigate(RouteDict.Payroll.Dashboard);
     }
   }, [hasPermission, navigate]);
   
@@ -716,11 +716,12 @@ const MainSubordinateSalaryTransactionPage: React.FC = () => {
 
   return (
     <div className=" p-4 w-full px-4 overflow-y-auto">
+      
       {userId && payrollId ? (
         <Button 
           variant="outline" 
           className="mb-4"
-          onClick={() => navigate('/p/new-payroll/subordinate/transaction')}
+          onClick={() => navigate(RouteDict.Payroll.Manager.Transaction)}
         >
           <ChevronLeft className="mr-2 h-4 w-4" />
           Back to All Subordinates

@@ -16,7 +16,10 @@ const ButtonOfViewPayslipOfAllSubordinatesPayroll = () => {
 
   return (
     <div>
-        <button onClick={()=>navigate(RouteDict.NewPayroll.History)} className='bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700'>
+        <button 
+            onClick={() => navigate(RouteDict.Payroll.Manager.Payslip)} 
+            className='bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700'
+        >
             View Payslip of All Subordinates
         </button>  
     </div>

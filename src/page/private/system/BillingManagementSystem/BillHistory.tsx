@@ -39,6 +39,7 @@ import {
 } from '@/components/ui/pagination';
 import { useToast } from '@/hooks/use-toast';
 import { APIV2Dictionary } from '@/api/v2/Api2Dicts';
+import RouteDict from '@/routes/RouteDict';
 
 interface BillData {
   id: string;
@@ -165,7 +166,7 @@ const BillHistory = () => {
     return (
       <div className="space-y-6">
         <div className="flex items-center mb-6">
-          <Button variant="ghost" onClick={() => navigate('/billing')} className="mr-2">
+          <Button variant="ghost" onClick={() => navigate(RouteDict.Billing.Base)} className="mr-2">
             <ChevronLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
@@ -192,7 +193,7 @@ const BillHistory = () => {
   if (error) {
     return (
       <div className="space-y-6">
-        <Button variant="ghost" onClick={() => navigate('/billing')}>
+        <Button variant="ghost" onClick={() => navigate(RouteDict.Billing.Base)}>
           <ChevronLeft className="mr-2 h-4 w-4" />
           Back to Billing Dashboard
         </Button>
@@ -210,7 +211,7 @@ const BillHistory = () => {
     <div className="space-y-6 w-full overflow-y-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div className="flex items-center">
-          <Button variant="ghost" onClick={() => navigate('/billing')} className="mr-2">
+          <Button variant="ghost" onClick={() => navigate(RouteDict.Billing.Base)} className="mr-2">
             <ChevronLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
@@ -323,7 +324,7 @@ const BillHistory = () => {
                         <Button 
                           variant="outline"
                           size="sm"
-                          onClick={() => navigate(`/billing/bill/${bill.id}`)}
+                          onClick={() => navigate(RouteDict.Billing.Details(bill.id))}
                         >
                           <FileText className="mr-2 h-4 w-4" />
                           View

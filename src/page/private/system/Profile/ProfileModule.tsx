@@ -9,7 +9,8 @@ const BankDetails = lazy(() => import('./BankDetails'));
 const ProfileModule = () => {
   return (
     <Routes>
-      <Route index element={<ProfileInfo />} />
+      <Route path='info' element={<ProfileInfo />} />
+      <Route path='info/:id' element={<ProfileInfo />} />
       <Route path="edit" element={<EditProfile />} />
       <Route path="bank-details" element={<BankDetails />} />
     </Routes>

@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Building2, Users, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import RouteDict from '@/routes/RouteDict';
 
 const OrganizationHome = () => {
     const { user } = useAuth();
@@ -38,7 +39,7 @@ const OrganizationHome = () => {
                     <h1 className="text-3xl font-bold">Organizations</h1>
                     <p className="text-muted-foreground">Manage your organizations and their settings</p>
                 </div>
-                <Button onClick={() => navigate('/organization/create')}>
+                <Button onClick={() => navigate(RouteDict.SuperAdmin.Create)}>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Create Organization
                 </Button>
@@ -73,7 +74,7 @@ const OrganizationHome = () => {
                                 <Button 
                                     variant="outline" 
                                     className="w-full mt-4"
-                                    onClick={() => navigate(`/organization/${org?.id}`)}
+                                    onClick={() => navigate(RouteDict.SuperAdmin.OrganizationDetails(org?.id))}
                                 >
                                     View Details
                                 </Button>

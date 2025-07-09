@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { backendDomain } from "@/lib/constant/Domain";
+import RouteDict from "@/routes/RouteDict";
 import { useAuth } from "@/services/AuthContext";
 import axios from "axios";
 import { useForm } from "react-hook-form";
@@ -44,7 +45,7 @@ const CreateLeaveType = () => {
             );
 
             
-            navigate('/leave/type');
+            navigate(RouteDict.Leave.Types.List);
             toast?.({
                 title: "Success",
                 description: "Leave type created successfully",

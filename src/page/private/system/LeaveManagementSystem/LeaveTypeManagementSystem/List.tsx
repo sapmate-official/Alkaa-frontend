@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import RouteDict from "@/routes/RouteDict";
 
 interface LeaveType {
     id: string;
@@ -80,7 +81,7 @@ export default function LeaveTypeList() {
     }, [user]);
 
     const handleEdit = (id: string) => {
-        navigate(`/leave/type/edit/${id}`);
+        navigate(RouteDict.Leave.Types.Edit(id));
     };
 
     return (
@@ -88,7 +89,7 @@ export default function LeaveTypeList() {
            <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold">Leave Types</h2>
                 <Button 
-                    onClick={()=>navigate("/leave/type/create")}
+                    onClick={()=>navigate(RouteDict.Leave.Types.Create)}
                     className="flex items-center gap-2"
                 >
                     <Plus className="h-4 w-4" />

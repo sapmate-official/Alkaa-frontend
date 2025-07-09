@@ -17,6 +17,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from "lucide-react"; // Add this import
 import { useNavigate } from 'react-router-dom';
+import RouteDict from '@/routes/RouteDict';
 
 interface OrganizationForm {
   name: string;
@@ -196,7 +197,7 @@ const OrganizationCreate = () => {
         });
         
         // Add navigation after successful completion
-        router(`/p/organisation/${organizationId}`);
+        router(RouteDict.SuperAdmin.OrganizationDetails(organizationId));
         
       } catch (roleError: any) {
         // If role assignment fails, delete the created user

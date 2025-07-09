@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Calendar } from '@/components/ui/calendar'
 import Loader from '@/components/Loader'
+import RouteDict from '@/routes/RouteDict'
 
 interface LeaveRequest {
   id: string
@@ -44,7 +45,7 @@ const EditLeaveRequest = () => {
           description: "Failed to fetch leave request details",
           variant: "destructive"
         })
-        navigate('/leave/request')
+        navigate(RouteDict.Leave.Requests.List)
       }
     }
 
@@ -75,7 +76,7 @@ const EditLeaveRequest = () => {
           title: "Success",
           description: "Leave request updated successfully"
         })
-        navigate('/leave/request')
+        navigate(RouteDict.Leave.Requests.List)
       }
     } catch (error) {
       toast({
@@ -137,7 +138,7 @@ const EditLeaveRequest = () => {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => navigate('/leave/request')}
+                    onClick={() => navigate(RouteDict.Leave.Requests.List)}
                   >
                     Cancel
                   </Button>

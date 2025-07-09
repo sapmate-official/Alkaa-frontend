@@ -65,7 +65,7 @@ const DepartmentManagementSystem = () => {
         } 
       />
       <Route 
-        path="/:id/edit" 
+        path="/edit/:id" 
         element={
           <PermissionRoute permissionKey="edit_department">
             <SpecificDepartmentEdit />

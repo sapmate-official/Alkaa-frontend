@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Building2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Department } from '../types';
+import RouteDict from '@/routes/RouteDict';
 
 interface DepartmentsTabProps {
   departments: Department[];
@@ -95,7 +96,7 @@ export const DepartmentsTab = ({
                       className={`border p-4 rounded-lg hover:bg-muted/50 cursor-pointer ${
                         canViewAllDepartments ? "" : "pointer-events-none"
                       }`}
-                      onClick={() => canViewAllDepartments && navigate(`/department/${dept.id}`)}
+                      onClick={() => canViewAllDepartments && navigate(RouteDict.Department.Details(dept.id))}
                     >
                       <p className="font-medium">{dept.name}</p>
                       {canViewAllDepartments && (

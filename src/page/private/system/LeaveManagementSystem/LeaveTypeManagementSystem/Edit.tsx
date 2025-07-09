@@ -5,6 +5,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import RouteDict from "@/routes/RouteDict";
 import { useAuth } from "@/services/AuthContext";
 import axios from "axios";
 import { useEffect } from "react";
@@ -55,7 +56,7 @@ const EditLeaveType = () => {
                     description: "Failed to fetch leave type",
                     variant: "destructive",
                 });
-                navigate('/leave/type');
+                navigate(RouteDict.Leave.Types.List);
             }
         };
 
@@ -78,7 +79,7 @@ const EditLeaveType = () => {
                 title: "Success",
                 description: "Leave type updated successfully",
             });
-            navigate('/leave/type');
+            navigate(RouteDict.Leave.Types.List);
         } catch (error) {
             toast({
                 title: "Error",
@@ -223,7 +224,7 @@ const EditLeaveType = () => {
                         <Button 
                             type="button" 
                             variant="outline"
-                            onClick={() => navigate('/leave/type')}
+                            onClick={() => navigate(RouteDict.Leave.Types.List)}
                         >
                             Cancel
                         </Button>

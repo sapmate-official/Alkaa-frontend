@@ -1,3 +1,4 @@
+import RouteDict from '@/routes/RouteDict'
 import CheckPermission from '@/services/PermissionCheck'
 import { permissionListAtom } from '@/store/atom'
 import { useAtom } from 'jotai'
@@ -11,7 +12,10 @@ const ButtonOfViewPayslipOfAllUsersPayroll = () => {
     const navigate = useNavigate()
   return (
     <div>
-        <button onClick={()=>navigate("/payroll/admin/payslip")} className='bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700'>
+        <button 
+            onClick={() => navigate(RouteDict.Payroll.Admin.Payslip)} 
+            className='bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700'
+        >
             View Payslip of All Users
         </button>
     </div>

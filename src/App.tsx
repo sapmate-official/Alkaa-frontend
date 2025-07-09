@@ -28,7 +28,7 @@ const ProfileModule = lazy(() => import('./page/private/system/Profile/ProfileMo
 const AttendanceModule = lazy(() => import('./page/private/system/AttendanceManagementSystem/AttendanceModule'));
 const DepartmentModule = lazy(() => import('./page/private/system/DepartmentManagementSystem'));
 const EmployeeModule = lazy(() => import('./page/private/system/EmployeeManagementSystem/EmployeeModule'));
-const PayrollModule = lazy(() => import('./page/private/system/PayrollManagementSystem/PayrollModule'));
+const PayrollModule = lazy(() => import('./page/private/system/PayrollManagementSystem/New_version/PayrollModule.tsx'));
 const BillingModule = lazy(() => import('./page/private/system/BillingManagementSystem/BillingModule'));
 const LeaveModule = lazy(() => import('./page/private/system/LeaveManagementSystem/LeaveModule'));
 

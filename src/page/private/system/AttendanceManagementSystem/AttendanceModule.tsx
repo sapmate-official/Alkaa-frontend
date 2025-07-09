@@ -14,7 +14,7 @@ const AttendanceModule = () => {
       <Route index element={<AttendancePanel />} />
       <Route path="history" element={<AttendanceHistory />} />
       <Route path="verification" element={<AttendanceVerification />} />
-      <Route path="live" element={<AttendanceLivePanel />} />
+      <Route path="live-panel" element={<AttendanceLivePanel />} />
       <Route path="pastdays" element={<PastNotCheckedDays />} />
     </Routes>
   );

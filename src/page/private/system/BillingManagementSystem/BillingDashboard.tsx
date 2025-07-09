@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { APIV2Dictionary } from '@/api/v2/Api2Dicts';
+import RouteDict from '@/routes/RouteDict';
 
 interface DashboardData {
   organization: {
@@ -132,7 +133,7 @@ const BillingDashboard = () => {
         <Button 
           variant="outline" 
           className="flex items-center"
-          onClick={() => navigate('/billing/history')}
+          onClick={() => navigate(RouteDict.Billing.History)}
         >
           <FileText className="mr-2 h-4 w-4" />
           View All Bills
@@ -140,7 +141,7 @@ const BillingDashboard = () => {
         {dashboardData?.billing?.latestBill && (
           <Button 
             className="flex items-center"
-            onClick={() => navigate(`/billing/bill/${dashboardData.billing.latestBill.id}`)}
+            onClick={() => navigate(RouteDict.Billing.Details(dashboardData.billing.latestBill.id))}
           >
             <Receipt className="mr-2 h-4 w-4" />
             Latest Bill
@@ -318,7 +319,7 @@ const BillingDashboard = () => {
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      onClick={() => navigate(`/billing/bill/${bill.id}`)}
+                      onClick={() => navigate(RouteDict.Billing.Details(bill.id))}
                     >
                       <FileText className="h-4 w-4" />
                     </Button>
@@ -332,7 +333,7 @@ const BillingDashboard = () => {
           <Button 
             variant="ghost" 
             className="w-full" 
-            onClick={() => navigate('/billing/history')}
+            onClick={() => navigate(RouteDict.Billing.History)}
           >
             View All Bills
           </Button>
