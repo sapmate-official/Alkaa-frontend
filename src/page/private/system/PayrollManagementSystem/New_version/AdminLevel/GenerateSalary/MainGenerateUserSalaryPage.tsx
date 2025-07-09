@@ -1,6 +1,5 @@
 
 import PayrollBreadcrumbs from '../../ui/PayrollBreadcrumbs';
-import { usePayrollRoutes } from '../../utils/PayrollRouteHelper';
 
 const MainGenerateUsersSalaryPage = () => {
     // this is generate salary page

@@ -27,7 +27,6 @@ import { APIDictionary } from '@/api/v2/APIdict'
 
 const DashboardOfPayroll = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [payslips, setPayslips] = useState<PayslipData[]>([]);
   const [selectedPayslip, setSelectedPayslip] = useState<PayslipData | null>(null);
