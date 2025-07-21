@@ -203,7 +203,7 @@ const OnboardingManagement = () => {
       
       // Filter users who can be managers (active employees, excluding current user)
       const potentialManagers = (response.data || []).filter((employee: User) => 
-        employee.status === 'active' && employee.id !== user?.id
+        employee.status === 'active' 
       ) as ManagerOption[];
       
       console.log('Filtered potential managers:', potentialManagers);
