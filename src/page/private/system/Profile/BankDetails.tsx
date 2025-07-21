@@ -72,7 +72,7 @@ const BankDetails = () => {
         description: "You don't have permission to edit bank details.",
         variant: "destructive"
       });
-      navigate(RouteDict.Profile.Base);
+      navigate(RouteDict.Profile.Info(id || user?.id || ''));
       return;
     }
     

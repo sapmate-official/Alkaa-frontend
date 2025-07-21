@@ -18,8 +18,8 @@ const RouteDict = {
         Base: "/p/profile",
         Info: (id:string)=> id?`/p/profile/info/${id}`:"/p/profile/info",
         Edit:(id:string | null)=> id?`/p/profile/edit/${id}`:"/p/profile/edit",
-        EditBank: (id:string | null)=> id?`/p/profile/edit-bank/${id}`:"/p/profile/edit-bank",
-        BankDetails: "/p/profile/bank-details",
+        EditBank: (id:string | null)=> id?`/p/profile/edit/bank/${id}`:"/p/profile/edit/bank",
+        BankDetails: "/p/profile/bank",
         SalaryParameter: "/p/profile/salary-parameter",
     },
 
@@ -32,6 +32,16 @@ const RouteDict = {
         RoleAssignment: "/p/employee/role-assignment",
         List: "/p/employee/list",
         Details: "/p/employee/:id",
+    },
+
+    // Onboarding Management System
+    Onboarding: {
+        Base: "/p/onboarding",
+        Manage: "/p/onboarding/manage",
+        CandidateDetails: (id: string) => `/p/onboarding/candidate/${id}`,
+        Review: (id: string) => `/p/onboarding/review/${id}`,
+        Complete: (id: string) => `/p/onboarding/complete/${id}`,
+        PublicForm: (token: string) => `/onboarding/${token}`,
     },
 
     // Attendance Management System
