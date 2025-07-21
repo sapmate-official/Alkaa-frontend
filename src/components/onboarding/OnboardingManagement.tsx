@@ -821,7 +821,7 @@ const OnboardingManagement = () => {
                 name="departmentId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Department (Optional)</FormLabel>
+                    <FormLabel>Department</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -848,7 +848,7 @@ const OnboardingManagement = () => {
                 name="managerId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Manager (Optional)</FormLabel>
+                    <FormLabel>Manager</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -879,7 +879,7 @@ const OnboardingManagement = () => {
                   name="annualPackage"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Annual Package (Optional)</FormLabel>
+                      <FormLabel>Annual Package</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -901,7 +901,7 @@ const OnboardingManagement = () => {
                   name="monthlySalary"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Monthly Salary (Optional)</FormLabel>
+                      <FormLabel>Monthly Salary</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -924,7 +924,7 @@ const OnboardingManagement = () => {
                 name="hiredDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Hired Date (Optional)</FormLabel>
+                    <FormLabel>Hired Date</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
