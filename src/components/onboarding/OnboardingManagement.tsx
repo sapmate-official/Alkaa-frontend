@@ -177,7 +177,7 @@ const OnboardingManagement = () => {
       console.log('Fetched departments:', departmentData);
       
       // Filter out any departments with invalid IDs
-      const validDepartments = departmentData.filter(dept => 
+      const validDepartments = departmentData.filter((dept: any): dept is Department => 
         dept && dept.id && dept.id.toString().trim() !== ''
       );
       

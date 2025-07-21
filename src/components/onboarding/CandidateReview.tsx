@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Dialog,
   DialogContent,
@@ -19,9 +18,7 @@ import axios from 'axios';
 import {
   User,
   Mail,
-  Phone,
   Calendar,
-  MapPin,
   CreditCard,
   Building2,
   CheckCircle,
