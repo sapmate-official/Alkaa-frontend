@@ -29,10 +29,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/services/AuthContext';
 import { APIDictionary } from '@/api/v2/APIdict';
+import { Department } from '@/interface/general';
 import axios from 'axios';
 import {
   User,
@@ -128,14 +128,9 @@ const EditCandidateDialog = ({ candidateId, isOpen, onClose, onSuccess }: EditCa
       console.log('Fetched departments:', departmentData);
       
       // Filter out any departments with invalid IDs
-      interface Department {
-        id: string | number;
-        name: string;
-      }
-
-            const validDepartments: Department[] = departmentData.filter((dept): dept is Department => 
-              dept && dept.id && dept.id.toString().trim() !== ''
-            );
+      const validDepartments: Department[] = departmentData.filter((dept: any): dept is Department => 
+        dept && dept.id && dept.id.toString().trim() !== ''
+      );
       
       setDepartments(validDepartments);
     } catch (error) {
