@@ -57,4 +57,7 @@ export const APIDictionary = {
     activityLogs: `${backendDomain}/api/v2/activity-logs`,
     activityStats: `${backendDomain}/api/v2/activity-logs/stats`,
     userRecentActivities: (targetUserId: string) => `${backendDomain}/api/v2/activity-logs/user/${targetUserId}/recent`,
+
+    // Onboarding Endpoints
+    onboarding: `${backendDomain}/api/v2/onboarding`,
 };

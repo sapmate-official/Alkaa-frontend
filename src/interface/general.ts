@@ -610,3 +610,54 @@ export interface PermissionPreset {
   createdAt: Date;
   updatedAt: Date;
 }
+
+// Onboarding Interfaces
+export enum OnboardingStatus {
+  INVITED = "INVITED",
+  FORM_SUBMITTED = "FORM_SUBMITTED",
+  UNDER_REVIEW = "UNDER_REVIEW",
+  REJECTED = "REJECTED",
+  APPROVED = "APPROVED",
+  ONBOARDED = "ONBOARDED",
+  ABORTED = "ABORTED"
+}
+
+export interface OnboardingCandidate {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  email: string;
+  mobileNumber?: string;
+  emergencyContact?: string;
+  dateOfBirth?: string;
+  address?: string;
+  adharNumber?: string;
+  panNumber?: string;
+  hiredDate?: string;
+  annualPackage?: number;
+  monthlySalary?: number;
+  departmentId?: string;
+  managerId?: string;
+  status: OnboardingStatus;
+  invitedAt?: Date;
+  formSubmittedAt?: Date;
+  reviewedAt?: Date;
+  rejectionReason?: string;
+  notes?: string;
+  verificationToken?: string;
+  tokenExpiry?: Date;
+  formData?: any;
+  orgId: string;
+  createdById: string;
+  reviewedById?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  organization?: Organization;
+  organizationName?: string;
+  organizationIndustry?: string;
+  organizationLogo?: string;
+  department?: Department;
+  manager?: User;
+  createdBy?: User;
+  reviewedBy?: User;
+}
