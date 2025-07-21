@@ -580,8 +580,7 @@ const completeOnboarding = async (req, res) => {
           accountNumber: formData.bankDetails.accountNumber,
           ifscCode: formData.bankDetails.ifscCode,
           bankName: formData.bankDetails.bankName,
-          branchName: formData.bankDetails.branchName,
-          accountHolderName: formData.bankDetails.accountHolderName
+          accountHolder: formData.bankDetails.accountHolderName
         }
       });
     }
