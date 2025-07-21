@@ -217,8 +217,8 @@ const ListOfDepartment = () => {
     const [sortField, setSortField] = useState<string>('name')
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
     const [statusFilter, setStatusFilter] = useState<string>('all')
-
-    const canViewAllDepartments = CheckPermission('view_all_department_info', permissions)
+    console.log(permissions)
+    const canViewAllDepartments = CheckPermission("view_list_of_department", permissions)
     const canViewOwnDepartment = CheckPermission('view_own_department_info', permissions)
     const canCreateDepartment = CheckPermission('create_new_department', permissions)
     
@@ -249,6 +249,12 @@ const ListOfDepartment = () => {
 
         const userDept = departments.find(dept => dept.id === user.departmentId)
         setOwnDepartment(userDept || null)
+
+        // Auto-navigate if user can only view their own department
+        if (!canViewAllDepartments && canViewOwnDepartment && userDept && userHeadedDepts.length === 0) {
+            navigate(RouteDict.Department.Details(userDept.id))
+            return
+        }
 
         if (canViewAllDepartments) {
             const otherDepts = departments.filter(dept => 
