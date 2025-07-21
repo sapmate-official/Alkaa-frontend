@@ -8,7 +8,7 @@ import { IoLogOutOutline } from 'react-icons/io5';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../services/AuthContext';
 import { Sidebar, SidebarBody, SidebarLink } from '@/components/ui/sidebar';
-import { Leaf, User2Icon, ShieldCheck, UserCog, Activity } from 'lucide-react';
+import { Leaf, User2Icon, ShieldCheck, UserCog, Activity, UserPlus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { APIDictionary } from '@/api/v2/APIdict';
@@ -23,6 +23,7 @@ const SIDEBAR_LINK_RANKING: Record<string, number> = {
   "Organization": 1,
   "Permission": 2,
   // "Employees": 3,
+  "Onboarding": 3,
   "Department": 4,
   "Roles & Permission": 5,
   "Profile": 6,
@@ -126,6 +127,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           label: "Profile",
           href: RouteDict.Profile.Info(user?.id || ""),
           icon: <FaRegIdCard className="h-5 w-5" />
+        });
+      } else if (permission.key === "create_user") {
+        if (baseLinks.some(link => link.label === "Onboarding")) continue;
+        baseLinks.push({
+          label: "Onboarding",
+          href: RouteDict.Onboarding.Base,
+          icon: <UserPlus className="h-5 w-5" />
         });
       } else if (permission?.key === "read_leave_type") {
         if (baseLinks.some(link => link.label === "Leave Type")) continue;

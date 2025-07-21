@@ -22,6 +22,7 @@ import HolidayManagementSystem from './page/private/system/HolidayManagementSyst
 const LandingPage = lazy(() => import('./page/public/LandingPage'));
 const SetPassword = lazy(() => import('./page/public/SetPassword'));
 const SignIn = lazy(() => import('./page/public/auth/SignIn'));
+const OnboardingForm = lazy(() => import('./components/onboarding/OnboardingForm'));
 
 // Core modules - group related components
 const ProfileModule = lazy(() => import('./page/private/system/Profile/ProfileModule'));
@@ -31,6 +32,7 @@ const EmployeeModule = lazy(() => import('./page/private/system/EmployeeManageme
 const PayrollModule = lazy(() => import('./page/private/system/PayrollManagementSystem/New_version/PayrollModule.tsx'));
 const BillingModule = lazy(() => import('./page/private/system/BillingManagementSystem/BillingModule'));
 const LeaveModule = lazy(() => import('./page/private/system/LeaveManagementSystem/LeaveModule'));
+const OnboardingModule = lazy(() => import('./page/private/system/OnboardingManagementSystem/OnboardingModule'));
 
 // Admin modules (less frequently used)
 const OrganizationModule = lazy(() => import('./page/private/system/OrganizationManagementSystem/OrganizationModule')); // For Super Admin
@@ -52,6 +54,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/reset-password/:token" element={<SetPassword />} />
           <Route path="/auth/signin" element={<AuthProvider><SignIn /></AuthProvider>} />
+          <Route path="/onboarding/:token" element={<OnboardingForm />} />
           
           {/* Protected Routes - All other routes that aren't public */}
           <Route
@@ -153,6 +156,12 @@ const ClientRoute = () => {
       <Route path="/employee/*" element={
         <PermissionRouteBasedOnKey requiredPermissions={['create_user', 'Read User Details', 'Update User Details', 'Delete User']}>
           <EmployeeModule />
+        </PermissionRouteBasedOnKey>
+      } />
+
+      <Route path="/onboarding/*" element={
+        <PermissionRouteBasedOnKey requiredPermissions={['create_user']}>
+          <OnboardingModule />
         </PermissionRouteBasedOnKey>
       } />
 
