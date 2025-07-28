@@ -338,7 +338,7 @@ const AlkaaLandingPage: React.FC = () => {
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 max-w-screen-xl items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white font-bold">A</div>
+            <img src="/logo_icon.svg" alt="Alkaa Logo" className="h-8 w-8" />
             <span className="text-xl font-bold">Alkaa</span>
           </div>
           
@@ -593,7 +593,7 @@ const AlkaaLandingPage: React.FC = () => {
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white font-bold">A</div>
+                <img src="/logo_icon.svg" alt="Alkaa Logo" className="h-8 w-8" />
                 <span className="text-xl font-bold">Alkaa</span>
               </div>
               <p className="text-sm text-muted-foreground">
