@@ -12,7 +12,9 @@ const ProfileModule = () => {
       <Route path='info' element={<ProfileInfo />} />
       <Route path='info/:id' element={<ProfileInfo />} />
       <Route path="edit" element={<EditProfile />} />
+      <Route path="edit/:id" element={<EditProfile />} />
       <Route path="edit/bank" element={<BankDetails />} />
+      <Route path="edit/bank/:id" element={<BankDetails />} />
     </Routes>
   );
 };

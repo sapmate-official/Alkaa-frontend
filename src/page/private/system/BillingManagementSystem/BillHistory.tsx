@@ -164,7 +164,7 @@ const BillHistory = () => {
 
   if (loading && bills.length === 0) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 w-full p-4">
         <div className="flex items-center mb-6">
           <Button variant="ghost" onClick={() => navigate(RouteDict.Billing.Base)} className="mr-2">
             <ChevronLeft className="mr-2 h-4 w-4" />

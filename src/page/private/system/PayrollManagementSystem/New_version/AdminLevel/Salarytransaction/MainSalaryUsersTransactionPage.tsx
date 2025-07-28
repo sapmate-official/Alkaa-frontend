@@ -4,7 +4,6 @@ import axios from 'axios';
 import { APIV3Dictionary } from '@/api/v3/Api3Dicts';
 import { APIDictionary } from '@/api/v2/APIdict';
 import { useAuth } from '@/services/AuthContext';
-import PayrollBreadcrumbs from '../../ui/PayrollBreadcrumbs';
 import { format } from 'date-fns';
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
@@ -622,374 +621,377 @@ const MainSalaryUsersTransactionPage: React.FC = () => {
   };
 
   return (
-    <div className="p-4 w-full h-screen">
-      {/* Breadcrumbs */}
-      <PayrollBreadcrumbs />
+    <div className="w-full h-screen flex flex-col">
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-10 bg-background border-b p-4">
+        <h1 className="text-3xl font-bold">Salary Transaction Management</h1>
+      </div>
       
-      <h1 className="text-3xl font-bold mb-6">Salary Transaction Management</h1>
-      
-      {/* Top section with month/year selection and report */}
-      <Card className="mb-6">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Payment Overview</CardTitle>
-            <div className="flex gap-2">
-              <Select
-                value={selectedMonth.toString()}
-                onValueChange={(value) => setSelectedMonth(parseInt(value))}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Month" />
-                </SelectTrigger>
-                <SelectContent>
-                  {months.map((month) => (
-                    <SelectItem key={month.value} value={month.value.toString()}>
-                      {month.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              
-              <Select
-                value={selectedYear.toString()}
-                onValueChange={(value) => setSelectedYear(parseInt(value))}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Year" />
-                </SelectTrigger>
-                <SelectContent>
-                  {years.map((year) => (
-                    <SelectItem key={year} value={year.toString()}>
-                      {year}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <CardDescription>
-            Salary payment summary for {months.find(m => m.value === selectedMonth)?.label} {selectedYear}
-          </CardDescription>
-        </CardHeader>
-        
-        <CardContent>
-          {report ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total Employees</p>
-                      <h3 className="text-2xl font-bold">{report.totalEmployees}</h3>
-                    </div>
-                    <Users className="h-8 w-8 text-blue-500" />
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Unpaid Salaries</p>
-                      <h3 className="text-2xl font-bold">{report.unpaidCount}</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {formatCurrency(report.totalUnpaidAmount)}
-                      </p>
-                    </div>
-                    <FileText className="h-8 w-8 text-amber-500" />
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Paid Salaries</p>
-                      <h3 className="text-2xl font-bold">{report.paidCount}</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {formatCurrency(report.paidAmount)}
-                      </p>
-                    </div>
-                    <DollarSign className="h-8 w-8 text-green-500" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          ) : (
-            <div className="flex justify-center items-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          )}
-        </CardContent>
-        
-        <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={downloadReport} disabled={!report}>
-            <Download className="mr-2 h-4 w-4" /> Download Report
-          </Button>
-          
-          <div className="flex gap-2">
-            <Button 
-              variant={isBulkTransactionMode ? "default" : "outline"}
-              onClick={() => setIsBulkTransactionMode(!isBulkTransactionMode)}
-            >
-              <CreditCard className="mr-2 h-4 w-4" /> 
-              {isBulkTransactionMode ? "Cancel Bulk Payment" : "Make Bulk Payment"}
-            </Button>
-          </div>
-        </CardFooter>
-      </Card>
-      
-      {/* Main content - List of users and their payslips */}
-      {isBulkTransactionMode ? (
-        <Card>
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto p-4">
+        {/* Top section with month/year selection and report */}
+        <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Bulk Payment Processing</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Payment Overview</CardTitle>
+              <div className="flex gap-2">
+                <Select
+                  value={selectedMonth.toString()}
+                  onValueChange={(value) => setSelectedMonth(parseInt(value))}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Month" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {months.map((month) => (
+                      <SelectItem key={month.value} value={month.value.toString()}>
+                        {month.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <Select
+                  value={selectedYear.toString()}
+                  onValueChange={(value) => setSelectedYear(parseInt(value))}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {years.map((year) => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             <CardDescription>
-              Select payslips to process together with the same transaction details
+              Salary payment summary for {months.find(m => m.value === selectedMonth)?.label} {selectedYear}
             </CardDescription>
           </CardHeader>
           
           <CardContent>
-            <div className="space-y-6">
-              <div className="border rounded-md p-4">
-                <h3 className="text-lg font-medium mb-2">Transaction Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Transaction ID</label>
-                    <Input 
-                      type="text" 
-                      placeholder="Enter bank transaction reference"
-                      value={bulkTransactionId}
-                      onChange={(e) => setBulkTransactionId(e.target.value)}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Apply to all selected payslips:</label>
-                    <div className="grid grid-cols-2 gap-4">
+            {report ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex justify-between items-center">
                       <div>
-                        <label className="text-sm text-muted-foreground">Bonus (₹)</label>
-                        <Input 
-                          type="number" 
-                          min="0" 
-                          placeholder="0"
-                          value={bulkBonus || ''}
-                          onChange={(e) => setBulkBonus(parseFloat(e.target.value) || 0)}
-                        />
+                        <p className="text-sm text-muted-foreground">Total Employees</p>
+                        <h3 className="text-2xl font-bold">{report.totalEmployees}</h3>
                       </div>
-                      
-                      <div>
-                        <label className="text-sm text-muted-foreground">Incentive (₹)</label>
-                        <Input 
-                          type="number" 
-                          min="0" 
-                          placeholder="0"
-                          value={bulkIncentive || ''}
-                          onChange={(e) => setBulkIncentive(parseFloat(e.target.value) || 0)}
-                        />
-                      </div>
+                      <Users className="h-8 w-8 text-blue-500" />
                     </div>
-                  </div>
-                  
-                  <div className="space-y-2 md:col-span-2">
-                    <label className="text-sm font-medium">Remarks</label>
-                    <Textarea 
-                      placeholder="Optional remarks for this transaction"
-                      value={bulkRemarks}
-                      onChange={(e) => setBulkRemarks(e.target.value)}
-                    />
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Unpaid Salaries</p>
+                        <h3 className="text-2xl font-bold">{report.unpaidCount}</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {formatCurrency(report.totalUnpaidAmount)}
+                        </p>
+                      </div>
+                      <FileText className="h-8 w-8 text-amber-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Paid Salaries</p>
+                        <h3 className="text-2xl font-bold">{report.paidCount}</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {formatCurrency(report.paidAmount)}
+                        </p>
+                      </div>
+                      <DollarSign className="h-8 w-8 text-green-500" />
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-              
-              <div>
-                <h3 className="text-lg font-medium mb-2">Select Payslips</h3>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-12">Select</TableHead>
-                      <TableHead>Employee</TableHead>
-                      <TableHead>Emp. ID</TableHead>
-                      <TableHead>Department</TableHead>
-                      <TableHead>Month</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {payslips.filter(p => p.status === 'PENDING').map((payslip) => (
-                      <TableRow key={payslip.id}>
-                        <TableCell>
-                          <Checkbox
-                            checked={!!selectedPayslips[payslip.id]}
-                            onCheckedChange={(checked) => {
-                              setSelectedPayslips(prev => ({
-                                ...prev,
-                                [payslip.id]: !!checked
-                              }));
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {payslip.employee.firstName} {payslip.employee.lastName}
-                        </TableCell>
-                        <TableCell>{payslip.employee.employeeId}</TableCell>
-                        <TableCell>{payslip.employee.department || 'N/A'}</TableCell>
-                        <TableCell>{months.find(m => m.value === payslip.month)?.label} {payslip.year}</TableCell>
-                        <TableCell>{formatCurrency(payslip.netSalary)}</TableCell>
-                        <TableCell>
-                          <Badge variant={getStatusBadgeVariant(payslip.status)}>
-                            {payslip.status}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+            ) : (
+              <div className="flex justify-center items-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
-            </div>
+            )}
           </CardContent>
           
-          <CardFooter className="flex justify-end">
+          <CardFooter className="flex justify-between">
+            <Button variant="outline" onClick={downloadReport} disabled={!report}>
+              <Download className="mr-2 h-4 w-4" /> Download Report
+            </Button>
+            
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setIsBulkTransactionMode(false)}>
-                Cancel
-              </Button>
               <Button 
-                onClick={processBulkTransactions} 
-                disabled={loading.transaction || Object.values(selectedPayslips).filter(Boolean).length === 0}
+                variant={isBulkTransactionMode ? "default" : "outline"}
+                onClick={() => setIsBulkTransactionMode(!isBulkTransactionMode)}
               >
-                {loading.transaction && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Process Payments
+                <CreditCard className="mr-2 h-4 w-4" /> 
+                {isBulkTransactionMode ? "Cancel Bulk Payment" : "Make Bulk Payment"}
               </Button>
             </div>
           </CardFooter>
         </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="md:col-span-1">
+        
+        {/* Main content - List of users and their payslips */}
+        {isBulkTransactionMode ? (
+          <Card>
             <CardHeader>
-              <CardTitle>Employees</CardTitle>
+              <CardTitle>Bulk Payment Processing</CardTitle>
               <CardDescription>
-                Select an employee to view their payslips
-              </CardDescription>
-            </CardHeader>
-            
-            <CardContent className="h-[500px] overflow-auto">
-              {loading.users ? (
-                <div className="flex justify-center items-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {users.map((user) => (
-                    <Card
-                      key={user.id}
-                      className={`p-3 cursor-pointer hover:bg-muted transition-colors ${
-                        selectedUser?.id === user.id ? 'bg-muted' : ''
-                      }`}
-                      onClick={() => handleSelectUser(user)}
-                    >
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <h3 className="font-medium">
-                            {user.firstName} {user.lastName}
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            {user.employeeId} • {user.department?.name || 'N/A'}
-                          </p>
-                        </div>
-                        {user.unpaidSalaries > 0 && (
-                          <Badge variant="secondary">{user.unpaidSalaries} Unpaid</Badge>
-                        )}
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-          
-          <Card className="md:col-span-2">
-            <CardHeader>
-              <CardTitle>
-                {selectedUser ? `${selectedUser.firstName}'s Payslips` : 'Select an Employee'}
-              </CardTitle>
-              <CardDescription>
-                {selectedUser
-                  ? `Showing payslips for ${months.find(m => m.value === selectedMonth)?.label} ${selectedYear}`
-                  : 'Select an employee from the list to view their payslips'}
+                Select payslips to process together with the same transaction details
               </CardDescription>
             </CardHeader>
             
             <CardContent>
-              {selectedUser ? (
-                loading.payslips ? (
-                  <div className="flex justify-center items-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <div className="space-y-6">
+                <div className="border rounded-md p-4">
+                  <h3 className="text-lg font-medium mb-2">Transaction Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Transaction ID</label>
+                      <Input 
+                        type="text" 
+                        placeholder="Enter bank transaction reference"
+                        value={bulkTransactionId}
+                        onChange={(e) => setBulkTransactionId(e.target.value)}
+                        required
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Apply to all selected payslips:</label>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-sm text-muted-foreground">Bonus (₹)</label>
+                          <Input 
+                            type="number" 
+                            min="0" 
+                            placeholder="0"
+                            value={bulkBonus || ''}
+                            onChange={(e) => setBulkBonus(parseFloat(e.target.value) || 0)}
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="text-sm text-muted-foreground">Incentive (₹)</label>
+                          <Input 
+                            type="number" 
+                            min="0" 
+                            placeholder="0"
+                            value={bulkIncentive || ''}
+                            onChange={(e) => setBulkIncentive(parseFloat(e.target.value) || 0)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2 md:col-span-2">
+                      <label className="text-sm font-medium">Remarks</label>
+                      <Textarea 
+                        placeholder="Optional remarks for this transaction"
+                        value={bulkRemarks}
+                        onChange={(e) => setBulkRemarks(e.target.value)}
+                      />
+                    </div>
                   </div>
-                ) : payslips.length > 0 ? (
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Select Payslips</h3>
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-12">Select</TableHead>
+                        <TableHead>Employee</TableHead>
+                        <TableHead>Emp. ID</TableHead>
+                        <TableHead>Department</TableHead>
                         <TableHead>Month</TableHead>
-                        <TableHead>Basic Salary</TableHead>
-                        <TableHead>Net Salary</TableHead>
+                        <TableHead>Amount</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Action</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {payslips.map((payslip) => (
-                        <TableRow key={payslip.id} className="cursor-pointer hover:bg-muted">
-                          <TableCell onClick={() => handleSelectPayslip(payslip)}>
-                            {months.find(m => m.value === payslip.month)?.label} {payslip.year}
+                      {payslips.filter(p => p.status === 'PENDING').map((payslip) => (
+                        <TableRow key={payslip.id}>
+                          <TableCell>
+                            <Checkbox
+                              checked={!!selectedPayslips[payslip.id]}
+                              onCheckedChange={(checked) => {
+                                setSelectedPayslips(prev => ({
+                                  ...prev,
+                                  [payslip.id]: !!checked
+                                }));
+                              }}
+                            />
                           </TableCell>
-                          <TableCell onClick={() => handleSelectPayslip(payslip)}>
-                            {formatCurrency(payslip.basicSalary)}
+                          <TableCell>
+                            {payslip.employee.firstName} {payslip.employee.lastName}
                           </TableCell>
-                          <TableCell onClick={() => handleSelectPayslip(payslip)}>
-                            {formatCurrency(payslip.netSalary)}
-                          </TableCell>
-                          <TableCell onClick={() => handleSelectPayslip(payslip)}>
+                          <TableCell>{payslip.employee.employeeId}</TableCell>
+                          <TableCell>{payslip.employee.department || 'N/A'}</TableCell>
+                          <TableCell>{months.find(m => m.value === payslip.month)?.label} {payslip.year}</TableCell>
+                          <TableCell>{formatCurrency(payslip.netSalary)}</TableCell>
+                          <TableCell>
                             <Badge variant={getStatusBadgeVariant(payslip.status)}>
                               {payslip.status}
                             </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {payslip.status === 'PENDING' && (
-                              <Button 
-                                size="sm"
-                                onClick={() => {
-                                  handleSelectPayslip(payslip);
-                                  setIsTransactionDialogOpen(true);
-                                }}
-                              >
-                                Process
-                              </Button>
-                            )}
                           </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
+                </div>
+              </div>
+            </CardContent>
+            
+            <CardFooter className="flex justify-end">
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setIsBulkTransactionMode(false)}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={processBulkTransactions} 
+                  disabled={loading.transaction || Object.values(selectedPayslips).filter(Boolean).length === 0}
+                >
+                  {loading.transaction && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Process Payments
+                </Button>
+              </div>
+            </CardFooter>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="md:col-span-1">
+              <CardHeader>
+                <CardTitle>Employees</CardTitle>
+                <CardDescription>
+                  Select an employee to view their payslips
+                </CardDescription>
+              </CardHeader>
+              
+              <CardContent className="h-[500px] overflow-auto">
+                {loading.users ? (
+                  <div className="flex justify-center items-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {users.map((user) => (
+                      <Card
+                        key={user.id}
+                        className={`p-3 cursor-pointer hover:bg-muted transition-colors ${
+                          selectedUser?.id === user.id ? 'bg-muted' : ''
+                        }`}
+                        onClick={() => handleSelectUser(user)}
+                      >
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h3 className="font-medium">
+                              {user.firstName} {user.lastName}
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              {user.employeeId} • {user.department?.name || 'N/A'}
+                            </p>
+                          </div>
+                          {user.unpaidSalaries > 0 && (
+                            <Badge variant="secondary">{user.unpaidSalaries} Unpaid</Badge>
+                          )}
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle>
+                  {selectedUser ? `${selectedUser.firstName}'s Payslips` : 'Select an Employee'}
+                </CardTitle>
+                <CardDescription>
+                  {selectedUser
+                    ? `Showing payslips for ${months.find(m => m.value === selectedMonth)?.label} ${selectedYear}`
+                    : 'Select an employee from the list to view their payslips'}
+                </CardDescription>
+              </CardHeader>
+              
+              <CardContent>
+                {selectedUser ? (
+                  loading.payslips ? (
+                    <div className="flex justify-center items-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : payslips.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Month</TableHead>
+                          <TableHead>Basic Salary</TableHead>
+                          <TableHead>Net Salary</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Action</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {payslips.map((payslip) => (
+                          <TableRow key={payslip.id} className="cursor-pointer hover:bg-muted">
+                            <TableCell onClick={() => handleSelectPayslip(payslip)}>
+                              {months.find(m => m.value === payslip.month)?.label} {payslip.year}
+                            </TableCell>
+                            <TableCell onClick={() => handleSelectPayslip(payslip)}>
+                              {formatCurrency(payslip.basicSalary)}
+                            </TableCell>
+                            <TableCell onClick={() => handleSelectPayslip(payslip)}>
+                              {formatCurrency(payslip.netSalary)}
+                            </TableCell>
+                            <TableCell onClick={() => handleSelectPayslip(payslip)}>
+                              <Badge variant={getStatusBadgeVariant(payslip.status)}>
+                                {payslip.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {payslip.status === 'PENDING' && (
+                                <Button 
+                                  size="sm"
+                                  onClick={() => {
+                                    handleSelectPayslip(payslip);
+                                    setIsTransactionDialogOpen(true);
+                                  }}
+                                >
+                                  Process
+                                </Button>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">No payslips found for this period</p>
+                    </div>
+                  )
                 ) : (
                   <div className="text-center py-8">
-                    <p className="text-muted-foreground">No payslips found for this period</p>
+                    <p className="text-muted-foreground">Select an employee to view their payslips</p>
                   </div>
-                )
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">Select an employee to view their payslips</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
       
       {/* Transaction Dialog */}
       <Dialog open={isTransactionDialogOpen} onOpenChange={setIsTransactionDialogOpen}>

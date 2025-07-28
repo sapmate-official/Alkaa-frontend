@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { format } from 'date-fns';
-import { CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Search, Clock, ChevronDown, ChevronUp, RefreshCw, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Search, Clock, ChevronDown, RefreshCw, ShieldCheck, AlertCircle } from 'lucide-react';
 import { useTheme } from '@/provider/ThemeProvider';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
@@ -200,27 +199,27 @@ const EmployeeAttendanceDashboard: React.FC = () => {
         );
     });
 
-    // Helper to determine card status color
+    // Helper to determine card status color (now more subtle)
     const getStatusColor = (userId: string): string => {
         const records = attendanceData[userId] || [];
         const currentSessionRecord = records?.find(r => r?.sessionNumber === currentSession);
         const isDark = theme === 'dark';
 
-        if (!currentSessionRecord) return isDark ? 'bg-secondary/30' : 'bg-secondary/20';
+        if (!currentSessionRecord) return '';
 
         switch (currentSessionRecord?.status) {
             case 'PRESENT':
-                return currentSessionRecord.checkOutTime !== undefined
-                    ? (isDark ? 'bg-blue-950/50' : 'bg-blue-100')
-                    : (isDark ? 'bg-green-800/40' : 'bg-green-200'); // Stronger green for active check-ins
+                return currentSessionRecord.checkOutTime !== null && currentSessionRecord.checkOutTime !== undefined
+                    ? (isDark ? 'bg-blue-50/5 border-blue-200/20' : 'bg-blue-50/50 border-blue-200/50')
+                    : (isDark ? 'bg-green-50/5 border-green-200/20' : 'bg-green-50/50 border-green-200/50');
             case 'LATE':
-                return isDark ? 'bg-yellow-950/50' : 'bg-yellow-100';
+                return isDark ? 'bg-yellow-50/5 border-yellow-200/20' : 'bg-yellow-50/50 border-yellow-200/50';
             case 'ABSENT':
-                return isDark ? 'bg-red-950/50' : 'bg-red-100';
+                return isDark ? 'bg-red-50/5 border-red-200/20' : 'bg-red-50/50 border-red-200/50';
             case 'LEAVE':
-                return isDark ? 'bg-gray-950/50' : 'bg-gray-100';
+                return isDark ? 'bg-gray-50/5 border-gray-200/20' : 'bg-gray-50/50 border-gray-200/50';
             default:
-                return isDark ? 'bg-secondary/30' : 'bg-secondary/20';
+                return '';
         }
     };
 
@@ -233,7 +232,7 @@ const EmployeeAttendanceDashboard: React.FC = () => {
 
         switch (currentSessionRecord?.status) {
             case 'PRESENT':
-                return currentSessionRecord.checkOutTime ? 'Checked Out' : 'Checked In';
+                return currentSessionRecord.checkOutTime !== null && currentSessionRecord.checkOutTime !== undefined ? 'Checked Out' : 'Checked In';
             case 'LATE': return 'Late';
             case 'ABSENT': return 'Absent';
             case 'LEAVE': return 'On Leave';
@@ -324,6 +323,64 @@ const EmployeeAttendanceDashboard: React.FC = () => {
                 )}
             </div>
 
+            {/* Quick Stats */}
+            {hasPermission && userData.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    {(() => {
+                        const stats = userData.reduce((acc, employee) => {
+                            const records = attendanceData[employee.id] || [];
+                            const currentRecord = records.find(r => r.sessionNumber === currentSession);
+                            const status = currentRecord ? getStatusText(employee.id) : 'Not Checked In';
+                            
+                            if (status === 'Checked In') acc.checkedIn++;
+                            else if (status === 'Checked Out') acc.checkedOut++;
+                            else if (status === 'Late') acc.late++;
+                            else if (status === 'Absent') acc.absent++;
+                            else if (status === 'On Leave') acc.onLeave++;
+                            else acc.notCheckedIn++;
+                            
+                            return acc;
+                        }, { checkedIn: 0, checkedOut: 0, late: 0, absent: 0, onLeave: 0, notCheckedIn: 0 });
+
+                        return (
+                            <>
+                                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                        <span className="text-sm font-medium text-green-800 dark:text-green-200">Checked In</span>
+                                    </div>
+                                    <p className="text-2xl font-bold text-green-900 dark:text-green-100 mt-1">{stats.checkedIn}</p>
+                                </div>
+                                
+                                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                        <span className="text-sm font-medium text-blue-800 dark:text-blue-200">Checked Out</span>
+                                    </div>
+                                    <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 mt-1">{stats.checkedOut}</p>
+                                </div>
+
+                                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                                        <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Late/Absent</span>
+                                    </div>
+                                    <p className="text-2xl font-bold text-yellow-900 dark:text-yellow-100 mt-1">{stats.late + stats.absent}</p>
+                                </div>
+
+                                <div className="bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-800 rounded-lg p-3">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+                                        <span className="text-sm font-medium text-gray-800 dark:text-gray-200">Not Started</span>
+                                    </div>
+                                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{stats.notCheckedIn + stats.onLeave}</p>
+                                </div>
+                            </>
+                        );
+                    })()}
+                </div>
+            )}
+
             {loading ? (
                 <div className="flex flex-col justify-center items-center h-64">
                     <RefreshCw className="h-8 w-8 animate-spin opacity-70 mb-4" />
@@ -345,8 +402,8 @@ const EmployeeAttendanceDashboard: React.FC = () => {
                     </Button>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredEmployees?.map((employee) => {
+                <div className="space-y-3">
+                    {filteredEmployees?.map((employee, index) => {
                         const isExpanded = expandedCards[employee?.id] || false;
                         const statusColor = employee?.id ? getStatusColor(employee.id) : '';
                         const statusText = employee?.id ? getStatusText(employee.id) : '';
@@ -356,137 +413,200 @@ const EmployeeAttendanceDashboard: React.FC = () => {
                         return employee ? (
                             <motion.div
                                 key={employee.id}
-                                className={`${statusColor} overflow-hidden rounded-lg border`}
-                                layout
-                                initial={{ borderRadius: 8 }}
-                                transition={{ duration: 0.3, ease: [0.04, 0.62, 0.23, 0.98] }}
+                                className="bg-card border rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.02, duration: 0.3 }}
                             >
-
-                                <CardContent className="p-0">
-                                    <div
-                                        className="p-4 cursor-pointer flex justify-between items-center"
-                                        onClick={() => employee?.id && toggleCard(employee.id)}
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <Avatar>
-                                                <AvatarImage src={employee?.avatarUrl} alt={employee?.name || ''} />
-                                                <AvatarFallback>{employee?.name ? employee.name.substring(0, 2).toUpperCase() : ''}</AvatarFallback>
-                                            </Avatar>
-                                            <div>
-                                                <p className="font-medium">{employee?.name}</p>
-                                                <p className="text-sm text-muted">{employee?.department} • {employee?.position}</p>
+                                {/* Main card content */}
+                                <div 
+                                    className={`p-4 cursor-pointer ${statusColor} transition-colors duration-200`}
+                                    onClick={() => employee?.id && toggleCard(employee.id)}
+                                >
+                                    <div className="flex items-center justify-between">
+                                        {/* Left section - Employee info */}
+                                        <div className="flex items-center gap-4 flex-1 min-w-0">
+                                            <div className="relative">
+                                                <Avatar className="h-12 w-12">
+                                                    <AvatarImage src={employee?.avatarUrl} alt={employee?.name || ''} />
+                                                    <AvatarFallback className="text-sm font-medium">
+                                                        {employee?.name ? employee.name.substring(0, 2).toUpperCase() : ''}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                {/* Status indicator dot */}
+                                                <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-background ${
+                                                    statusText === 'Checked In' ? 'bg-green-500' :
+                                                    statusText === 'Checked Out' ? 'bg-blue-500' :
+                                                    statusText === 'Late' ? 'bg-yellow-500' :
+                                                    statusText === 'Absent' ? 'bg-red-500' :
+                                                    statusText === 'On Leave' ? 'bg-gray-500' : 'bg-gray-300'
+                                                }`} />
+                                            </div>
+                                            
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <h3 className="font-semibold text-foreground truncate">
+                                                        {employee?.name}
+                                                    </h3>
+                                                    <Badge
+                                                        variant={statusText === 'Checked In' ? 'default' : 'secondary'}
+                                                        className={`text-xs ${
+                                                            statusText === 'Checked In' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                                                            statusText === 'Checked Out' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                                                            statusText === 'Late' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                                                            statusText === 'Absent' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                                                            'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+                                                        }`}
+                                                    >
+                                                        {statusText}
+                                                    </Badge>
+                                                </div>
+                                                <p className="text-sm text-muted-foreground">
+                                                    {employee?.department} • {employee?.position}
+                                                </p>
                                             </div>
                                         </div>
-                                        <div className="flex flex-col items-end">
-                                            <Badge
-                                                variant={statusText === 'Checked In' ? 'default' : 'outline'}
-                                                className={statusText === 'Checked In' ? 'bg-primary text-primary-foreground' : ''}
-                                            >
-                                                {statusText}
-                                            </Badge>
+
+                                        {/* Right section - Time and controls */}
+                                        <div className="flex items-center gap-4">
                                             {currentSessionRecord?.checkInTime && statusText !== 'Absent' && statusText !== 'On Leave' && (
-                                                <div className="flex items-center text-sm mt-1 text-muted">
-                                                    <Clock className="h-3 w-3 mr-1" />
-                                                    {format(currentSessionRecord.checkInTime, 'h:mm a')}
+                                                <div className="text-right">
+                                                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                                        <Clock className="h-3 w-3" />
+                                                        <span>Check In</span>
+                                                    </div>
+                                                    <p className="text-sm font-medium">
+                                                        {format(currentSessionRecord.checkInTime, 'h:mm a')}
+                                                    </p>
+                                                    {currentSessionRecord?.checkOutTime && (
+                                                        <div className="mt-1">
+                                                            <div className="text-xs text-muted-foreground">Check Out</div>
+                                                            <p className="text-xs font-medium">
+                                                                {format(currentSessionRecord.checkOutTime, 'h:mm a')}
+                                                            </p>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
-                                            {isExpanded ? (
-                                                <ChevronUp className="h-5 w-5 mt-1 text-muted" />
-                                            ) : (
-                                                <ChevronDown className="h-5 w-5 mt-1 text-muted" />
-                                            )}
+                                            
+                                            <motion.div
+                                                animate={{ rotate: isExpanded ? 180 : 0 }}
+                                                transition={{ duration: 0.2 }}
+                                                className="text-muted-foreground"
+                                            >
+                                                <ChevronDown className="h-5 w-5" />
+                                            </motion.div>
                                         </div>
                                     </div>
-                                    <AnimatePresence>
-                                        {isExpanded && (
-                                            <motion.div
-                                                className="bg-card p-4 border-t"
-                                                initial={{ opacity: 0, height: 0 }}
-                                                animate={{ opacity: 1, height: "auto" }}
-                                                exit={{ opacity: 0, height: 0 }}
-                                                transition={{ duration: 0.3 }}
-                                            >
-                                                {/* Expanded details */}
-                                                {isExpanded && (
-                                                    <div className="bg-card p-4 border-t">
-                                                        <h3 className="font-medium mb-3">Today's Sessions</h3>
+                                </div>
 
-                                                        {employeeRecords?.length === 0 ? (
-                                                            <p className="text-muted">No attendance records for today</p>
-                                                        ) : (
-                                                            <div className="space-y-4">
-                                                                {employeeRecords?.map((record) => record ? (
-                                                                    <div key={record.id} className="border rounded-md p-3">
-                                                                        <div className="flex justify-between items-center mb-2">
-                                                                            <div className="flex gap-2">
-                                                                                <Badge>Session {record?.sessionNumber}</Badge>
-                                                                                {record?.verificationStatus && (
-                                                                                    <Badge variant="outline" className={getVerificationBadge(record.verificationStatus)}>
-                                                                                        {record.verificationStatus}
-                                                                                    </Badge>
-                                                                                )}
-                                                                            </div>
-                                                                            <Badge variant="outline" className={
-                                                                                record.status === 'PRESENT' ? 'bg-primary bg-opacity-10 text-primary' :
-                                                                                    record.status === 'LATE' ? 'bg-accent bg-opacity-10 text-accent' :
-                                                                                        record.status === 'ABSENT' ? 'bg-destructive bg-opacity-10 text-destructive' :
-                                                                                            record.status === 'LEAVE' ? 'bg-secondary bg-opacity-30 text-muted-foreground' : ''
-                                                                            }>
-                                                                                {record.status}
+                                {/* Expanded content */}
+                                <AnimatePresence>
+                                    {isExpanded && (
+                                        <motion.div
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: "auto", opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            transition={{ duration: 0.2, ease: "easeInOut" }}
+                                            className="overflow-hidden"
+                                        >
+                                            <div className="px-4 pb-4 border-t bg-muted/30">
+                                                <div className="pt-4">
+                                                    <h4 className="font-medium text-sm mb-3 text-foreground">
+                                                        Today's Sessions
+                                                    </h4>
+
+                                                    {employeeRecords?.length === 0 ? (
+                                                        <div className="text-center py-6 text-muted-foreground">
+                                                            <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                                                            <p className="text-sm">No attendance records for today</p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="space-y-3">
+                                                            {employeeRecords?.map((record, recordIndex) => record ? (
+                                                                <motion.div
+                                                                    key={record.id}
+                                                                    initial={{ opacity: 0, x: -20 }}
+                                                                    animate={{ opacity: 1, x: 0 }}
+                                                                    transition={{ delay: recordIndex * 0.1 }}
+                                                                    className="bg-background rounded-lg border p-3"
+                                                                >
+                                                                    <div className="flex justify-between items-start mb-3">
+                                                                        <div className="flex gap-2">
+                                                                            <Badge variant="outline" className="text-xs">
+                                                                                Session {record?.sessionNumber}
                                                                             </Badge>
+                                                                            {record?.verificationStatus && (
+                                                                                <Badge variant="outline" className={`text-xs ${getVerificationBadge(record.verificationStatus)}`}>
+                                                                                    {record.verificationStatus}
+                                                                                </Badge>
+                                                                            )}
                                                                         </div>
-
-                                                                        {(record?.status !== 'ABSENT' && record?.status !== 'LEAVE') && (
-                                                                            <>
-                                                                                <div className="grid grid-cols-2 gap-2 mb-2">
-                                                                                    <div>
-                                                                                        <p className="text-sm text-muted">Check In</p>
-                                                                                        <p>{format(record.checkInTime, 'h:mm a')}</p>
-                                                                                    </div>
-                                                                                    <div>
-                                                                                        <p className="text-sm text-muted">Check Out</p>
-                                                                                        <p>{record.checkOutTime ? format(record.checkOutTime, 'h:mm a') : '—'}</p>
-                                                                                    </div>
-                                                                                </div>
-
-                                                                                {record.duration && (
-                                                                                    <div className="mb-2 text-sm">
-                                                                                        <p className="text-muted">Duration</p>
-                                                                                        <p>{record.duration.hours}h {record.duration.minutes}m</p>
-                                                                                    </div>
-                                                                                )}
-
-                                                                                <LocationInfo
-                                                                                    lat={record.checkInLocation.latitude}
-                                                                                    lon={record.checkInLocation.longitude}
-                                                                                    address={record.checkInLocation.address}
-                                                                                />
-
-                                                                                {record.deviceInfo && (
-                                                                                    <p className="text-xs text-muted mt-2">
-                                                                                        Device: {record.deviceInfo}
-                                                                                    </p>
-                                                                                )}
-                                                                            </>
-                                                                        )}
-
-                                                                        {record.notes && (
-                                                                            <div className="mt-2 text-sm">
-                                                                                <p className="font-medium">Notes:</p>
-                                                                                <p>{record.notes}</p>
-                                                                            </div>
-                                                                        )}
+                                                                        <Badge variant="outline" className={`text-xs ${
+                                                                            record.status === 'PRESENT' ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400' :
+                                                                            record.status === 'LATE' ? 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400' :
+                                                                            record.status === 'ABSENT' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400' :
+                                                                            record.status === 'LEAVE' ? 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400' : ''
+                                                                        }`}>
+                                                                            {record.status}
+                                                                        </Badge>
                                                                     </div>
-                                                                ) : null)}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
-                                </CardContent>
 
+                                                                    {(record?.status !== 'ABSENT' && record?.status !== 'LEAVE') && (
+                                                                        <>
+                                                                            <div className="grid grid-cols-2 gap-4 mb-3">
+                                                                                <div>
+                                                                                    <p className="text-xs text-muted-foreground mb-1">Check In</p>
+                                                                                    <p className="text-sm font-medium">{format(record.checkInTime, 'h:mm a')}</p>
+                                                                                </div>
+                                                                                <div>
+                                                                                    <p className="text-xs text-muted-foreground mb-1">Check Out</p>
+                                                                                    <p className="text-sm font-medium">
+                                                                                        {record.checkOutTime ? format(record.checkOutTime, 'h:mm a') : (
+                                                                                            <span className="text-yellow-600 dark:text-yellow-400">Ongoing</span>
+                                                                                        )}
+                                                                                    </p>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            {record.duration && (
+                                                                                <div className="mb-3">
+                                                                                    <p className="text-xs text-muted-foreground mb-1">Duration</p>
+                                                                                    <p className="text-sm font-medium">
+                                                                                        {record.duration.hours}h {record.duration.minutes}m
+                                                                                    </p>
+                                                                                </div>
+                                                                            )}
+
+                                                                            <LocationInfo
+                                                                                lat={record.checkInLocation.latitude}
+                                                                                lon={record.checkInLocation.longitude}
+                                                                                address={record.checkInLocation.address}
+                                                                            />
+
+                                                                            {record.deviceInfo && (
+                                                                                <p className="text-xs text-muted-foreground mt-2">
+                                                                                    Device: {record.deviceInfo}
+                                                                                </p>
+                                                                            )}
+                                                                        </>
+                                                                    )}
+
+                                                                    {record.notes && (
+                                                                        <div className="mt-3 pt-3 border-t">
+                                                                            <p className="text-xs text-muted-foreground mb-1">Notes</p>
+                                                                            <p className="text-sm">{record.notes}</p>
+                                                                        </div>
+                                                                    )}
+                                                                </motion.div>
+                                                            ) : null)}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </motion.div>
                         ) : null;
                     })}
