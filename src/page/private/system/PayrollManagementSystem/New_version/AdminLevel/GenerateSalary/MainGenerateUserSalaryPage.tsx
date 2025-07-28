@@ -1,5 +1,4 @@
 
-import PayrollBreadcrumbs from '../../ui/PayrollBreadcrumbs';
 
 const MainGenerateUsersSalaryPage = () => {
     // this is generate salary page
@@ -8,7 +7,6 @@ const MainGenerateUsersSalaryPage = () => {
   return (
     <div className="p-4 w-full h-screen">
       {/* Breadcrumbs */}
-      <PayrollBreadcrumbs />
       
       <h1 className="text-3xl font-bold mb-6">Generate Salary for All Users</h1>
       <div>MainGenerateUsersSalaryPage - Implementation needed</div>

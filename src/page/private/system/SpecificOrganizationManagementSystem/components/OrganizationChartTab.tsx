@@ -63,23 +63,23 @@ const UserNode = ({ data }: { data: CustomNodeData }) => {
   const { user, onUserClick, canViewDetails, isCurrentUser, subordinateCount } = data;
   
 const getNodeColor = () => {
-  if (isCurrentUser) return { bg: 'bg-purple-50', border: 'border-purple-400', shadow: '0 4px 24px 0 rgba(168, 85, 247, 0.15)' };
-  if (user.isHead) return { bg: 'bg-red-50', border: 'border-red-300', shadow: '0 4px 24px 0 rgba(239, 68, 68, 0.15)' };
-  if (user.isManager) return { bg: 'bg-green-50', border: 'border-green-300', shadow: '0 4px 24px 0 rgba(34, 197, 94, 0.15)' };
-  return { bg: 'bg-blue-50', border: 'border-blue-300', shadow: '0 4px 24px 0 rgba(59, 130, 246, 0.15)' };
+  if (isCurrentUser) return { bg: 'bg-primary/10', border: 'border-primary/40', shadow: '0 4px 24px 0 hsl(var(--primary) / 0.15)' };
+  if (user.isHead) return { bg: 'bg-destructive/10', border: 'border-destructive/40', shadow: '0 4px 24px 0 hsl(var(--destructive) / 0.15)' };
+  if (user.isManager) return { bg: 'bg-chart-2/10', border: 'border-chart-2/40', shadow: '0 4px 24px 0 hsl(var(--chart-2) / 0.15)' };
+  return { bg: 'bg-muted/20', border: 'border-muted', shadow: '0 4px 24px 0 hsl(var(--muted) / 0.15)' };
 };
 
   const getBadgeColor = () => {
-    if (user.isHead) return 'bg-red-500 text-white';
-    if (user.isManager) return 'bg-green-500 text-white';
-    return 'bg-blue-500 text-white';
+    if (user.isHead) return 'bg-destructive text-destructive-foreground';
+    if (user.isManager) return 'bg-chart-2 text-white dark:text-black';
+    return 'bg-primary text-primary-foreground';
   };
 
   const getTextColor = () => {
-    if (isCurrentUser) return 'text-purple-800';
-    if (user.isHead) return 'text-red-800';
-    if (user.isManager) return 'text-green-800';
-    return 'text-blue-800';
+    if (isCurrentUser) return 'text-primary';
+    if (user.isHead) return 'text-destructive';
+    if (user.isManager) return 'text-chart-2';
+    return 'text-foreground';
   };
 
   const handleClick = () => {
@@ -95,7 +95,7 @@ const getNodeColor = () => {
       
       <div
         className={`
-          relative bg-white rounded-xl border-2 hover:shadow-xl transition-all duration-300 
+          relative bg-card rounded-xl border-2 hover:shadow-xl transition-all duration-300 
           cursor-pointer min-w-[200px] max-w-[220px] p-4 transform hover:scale-105
           ${bg} ${border}
         `}
@@ -105,7 +105,7 @@ const getNodeColor = () => {
         <div className="flex flex-col items-center text-center">
           {/* Current User Indicator */}
           {isCurrentUser && (
-            <div className="absolute -top-2 -right-2 bg-purple-500 text-white text-xs px-2 py-1 rounded-full">
+            <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
               You
             </div>
           )}
@@ -123,10 +123,10 @@ const getNodeColor = () => {
           </h3>
 
           {/* Position */}
-          <div className="text-xs text-gray-600 mb-2 text-center">
+          <div className="text-xs text-muted-foreground mb-2 text-center">
             <div>{user.position || user.role || 'Employee'}</div>
             {user.departmentName && (
-              <div className="text-xs text-gray-500 mt-1">
+              <div className="text-xs text-muted-foreground/80 mt-1">
                 {user.departmentName}
               </div>
             )}
@@ -152,12 +152,12 @@ const getNodeColor = () => {
           </div>
 
           {/* Employee ID and subordinate count */}
-          <div className="text-xs text-gray-500 space-y-1">
+          <div className="text-xs text-muted-foreground space-y-1">
             {user.employeeId && (
               <div>ID: {user.employeeId}</div>
             )}
             {subordinateCount > 0 && (
-              <div className="font-medium text-green-600 flex items-center justify-center gap-1">
+              <div className="font-medium text-chart-2 flex items-center justify-center gap-1">
                 <Users className="h-3 w-3" />
                 {subordinateCount} {subordinateCount === 1 ? 'report' : 'reports'}
               </div>
@@ -415,10 +415,10 @@ const OrganizationChartFlow = ({
               type: MarkerType.ArrowClosed,
               width: 20,
               height: 20,
-              color: '#64748b'
+              color: 'hsl(var(--muted-foreground))'
             },
             style: {
-              stroke: '#64748b',
+              stroke: 'hsl(var(--muted-foreground))',
               strokeWidth: 2,
             }
           });
@@ -465,10 +465,10 @@ const OrganizationChartFlow = ({
               type: MarkerType.ArrowClosed,
               width: 20,
               height: 20,
-              color: '#64748b'
+              color: 'hsl(var(--muted-foreground))'
             },
             style: {
-              stroke: '#64748b',
+              stroke: 'hsl(var(--muted-foreground))',
               strokeWidth: 2,
             }
           });
@@ -536,10 +536,10 @@ const OrganizationChartFlow = ({
                         type: MarkerType.ArrowClosed,
                         width: 18,
                         height: 18,
-                        color: '#64748b'
+                        color: 'hsl(var(--muted-foreground))'
                       },
                       style: {
-                        stroke: '#64748b',
+                        stroke: 'hsl(var(--muted-foreground))',
                         strokeWidth: 2,
                         // Add slight transparency to distinguish from main hierarchy
                         strokeOpacity: 0.8,
@@ -559,10 +559,10 @@ const OrganizationChartFlow = ({
                         type: MarkerType.ArrowClosed,
                         width: 18,
                         height: 18,
-                        color: '#64748b'
+                        color: 'hsl(var(--muted-foreground))'
                       },
                       style: {
-                        stroke: '#64748b',
+                        stroke: 'hsl(var(--muted-foreground))',
                         strokeWidth: 2,
                       }
                     });
@@ -586,10 +586,10 @@ const OrganizationChartFlow = ({
                           type: MarkerType.ArrowClosed,
                           width: 20,
                           height: 20,
-                          color: '#64748b'
+                          color: 'hsl(var(--muted-foreground))'
                         },
                         style: {
-                          stroke: '#64748b',
+                          stroke: 'hsl(var(--muted-foreground))',
                           strokeWidth: 2,
                         }
                       });
@@ -638,10 +638,10 @@ const OrganizationChartFlow = ({
                   type: MarkerType.ArrowClosed,
                   width: 20,
                   height: 20,
-                  color: '#64748b'
+                  color: 'hsl(var(--muted-foreground))'
                 },
                 style: {
-                  stroke: '#64748b',
+                  stroke: 'hsl(var(--muted-foreground))',
                   strokeWidth: 2,
                 }
               });
@@ -770,7 +770,7 @@ const OrganizationChartFlow = ({
           variant="outline"
           size="sm"
           onClick={centerOnCurrentUser}
-          className="bg-white/90 backdrop-blur-sm hover:bg-white"
+          className="bg-card/90 backdrop-blur-sm hover:bg-card"
           disabled={!currentUser?.id}
         >
           <User className="h-4 w-4 mr-1" />
@@ -780,7 +780,7 @@ const OrganizationChartFlow = ({
           variant="outline"
           size="sm"
           onClick={fitView}
-          className="bg-white/90 backdrop-blur-sm hover:bg-white"
+          className="bg-card/90 backdrop-blur-sm hover:bg-card"
         >
           <Maximize2 className="h-4 w-4 mr-1" />
           Fit View
@@ -795,12 +795,12 @@ const OrganizationChartFlow = ({
         nodeTypes={nodeTypes}
         fitView={false}
         attributionPosition="bottom-left"
-        className="bg-gray-50"
+        className="bg-background"
         minZoom={0.3}
         maxZoom={2}
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
       >
-        <Background color="#aaa" gap={16} />
+        <Background color="hsl(var(--muted-foreground) / 0.2)" gap={16} />
         <Controls />
       </ReactFlow>
     </div>
@@ -823,7 +823,7 @@ export const OrganizationChartTab = (props: OrganizationChartTabProps) => {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <div className="text-4xl text-gray-300 mb-4">🔒</div>
+            <div className="text-4xl text-muted-foreground mb-4">🔒</div>
             <h3 className="text-lg font-medium mb-2">Access Restricted</h3>
             <p className="text-muted-foreground">
               You don't have permission to view the organization chart.
@@ -863,27 +863,27 @@ export const OrganizationChartTab = (props: OrganizationChartTabProps) => {
       </CardHeader>
       <CardContent>
         {/* Legend */}
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+        <div className="mb-6 p-4 bg-muted/30 rounded-lg">
           <h4 className="text-sm font-medium mb-3">Legend:</h4>
           <div className="flex flex-wrap gap-4 text-xs">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-purple-500 rounded"></div>
+              <div className="w-4 h-4 bg-primary rounded"></div>
               <span>You</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-red-500 rounded"></div>
+              <div className="w-4 h-4 bg-destructive rounded"></div>
               <span>Department Head</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-green-500 rounded"></div>
+              <div className="w-4 h-4 bg-chart-2 rounded"></div>
               <span>Manager</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-blue-500 rounded"></div>
+              <div className="w-4 h-4 bg-muted rounded"></div>
               <span>Employee</span>
             </div>
           </div>
-          <p className="text-xs text-gray-600 mt-2">
+          <p className="text-xs text-muted-foreground mt-2">
             {isOrgAdmin 
               ? "Full organization view. Arrows show reporting direction."
               : "Limited view based on your position. Arrows show reporting direction. Use \"Find Me\" to center on your position."
