@@ -3,6 +3,7 @@ import { permissionListAtom } from '@/store/atom'
 import { useAtom } from 'jotai'
 import { useNavigate } from 'react-router-dom'
 import RouteDict from '@/routes/RouteDict'
+import { Button } from '@/components/ui/button'
 
 const ButtonOfViewPayslipOfAllSubordinatesPayroll = () => {
     // this component will call the permission atom of this user and fetch the length of subordinates via api
@@ -16,12 +17,12 @@ const ButtonOfViewPayslipOfAllSubordinatesPayroll = () => {
 
   return (
     <div>
-        <button 
+        <Button 
             onClick={() => navigate(RouteDict.Payroll.Manager.Payslip)} 
-            className='bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700'
+            className=''
         >
             View Payslip of All Subordinates
-        </button>  
+        </Button>  
     </div>
   )
 }

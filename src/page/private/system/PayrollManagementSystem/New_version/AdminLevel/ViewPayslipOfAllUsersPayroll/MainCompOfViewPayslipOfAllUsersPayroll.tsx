@@ -579,32 +579,32 @@ const MainCompOfViewPayslipOfAllUsersPayroll = () => {
                               </CardHeader>
                               <CardContent>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                                  <div className="text-center p-3 bg-blue-50 rounded-lg border">
-                                    <Calendar className="h-6 w-6 mx-auto mb-2 text-blue-600" />
-                                    <p className="text-2xl font-bold text-blue-600">{preStatistics.workingDays}</p>
+                                  <div className="text-center p-3 bg-card border rounded-lg shadow-sm">
+                                    <Calendar className="h-6 w-6 mx-auto mb-2 text-primary" />
+                                    <p className="text-2xl font-bold text-foreground">{preStatistics.workingDays}</p>
                                     <p className="text-xs text-muted-foreground">Working Days</p>
                                   </div>
-                                  <div className="text-center p-3 bg-green-50 rounded-lg border">
-                                    <UserCheck className="h-6 w-6 mx-auto mb-2 text-green-600" />
-                                    <p className="text-2xl font-bold text-green-600">{preStatistics.attendanceStats.presentDays}</p>
+                                  <div className="text-center p-3 bg-card border rounded-lg shadow-sm">
+                                    <UserCheck className="h-6 w-6 mx-auto mb-2 text-emerald-600 dark:text-emerald-400" />
+                                    <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{preStatistics.attendanceStats.presentDays}</p>
                                     <p className="text-xs text-muted-foreground">Present</p>
                                   </div>
-                                  <div className="text-center p-3 bg-yellow-50 rounded-lg border">
-                                    <Clock className="h-6 w-6 mx-auto mb-2 text-yellow-600" />
-                                    <p className="text-2xl font-bold text-yellow-600">{preStatistics.attendanceStats.halfDays}</p>
+                                  <div className="text-center p-3 bg-card border rounded-lg shadow-sm">
+                                    <Clock className="h-6 w-6 mx-auto mb-2 text-amber-600 dark:text-amber-400" />
+                                    <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{preStatistics.attendanceStats.halfDays}</p>
                                     <p className="text-xs text-muted-foreground">Half Days</p>
                                   </div>
-                                  <div className="text-center p-3 bg-red-50 rounded-lg border">
-                                    <UserX className="h-6 w-6 mx-auto mb-2 text-red-600" />
-                                    <p className="text-2xl font-bold text-red-600">{preStatistics.attendanceStats.absentDays}</p>
+                                  <div className="text-center p-3 bg-card border rounded-lg shadow-sm">
+                                    <UserX className="h-6 w-6 mx-auto mb-2 text-red-600 dark:text-red-400" />
+                                    <p className="text-2xl font-bold text-red-600 dark:text-red-400">{preStatistics.attendanceStats.absentDays}</p>
                                     <p className="text-xs text-muted-foreground">Absent</p>
                                   </div>
                                 </div>
 
                                 {/* Attendance Percentage */}
-                                <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4 mb-4">
+                                <div className="bg-secondary/50 rounded-lg p-4 mb-4 border">
                                   <div className="flex items-center justify-between mb-2">
-                                    <span className="font-medium">Attendance Percentage</span>
+                                    <span className="font-medium text-foreground">Attendance Percentage</span>
                                     <Badge 
                                       variant={preStatistics.attendanceStats.attendancePercentage >= 80 ? 'default' : 'destructive'}
                                       className="text-sm"
@@ -612,13 +612,13 @@ const MainCompOfViewPayslipOfAllUsersPayroll = () => {
                                       {preStatistics.attendanceStats.attendancePercentage.toFixed(1)}%
                                     </Badge>
                                   </div>
-                                  <div className="w-full bg-secondary rounded-full h-2">
+                                  <div className="w-full bg-muted/30 rounded-full h-2">
                                     <div 
                                       className={`h-2 rounded-full transition-all ${
                                         preStatistics.attendanceStats.attendancePercentage >= 80 
-                                          ? 'bg-green-500' 
+                                          ? 'bg-emerald-500' 
                                           : preStatistics.attendanceStats.attendancePercentage >= 60
-                                            ? 'bg-yellow-500'
+                                            ? 'bg-amber-500'
                                             : 'bg-red-500'
                                       }`}
                                       style={{ width: `${Math.min(preStatistics.attendanceStats.attendancePercentage, 100)}%` }}
@@ -628,14 +628,14 @@ const MainCompOfViewPayslipOfAllUsersPayroll = () => {
 
                                 {/* Leave Details */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <div className="text-center p-3 bg-blue-50 rounded-lg border">
-                                    <Award className="h-5 w-5 mx-auto mb-2 text-blue-600" />
-                                    <p className="text-lg font-semibold text-blue-600">{preStatistics.attendanceStats.paidLeaveDays}</p>
+                                  <div className="text-center p-3 bg-card border rounded-lg shadow-sm">
+                                    <Award className="h-5 w-5 mx-auto mb-2 text-primary" />
+                                    <p className="text-lg font-semibold text-foreground">{preStatistics.attendanceStats.paidLeaveDays}</p>
                                     <p className="text-xs text-muted-foreground">Paid Leave Days</p>
                                   </div>
-                                  <div className="text-center p-3 bg-orange-50 rounded-lg border">
-                                    <TrendingUp className="h-5 w-5 mx-auto mb-2 text-orange-600" />
-                                    <p className="text-lg font-semibold text-orange-600">{preStatistics.attendanceStats.unpaidLeaveDays}</p>
+                                  <div className="text-center p-3 bg-card border rounded-lg shadow-sm">
+                                    <TrendingUp className="h-5 w-5 mx-auto mb-2 text-accent" />
+                                    <p className="text-lg font-semibold text-foreground">{preStatistics.attendanceStats.unpaidLeaveDays}</p>
                                     <p className="text-xs text-muted-foreground">Unpaid Leave Days</p>
                                   </div>
                                 </div>
@@ -643,11 +643,11 @@ const MainCompOfViewPayslipOfAllUsersPayroll = () => {
                                 {/* Leave Types Breakdown */}
                                 {preStatistics.leaveStats && preStatistics.leaveStats.length > 0 && (
                                   <div className="mt-4">
-                                    <h4 className="font-medium mb-3">Leave Breakdown</h4>
+                                    <h4 className="font-medium mb-3 text-foreground">Leave Breakdown</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                       {preStatistics.leaveStats.map((leave, index) => (
-                                        <div key={index} className="flex justify-between items-center p-2 bg-muted rounded">
-                                          <span className="text-sm">{leave.leaveType}</span>
+                                        <div key={index} className="flex justify-between items-center p-2 bg-muted/30 rounded border">
+                                          <span className="text-sm text-foreground">{leave.leaveType}</span>
                                           <Badge variant="outline">{leave.count} days</Badge>
                                         </div>
                                       ))}
@@ -656,15 +656,15 @@ const MainCompOfViewPayslipOfAllUsersPayroll = () => {
                                 )}
 
                                 {/* Verification Status */}
-                                <div className="mt-4 pt-4 border-t">
+                                <div className="mt-4 pt-4 border-t border-border">
                                   <div className="grid grid-cols-2 gap-4 text-sm">
                                     <div className="flex justify-between">
-                                      <span>Verified Attendance:</span>
-                                      <span className="font-medium text-green-600">{preStatistics.verifiedAttendance}</span>
+                                      <span className="text-muted-foreground">Verified Attendance:</span>
+                                      <span className="font-medium text-emerald-600 dark:text-emerald-400">{preStatistics.verifiedAttendance}</span>
                                     </div>
                                     <div className="flex justify-between">
-                                      <span>Unverified Attendance:</span>
-                                      <span className="font-medium text-orange-600">{preStatistics.unverifiedAttendance}</span>
+                                      <span className="text-muted-foreground">Unverified Attendance:</span>
+                                      <span className="font-medium text-amber-600 dark:text-amber-400">{preStatistics.unverifiedAttendance}</span>
                                     </div>
                                   </div>
                                 </div>
@@ -720,7 +720,7 @@ const MainCompOfViewPayslipOfAllUsersPayroll = () => {
           
           <Separator />
           
-          <div className="px-4 py-6 overflow-auto">
+          <div className="px-4 py-6 overflow-auto flex-1">
             {loading ? (
               <div className="space-y-6">
                 {/* Employee info skeleton */}

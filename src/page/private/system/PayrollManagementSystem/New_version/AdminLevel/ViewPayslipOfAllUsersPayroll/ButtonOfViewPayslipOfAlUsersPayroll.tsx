@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button'
 import RouteDict from '@/routes/RouteDict'
 import CheckPermission from '@/services/PermissionCheck'
 import { permissionListAtom } from '@/store/atom'
@@ -12,12 +13,12 @@ const ButtonOfViewPayslipOfAllUsersPayroll = () => {
     const navigate = useNavigate()
   return (
     <div>
-        <button 
+        <Button
             onClick={() => navigate(RouteDict.Payroll.Admin.Payslip)} 
-            className='bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700'
+            className=''
         >
             View Payslip of All Users
-        </button>
+        </Button>
     </div>
   )
 }
