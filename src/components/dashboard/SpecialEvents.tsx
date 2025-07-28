@@ -143,7 +143,7 @@ export const SpecialEvents: React.FC<SpecialEventsProps> = ({ events, isLoading 
               </div>
               <div className="text-sm text-muted-foreground">{event.description}</div>
               <div className="text-xs text-muted-foreground mt-1">
-                {typeof event.date === 'string' ? event.date : format(new Date(event.date), 'PPP')}
+                {format(new Date(event.date), 'PP')}
               </div>
             </div>
             {getActionButton(event)}

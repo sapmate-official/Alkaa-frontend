@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils';
 import {
   HiOutlineBuildingOffice2,
 } from 'react-icons/hi2';
-import { FaUserCheck, FaRegIdCard, FaRegBell, FaCoins, FaReceipt } from 'react-icons/fa';
+import { FaUserCheck, FaRegIdCard, FaCoins, FaReceipt } from 'react-icons/fa';
 import { BsCalendarWeek, BsBank, BsFileText, BsCalendarEvent } from 'react-icons/bs';
 import { IoLogOutOutline } from 'react-icons/io5';
 import { Link, useLocation } from 'react-router-dom';
@@ -156,14 +156,16 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           href: RouteDict.Leave.Balance.Base,
           icon: <BsCalendarWeek className="h-5 w-5" />
         });
-      } else if (permission.module === "Notification") {
-        if (baseLinks.some(link => link.label === "Notification")) continue;
-        baseLinks.push({
-          label: "Notification",
-          href: RouteDict.Notification.Base,
-          icon: <FaRegBell className="h-5 w-5" />
-        });
-      } else if (permission.module === "Organization") {
+      } 
+      // else if (permission.module === "Notification") {
+      //   if (baseLinks.some(link => link.label === "Notification")) continue;
+      //   baseLinks.push({
+      //     label: "Notification",
+      //     href: RouteDict.Notification.Base,
+      //     icon: <FaRegBell className="h-5 w-5" />
+      //   });
+      // }
+       else if (permission.module === "Organization") {
         if (baseLinks.some(link => link.label === "Organization")) continue;
         baseLinks.push({
           label: "Organization",
@@ -260,7 +262,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               <SidebarLink
                 link={{
                   label: ` ${user?.firstName} ${user?.lastName}` || "User",
-                  href: RouteDict.Dynamic.UserProfile(user?.id || ""),
+                  href: RouteDict.Profile.Info(user?.id || ""),
                   icon: userDetails?.avatar ? (
                     <img
                       src={userDetails?.avatar}
