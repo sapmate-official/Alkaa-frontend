@@ -20,23 +20,23 @@ import RouteDict from '@/routes/RouteDict';
 
 // Constant ranking for sidebar links to maintain consistent order
 const SIDEBAR_LINK_RANKING: Record<string, number> = {
-  "Organization": 1,
-  "Permission": 2,
-  // "Employees": 3,
-  "Onboarding": 3,
-  "Department": 4,
-  "Roles & Permission": 5,
-  "Profile": 6,
-  "Attendance": 7,
-  "Leave Type": 8,
-  "Leave Request": 9,
-  "Leave Balance": 10,
-  "Holiday": 11,
-  "Activity Logs": 12,
-  "Payroll": 13,
-  "Billing": 14,
-  "Notification": 15,
-  "Logout": 16
+  "Dashboard": 1,
+  "Organization": 2,
+  "Permission": 3,
+  "Onboarding": 4,
+  "Department": 5,
+  "Roles & Permission": 6,
+  "Profile": 7,
+  "Attendance": 8,
+  "Leave Type": 9,
+  "Leave Request": 10,
+  "Leave Balance": 11,
+  "Holiday": 12,
+  "Activity Logs": 13,
+  "Payroll": 14,
+  "Billing": 15,
+  "Notification": 16,
+  "Logout": 17
 };
 
 interface MainLayoutProps {
@@ -121,7 +121,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             icon: <FaUserCheck className="h-5 w-5" />
           });
         }
-      } else if (permission.key === "view_personal_info_to_myself") {
+      } 
+      else if (permission.key === "view_personal_info_to_myself") {
         if (baseLinks.some(link => link.label === "Profile")) continue;
         baseLinks.push({
           label: "Profile",
@@ -217,7 +218,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         });
       }
     }
-
+    baseLinks.push({
+      label: "Dashboard",
+      href: RouteDict.Dashboard,
+      icon: <Activity className="h-5 w-5" />
+    })
     // Sort links based on their ranking
     baseLinks.sort((a, b) => {
       const rankA = SIDEBAR_LINK_RANKING[a.label] || 999;

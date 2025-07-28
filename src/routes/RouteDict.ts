@@ -11,7 +11,7 @@ const RouteDict = {
 
     // Home/Dashboard
     Home: "/p/",
-    Dashboard: "/p/home",
+    Dashboard: "/p/",
 
     // Profile Management
     Profile: {
