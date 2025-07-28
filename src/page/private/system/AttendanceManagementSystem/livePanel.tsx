@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { format } from 'date-fns';
-import { CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Search, Clock, ChevronDown, ChevronUp, RefreshCw, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Search, Clock, ChevronDown, RefreshCw, ShieldCheck, AlertCircle } from 'lucide-react';
 import { useTheme } from '@/provider/ThemeProvider';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
