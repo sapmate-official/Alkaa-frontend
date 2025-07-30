@@ -174,18 +174,18 @@ const ClientRoute = () => {
       <Route path="/billing/*" element={<BillingModule />} />
 
       <Route path="/organization/*" element={
-        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['view_organization_basic_details', 'see_team_details', 'view_own_department_info', 'view_organization_detailed_info']}>
+        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['view_organization_basic_details', 'see_team_details', 'view_own_department_info', 'view_organization_detailed_info', 'view_all_users', 'view_list_of_department']}>
           <ClientOrganizationModule />
         </PermissionRouteBasedOnKey>
       } />
 
       <Route path="/role/" element={
-        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['view_organization_basic_details', 'see_team_details', 'view_own_department_info', 'view_organization_detailed_info']}>
+        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['manage_role', 'view_organization_basic_details', 'view_employee_management']}>
           <RolesPermissionsManagement />
         </PermissionRouteBasedOnKey>
       } />
       <Route path="/holiday/" element={
-        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['view_organization_basic_details', 'see_team_details', 'view_own_department_info', 'view_organization_detailed_info']}>
+        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['holiday_view', 'holiday_manage', 'create_holiday', 'view_holiday', 'update_holiday', 'delete_holiday']}>
           <HolidayManagementSystem />
         </PermissionRouteBasedOnKey>
       } />
