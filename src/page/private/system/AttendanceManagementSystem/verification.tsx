@@ -257,8 +257,11 @@ const AttendanceVerificationComponent: React.FC = () => {
     setSelectedRecordIds([]);
   };
 
-  const isVerificationDisabled = (status: AttendanceVerificationStatus): boolean => {
-    return status === "VERIFIED" || status === "REJECTED";
+  const isVerificationDisabled = (_status: AttendanceVerificationStatus): boolean => {
+    // return status === "VERIFIED" || status === "REJECTED";
+    
+    
+    return false;
   };
 
   const uniqueUsers = Array.from(new Set(records.map(record => record.userId)))
