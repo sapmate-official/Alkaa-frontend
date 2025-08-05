@@ -52,45 +52,45 @@ import { backendDomain } from '@/lib/constant/Domain';
 import { useToast } from '@/hooks/use-toast';
 import RouteDict from '@/routes/RouteDict';
 
-interface FeatureCardProps {
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  category?: string;
-}
+// interface FeatureCardProps {
+//   title: string;
+//   description: string;
+//   icon: React.ReactNode;
+//   category?: string;
+// }
 
-const FeatureCard: React.FC<FeatureCardProps> = ({ title, description, icon, category }) => (
-  <Card className="border border-border bg-card hover:shadow-lg transition-all duration-300 hover:scale-105 group">
-    <CardHeader className="pb-2">
-      <div className="mb-2 text-primary group-hover:scale-110 transition-transform duration-300">{icon}</div>
-      {category && <div className="text-xs text-primary font-medium mb-1">{category}</div>}
-      <CardTitle className="text-lg font-semibold">{title}</CardTitle>
-    </CardHeader>
-    <CardContent>
-      <CardDescription className="text-sm text-muted-foreground">{description}</CardDescription>
-    </CardContent>
-  </Card>
-);
+// const FeatureCard: React.FC<FeatureCardProps> = ({ title, description, icon, category }) => (
+//   <Card className="border border-border bg-card hover:shadow-lg transition-all duration-300 hover:scale-105 group">
+//     <CardHeader className="pb-2">
+//       <div className="mb-2 text-primary group-hover:scale-110 transition-transform duration-300">{icon}</div>
+//       {category && <div className="text-xs text-primary font-medium mb-1">{category}</div>}
+//       <CardTitle className="text-lg font-semibold">{title}</CardTitle>
+//     </CardHeader>
+//     <CardContent>
+//       <CardDescription className="text-sm text-muted-foreground">{description}</CardDescription>
+//     </CardContent>
+//   </Card>
+// );
 
-interface MetricCardProps {
-  value: string;
-  label: string;
-  icon: React.ReactNode;
-  description?: string;
-}
+// interface MetricCardProps {
+//   value: string;
+//   label: string;
+//   icon: React.ReactNode;
+//   description?: string;
+// }
 
-const MetricCard: React.FC<MetricCardProps> = ({ value, label, icon, description }) => (
-  <Card className="text-center border-border bg-card/50 backdrop-blur hover:bg-card transition-colors">
-    <CardContent className="p-6">
-      <div className="text-primary mb-3 flex justify-center">
-        {icon}
-      </div>
-      <div className="text-3xl font-bold text-primary mb-1">{value}</div>
-      <div className="text-sm font-medium text-foreground mb-1">{label}</div>
-      {description && <div className="text-xs text-muted-foreground">{description}</div>}
-    </CardContent>
-  </Card>
-);
+// const MetricCard: React.FC<MetricCardProps> = ({ value, label, icon, description }) => (
+//   <Card className="text-center border-border bg-card/50 backdrop-blur hover:bg-card transition-colors">
+//     <CardContent className="p-6">
+//       <div className="text-primary mb-3 flex justify-center">
+//         {icon}
+//       </div>
+//       <div className="text-3xl font-bold text-primary mb-1">{value}</div>
+//       <div className="text-sm font-medium text-foreground mb-1">{label}</div>
+//       {description && <div className="text-xs text-muted-foreground">{description}</div>}
+//     </CardContent>
+//   </Card>
+// );
 
 interface TechStackItemProps {
   name: string;

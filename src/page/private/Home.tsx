@@ -113,12 +113,14 @@ const Home = () => {
     icon: React.ReactNode;
     onClick: () => void;
   }) => (
-    <Card className="cursor-pointer hover:bg-accent transition-colors" onClick={onClick}>
-      <CardContent className="flex items-center p-6">
-        {icon}
-        <div className="ml-4">
-          <h3 className="font-semibold">{title}</h3>
-          <p className="text-sm text-muted-foreground">{description}</p>
+    <Card className="cursor-pointer hover:bg-accent transition-colors h-fit" onClick={onClick}>
+      <CardContent className="flex items-center p-4 md:p-6 gap-3 md:gap-4 min-w-0">
+        <div className="flex-shrink-0">
+          {icon}
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="font-semibold text-sm md:text-base truncate">{title}</h3>
+          <p className="text-xs md:text-sm text-muted-foreground line-clamp-2">{description}</p>
         </div>
       </CardContent>
     </Card>
@@ -156,34 +158,34 @@ const Home = () => {
   // );
 
   const QuickActionSkeleton = () => (
-    <Card>
-      <CardContent className="flex items-center p-6">
-        <Skeleton className="h-6 w-6 rounded-full" />
-        <div className="ml-4 w-full">
-          <Skeleton className="h-5 w-24 mb-2" />
-          <Skeleton className="h-3 w-full" />
+    <Card className="h-fit">
+      <CardContent className="flex items-center p-4 md:p-6 gap-3 md:gap-4">
+        <Skeleton className="h-6 w-6 rounded-full flex-shrink-0" />
+        <div className="min-w-0 flex-1 space-y-2">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-3 w-full max-w-32" />
         </div>
       </CardContent>
     </Card>
   );
 
   return (
-    <div className="p-6 space-y-6 w-full h-full overflow-y-auto">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <div className="flex gap-2">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6 w-full h-full overflow-y-auto max-w-full">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
+        <div className="flex flex-wrap gap-2">
           <Button onClick={refreshDashboard} variant="outline" size="sm" disabled={isLoading}>
             {isLoading ? 'Loading...' : 'Refresh'}
           </Button>
-          <Button onClick={() => navigate(RouteDict.Attendance.Base)}>Mark Attendance</Button>
-          <Button onClick={() => navigate(RouteDict.Leave.Requests.Base)} variant="outline">
+          <Button onClick={() => navigate(RouteDict.Attendance.Base)} size="sm">Mark Attendance</Button>
+          <Button onClick={() => navigate(RouteDict.Leave.Requests.Base)} variant="outline" size="sm">
             Request Leave
           </Button>
         </div>
       </div>
 
       {/* Key Metrics */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-3 md:gap-4 grid-cols-2 md:grid-cols-4">
         {isLoading ? (
           <>
             <MetricCardSkeleton />
@@ -237,13 +239,13 @@ const Home = () => {
       </div>
 
       {/* Charts & Activity Feed */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
         <Card className="col-span-1">
           <CardHeader>
             <CardTitle>Attendance Overview</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
+            <div className="h-[300px] overflow-hidden">
               {isLoading ? (
                 <div className="space-y-4 max-h-[300px]">
                   <table className="w-full">
@@ -280,11 +282,11 @@ const Home = () => {
                         
                         return (
                           <tr key={employee.id} className="border-t border-gray-100">
-                            <td className="py-3">{employee.name}</td>
+                            <td className="py-3 truncate max-w-[120px]">{employee.name}</td>
                             <td className={`py-3 ${status === "Present" ? "text-green-600" : "text-red-600"}`}>
                               {status}
                             </td>
-                            <td className="py-3">{checkInTime}</td>
+                            <td className="py-3 text-sm">{checkInTime}</td>
                           </tr>
                         );
                       })}
@@ -303,14 +305,16 @@ const Home = () => {
           </CardContent>
         </Card>
 
-        {/* Special Events Display */}
-        <SpecialEvents events={specialEvents} isLoading={isLoading} />
+        {/* Special Events Display - constrained height */}
+        <div className="col-span-1 max-h-[400px] overflow-hidden">
+          <SpecialEvents events={specialEvents} isLoading={isLoading} />
+        </div>
       </div>
 
       {/* Quick Actions */}
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">Quick Actions</h2>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {isLoading ? (
             <>
               <QuickActionSkeleton />
@@ -322,19 +326,19 @@ const Home = () => {
               <QuickActionCard
                 title="View Profile"
                 description="Check and update your profile information"
-                icon={<Users className="h-6 w-6 text-primary" />}
+                icon={<Users className="h-6 w-6 text-primary flex-shrink-0" />}
                 onClick={() => navigate(RouteDict.Profile.Base)}
               />
               <QuickActionCard
                 title="Leave Balance"
                 description="Check your remaining leave balance"
-                icon={<CalendarDays className="h-6 w-6 text-primary" />}
+                icon={<CalendarDays className="h-6 w-6 text-primary flex-shrink-0" />}
                 onClick={() => navigate(RouteDict.Leave.Base)}
               />
               <QuickActionCard
                 title="Attendance History"
                 description="View your attendance records"
-                icon={<Clock className="h-6 w-6 text-primary" />}
+                icon={<Clock className="h-6 w-6 text-primary flex-shrink-0" />}
                 onClick={() => navigate(RouteDict.Attendance.Base)}
               />
             </>
