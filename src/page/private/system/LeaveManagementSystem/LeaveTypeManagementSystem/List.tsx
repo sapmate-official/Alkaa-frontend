@@ -130,9 +130,9 @@ export default function LeaveTypeList() {
 
     if (loading) {
         return (
-            <div className="p-6 w-full h-full overflow-y-auto bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+            <div className="p-6 w-full h-full overflow-y-auto bg-background">
                 {/* Header Skeleton */}
-                <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-6 py-4 mb-6">
+                <div className="bg-card border-b border-border px-6 py-4 mb-6">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                             <Skeleton className="h-8 w-8 rounded-lg" />
@@ -183,14 +183,14 @@ export default function LeaveTypeList() {
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-green-500 rounded-lg">
-                            <CalendarDays className="h-6 w-6 text-white" />
+                        <div className="p-2 bg-primary rounded-lg">
+                            <CalendarDays className="h-6 w-6 text-primary-foreground" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                            <h1 className="text-2xl font-bold text-foreground">
                                 Leave Types Management
                             </h1>
-                            <p className="text-sm text-slate-600 dark:text-slate-400">
+                            <p className="text-sm text-muted-foreground">
                                 Manage and configure leave types for your organization
                             </p>
                         </div>
@@ -208,7 +208,7 @@ export default function LeaveTypeList() {
                         </Button>
                         <Button 
                             onClick={() => navigate(RouteDict.Leave.Types.Create)}
-                            className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                            className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
                         >
                             <Plus className="h-4 w-4" />
                             Create Leave Type
@@ -410,12 +410,12 @@ export default function LeaveTypeList() {
                                             </p>
 
                                             {/* Annual Limit */}
-                                            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                                            <div className="flex items-center justify-between p-3  rounded-lg">
                                                 <div className="flex items-center space-x-2">
-                                                    <Calendar className="h-4 w-4 text-accent" />
-                                                    <span className="text-sm font-medium">Annual Limit</span>
+                                                    <Calendar className="h-4 w-4 text-primary" />
+                                                    <span className="text-sm font-medium text-foreground">Annual Limit</span>
                                                 </div>
-                                                <Badge variant="outline" className="bg-accent/10 text-accent border-accent/20">
+                                                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 font-semibold">
                                                     {leaveType.annualLimit} days
                                                 </Badge>
                                             </div>
