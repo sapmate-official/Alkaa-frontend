@@ -174,12 +174,12 @@ export default function LeaveTypeList() {
     }
 
     return (
-        <div className="h-screen w-full bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 overflow-hidden">
+        <div className="h-screen w-full bg-background overflow-hidden">
             {/* Header */}
             <motion.div 
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-6 py-4"
+                className="bg-card border-b border-border px-6 py-4"
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
@@ -228,16 +228,16 @@ export default function LeaveTypeList() {
                 >
                     <div className="flex flex-col sm:flex-row gap-4">
                         <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
                                 placeholder="Search leave types by name or description..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-10 bg-white dark:bg-slate-800"
+                                className="pl-10 bg-card border-border"
                             />
                         </div>
                         <div className="flex items-center space-x-2">
-                            <Filter className="h-4 w-4 text-slate-400" />
+                            <Filter className="h-4 w-4 text-muted-foreground" />
                             <div className="flex space-x-1">
                                 {(['ALL', 'PAID', 'UNPAID'] as const).map((filter) => (
                                     <Button
@@ -256,43 +256,43 @@ export default function LeaveTypeList() {
 
                     {/* Stats */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <Card className="p-4 bg-white/80 backdrop-blur border-slate-200">
+                        <Card className="p-4 bg-card backdrop-blur border-border">
                             <div className="flex items-center space-x-2">
-                                <CalendarDays className="h-5 w-5 text-green-500" />
+                                <CalendarDays className="h-5 w-5 text-primary" />
                                 <div>
-                                    <p className="text-sm text-slate-600 dark:text-slate-400">Total Types</p>
-                                    <p className="text-xl font-bold text-slate-900 dark:text-slate-100">{leaveTypes.length}</p>
+                                    <p className="text-sm text-muted-foreground">Total Types</p>
+                                    <p className="text-xl font-bold text-foreground">{leaveTypes.length}</p>
                                 </div>
                             </div>
                         </Card>
-                        <Card className="p-4 bg-white/80 backdrop-blur border-slate-200">
+                        <Card className="p-4 bg-card backdrop-blur border-border">
                             <div className="flex items-center space-x-2">
-                                <CheckCircle className="h-5 w-5 text-blue-500" />
+                                <CheckCircle className="h-5 w-5 text-accent" />
                                 <div>
-                                    <p className="text-sm text-slate-600 dark:text-slate-400">Paid Leave</p>
-                                    <p className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                                    <p className="text-sm text-muted-foreground">Paid Leave</p>
+                                    <p className="text-xl font-bold text-foreground">
                                         {leaveTypes.filter(lt => lt.isPaid).length}
                                     </p>
                                 </div>
                             </div>
                         </Card>
-                        <Card className="p-4 bg-white/80 backdrop-blur border-slate-200">
+                        <Card className="p-4 bg-card backdrop-blur border-border">
                             <div className="flex items-center space-x-2">
-                                <Shield className="h-5 w-5 text-orange-500" />
+                                <Shield className="h-5 w-5 text-chart-2" />
                                 <div>
-                                    <p className="text-sm text-slate-600 dark:text-slate-400">Require Approval</p>
-                                    <p className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                                    <p className="text-sm text-muted-foreground">Require Approval</p>
+                                    <p className="text-xl font-bold text-foreground">
                                         {leaveTypes.filter(lt => lt.requiresApproval).length}
                                     </p>
                                 </div>
                             </div>
                         </Card>
-                        <Card className="p-4 bg-white/80 backdrop-blur border-slate-200">
+                        <Card className="p-4 bg-card backdrop-blur border-border">
                             <div className="flex items-center space-x-2">
-                                <Calendar className="h-5 w-5 text-purple-500" />
+                                <Calendar className="h-5 w-5 text-chart-3" />
                                 <div>
-                                    <p className="text-sm text-slate-600 dark:text-slate-400">Carry Forward</p>
-                                    <p className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                                    <p className="text-sm text-muted-foreground">Carry Forward</p>
+                                    <p className="text-xl font-bold text-foreground">
                                         {leaveTypes.filter(lt => lt.carryForward).length}
                                     </p>
                                 </div>
@@ -309,13 +309,13 @@ export default function LeaveTypeList() {
                             animate={{ opacity: 1 }}
                             className="text-center py-12"
                         >
-                            <div className="p-6 bg-slate-100 dark:bg-slate-800 rounded-full w-24 h-24 mx-auto flex items-center justify-center mb-4">
-                                <CalendarDays className="h-12 w-12 text-slate-400" />
+                            <div className="p-6 bg-muted rounded-full w-24 h-24 mx-auto flex items-center justify-center mb-4">
+                                <CalendarDays className="h-12 w-12 text-muted-foreground" />
                             </div>
-                            <h3 className="text-xl font-medium text-slate-900 dark:text-slate-100 mb-2">
+                            <h3 className="text-xl font-medium text-foreground mb-2">
                                 {searchTerm || filterPaid !== 'ALL' ? 'No matching leave types' : 'No leave types found'}
                             </h3>
-                            <p className="text-slate-600 dark:text-slate-400 mb-6">
+                            <p className="text-muted-foreground mb-6">
                                 {searchTerm || filterPaid !== 'ALL' 
                                     ? 'Try adjusting your search or filter criteria' 
                                     : 'Get started by creating your first leave type'}
@@ -323,7 +323,7 @@ export default function LeaveTypeList() {
                             {(!searchTerm && filterPaid === 'ALL') && (
                                 <Button 
                                     onClick={() => navigate(RouteDict.Leave.Types.Create)}
-                                    className="bg-green-600 hover:bg-green-700"
+                                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
                                 >
                                     <Plus className="h-4 w-4 mr-2" />
                                     Create Your First Leave Type
@@ -348,11 +348,11 @@ export default function LeaveTypeList() {
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
                                 >
-                                    <Card className="h-full shadow-lg hover:shadow-xl transition-all duration-200 border-l-4 border-l-green-400 bg-white/80 backdrop-blur">
+                                    <Card className="h-full shadow-lg hover:shadow-xl transition-all duration-200 border-l-4 border-l-primary bg-card backdrop-blur">
                                         <CardHeader className="pb-3">
                                             <div className="flex justify-between items-start">
-                                                <CardTitle className="text-lg text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                                                    <CalendarDays className="h-5 w-5 text-green-500" />
+                                                <CardTitle className="text-lg text-foreground flex items-center gap-2">
+                                                    <CalendarDays className="h-5 w-5 text-primary" />
                                                     {leaveType.name}
                                                 </CardTitle>
                                                 <div className="flex gap-1">
@@ -360,18 +360,17 @@ export default function LeaveTypeList() {
                                                         variant="ghost"
                                                         size="sm"
                                                         onClick={() => handleEdit(leaveType.id)}
-                                                        className="h-8 w-8 p-0 hover:bg-blue-100 hover:text-blue-600"
+                                                        className="h-8 w-8 p-0 hover:bg-accent hover:text-accent-foreground"
                                                     >
                                                         <Edit2 className="h-4 w-4" />
                                                     </Button>
                                                     
                                                     <AlertDialog>
-                                                        <AlertDialogTrigger asChild>
-                                                            <Button 
-                                                                variant="ghost" 
-                                                                size="sm" 
-                                                                className="h-8 w-8 p-0 hover:bg-red-100 hover:text-red-600"
-                                                            >
+                                                        <AlertDialogTrigger asChild>                                                        <Button 
+                                                            variant="ghost" 
+                                                            size="sm" 
+                                                            className="h-8 w-8 p-0 hover:bg-destructive/20 hover:text-destructive"
+                                                        >
                                                                 <Trash2 className="h-4 w-4" />
                                                             </Button>
                                                         </AlertDialogTrigger>
@@ -405,17 +404,17 @@ export default function LeaveTypeList() {
                                             </div>
                                         </CardHeader>
                                         <CardContent className="space-y-4">
-                                            <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
+                                            <p className="text-sm text-muted-foreground line-clamp-2">
                                                 {leaveType.description}
                                             </p>
 
                                             {/* Annual Limit */}
-                                            <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                                            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
                                                 <div className="flex items-center space-x-2">
-                                                    <Calendar className="h-4 w-4 text-blue-500" />
+                                                    <Calendar className="h-4 w-4 text-accent" />
                                                     <span className="text-sm font-medium">Annual Limit</span>
                                                 </div>
-                                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                                <Badge variant="outline" className="bg-accent/10 text-accent border-accent/20">
                                                     {leaveType.annualLimit} days
                                                 </Badge>
                                             </div>
@@ -425,8 +424,8 @@ export default function LeaveTypeList() {
                                                 <Badge 
                                                     variant={leaveType.isPaid ? "default" : "secondary"}
                                                     className={leaveType.isPaid 
-                                                        ? "bg-green-100 text-green-800 border-green-200" 
-                                                        : "bg-gray-100 text-gray-800 border-gray-200"
+                                                        ? "bg-primary/10 text-primary border-primary/20" 
+                                                        : "bg-muted text-muted-foreground border-border"
                                                     }
                                                 >
                                                     {leaveType.isPaid ? (
@@ -438,14 +437,14 @@ export default function LeaveTypeList() {
                                                 </Badge>
 
                                                 {leaveType.requiresApproval && (
-                                                    <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                                                    <Badge variant="outline" className="bg-chart-2/10 text-chart-2 border-chart-2/20">
                                                         <Shield className="h-3 w-3 mr-1" />
                                                         Approval Required
                                                     </Badge>
                                                 )}
 
                                                 {leaveType.carryForward && (
-                                                    <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                                                    <Badge variant="outline" className="bg-chart-3/10 text-chart-3 border-chart-3/20">
                                                         <Calendar className="h-3 w-3 mr-1" />
                                                         Carry Forward ({leaveType.maxCarryForward})
                                                     </Badge>
@@ -453,8 +452,8 @@ export default function LeaveTypeList() {
                                             </div>
 
                                             {/* Created Date */}
-                                            <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
-                                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                            <div className="pt-2 border-t border-border">
+                                                <p className="text-xs text-muted-foreground">
                                                     Created on {new Date(leaveType.createdAt).toLocaleDateString()}
                                                 </p>
                                             </div>
