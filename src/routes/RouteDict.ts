@@ -139,6 +139,8 @@ const RouteDict = {
         Edit: "/p/role/edit/:id",
         Permissions: "/p/role/permissions",
         Assignment: "/p/role/assignment",
+        Modern: "/p/role/modern",
+        PermissionManager: "/p/role/permission-manager",
     },
 
     // Permission Management System
