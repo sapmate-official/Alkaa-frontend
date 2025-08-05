@@ -61,13 +61,10 @@ import {
   Filter,
   MoreHorizontal,
   CheckCircle,
-  XCircle,
   Copy,
   Eye,
-  Settings,
   Crown,
-  Lock,
-  Unlock
+  Lock
 } from 'lucide-react';
 import { APIDictionary } from '@/api/v2/APIdict';
 import { useAuth } from '@/services/AuthContext';
@@ -100,7 +97,7 @@ interface LoadingStates {
 const ModernRolePermissionManager = () => {
   // State management
   const [roles, setRoles] = useState<Role[]>([]);
-  const [permissions, setPermissions] = useState<Permission[]>([]);
+  const [, setPermissions] = useState<Permission[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [permissionGroups, setPermissionGroups] = useState<PermissionGroup[]>([]);
   const [permissionPresets, setPermissionPresets] = useState<PermissionPreset[]>([]);
