@@ -427,7 +427,7 @@ const ListOfDepartment = () => {
     const displayTabs = availableTabs.filter(tab => tab.show)
 
     return (
-        <div className="p-4 w-full h-full">
+        <div className="p-4 w-full h-full overflow-y-auto">
             <div className="flex flex-col space-y-4">
                 {/* Header with search and action buttons */}
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
