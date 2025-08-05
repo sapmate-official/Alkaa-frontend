@@ -366,11 +366,12 @@ export default function LeaveTypeList() {
                                                     </Button>
                                                     
                                                     <AlertDialog>
-                                                        <AlertDialogTrigger asChild>                                                        <Button 
-                                                            variant="ghost" 
-                                                            size="sm" 
-                                                            className="h-8 w-8 p-0 hover:bg-destructive/20 hover:text-destructive"
-                                                        >
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button 
+                                                                variant="ghost" 
+                                                                size="sm" 
+                                                                className="h-8 w-8 p-0 hover:bg-destructive/20 hover:text-destructive"
+                                                            >
                                                                 <Trash2 className="h-4 w-4" />
                                                             </Button>
                                                         </AlertDialogTrigger>
