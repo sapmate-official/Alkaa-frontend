@@ -15,7 +15,7 @@ const RouteDict = {
 
     // Profile Management
     Profile: {
-        Base: "/p/profile",
+        Base: "/p/profile/info",
         Info: (id:string)=> id?`/p/profile/info/${id}`:"/p/profile/info",
         Edit:(id:string | null)=> id?`/p/profile/edit/${id}`:"/p/profile/edit",
         EditBank: (id:string | null)=> id?`/p/profile/edit/bank/${id}`:"/p/profile/edit/bank",
