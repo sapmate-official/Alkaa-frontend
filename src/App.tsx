@@ -16,6 +16,8 @@ import RouteDict from './routes/RouteDict';
 import Home from './page/private/Home.tsx';
 import { MainLayout } from './page/private/layout/MainLayout';
 import RolesPermissionsManagement from './page/private/system/RoleManagementSystem/RoleManagementDashboard.tsx';
+import ModernRolePermissionPage from './page/private/system/RoleManagementSystem/ModernRolePermissionPage.tsx';
+import ModernRolePermissionManager from './page/private/system/RoleManagementSystem/ModernRolePermissionManager.tsx';
 import HolidayManagementSystem from './page/private/system/HolidayManagementSystem/HolidayDashboard.tsx';
 
 // Public pages
@@ -182,6 +184,16 @@ const ClientRoute = () => {
       <Route path="/role/" element={
         <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['manage_role', 'view_organization_basic_details', 'view_employee_management']}>
           <RolesPermissionsManagement />
+        </PermissionRouteBasedOnKey>
+      } />
+      <Route path="/role/modern" element={
+        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['manage_role', 'view_organization_basic_details', 'view_employee_management']}>
+          <ModernRolePermissionPage />
+        </PermissionRouteBasedOnKey>
+      } />
+      <Route path="/role/permission-manager" element={
+        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['manage_role', 'view_organization_basic_details', 'view_employee_management']}>
+          <ModernRolePermissionManager />
         </PermissionRouteBasedOnKey>
       } />
       <Route path="/holiday/" element={

@@ -15,7 +15,7 @@ const RouteDict = {
 
     // Profile Management
     Profile: {
-        Base: "/p/profile",
+        Base: "/p/profile/info",
         Info: (id:string)=> id?`/p/profile/info/${id}`:"/p/profile/info",
         Edit:(id:string | null)=> id?`/p/profile/edit/${id}`:"/p/profile/edit",
         EditBank: (id:string | null)=> id?`/p/profile/edit/bank/${id}`:"/p/profile/edit/bank",
@@ -139,6 +139,8 @@ const RouteDict = {
         Edit: "/p/role/edit/:id",
         Permissions: "/p/role/permissions",
         Assignment: "/p/role/assignment",
+        Modern: "/p/role/modern",
+        PermissionManager: "/p/role/permission-manager",
     },
 
     // Permission Management System
