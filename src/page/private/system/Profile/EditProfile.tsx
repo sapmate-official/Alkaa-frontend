@@ -133,6 +133,11 @@ const ProfileEdit = () => {
     };
     
     if (!canEditProfile) {
+      toast({
+        title: "Access Denied",
+        description: "You do not have permission to edit profile.",
+        variant: "destructive"
+      });
       navigate(RouteDict.Profile.Base);
       return;
     }
