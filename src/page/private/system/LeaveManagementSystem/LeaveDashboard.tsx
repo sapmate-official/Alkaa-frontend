@@ -8,6 +8,9 @@ import { useToast } from '@/hooks/use-toast';
 import { backendDomain } from '@/lib/constant/Domain';
 import RouteDict from '@/routes/RouteDict';
 import axios from 'axios';
+import { useAtom } from 'jotai';
+import { permissionListAtom } from '@/store/atom';
+import { format } from 'date-fns';
 import { 
   Calendar, 
   Clock, 
@@ -18,7 +21,11 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
-  Timer
+  Timer,
+  UserCheck,
+  Zap,
+  TrendingUp,
+  Activity
 } from 'lucide-react';
 
 interface LeaveType {
@@ -48,29 +55,41 @@ interface LeaveRequest {
   numberOfDays: number;
   reason: string;
   leaveType: LeaveType;
+  user?: {
+    firstName: string;
+    lastName: string;
+  };
+  createdAt: string;
 }
 
 const LeaveDashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [permissionList] = useAtom(permissionListAtom);
   
   const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
   const [leaveBalances, setLeaveBalances] = useState<LeaveBalance[]>([]);
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
+  const [pendingApprovals, setPendingApprovals] = useState<LeaveRequest[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Check if user has approval permissions
+  const canApproveLeaveRequests = permissionList.some(permission => 
+    permission.key === 'approve_leave' || permission.key === 'leave_request_approve'
+  );
 
   useEffect(() => {
     if (user?.organization?.id) {
       fetchDashboardData();
     }
-  }, [user]);
+  }, [user, canApproveLeaveRequests]);
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
       
-      const [typesResponse, balancesResponse, requestsResponse] = await Promise.all([
+      const requests = [
         axios.get(`${backendDomain}/api/v2/leave-type/org/${user?.organization?.id}`, {
           withCredentials: true,
         }),
@@ -80,11 +99,28 @@ const LeaveDashboard = () => {
         axios.get(`${backendDomain}/api/v2/leave-request/user/${user?.id}`, {
           withCredentials: true,
         }),
-      ]);
+      ];
 
-      setLeaveTypes(typesResponse.data);
-      setLeaveBalances(balancesResponse.data);
-      setLeaveRequests(requestsResponse.data);
+      // Add pending approvals request if user has approval permissions
+      if (canApproveLeaveRequests) {
+        requests.push(
+          axios.get(`${backendDomain}/api/v2/leave-request/manager/${user?.id}`, {
+            withCredentials: true,
+          })
+        );
+      }
+
+      const responses = await Promise.all(requests);
+      
+      setLeaveTypes(responses[0].data);
+      setLeaveBalances(responses[1].data);
+      setLeaveRequests(responses[2].data);
+      
+      // Set pending approvals if the request was made
+      if (canApproveLeaveRequests && responses[3]) {
+        const pendingRequests = responses[3].data.filter((req: LeaveRequest) => req.status === 'PENDING');
+        setPendingApprovals(pendingRequests);
+      }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       toast({
@@ -94,6 +130,55 @@ const LeaveDashboard = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleQuickApprove = async (requestId: string) => {
+    try {
+      await axios.post(`${backendDomain}/api/v2/leave-request/approve/${requestId}`, {
+        approvedBy: user?.id
+      }, {
+        withCredentials: true,
+      });
+
+      toast({
+        title: "Success",
+        description: "Leave request approved successfully",
+      });
+
+      // Refresh pending approvals
+      fetchDashboardData();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to approve leave request",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleQuickReject = async (requestId: string) => {
+    try {
+      await axios.post(`${backendDomain}/api/v2/leave-request/reject/${requestId}`, {
+        approvedBy: user?.id,
+        rejectedReason: "Quick rejection from dashboard"
+      }, {
+        withCredentials: true,
+      });
+
+      toast({
+        title: "Success",
+        description: "Leave request rejected",
+      });
+
+      // Refresh pending approvals
+      fetchDashboardData();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to reject leave request",
+        variant: "destructive",
+      });
     }
   };
 
@@ -134,16 +219,135 @@ const LeaveDashboard = () => {
         <p className="text-gray-600 mt-2">Overview of your leave requests, balances, and available leave types</p>
       </div>
 
-      {/* Quick Stats */}
+      {/* Approval Section - Only show if user has approval permissions and there are pending requests */}
+      {canApproveLeaveRequests && pendingApprovals.length > 0 && (
+        <div className="mb-8">
+          <Card className="border-l-4 border-l-orange-500 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950 dark:to-amber-950 shadow-lg">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-orange-500 rounded-full">
+                    <UserCheck className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl flex items-center gap-2">
+                      <Zap className="h-5 w-5 text-orange-500" />
+                      Pending Approvals
+                      <Badge className="bg-orange-500 text-white">{pendingApprovals.length}</Badge>
+                    </CardTitle>
+                    <CardDescription className="text-orange-700 dark:text-orange-300">
+                      {pendingApprovals.length === 1 
+                        ? "1 leave request needs your attention" 
+                        : `${pendingApprovals.length} leave requests need your attention`
+                      }
+                    </CardDescription>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => navigate(RouteDict.Leave.Requests.Approval)}
+                  className="bg-orange-500 hover:bg-orange-600 text-white"
+                >
+                  <Activity className="h-4 w-4 mr-2" />
+                  Manage All
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="grid gap-4">
+                {pendingApprovals.slice(0, 3).map((request) => (
+                  <div
+                    key={request.id}
+                    className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg border border-orange-200 dark:border-orange-800 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="font-medium text-gray-900 dark:text-gray-100">
+                          {request.user?.firstName} {request.user?.lastName}
+                        </div>
+                        <Badge variant="outline" className="text-orange-600 border-orange-300">
+                          {request.leaveType.name}
+                        </Badge>
+                        <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                          {request.numberOfDays} {request.numberOfDays === 1 ? 'day' : 'days'}
+                        </Badge>
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        {format(new Date(request.startDate), 'MMM dd')} - {format(new Date(request.endDate), 'MMM dd, yyyy')}
+                      </div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-1">
+                        {request.reason}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 ml-4">
+                      <Button
+                        size="sm"
+                        onClick={() => handleQuickApprove(request.id)}
+                        className="bg-green-500 hover:bg-green-600 text-white"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                        Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleQuickReject(request.id)}
+                        className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
+                      >
+                        <XCircle className="h-4 w-4 mr-1" />
+                        Reject
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => navigate(RouteDict.Leave.Requests.Approval)}
+                        className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                {pendingApprovals.length > 3 && (
+                  <div className="text-center pt-2">
+                    <Button
+                      variant="ghost"
+                      onClick={() => navigate(RouteDict.Leave.Requests.Approval)}
+                      className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                    >
+                      <TrendingUp className="h-4 w-4 mr-2" />
+                      View {pendingApprovals.length - 3} more pending requests
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Enhanced Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card>
+        <Card className={canApproveLeaveRequests && pendingApprovals.length > 0 ? "border-orange-200" : ""}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Leave Types</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">
+              {canApproveLeaveRequests ? "Pending Approvals" : "Total Leave Types"}
+            </CardTitle>
+            {canApproveLeaveRequests ? (
+              <UserCheck className="h-4 w-4 text-orange-500" />
+            ) : (
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            )}
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{leaveTypes.length}</div>
-            <p className="text-xs text-muted-foreground">Available leave categories</p>
+            <div className="text-2xl font-bold">
+              {canApproveLeaveRequests ? pendingApprovals.length : leaveTypes.length}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {canApproveLeaveRequests 
+                ? (pendingApprovals.length === 1 ? "Request awaiting approval" : "Requests awaiting approval")
+                : "Available leave categories"
+              }
+            </p>
           </CardContent>
         </Card>
 
@@ -171,7 +375,7 @@ const LeaveDashboard = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Requests</CardTitle>
+            <CardTitle className="text-sm font-medium">My Pending Requests</CardTitle>
             <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
