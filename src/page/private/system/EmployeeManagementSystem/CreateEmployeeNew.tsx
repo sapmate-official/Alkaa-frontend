@@ -29,6 +29,7 @@ import { Department, User } from '@/interface/general';
 import RoleAssignment from './RoleAssignment';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
+import MultiDepartmentSelector from '@/components/ui/MultiDepartmentSelector';
 import { 
   Loader, 
   Sparkles, 
@@ -85,7 +86,13 @@ const salaryDetailsSchema = z.object({
 });
 
 const roleAssignmentSchema = z.object({
-  departmentId: z.string().optional(),
+  departmentId: z.string().optional(), // Legacy field for backward compatibility
+  departmentIds: z.array(z.string()).min(1, 'At least one department must be selected'), // New multi-department field
+  primaryDepartmentId: z.string().optional(), // Primary department selection
+  departmentRoles: z.array(z.object({
+    departmentId: z.string(),
+    role: z.string().optional(),
+  })).optional(), // Department-specific roles
   roleIds: z.array(z.string()).min(1, 'At least one role must be selected'),
   managerId: z.string().optional(),
 });
@@ -190,7 +197,10 @@ const CreateEmployeeNew = () => {
       insuranceFixed: 0,
 
       // Role Assignment
-      departmentId: '',
+      departmentId: '', // Legacy field for backward compatibility
+      departmentIds: [], // New multi-department field
+      primaryDepartmentId: '', // Primary department selection
+      departmentRoles: [] as { departmentId: string; role?: string }[], // Department-specific roles
       roleIds: [],
       managerId: user?.id.toString()
     }
@@ -1008,41 +1018,68 @@ const CreateEmployeeNew = () => {
           Organizational Position
         </h3>
         <p className="text-sm text-muted-foreground">
-          Assign the employee to appropriate department and roles within the organization.
+          Assign the employee to appropriate departments and roles within the organization.
         </p>
       </div>
       
+      {/* Multi-Department Selector */}
       <FormField
         control={form.control}
-        name="departmentId"
+        name="departmentIds"
         render={({ field }) => (
           <FormItem>
             <FormLabel className="flex items-center gap-2">
               <Building className="h-4 w-4" />
-              Department
+              Department Assignment
             </FormLabel>
-            <Select onValueChange={(value) => {
-              field.onChange(value);
-              // Reset head manager checkbox if department has no head
-              const selectedDept = departments?.find(dept => dept?.id === value);
-              if (!selectedDept?.headId) {
-                setUseHeadAsManager(false);
-              }
-            }} value={field.value}>
-              <FormControl>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select department" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {departments?.map((dept) => (
-                  <SelectItem key={dept?.id} value={dept?.id}>
-                    {dept?.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <FormControl>
+              <MultiDepartmentSelector
+                departments={departments}
+                selectedDepartments={field.value || []}
+                primaryDepartmentId={form.getValues("primaryDepartmentId")}
+                departmentRoles={form.getValues("departmentRoles")?.map(r => ({ 
+                  departmentId: r.departmentId, 
+                  role: r.role || "Member" 
+                })) || []}
+                onSelectionChange={(departmentIds, primaryId, roles) => {
+                  field.onChange(departmentIds);
+                  form.setValue("primaryDepartmentId", primaryId || "");
+                  form.setValue("departmentRoles", roles || []);
+                  
+                  // Legacy support: Set departmentId to primary department
+                  form.setValue("departmentId", primaryId || "");
+                  
+                  // Update manager selection based on primary department
+                  if (primaryId) {
+                    const primaryDept = departments?.find(dept => dept?.id === primaryId);
+                    if (useHeadAsManager && primaryDept?.headId) {
+                      form.setValue("managerId", primaryDept.headId);
+                    }
+                  }
+                }}
+                showRoles={true}
+                availableRoles={['Member', 'Lead', 'Supervisor', 'Assistant']}
+                placeholder="Select departments for this employee..."
+                maxSelections={5}
+              />
+            </FormControl>
+            <FormDescription>
+              Select one or more departments. The first selection will be the primary department.
+            </FormDescription>
             <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      {/* Legacy Department Field (Hidden, for backward compatibility) */}
+      <FormField
+        control={form.control}
+        name="departmentId"
+        render={({ field }) => (
+          <FormItem className="hidden">
+            <FormControl>
+              <Input {...field} />
+            </FormControl>
           </FormItem>
         )}
       />
@@ -1052,12 +1089,13 @@ const CreateEmployeeNew = () => {
           <Checkbox
             id="useHeadAsManager"
             checked={useHeadAsManager}
-            disabled={!departments?.find(dept => dept?.id === form.getValues("departmentId"))?.headId}
+            disabled={!departments?.find(dept => dept?.id === form.getValues("primaryDepartmentId"))?.headId}
             onCheckedChange={(checked) => {
               setUseHeadAsManager(checked as boolean);
               if (checked) {
+                const primaryDeptId = form.getValues("primaryDepartmentId");
                 const selectedDept = departments?.find(
-                  (dept) => dept?.id === form.getValues("departmentId")
+                  (dept) => dept?.id === primaryDeptId
                 );
                 if (selectedDept?.headId) {
                   form.setValue("managerId", selectedDept.headId);
@@ -1070,9 +1108,9 @@ const CreateEmployeeNew = () => {
           />
           <label 
             htmlFor="useHeadAsManager"
-            className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${!departments?.find(dept => dept?.id === form.getValues("departmentId"))?.headId ? "text-muted-foreground" : ""}`}
+            className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${!departments?.find(dept => dept?.id === form.getValues("primaryDepartmentId"))?.headId ? "text-muted-foreground" : ""}`}
           >
-            Use department head as manager
+            Use primary department head as manager
           </label>
         </div>
         

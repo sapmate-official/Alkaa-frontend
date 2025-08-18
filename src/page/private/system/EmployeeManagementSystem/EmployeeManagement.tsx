@@ -27,6 +27,20 @@ interface User {
         id: string
         name: string
     }
+    // Multi-department support
+    userDepartments?: {
+        id: string
+        departmentId: string
+        isPrimary: boolean
+        role?: string
+        assignedAt: Date
+        department: {
+            id: string
+            name: string
+            code?: string
+            description?: string
+        }
+    }[]
     roles?: {
         role: {
             id: string
@@ -211,7 +225,11 @@ const EmployeeManagement: React.FC = () => {
             employee.lastName?.toLowerCase().includes(query) ||
             employee.email.toLowerCase().includes(query) ||
             employee.employeeId?.toLowerCase().includes(query) ||
-            employee.department?.name.toLowerCase().includes(query)
+            employee.department?.name.toLowerCase().includes(query) ||
+            // Multi-department search
+            employee.userDepartments?.some(ud => 
+                ud.department.name.toLowerCase().includes(query)
+            )
         )
         setFilteredEmployees(filtered)
     }, [searchQuery, employees])
@@ -499,7 +517,36 @@ const EmployeeManagement: React.FC = () => {
                                             </TableCell>
                                             <TableCell>{employee.employeeId || 'N/A'}</TableCell>
                                             <TableCell>{employee.email}</TableCell>
-                                            <TableCell>{employee.department?.name || 'Unassigned'}</TableCell>
+                                            <TableCell>
+                                                {/* Multi-department display */}
+                                                {employee.userDepartments && employee.userDepartments.length > 0 ? (
+                                                    <div className="space-y-1">
+                                                        {employee.userDepartments?.map((ud) => (
+                                                            <div key={ud.id} className="flex items-center gap-1 text-xs">
+                                                                {ud.isPrimary && (
+                                                                    <svg className="h-3 w-3 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                                                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                                    </svg>
+                                                                )}
+                                                                <span className={ud.isPrimary ? 'font-medium' : ''}>
+                                                                    {ud.department.name}
+                                                                </span>
+                                                                {ud.role && (
+                                                                    <span className="text-muted-foreground">({ud.role})</span>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                        {employee.userDepartments && employee.userDepartments.length > 2 && (
+                                                            <div className="text-xs text-muted-foreground">
+                                                                +{employee.userDepartments.length - 2} more
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    // Fallback to legacy department
+                                                    employee.department?.name || 'Unassigned'
+                                                )}
+                                            </TableCell>
                                             <TableCell>
                                                 {employee.roles && employee.roles.length > 0
                                                     ? employee.roles[0].role.name
@@ -628,10 +675,37 @@ const EmployeeManagement: React.FC = () => {
                                                 </div>
 
                                                 <div>
-                                                    <Label>Department</Label>
-                                                    <p className="text-sm mt-1">
-                                                        {selectedEmployee.department?.name || 'Unassigned'}
-                                                    </p>
+                                                    <Label>Department(s)</Label>
+                                                    <div className="text-sm mt-1">
+                                                        {selectedEmployee.userDepartments && selectedEmployee.userDepartments.length > 0 ? (
+                                                            <div className="space-y-1">
+                                                                {selectedEmployee.userDepartments?.map(ud => (
+                                                                    <div key={ud.id} className="flex items-center gap-2">
+                                                                        {ud.isPrimary && (
+                                                                            <svg className="h-3 w-3 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                                                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                                            </svg>
+                                                                        )}
+                                                                        <span className={ud.isPrimary ? 'font-medium' : ''}>
+                                                                            {ud.department.name}
+                                                                        </span>
+                                                                        {ud.role && (
+                                                                            <Badge variant="outline" className="text-xs h-5">
+                                                                                {ud.role}
+                                                                            </Badge>
+                                                                        )}
+                                                                        {ud.isPrimary && (
+                                                                            <Badge variant="default" className="text-xs h-5">
+                                                                                Primary
+                                                                            </Badge>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            selectedEmployee.department?.name || 'Unassigned'
+                                                        )}
+                                                    </div>
                                                 </div>
 
                                                 <div>
@@ -681,49 +755,200 @@ const EmployeeManagement: React.FC = () => {
                                         </div>
                                     )}
 
-                                    {/* Department tab content */}
+                                    {/* Department tab content - Multi-Department Support */}
                                     {activeTab === 'department' && (
                                         <div className="space-y-4 p-1">
-                                            <div>
-                                                <h3 className="text-lg font-medium mb-2">Current Department</h3>
-                                                <p className="text-sm mb-4">
-                                                    {selectedEmployee.department?.name || 'No department assigned'}
-                                                </p>
+                                            {/* Import Multi-Department Manager Component */}
+                                            <div className="space-y-4">
+                                                {/* Legacy Single Department Display */}
+                                                {selectedEmployee.department && !selectedEmployee.userDepartments?.length && (
+                                                    <div className="p-4 border rounded-lg bg-yellow-50 dark:bg-yellow-900/20">
+                                                        <h4 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">
+                                                            Legacy Department Assignment
+                                                        </h4>
+                                                        <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                                                            Current: {selectedEmployee.department.name}
+                                                        </p>
+                                                        <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                                                            This user is using the legacy single-department system. 
+                                                            Use "Migrate to Multi-Department" to enable multi-department features.
+                                                        </p>
+                                                    </div>
+                                                )}
+
+                                                {/* Multi-Department Display */}
+                                                {selectedEmployee.userDepartments && selectedEmployee.userDepartments.length > 0 ? (
+                                                    <div className="space-y-4">
+                                                        <h3 className="text-lg font-medium mb-2">Department Assignments</h3>
+                                                        <div className="space-y-3">
+                                                            {selectedEmployee.userDepartments?.map((assignment) => (
+                                                                <div key={assignment.id} className={`p-4 border rounded-lg ${assignment.isPrimary ? 'bg-primary/5 border-primary/20' : 'bg-muted/20'}`}>
+                                                                    <div className="flex items-center justify-between">
+                                                                        <div className="flex items-center gap-3">
+                                                                            {assignment.isPrimary ? (
+                                                                                <div className="flex items-center gap-2 text-yellow-600">
+                                                                                    <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                                                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                                                    </svg>
+                                                                                    <span className="text-sm font-medium">Primary</span>
+                                                                                </div>
+                                                                            ) : (
+                                                                                <div className="text-muted-foreground">
+                                                                                    <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                                                                        <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm2 2h8v8H6V6z" clipRule="evenodd" />
+                                                                                    </svg>
+                                                                                </div>
+                                                                            )}
+                                                                            <div>
+                                                                                <h4 className="font-medium">{assignment.department.name}</h4>
+                                                                                {assignment.department.code && (
+                                                                                    <p className="text-xs text-muted-foreground">Code: {assignment.department.code}</p>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="text-xs bg-muted px-2 py-1 rounded">
+                                                                                {assignment.role || 'Member'}
+                                                                            </span>
+                                                                            <span className="text-xs text-muted-foreground">
+                                                                                Since: {new Date(assignment.assignedAt).toLocaleDateString()}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-center py-8">
+                                                        <svg className="h-12 w-12 text-muted-foreground mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4M9 7h6m-6 4h6m-6 4h6" />
+                                                        </svg>
+                                                        <p className="text-muted-foreground">No departments assigned</p>
+                                                    </div>
+                                                )}
 
                                                 <hr className="my-4" />
 
-                                                {(hasPermission('assign_user_to_all_department') || hasPermission('assign_user_to_own_lead_department')) ? (
-                                                    <>
-                                                        <h3 className="text-lg font-medium mb-2">Update Department</h3>
-                                                        <div className="space-y-4">
-                                                            <div>
-                                                                <label htmlFor="department" className="text-sm font-medium">Select Department</label>
-                                                                <select
-                                                                    id="department"
-                                                                    value={selectedDepartment}
-                                                                    onChange={(e) => setSelectedDepartment(e.target.value)}
-                                                                    className="w-full mt-1 p-2 border rounded-md bg-background"
-                                                                >
-                                                                    <option value="">Select a department</option>
-                                                                    {getAssignableDepartments().map((department) => (
-                                                                        <option key={department.id} value={department.id}>
-                                                                            {department.name}
-                                                                        </option>
-                                                                    ))}
-                                                                </select>
-                                                            </div>
-
+                                                {/* Department Management Actions */}
+                                                {(hasPermission('assign_user_to_all_department') || hasPermission('assign_user_to_own_lead_department') || hasPermission('assign_user_departments') || hasPermission('remove_user_departments')) ? (
+                                                    <div className="space-y-4">
+                                                        <h3 className="text-lg font-medium mb-2">Manage Department Assignments</h3>
+                                                        
+                                                        {/* Multi-Department Actions */}
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                             <button
-                                                                onClick={handleUpdateDepartment}
-                                                                disabled={isLoading.action || 
-                                                                    selectedDepartment === selectedEmployee.department?.id || 
-                                                                    !canAssignToDepartment(selectedDepartment)}
-                                                                className="w-full py-2 px-4 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50"
+                                                                onClick={() => {
+                                                                    // Open multi-department assignment dialog
+                                                                    // This would be handled by a MultiDepartmentManager component
+                                                                    toast({
+                                                                        title: "Multi-Department Management",
+                                                                        description: "This feature allows assigning users to multiple departments with different roles."
+                                                                    });
+                                                                }}
+                                                                className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
                                                             >
-                                                                {isLoading.action ? "Updating..." : "Update Department"}
+                                                                <svg className="h-5 w-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                                                                </svg>
+                                                                <div className="text-left">
+                                                                    <div className="font-medium">Assign to Departments</div>
+                                                                    <div className="text-xs text-muted-foreground">Add to multiple departments</div>
+                                                                </div>
                                                             </button>
+
+                                                            {selectedEmployee.userDepartments && selectedEmployee.userDepartments.length > 0 && (
+                                                                <button
+                                                                    onClick={() => {
+                                                                        // Open edit departments dialog
+                                                                        toast({
+                                                                            title: "Edit Assignments",
+                                                                            description: "Modify existing department assignments and roles."
+                                                                        });
+                                                                    }}
+                                                                    className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                                                                >
+                                                                    <svg className="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                                                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                                                    </svg>
+                                                                    <div className="text-left">
+                                                                        <div className="font-medium">Edit Assignments</div>
+                                                                        <div className="text-xs text-muted-foreground">Modify roles and primary dept</div>
+                                                                    </div>
+                                                                </button>
+                                                            )}
                                                         </div>
-                                                    </>
+
+                                                        {/* Legacy Department Update (Backward Compatibility) */}
+                                                        {(!selectedEmployee.userDepartments || selectedEmployee.userDepartments.length === 0) && selectedEmployee.department && (
+                                                            <div className="space-y-3">
+                                                                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                                                                    <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">
+                                                                        Migrate to Multi-Department System
+                                                                    </h4>
+                                                                    <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
+                                                                        This user is using the legacy single-department system. 
+                                                                        Migrate to enable multi-department features with roles and primary department assignment.
+                                                                    </p>
+                                                                    <button
+                                                                        onClick={async () => {
+                                                                            try {
+                                                                                // Migrate user to multi-department system
+                                                                                await axios.post(`${APIDictionary.user}/${selectedEmployee.id}/migrate-departments`, {}, {
+                                                                                    withCredentials: true
+                                                                                });
+                                                                                
+                                                                                toast({
+                                                                                    title: "Migration Successful",
+                                                                                    description: "User has been migrated to multi-department system."
+                                                                                });
+                                                                                
+                                                                                // Refresh employee data
+                                                                                fetchEmployees();
+                                                                            } catch (error) {
+                                                                                console.error('Migration error:', error);
+                                                                                toast({
+                                                                                    title: "Migration Failed",
+                                                                                    description: "Failed to migrate user to multi-department system.",
+                                                                                    variant: "destructive"
+                                                                                });
+                                                                            }
+                                                                        }}
+                                                                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+                                                                    >
+                                                                        Migrate to Multi-Department
+                                                                    </button>
+                                                                </div>
+
+                                                                {/* Legacy single department update */}
+                                                                <div>
+                                                                    <label htmlFor="department" className="text-sm font-medium">Update Single Department (Legacy)</label>
+                                                                    <select
+                                                                        id="department"
+                                                                        value={selectedDepartment}
+                                                                        onChange={(e) => setSelectedDepartment(e.target.value)}
+                                                                        className="w-full mt-1 p-2 border rounded-md bg-background"
+                                                                    >
+                                                                        <option value="">Select a department</option>
+                                                                        {getAssignableDepartments().map((department) => (
+                                                                            <option key={department.id} value={department.id}>
+                                                                                {department.name}
+                                                                            </option>
+                                                                        ))}
+                                                                    </select>
+                                                                    <button
+                                                                        onClick={handleUpdateDepartment}
+                                                                        disabled={isLoading.action || 
+                                                                            selectedDepartment === selectedEmployee.department?.id || 
+                                                                            !canAssignToDepartment(selectedDepartment)}
+                                                                        className="w-full mt-2 py-2 px-4 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50"
+                                                                    >
+                                                                        {isLoading.action ? "Updating..." : "Update Department (Legacy)"}
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 ) : (
                                                     <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md text-center">
                                                         <p className="text-sm text-gray-500 dark:text-gray-400">

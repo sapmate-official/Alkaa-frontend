@@ -47,6 +47,8 @@ import {
   Department,
   User 
 } from '@/interface/general';
+import { MultiDepartmentSelector } from '@/components/ui/MultiDepartmentSelector';
+import { Switch } from '@/components/ui/switch';
 
 // Interface for manager dropdown options
 interface ManagerOption extends Pick<User, 'id' | 'firstName' | 'lastName' | 'email' | 'status'> {
@@ -355,10 +357,14 @@ const OnboardingManagement = () => {
   const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
   const [completionData, setCompletionData] = useState({
     departmentId: '',
+    departmentIds: [] as string[],
+    primaryDepartmentId: '',
+    departmentRoles: [] as { departmentId: string; role: string }[],
     roleId: '',
     managerId: '',
     monthlySalary: 0,
-    annualPackage: 0
+    annualPackage: 0,
+    useMultiDepartment: false
   });
 
   const fetchRoles = async () => {
@@ -381,10 +387,14 @@ const OnboardingManagement = () => {
     // Pre-fill with existing data if available
     setCompletionData({
       departmentId: candidate.departmentId || '',
+      departmentIds: candidate.departmentId ? [candidate.departmentId] : [],
+      primaryDepartmentId: candidate.departmentId || '',
+      departmentRoles: candidate.departmentId ? [{ departmentId: candidate.departmentId, role: 'Member' }] : [],
       roleId: '',
       managerId: candidate.managerId || '',
       monthlySalary: candidate.monthlySalary || (candidate.annualPackage ? candidate.annualPackage / 12 : 0),
-      annualPackage: candidate.annualPackage || (candidate.monthlySalary ? candidate.monthlySalary * 12 : 0)
+      annualPackage: candidate.annualPackage || (candidate.monthlySalary ? candidate.monthlySalary * 12 : 0),
+      useMultiDepartment: false
     });
 
     await fetchRoles();
@@ -393,6 +403,10 @@ const OnboardingManagement = () => {
   };
 
   const submitCompletion = async () => {
+    const finalDepartmentId = completionData.useMultiDepartment 
+      ? completionData.primaryDepartmentId 
+      : completionData.departmentId;
+
     if (!completionData.roleId) {
       toast({
         title: 'Validation Error',
@@ -402,18 +416,44 @@ const OnboardingManagement = () => {
       return;
     }
 
+    if (!finalDepartmentId) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please select at least one department for the employee',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       setLoading(true);
+      
+      const payload = {
+        departmentId: finalDepartmentId,
+        roleId: completionData.roleId,
+        managerId: completionData.managerId || undefined,
+        monthlySalary: completionData.monthlySalary || undefined,
+        annualPackage: completionData.annualPackage || undefined,
+        // Multi-department data
+        ...(completionData.useMultiDepartment && {
+          departmentIds: completionData.departmentIds,
+          primaryDepartmentId: completionData.primaryDepartmentId,
+          departmentRoles: completionData.departmentRoles
+        })
+      };
+
       const response = await axios.post(
         `${APIDictionary.onboarding}/${selectedCandidate?.id}/complete`,
-        completionData,
+        payload,
         { withCredentials: true }
       );
 
       if (response.status === 200) {
         toast({
           title: 'Success',
-          description: 'Onboarding completed. Employee account created.',
+          description: completionData.useMultiDepartment 
+            ? `Onboarding completed. Employee assigned to ${completionData.departmentIds.length} departments.`
+            : 'Onboarding completed. Employee account created.',
         });
         setIsCompleteDialogOpen(false);
         fetchCandidates();
@@ -1124,11 +1164,11 @@ const OnboardingManagement = () => {
 
       {/* Complete Onboarding Dialog */}
       <Dialog open={isCompleteDialogOpen} onOpenChange={setIsCompleteDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Complete Onboarding</DialogTitle>
             <DialogDescription>
-              Assign department and role to complete the onboarding process for {selectedCandidate?.firstName} {selectedCandidate?.lastName}
+              Assign department(s) and role to complete the onboarding process for {selectedCandidate?.firstName} {selectedCandidate?.lastName}
             </DialogDescription>
           </DialogHeader>
           
@@ -1157,23 +1197,71 @@ const OnboardingManagement = () => {
                 </div>
               </div>
 
-              {/* Department Selection */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Department *</label>
-                <select
-                  value={completionData.departmentId}
-                  onChange={(e) => setCompletionData(prev => ({ ...prev, departmentId: e.target.value }))}
-                  className="w-full p-2 border rounded-md bg-background"
-                  required
-                >
-                  <option value="">Select Department</option>
-                  {departments.map((dept) => (
-                    <option key={dept.id} value={dept.id}>
-                      {dept.name} ({dept.code})
-                    </option>
-                  ))}
-                </select>
+              {/* Multi-Department Toggle */}
+              <div className="flex items-center space-x-3 p-4 border rounded-lg">
+                <Switch
+                  id="multi-department"
+                  checked={completionData.useMultiDepartment}
+                  onCheckedChange={(checked) => setCompletionData(prev => ({ 
+                    ...prev, 
+                    useMultiDepartment: checked,
+                    // Reset selections when switching modes
+                    departmentIds: checked ? (prev.departmentId ? [prev.departmentId] : []) : [],
+                    primaryDepartmentId: checked ? prev.departmentId : '',
+                    departmentRoles: checked ? (prev.departmentId ? [{ departmentId: prev.departmentId, role: 'Member' }] : []) : []
+                  }))}
+                />
+                <div>
+                  <label htmlFor="multi-department" className="text-sm font-medium cursor-pointer">
+                    Enable Multi-Department Assignment
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    Allow employee to be assigned to multiple departments
+                  </p>
+                </div>
               </div>
+
+              {/* Department Selection */}
+              {completionData.useMultiDepartment ? (
+                <MultiDepartmentSelector
+                  departments={departments}
+                  selectedDepartments={completionData.departmentIds}
+                  primaryDepartmentId={completionData.primaryDepartmentId}
+                  departmentRoles={completionData.departmentRoles}
+                  onSelectionChange={(departmentIds, primaryId, roles) => {
+                    setCompletionData(prev => ({
+                      ...prev,
+                      departmentIds,
+                      primaryDepartmentId: primaryId || '',
+                      departmentRoles: roles || []
+                    }));
+                  }}
+                  showRoles={true}
+                  availableRoles={['Member', 'Lead', 'Supervisor', 'Manager']}
+                  placeholder="Select departments for the employee..."
+                />
+              ) : (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Department *</label>
+                  <select
+                    value={completionData.departmentId}
+                    onChange={(e) => setCompletionData(prev => ({ 
+                      ...prev, 
+                      departmentId: e.target.value,
+                      primaryDepartmentId: e.target.value
+                    }))}
+                    className="w-full p-2 border rounded-md bg-background"
+                    required
+                  >
+                    <option value="">Select Department</option>
+                    {departments.map((dept) => (
+                      <option key={dept.id} value={dept.id}>
+                        {dept.name} ({dept.code})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {/* Role Selection */}
               <RoleSelector
@@ -1182,20 +1270,68 @@ const OnboardingManagement = () => {
                 onRoleCreated={fetchRoles}
               />
 
-              {/* Monthly Salary */}
+              {/* Manager Selection */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Monthly Salary (Optional)</label>
-                <input
-                  type="number"
-                  value={completionData.monthlySalary}
-                  onChange={(e) => setCompletionData(prev => ({ ...prev, monthlySalary: parseFloat(e.target.value) || 0 }))}
-                  placeholder="Enter monthly salary"
+                <label className="text-sm font-medium">Manager (Optional)</label>
+                <select
+                  value={completionData.managerId}
+                  onChange={(e) => setCompletionData(prev => ({ ...prev, managerId: e.target.value }))}
                   className="w-full p-2 border rounded-md bg-background"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Will be auto-calculated from annual package if not provided
-                </p>
+                >
+                  <option value="">Select Manager</option>
+                  {managers.map((manager) => (
+                    <option key={manager.id} value={manager.id}>
+                      {manager.firstName} {manager.lastName} ({manager.email})
+                    </option>
+                  ))}
+                </select>
               </div>
+
+              {/* Salary Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Monthly Salary (Optional)</label>
+                  <input
+                    type="number"
+                    value={completionData.monthlySalary}
+                    onChange={(e) => setCompletionData(prev => ({ 
+                      ...prev, 
+                      monthlySalary: parseFloat(e.target.value) || 0,
+                      annualPackage: (parseFloat(e.target.value) || 0) * 12
+                    }))}
+                    placeholder="Enter monthly salary"
+                    className="w-full p-2 border rounded-md bg-background"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Annual Package (Optional)</label>
+                  <input
+                    type="number"
+                    value={completionData.annualPackage}
+                    onChange={(e) => setCompletionData(prev => ({ 
+                      ...prev, 
+                      annualPackage: parseFloat(e.target.value) || 0,
+                      monthlySalary: (parseFloat(e.target.value) || 0) / 12
+                    }))}
+                    placeholder="Enter annual package"
+                    className="w-full p-2 border rounded-md bg-background"
+                  />
+                </div>
+              </div>
+
+              {/* Validation Summary */}
+              {completionData.useMultiDepartment && completionData.departmentIds.length > 0 && (
+                <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg">
+                  <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
+                    Multi-Department Assignment Summary
+                  </h4>
+                  <div className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                    <p>• Employee will be assigned to {completionData.departmentIds.length} department(s)</p>
+                    <p>• Primary department: {departments.find(d => d.id === completionData.primaryDepartmentId)?.name}</p>
+                    <p>• Department roles configured for each assignment</p>
+                  </div>
+                </div>
+              )}
 
               <div className="flex justify-end gap-2 pt-4">
                 <Button
@@ -1208,7 +1344,14 @@ const OnboardingManagement = () => {
                 </Button>
                 <Button
                   onClick={submitCompletion}
-                  disabled={loading || !completionData.departmentId || !completionData.roleId}
+                  disabled={loading || 
+                    !completionData.roleId || 
+                    (completionData.useMultiDepartment 
+                      ? !completionData.primaryDepartmentId || completionData.departmentIds.length === 0
+                      : !completionData.departmentId
+                    )
+                  }
+                  className="min-w-[140px]"
                 >
                   {loading ? 'Processing...' : 'Complete Onboarding'}
                 </Button>

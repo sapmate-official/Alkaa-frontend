@@ -65,13 +65,36 @@ export const DepartmentsTab = ({
                 )}
                 <div className="mt-4">
                   <p className="text-sm font-medium mb-1">Department Members: {userDepartment.users?.length || 0}</p>
+                  {/* Show multi-department statistics - with fallback for missing userDepartments */}
+                  <div className="text-xs text-muted-foreground mb-2">
+                    {userDepartment.users?.some((user: any) => user.userDepartments) ? (
+                      <>
+                        Primary: {userDepartment.users?.filter((user: any) => 
+                          user.userDepartments?.some((ud: any) => ud.departmentId === userDepartment.id && ud.isPrimary)
+                        ).length || 0} | 
+                        Secondary: {userDepartment.users?.filter((user: any) => 
+                          user.userDepartments?.some((ud: any) => ud.departmentId === userDepartment.id && !ud.isPrimary)
+                        ).length || 0}
+                      </>
+                    ) : (
+                      'Single department assignments'
+                    )}
+                  </div>
                   <div className="flex flex-wrap gap-2 mt-2">
                     {userDepartment.users?.slice(0, 5).map((deptUser) => (
-                      <Avatar key={deptUser.id} className="h-8 w-8 cursor-pointer" onClick={() => onUserClick(deptUser.id)}>
-                        <AvatarFallback>
-                          {deptUser.firstName?.[0]}{deptUser.lastName?.[0]}
-                        </AvatarFallback>
-                      </Avatar>
+                      <div key={deptUser.id} className="relative">
+                        <Avatar className="h-8 w-8 cursor-pointer" onClick={() => onUserClick(deptUser.id)}>
+                          <AvatarFallback>
+                            {deptUser.firstName?.[0]}{deptUser.lastName?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        {/* Show crown for primary members if userDepartments exists */}
+                        {(deptUser as any).userDepartments?.some((ud: any) => ud.departmentId === userDepartment.id && ud.isPrimary) && (
+                          <div className="absolute -top-1 -right-1 text-yellow-500">
+                            <span className="text-xs">👑</span>
+                          </div>
+                        )}
+                      </div>
                     ))}
                     {userDepartment.users?.length > 5 && (
                       <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs">

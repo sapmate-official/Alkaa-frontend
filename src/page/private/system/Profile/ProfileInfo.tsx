@@ -6,6 +6,10 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { BriefcaseIcon, BanknotesIcon, UserIcon, PencilIcon, CalendarIcon, PhoneIcon, MapPinIcon, EnvelopeIcon, IdentificationIcon } from "@heroicons/react/24/outline"
+import { Building } from 'lucide-react'
+import { MultiDepartmentDisplay } from '@/components/ui/MultiDepartmentDisplay'
+import DepartmentAssignmentHistory from '@/components/ui/DepartmentAssignmentHistory'
+import { Separator } from "@/components/ui/separator"
 import axios from 'axios'
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
@@ -335,39 +339,75 @@ const ProfileInfo = () => {
                                     Employment Details
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="grid gap-6 sm:grid-cols-2">
-                                <div className="flex items-start gap-3">
-                                    <div className="rounded-full bg-primary/10 p-2 mt-1">
-                                        <IdentificationIcon className="w-4 h-4 text-primary" />
+                            <CardContent className="space-y-6">
+                                <div className="grid gap-6 sm:grid-cols-2">
+                                    <div className="flex items-start gap-3">
+                                        <div className="rounded-full bg-primary/10 p-2 mt-1">
+                                            <IdentificationIcon className="w-4 h-4 text-primary" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-sm text-muted-foreground font-medium">Employee ID</p>
+                                            <p className="font-medium">{profileInfo?.employeeId || profileInfo?.id}</p>
+                                        </div>
                                     </div>
-                                    <div className="space-y-1">
-                                        <p className="text-sm text-muted-foreground font-medium">Employee ID</p>
-                                        <p className="font-medium">{profileInfo?.employeeId || profileInfo?.id}</p>
+                                    
+                                    {profileInfo?.hiredDate && (
+                                        <div className="flex items-start gap-3">
+                                            <div className="rounded-full bg-primary/10 p-2 mt-1">
+                                                <CalendarIcon className="w-4 h-4 text-primary" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-sm text-muted-foreground font-medium">Hire Date</p>
+                                                <p className="font-medium">
+                                                    {new Date(profileInfo?.hiredDate).toLocaleDateString(undefined, {
+                                                        year: 'numeric',
+                                                        month: 'long',
+                                                        day: 'numeric'
+                                                    })}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Department Information */}
+                                <div className="space-y-4">
+                                    <Separator />
+                                    <div>
+                                        <p className="text-sm text-muted-foreground font-medium mb-3">Department Assignment</p>
+                                        {profileInfo?.userDepartments && profileInfo.userDepartments.length > 0 ? (
+                                            <MultiDepartmentDisplay 
+                                                user={profileInfo}
+                                                showRoles={true}
+                                                compact={false}
+                                                className="bg-muted/20 rounded-lg p-3"
+                                            />
+                                        ) : profileInfo?.department ? (
+                                            // Fallback for legacy single department display
+                                            <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/20">
+                                                <div className="rounded-full bg-primary/10 p-2">
+                                                    <Building className="w-4 h-4 text-primary" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium">{profileInfo.department.name}</p>
+                                                    <p className="text-sm text-muted-foreground">Single Department Assignment</p>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/20 text-muted-foreground">
+                                                <Building className="w-4 h-4" />
+                                                <span>No department assigned</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                                 
-                                {profileInfo?.hiredDate && (
-                                    <div className="flex items-start gap-3">
-                                        <div className="rounded-full bg-primary/10 p-2 mt-1">
-                                            <CalendarIcon className="w-4 h-4 text-primary" />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <p className="text-sm text-muted-foreground font-medium">Hire Date</p>
-                                            <p className="font-medium">
-                                                {new Date(profileInfo?.hiredDate).toLocaleDateString(undefined, {
-                                                    year: 'numeric',
-                                                    month: 'long',
-                                                    day: 'numeric'
-                                                })}
-                                            </p>
-                                        </div>
-                                    </div>
-                                )}
-                                
+                                {/* Roles Information */}
                                 {profileInfo?.roles && profileInfo?.roles?.length > 0 && (
-                                    <div className="sm:col-span-2">
-                                        <div className="space-y-3">
-                                            <p className="text-sm text-muted-foreground font-medium">Roles</p>
+                                    <div className="space-y-3">
+                                        <Separator />
+                                        <div>
+                                            <p className="text-sm text-muted-foreground font-medium mb-3">System Roles</p>
                                             <div className="flex flex-wrap gap-2">
                                                 {profileInfo?.roles?.map((role) => (
                                                     <Badge key={role?.id} variant="secondary" className="px-3 py-1">
@@ -428,6 +468,22 @@ const ProfileInfo = () => {
 
                 {canDisplayBankInfo() && (
                     <BankDetails userId={id || user?.id || ''} />
+                )}
+
+                {canDisplayEmploymentInfo() && (
+                    <motion.div 
+                        initial="hidden"
+                        animate="visible"
+                        variants={cardVariants}
+                        transition={{ duration: 0.3, delay: 0.4 }}
+                    >
+                        <DepartmentAssignmentHistory 
+                            userId={id || user?.id || ''} 
+                            showTitle={true}
+                            limit={5}
+                            className="shadow-sm hover:shadow-md transition-shadow duration-300"
+                        />
+                    </motion.div>
                 )}
             </div>
         </div>

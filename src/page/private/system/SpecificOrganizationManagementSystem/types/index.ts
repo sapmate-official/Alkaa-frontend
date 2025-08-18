@@ -21,6 +21,20 @@ export interface User {
     id: string;
     name: string;
   };
+  // Multi-department support
+  userDepartments?: {
+    id: string;
+    departmentId: string;
+    isPrimary: boolean;
+    role?: string;
+    assignedAt: Date;
+    department: {
+      id: string;
+      name: string;
+      code?: string;
+      description?: string;
+    };
+  }[];
   subordinates?: User[];
 }
 

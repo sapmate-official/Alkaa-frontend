@@ -51,6 +51,7 @@ export const AllUsersTab = ({
               <TableHead>Employee</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Employee ID</TableHead>
+              <TableHead>Departments</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
@@ -71,6 +72,32 @@ export const AllUsersTab = ({
                 </TableCell>
                 <TableCell>{user?.email}</TableCell>
                 <TableCell>{user?.employeeId || 'N/A'}</TableCell>
+                <TableCell>
+                  {user?.userDepartments && user.userDepartments.length > 0 ? (
+                    <div className="space-y-1">
+                      {user.userDepartments.slice(0, 2).map((userDept, index) => (
+                        <div key={userDept.id || index} className="flex items-center gap-1">
+                          {userDept.isPrimary && <span className="text-yellow-500">👑</span>}
+                          <span className="text-xs">{userDept.department?.name}</span>
+                          {userDept.role && (
+                            <Badge variant="outline" className="text-xs px-1 py-0">
+                              {userDept.role}
+                            </Badge>
+                          )}
+                        </div>
+                      ))}
+                      {user.userDepartments && user.userDepartments.length > 2 && (
+                        <div className="text-xs text-muted-foreground">
+                          +{user.userDepartments.length - 2} more
+                        </div>
+                      )}
+                    </div>
+                  ) : user?.department ? (
+                    <span className="text-sm">{user.department.name}</span>
+                  ) : (
+                    <span className="text-muted-foreground text-sm">Not assigned</span>
+                  )}
+                </TableCell>
                 <TableCell>
                   <Badge variant={user?.status === 'active' ? "success" : "destructive"}>
                     {user?.status}

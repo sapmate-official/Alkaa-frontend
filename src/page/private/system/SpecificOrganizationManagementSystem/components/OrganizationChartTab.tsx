@@ -45,6 +45,16 @@ interface UserData {
     firstName: string;
     lastName: string;
   }>;
+  userDepartments?: Array<{
+    departmentId: string;
+    isPrimary: boolean;
+    role?: string;
+    department?: {
+      id: string;
+      name: string;
+      code?: string;
+    };
+  }>;
   isHead?: boolean;
   isManager?: boolean;
 }
@@ -125,7 +135,26 @@ const getNodeColor = () => {
           {/* Position */}
           <div className="text-xs text-muted-foreground mb-2 text-center">
             <div>{user.position || user.role || 'Employee'}</div>
-            {user.departmentName && (
+            {/* Multi-department display */}
+            {user.userDepartments && user.userDepartments.length > 0 ? (
+              <div className="space-y-1 mt-1">
+                {user.userDepartments.map((userDept) => (
+                  <div key={userDept.departmentId} className={`text-xs ${userDept.isPrimary ? 'font-medium text-primary' : 'text-muted-foreground/80'}`}>
+                    {userDept.isPrimary && '👑 '}{userDept.department?.name}
+                    {userDept.role && (
+                      <span className="ml-1 px-1 py-0.5 bg-muted rounded text-xs">
+                        {userDept.role}
+                      </span>
+                    )}
+                  </div>
+                ))}
+                {user.userDepartments.length > 2 && (
+                  <div className="text-xs text-muted-foreground/60">
+                    +{user.userDepartments.length - 2} more
+                  </div>
+                )}
+              </div>
+            ) : user.departmentName && (
               <div className="text-xs text-muted-foreground/80 mt-1">
                 {user.departmentName}
               </div>

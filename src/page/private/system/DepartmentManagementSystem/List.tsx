@@ -66,6 +66,8 @@ interface Department {
         id?: string
     }
     users?: { id: string }[]
+    primaryUsers?: { id: string }[]
+    secondaryUsers?: { id: string }[]
 }
 
 const DepartmentSkeleton = () => {
@@ -108,7 +110,17 @@ interface DepartmentCardProps {
 }
 
 const DepartmentCard = ({ dept, onClick, isUserHead = false }: DepartmentCardProps) => {
-    const userCount = dept.users?.length || 0;
+    // Calculate user statistics for multi-department support
+    const legacyUserCount = dept.users?.length || 0;
+    
+    // Check if userDepartments exists and calculate multi-department stats
+    const userDepartments = (dept as any).userDepartments || [];
+    const primaryUserCount = userDepartments.filter((ud: any) => ud.isPrimary).length;
+    const secondaryUserCount = userDepartments.filter((ud: any) => !ud.isPrimary).length;
+    const totalMultiDeptUsers = primaryUserCount + secondaryUserCount;
+    
+    // Use multi-department stats if available, otherwise fall back to legacy
+    const displayUserCount = totalMultiDeptUsers > 0 ? totalMultiDeptUsers : legacyUserCount;
     
     return (
         <Card
@@ -167,9 +179,27 @@ const DepartmentCard = ({ dept, onClick, isUserHead = false }: DepartmentCardPro
                 <p className="text-sm line-clamp-2 text-muted-foreground">{dept.description || 'No description'}</p>
             </CardContent>
             <CardFooter className="flex justify-between items-center pt-2">
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Users className="h-3.5 w-3.5" />
-                    <span>{userCount} member{userCount !== 1 ? 's' : ''}</span>
+                    {totalMultiDeptUsers > 0 ? (
+                        <div className="flex items-center gap-1">
+                            <span>{displayUserCount} total</span>
+                            {primaryUserCount > 0 && secondaryUserCount > 0 && (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <span className="text-blue-600">({primaryUserCount}+{secondaryUserCount})</span>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>{primaryUserCount} primary • {secondaryUserCount} secondary</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )}
+                        </div>
+                    ) : (
+                        <span>{displayUserCount} member{displayUserCount !== 1 ? 's' : ''}</span>
+                    )}
                 </div>
                 <div className="text-sm font-semibold">
                     ₹{dept.budget?.toLocaleString() || 0}

@@ -50,7 +50,10 @@ export interface Department {
   createdAt: Date;
   updatedAt: Date;
   organization: Organization;
-  users: User[];
+  users: User[]; // Legacy users relation for backward compatibility
+  userDepartments?: UserDepartment[]; // New multi-department relation
+  primaryUsers?: User[]; // Computed field for users who have this as primary department
+  secondaryUsers?: User[]; // Computed field for users who have this as secondary department
   departmentHead?: User;
   parentDepartment?: Department;
   subDepartments: Department[];
@@ -93,10 +96,26 @@ export interface RolePermission {
   permission: Permission;
 }
 
+// New Multi-Department Interface
+export interface UserDepartment {
+  id: string;
+  userId: string;
+  departmentId: string;
+  isPrimary: boolean;
+  role?: string; // Department-specific role
+  assignedAt: Date;
+  assignedBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+  department: Department;
+  user: User;
+  assignedByUser: User;
+}
+
 export interface User {
   id: string;
   orgId: string;
-  departmentId?: string;
+  departmentId?: string; // Legacy field for backward compatibility
   managerId?: string;
   email: string;
   firstName?: string;
@@ -119,7 +138,11 @@ export interface User {
   createdAt: Date;
   updatedAt: Date;
   organization: Organization;
-  Department?: Department[];
+  Department?: Department[]; // Legacy relation for backward compatibility
+  department?: Department; // Legacy single department for backward compatibility
+  userDepartments?: UserDepartment[]; // New multi-department relation
+  departments?: Department[]; // Computed field for all departments
+  primaryDepartment?: Department; // Computed field for primary department
   manager?: User;
   subordinates: User[];
   roles: UserRole[];
@@ -438,6 +461,52 @@ export interface SalaryParameter {
   additionalAllowances?: any;
   additionalDeductions?: any;
   user: User;
+}
+
+// Multi-Department Assignment Interfaces
+export interface DepartmentAssignmentRequest {
+  departmentIds: string[];
+  primaryDepartmentId?: string;
+  roles?: { departmentId: string; role: string }[];
+}
+
+export interface DepartmentAssignmentResponse {
+  success: boolean;
+  message: string;
+  user: User;
+  assignments: UserDepartment[];
+}
+
+export interface MultiDepartmentUser extends User {
+  allDepartments: {
+    id: string;
+    name: string;
+    isPrimary: boolean;
+    role?: string;
+    assignedAt: Date;
+  }[];
+  primaryDepartmentInfo: {
+    id: string;
+    name: string;
+    code?: string;
+  } | null;
+}
+
+// Activity Log Interface for Multi-Department Operations
+export interface DepartmentActivityLog {
+  id: string;
+  action: 'ASSIGN' | 'UNASSIGN' | 'UPDATE' | 'PRIMARY_CHANGE';
+  entityType: 'USER_DEPARTMENT';
+  userId: string;
+  departmentId: string;
+  performedBy: string;
+  details: {
+    isPrimary?: boolean;
+    role?: string;
+    previousPrimaryDepartment?: string;
+    newPrimaryDepartment?: string;
+  };
+  createdAt: Date;
 }
 
 export enum UserStatus {
