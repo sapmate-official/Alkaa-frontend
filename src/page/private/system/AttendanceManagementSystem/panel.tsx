@@ -7,6 +7,11 @@ import axios, { AxiosError } from 'axios';
 import { useAuth } from '@/services/AuthContext';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { 
+  getCurrentTimestamp, 
+  formatTime24Hour, 
+  createTimestampPayload 
+} from '@/utils/timeUtils';
 import {
   Table,
   TableBody,
@@ -67,6 +72,21 @@ const AttendancePanel = () => {
   const canModifyPastAttendance = hasPermission('modify_past_attendance');
 
   const canViewOthersAttendance = canViewSubordinatesAttendance || canViewAllUsersAttendance;
+
+  // Helper function to format time in 24-hour format
+  const formatTime24Hour = (date: Date): string => {
+    return date.toLocaleTimeString('en-GB', { 
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  };
+
+  // Helper function to get ISO string with timezone info
+  const getClientTimestamp = (): string => {
+    return new Date().toISOString();
+  };
 
   const fetchData = async () => {
     try {
@@ -134,11 +154,10 @@ const AttendancePanel = () => {
 
       const checkInData = {
         date: formattedDate,
-        checkInTime: currentDate.toISOString(), // Client-side timestamp
+        checkInTime: getCurrentTimestamp(), // Use ISO timestamp
         checkInLocation: location ? `${location?.latitude},${location?.longitude}` : '',
         notes: "",
-        clientTimestamp: currentDate.toISOString(), // Add explicit client timestamp
-        clientTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone // Add timezone info
+        ...createTimestampPayload() // Add timestamp and timezone info
       };
 
       const response = await axios.post(APIDictionary.checkIn, checkInData, {
@@ -158,7 +177,7 @@ const AttendancePanel = () => {
         
         toast({
           title: "Checked in successfully",
-          description: `Session ${response.data.sessionNumber} started at ${format(currentDate, 'h:mm a')}`,
+          description: `Session ${response.data.sessionNumber} started at ${formatTime24Hour(currentDate)}`,
           variant: "default"
         });
       }
@@ -198,14 +217,13 @@ const AttendancePanel = () => {
       const checkOutData = {
         userId: user?.id,
         date: format(currentDate, 'yyyy-MM-dd'),
-        checkOutTime: currentDate.toISOString(), // Client-side timestamp
+        checkOutTime: getCurrentTimestamp(), // Use ISO timestamp
         checkOutLocation: location ? `${location?.latitude},${location?.longitude}` : '',
         notes: JSON.stringify(reportData),
         deviceInfo: JSON.stringify(deviceInfo),
         ipAddress,
         reportContent: JSON.stringify(reportData),
-        clientTimestamp: currentDate.toISOString(), // Add explicit client timestamp
-        clientTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone // Add timezone info
+        ...createTimestampPayload() // Add timestamp and timezone info
       };
 
       const response = await axios.post(APIDictionary.checkOut, checkOutData, {
@@ -226,7 +244,7 @@ const AttendancePanel = () => {
 
       toast({
         title: "Checked out successfully",
-        description: `Session ended at ${format(currentDate, 'h:mm a')}. Your daily report has been submitted`,
+        description: `Session ended at ${formatTime24Hour(currentDate)}. Your daily report has been submitted`,
         variant: "default"
       });
 

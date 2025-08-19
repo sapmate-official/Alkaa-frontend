@@ -32,10 +32,9 @@ const Home = () => {
         setIsLoading(true);
         if (!user?.id) return;
         
-        // If we already have cached data, show it immediately and skip loading
         if (dashboardData) {
           setIsLoading(false);
-          // Still fetch fresh data in background but don't block UI
+          
           Promise.all([
             axios.get(`${APIDictionary.attendance}/manager/live/${user?.id}`, { withCredentials: true }),
             axios.get(`${APIDictionary.events}`, { withCredentials: true })
