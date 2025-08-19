@@ -9,7 +9,6 @@ import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { 
   getCurrentTimestamp, 
-  formatTime24Hour, 
   createTimestampPayload 
 } from '@/utils/timeUtils';
 import {
@@ -83,11 +82,7 @@ const AttendancePanel = () => {
     });
   };
 
-  // Helper function to get ISO string with timezone info
-  const getClientTimestamp = (): string => {
-    return new Date().toISOString();
-  };
-
+  
   const fetchData = async () => {
     try {
       const response = await axios.get(`${APIDictionary.attendance}/check-out/past`, {
