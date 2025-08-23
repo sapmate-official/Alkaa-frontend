@@ -19,6 +19,7 @@ import RolesPermissionsManagement from './page/private/system/RoleManagementSyst
 import ModernRolePermissionPage from './page/private/system/RoleManagementSystem/ModernRolePermissionPage.tsx';
 import ModernRolePermissionManager from './page/private/system/RoleManagementSystem/ModernRolePermissionManager.tsx';
 import HolidayManagementSystem from './page/private/system/HolidayManagementSystem/HolidayDashboard.tsx';
+import PrivacyPolicyPage from './page/public/PrivacyPolicyPage.tsx';
 
 // Public pages
 const LandingPage = lazy(() => import('./page/public/LandingPage'));
@@ -35,6 +36,7 @@ const PayrollModule = lazy(() => import('./page/private/system/PayrollManagement
 const BillingModule = lazy(() => import('./page/private/system/BillingManagementSystem/BillingModule'));
 const LeaveModule = lazy(() => import('./page/private/system/LeaveManagementSystem/LeaveModule'));
 const OnboardingModule = lazy(() => import('./page/private/system/OnboardingManagementSystem/OnboardingModule'));
+
 
 // Admin modules (less frequently used)
 const OrganizationModule = lazy(() => import('./page/private/system/OrganizationManagementSystem/OrganizationModule')); // For Super Admin
@@ -54,6 +56,7 @@ function App() {
         <Routes>
           {/* Public Routes - Outside AuthProvider */}
           <Route path="/" element={<LandingPage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicyPage/>}/>
           <Route path="/reset-password/:token" element={<SetPassword />} />
           <Route path="/auth/signin" element={<AuthProvider><SignIn /></AuthProvider>} />
           <Route path="/onboarding/:token" element={<OnboardingForm />} />
