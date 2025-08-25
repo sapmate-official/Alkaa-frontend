@@ -505,10 +505,10 @@ const LeaveRequestApprove = () => {
                                     initial="hidden"
                                     animate="visible"
                                     exit="hidden"
-                                    className="h-full"
+                                    className="h-full flex flex-col"
                                 >
-                                    <Card className="h-full shadow-lg">
-                                        <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-b">
+                                    <Card className="h-full shadow-lg flex flex-col">
+                                        <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-b flex-shrink-0">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center space-x-3">
                                                     <div className="p-2 bg-blue-500 rounded-lg">
@@ -529,248 +529,255 @@ const LeaveRequestApprove = () => {
                                                 </Badge>
                                             </div>
                                         </CardHeader>
-                                        <CardContent className="p-6 space-y-6">
-                                            {/* Employee Information */}
-                                            <motion.div
-                                                initial={{ opacity: 0, y: 20 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: 0.1 }}
-                                                className="grid grid-cols-2 gap-6"
-                                            >
-                                                <div className="space-y-2">
-                                                    <div className="flex items-center space-x-2">
-                                                        <User className="h-4 w-4 text-blue-500" />
-                                                        <h4 className="font-semibold text-slate-900 dark:text-slate-100">Employee</h4>
-                                                    </div>
-                                                    <p className="text-slate-700 dark:text-slate-300 pl-6">
-                                                        {selectedRequest.user?.firstName} {selectedRequest.user?.lastName}
-                                                    </p>
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <div className="flex items-center space-x-2">
-                                                        <FileText className="h-4 w-4 text-blue-500" />
-                                                        <h4 className="font-semibold text-slate-900 dark:text-slate-100">Leave Type</h4>
-                                                    </div>
-                                                    <p className="text-slate-700 dark:text-slate-300 pl-6">
-                                                        {selectedRequest.leaveType?.name}
-                                                    </p>
-                                                </div>
-                                            </motion.div>
-
-                                            <Separator />
-
-                                            {/* Duration Information */}
-                                            <motion.div
-                                                initial={{ opacity: 0, y: 20 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: 0.2 }}
-                                                className="space-y-4"
-                                            >
-                                                <div className="flex items-center space-x-2">
-                                                    <Calendar className="h-4 w-4 text-blue-500" />
-                                                    <h4 className="font-semibold text-slate-900 dark:text-slate-100">Duration</h4>
-                                                </div>
-                                                <div className="pl-6 space-y-2">
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <div>
-                                                            <p className="text-sm text-slate-600 dark:text-slate-400">Start Date</p>
-                                                            <p className="font-medium text-slate-900 dark:text-slate-100">
-                                                                {format(new Date(selectedRequest.startDate), 'EEEE, PPP')}
+                                        <CardContent className="flex-1 min-h-0 p-0">
+                                            <ScrollArea className="h-full">
+                                                <div className="p-6 space-y-6">
+                                                    {/* Employee Information */}
+                                                    <motion.div
+                                                        initial={{ opacity: 0, y: 20 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        transition={{ delay: 0.1 }}
+                                                        className="grid grid-cols-2 gap-6"
+                                                    >
+                                                        <div className="space-y-2">
+                                                            <div className="flex items-center space-x-2">
+                                                                <User className="h-4 w-4 text-blue-500" />
+                                                                <h4 className="font-semibold text-slate-900 dark:text-slate-100">Employee</h4>
+                                                            </div>
+                                                            <p className="text-slate-700 dark:text-slate-300 pl-6">
+                                                                {selectedRequest.user?.firstName} {selectedRequest.user?.lastName}
                                                             </p>
                                                         </div>
-                                                        <div>
-                                                            <p className="text-sm text-slate-600 dark:text-slate-400">End Date</p>
-                                                            <p className="font-medium text-slate-900 dark:text-slate-100">
-                                                                {format(new Date(selectedRequest.endDate), 'EEEE, PPP')}
+                                                        <div className="space-y-2">
+                                                            <div className="flex items-center space-x-2">
+                                                                <FileText className="h-4 w-4 text-blue-500" />
+                                                                <h4 className="font-semibold text-slate-900 dark:text-slate-100">Leave Type</h4>
+                                                            </div>
+                                                            <p className="text-slate-700 dark:text-slate-300 pl-6">
+                                                                {selectedRequest.leaveType?.name}
                                                             </p>
                                                         </div>
-                                                    </div>
-                                                    <div className="flex items-center space-x-2">
-                                                        <p className="text-sm text-slate-600 dark:text-slate-400">Total Duration:</p>
-                                                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                                                            {selectedRequest.numberOfDays} {selectedRequest.numberOfDays === 1 ? 'day' : 'days'}
-                                                        </Badge>
-                                                    </div>
-                                                </div>
-                                            </motion.div>
+                                                    </motion.div>
 
-                                            <Separator />
-
-                                            {/* Reason */}
-                                            <motion.div
-                                                initial={{ opacity: 0, y: 20 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: 0.3 }}
-                                                className="space-y-2"
-                                            >
-                                                <div className="flex items-center space-x-2">
-                                                    <FileText className="h-4 w-4 text-blue-500" />
-                                                    <h4 className="font-semibold text-slate-900 dark:text-slate-100">Reason</h4>
-                                                </div>
-                                                <div className="pl-6">
-                                                    <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 border">
-                                                        <p className="text-slate-700 dark:text-slate-300">
-                                                            {selectedRequest.reason || 'No reason provided'}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </motion.div>
-
-                                            {/* Rejection Reason (if rejected) */}
-                                            {selectedRequest.status === 'REJECTED' && selectedRequest.rejectedReason && (
-                                                <motion.div
-                                                    initial={{ opacity: 0, y: 20 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    transition={{ delay: 0.4 }}
-                                                    className="space-y-2"
-                                                >
                                                     <Separator />
-                                                    <div className="flex items-center space-x-2">
-                                                        <XCircle className="h-4 w-4 text-red-500" />
-                                                        <h4 className="font-semibold text-red-900 dark:text-red-100">Rejection Reason</h4>
-                                                    </div>
-                                                    <div className="pl-6">
-                                                        <div className="bg-red-50 dark:bg-red-950 rounded-lg p-4 border border-red-200 dark:border-red-800">
-                                                            <p className="text-red-700 dark:text-red-300">
-                                                                {selectedRequest.rejectedReason}
-                                                            </p>
+
+                                                    {/* Duration Information */}
+                                                    <motion.div
+                                                        initial={{ opacity: 0, y: 20 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        transition={{ delay: 0.2 }}
+                                                        className="space-y-4"
+                                                    >
+                                                        <div className="flex items-center space-x-2">
+                                                            <Calendar className="h-4 w-4 text-blue-500" />
+                                                            <h4 className="font-semibold text-slate-900 dark:text-slate-100">Duration</h4>
                                                         </div>
-                                                    </div>
-                                                </motion.div>
-                                            )}
+                                                        <div className="pl-6 space-y-2">
+                                                            <div className="grid grid-cols-2 gap-4">
+                                                                <div>
+                                                                    <p className="text-sm text-slate-600 dark:text-slate-400">Start Date</p>
+                                                                    <p className="font-medium text-slate-900 dark:text-slate-100">
+                                                                        {format(new Date(selectedRequest.startDate), 'EEEE, PPP')}
+                                                                    </p>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-sm text-slate-600 dark:text-slate-400">End Date</p>
+                                                                    <p className="font-medium text-slate-900 dark:text-slate-100">
+                                                                        {format(new Date(selectedRequest.endDate), 'EEEE, PPP')}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center space-x-2">
+                                                                <p className="text-sm text-slate-600 dark:text-slate-400">Total Duration:</p>
+                                                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                                                    {selectedRequest.numberOfDays} {selectedRequest.numberOfDays === 1 ? 'day' : 'days'}
+                                                                </Badge>
+                                                            </div>
+                                                        </div>
+                                                    </motion.div>
 
-                                            {/* Action Buttons for Pending Requests */}
-                                            {selectedRequest.status === 'PENDING' && (
-                                                <motion.div
-                                                    initial={{ opacity: 0, y: 20 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    transition={{ delay: 0.5 }}
-                                                    className="space-y-4 pt-4 border-t"
-                                                >
-                                                    <div className="space-y-2">
-                                                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                                                            Rejection Reason (Optional for approval, Required for rejection)
-                                                        </label>
-                                                        <Textarea
-                                                            placeholder="Enter reason for rejection (if rejecting) or additional comments..."
-                                                            value={rejectionReason}
-                                                            onChange={(e) => setRejectionReason(e.target.value)}
-                                                            className="min-h-[80px]"
-                                                        />
-                                                    </div>
-                                                    <div className="flex space-x-3">
-                                                        <AlertDialog>
-                                                            <AlertDialogTrigger asChild>
-                                                                <Button
-                                                                    className="flex-1 bg-green-500 hover:bg-green-600 text-white"
-                                                                    disabled={actionLoading}
-                                                                >
-                                                                    <CheckCircle className="h-4 w-4 mr-2" />
-                                                                    Approve Request
-                                                                </Button>
-                                                            </AlertDialogTrigger>
-                                                            <AlertDialogContent>
-                                                                <AlertDialogHeader>
-                                                                    <AlertDialogTitle>Approve Leave Request</AlertDialogTitle>
-                                                                    <AlertDialogDescription>
-                                                                        Are you sure you want to approve this leave request for{' '}
-                                                                        <strong>{selectedRequest.user?.firstName} {selectedRequest.user?.lastName}</strong>?
-                                                                        This action cannot be undone.
-                                                                    </AlertDialogDescription>
-                                                                </AlertDialogHeader>
-                                                                <AlertDialogFooter>
-                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                    <AlertDialogAction
-                                                                        onClick={() => handleApprove(selectedRequest.id)}
-                                                                        className="bg-green-500 hover:bg-green-600"
-                                                                        disabled={actionLoading}
-                                                                    >
-                                                                        {actionLoading ? (
-                                                                            <>
-                                                                                <Spinner size="sm" className="mr-2" />
-                                                                                Approving...
-                                                                            </>
-                                                                        ) : (
-                                                                            'Approve'
-                                                                        )}
-                                                                    </AlertDialogAction>
-                                                                </AlertDialogFooter>
-                                                            </AlertDialogContent>
-                                                        </AlertDialog>
+                                                    <Separator />
 
-                                                        <AlertDialog>
-                                                            <AlertDialogTrigger asChild>
-                                                                <Button
-                                                                    variant="destructive"
-                                                                    className="flex-1"
-                                                                    disabled={actionLoading}
-                                                                >
-                                                                    <XCircle className="h-4 w-4 mr-2" />
-                                                                    Reject Request
-                                                                </Button>
-                                                            </AlertDialogTrigger>
-                                                            <AlertDialogContent>
-                                                                <AlertDialogHeader>
-                                                                    <AlertDialogTitle>Reject Leave Request</AlertDialogTitle>
-                                                                    <AlertDialogDescription>
-                                                                        Are you sure you want to reject this leave request for{' '}
-                                                                        <strong>{selectedRequest.user?.firstName} {selectedRequest.user?.lastName}</strong>?
-                                                                        {!rejectionReason?.trim() && (
-                                                                            <span className="block mt-2 text-red-600 font-medium">
-                                                                                Please provide a rejection reason before proceeding.
-                                                                            </span>
-                                                                        )}
-                                                                    </AlertDialogDescription>
-                                                                </AlertDialogHeader>
-                                                                <AlertDialogFooter>
-                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                    <AlertDialogAction
-                                                                        onClick={() => handleReject(selectedRequest.id)}
-                                                                        className="bg-red-500 hover:bg-red-600"
-                                                                        disabled={actionLoading || !rejectionReason?.trim()}
-                                                                    >
-                                                                        {actionLoading ? (
-                                                                            <>
-                                                                                <Spinner size="sm" className="mr-2" />
-                                                                                Rejecting...
-                                                                            </>
-                                                                        ) : (
-                                                                            'Reject'
-                                                                        )}
-                                                                    </AlertDialogAction>
-                                                                </AlertDialogFooter>
-                                                            </AlertDialogContent>
-                                                        </AlertDialog>
-                                                    </div>
-                                                </motion.div>
-                                            )}
+                                                    {/* Reason */}
+                                                    <motion.div
+                                                        initial={{ opacity: 0, y: 20 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        transition={{ delay: 0.3 }}
+                                                        className="space-y-2"
+                                                    >
+                                                        <div className="flex items-center space-x-2">
+                                                            <FileText className="h-4 w-4 text-blue-500" />
+                                                            <h4 className="font-semibold text-slate-900 dark:text-slate-100">Reason</h4>
+                                                        </div>
+                                                        <div className="pl-6">
+                                                            <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 border">
+                                                                <p className="text-slate-700 dark:text-slate-300">
+                                                                    {selectedRequest.reason || 'No reason provided'}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </motion.div>
 
-                                            {/* Approval Information (for processed requests) */}
-                                            {selectedRequest.status !== 'PENDING' && selectedRequest.approvedAt && (
-                                                <motion.div
-                                                    initial={{ opacity: 0, y: 20 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    transition={{ delay: 0.4 }}
-                                                    className="space-y-2 pt-4 border-t"
-                                                >
-                                                    <div className="flex items-center space-x-2">
-                                                        {selectedRequest.status === 'APPROVED' ? (
-                                                            <CheckCircle className="h-4 w-4 text-green-500" />
-                                                        ) : (
-                                                            <XCircle className="h-4 w-4 text-red-500" />
-                                                        )}
-                                                        <h4 className="font-semibold text-slate-900 dark:text-slate-100">
-                                                            {selectedRequest.status === 'APPROVED' ? 'Approved' : 'Rejected'} By
-                                                        </h4>
-                                                    </div>
-                                                    <div className="pl-6">
-                                                        <p className="text-slate-700 dark:text-slate-300">
-                                                            {format(new Date(selectedRequest.approvedAt), 'PPP')} at{' '}
-                                                            {format(new Date(selectedRequest.approvedAt), 'p')}
-                                                        </p>
-                                                    </div>
-                                                </motion.div>
-                                            )}
+                                                    {/* Rejection Reason (if rejected) */}
+                                                    {selectedRequest.status === 'REJECTED' && selectedRequest.rejectedReason && (
+                                                        <motion.div
+                                                            initial={{ opacity: 0, y: 20 }}
+                                                            animate={{ opacity: 1, y: 0 }}
+                                                            transition={{ delay: 0.4 }}
+                                                            className="space-y-2"
+                                                        >
+                                                            <Separator />
+                                                            <div className="flex items-center space-x-2">
+                                                                <XCircle className="h-4 w-4 text-red-500" />
+                                                                <h4 className="font-semibold text-red-900 dark:text-red-100">Rejection Reason</h4>
+                                                            </div>
+                                                            <div className="pl-6">
+                                                                <div className="bg-red-50 dark:bg-red-950 rounded-lg p-4 border border-red-200 dark:border-red-800">
+                                                                    <p className="text-red-700 dark:text-red-300">
+                                                                        {selectedRequest.rejectedReason}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </motion.div>
+                                                    )}
+
+                                                    {/* Action Buttons for Pending Requests */}
+                                                    {selectedRequest.status === 'PENDING' && (
+                                                        <motion.div
+                                                            initial={{ opacity: 0, y: 20 }}
+                                                            animate={{ opacity: 1, y: 0 }}
+                                                            transition={{ delay: 0.5 }}
+                                                            className="space-y-4 pt-4 border-t"
+                                                        >
+                                                            <div className="space-y-2">
+                                                                <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                                                    Rejection Reason (Optional for approval, Required for rejection)
+                                                                </label>
+                                                                <Textarea
+                                                                    placeholder="Enter reason for rejection (if rejecting) or additional comments..."
+                                                                    value={rejectionReason}
+                                                                    onChange={(e) => setRejectionReason(e.target.value)}
+                                                                    className="min-h-[80px]"
+                                                                />
+                                                            </div>
+                                                            <div className="flex space-x-3">
+                                                                <AlertDialog>
+                                                                    <AlertDialogTrigger asChild>
+                                                                        <Button
+                                                                            className="flex-1 bg-green-500 hover:bg-green-600 text-white"
+                                                                            disabled={actionLoading}
+                                                                        >
+                                                                            <CheckCircle className="h-4 w-4 mr-2" />
+                                                                            Approve Request
+                                                                        </Button>
+                                                                    </AlertDialogTrigger>
+                                                                    <AlertDialogContent>
+                                                                        <AlertDialogHeader>
+                                                                            <AlertDialogTitle>Approve Leave Request</AlertDialogTitle>
+                                                                            <AlertDialogDescription>
+                                                                                Are you sure you want to approve this leave request for{' '}
+                                                                                <strong>{selectedRequest.user?.firstName} {selectedRequest.user?.lastName}</strong>?
+                                                                                This action cannot be undone.
+                                                                            </AlertDialogDescription>
+                                                                        </AlertDialogHeader>
+                                                                        <AlertDialogFooter>
+                                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                            <AlertDialogAction
+                                                                                onClick={() => handleApprove(selectedRequest.id)}
+                                                                                className="bg-green-500 hover:bg-green-600"
+                                                                                disabled={actionLoading}
+                                                                            >
+                                                                                {actionLoading ? (
+                                                                                    <>
+                                                                                        <Spinner size="sm" className="mr-2" />
+                                                                                        Approving...
+                                                                                    </>
+                                                                                ) : (
+                                                                                    'Approve'
+                                                                                )}
+                                                                            </AlertDialogAction>
+                                                                        </AlertDialogFooter>
+                                                                    </AlertDialogContent>
+                                                                </AlertDialog>
+
+                                                                <AlertDialog>
+                                                                    <AlertDialogTrigger asChild>
+                                                                        <Button
+                                                                            variant="destructive"
+                                                                            className="flex-1"
+                                                                            disabled={actionLoading}
+                                                                        >
+                                                                            <XCircle className="h-4 w-4 mr-2" />
+                                                                            Reject Request
+                                                                        </Button>
+                                                                    </AlertDialogTrigger>
+                                                                    <AlertDialogContent>
+                                                                        <AlertDialogHeader>
+                                                                            <AlertDialogTitle>Reject Leave Request</AlertDialogTitle>
+                                                                            <AlertDialogDescription>
+                                                                                Are you sure you want to reject this leave request for{' '}
+                                                                                <strong>{selectedRequest.user?.firstName} {selectedRequest.user?.lastName}</strong>?
+                                                                                {!rejectionReason?.trim() && (
+                                                                                    <span className="block mt-2 text-red-600 font-medium">
+                                                                                        Please provide a rejection reason before proceeding.
+                                                                                    </span>
+                                                                                )}
+                                                                            </AlertDialogDescription>
+                                                                        </AlertDialogHeader>
+                                                                        <AlertDialogFooter>
+                                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                            <AlertDialogAction
+                                                                                onClick={() => handleReject(selectedRequest.id)}
+                                                                                className="bg-red-500 hover:bg-red-600"
+                                                                                disabled={actionLoading || !rejectionReason?.trim()}
+                                                                            >
+                                                                                {actionLoading ? (
+                                                                                    <>
+                                                                                        <Spinner size="sm" className="mr-2" />
+                                                                                        Rejecting...
+                                                                                    </>
+                                                                                ) : (
+                                                                                    'Reject'
+                                                                                )}
+                                                                            </AlertDialogAction>
+                                                                        </AlertDialogFooter>
+                                                                    </AlertDialogContent>
+                                                                </AlertDialog>
+                                                            </div>
+                                                        </motion.div>
+                                                    )}
+
+                                                    {/* Approval Information (for processed requests) */}
+                                                    {selectedRequest.status !== 'PENDING' && selectedRequest.approvedAt && (
+                                                        <motion.div
+                                                            initial={{ opacity: 0, y: 20 }}
+                                                            animate={{ opacity: 1, y: 0 }}
+                                                            transition={{ delay: 0.4 }}
+                                                            className="space-y-2 pt-4 border-t"
+                                                        >
+                                                            <div className="flex items-center space-x-2">
+                                                                {selectedRequest.status === 'APPROVED' ? (
+                                                                    <CheckCircle className="h-4 w-4 text-green-500" />
+                                                                ) : (
+                                                                    <XCircle className="h-4 w-4 text-red-500" />
+                                                                )}
+                                                                <h4 className="font-semibold text-slate-900 dark:text-slate-100">
+                                                                    {selectedRequest.status === 'APPROVED' ? 'Approved' : 'Rejected'} By
+                                                                </h4>
+                                                            </div>
+                                                            <div className="pl-6">
+                                                                <p className="text-slate-700 dark:text-slate-300">
+                                                                    {format(new Date(selectedRequest.approvedAt), 'PPP')} at{' '}
+                                                                    {format(new Date(selectedRequest.approvedAt), 'p')}
+                                                                </p>
+                                                            </div>
+                                                        </motion.div>
+                                                    )}
+                                                    
+                                                    {/* Add some bottom padding to ensure last content is visible */}
+                                                    <div className="h-4"></div>
+                                                </div>
+                                            </ScrollArea>
                                         </CardContent>
                                     </Card>
                                 </motion.div>

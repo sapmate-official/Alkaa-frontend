@@ -5,13 +5,15 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/services/AuthContext"
 import { useState } from "react"
-import { Eye, EyeOff } from "lucide-react" // Import eye icons
+import { Eye, EyeOff, ArrowLeft } from "lucide-react" // Import ArrowLeft icon
+import { useNavigate } from "react-router-dom" // Import useNavigate
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
   const { signIn, } = useAuth();
+  const navigate = useNavigate(); // Add navigate hook
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoadingg, setIsLoadingg] = useState(false);
@@ -41,6 +43,18 @@ export function LoginForm({
         <CardContent className="grid p-0 md:grid-cols-2">
           <form className="p-6 md:p-8" onSubmit={handleSubmit}>
             <div className="flex flex-col gap-6">
+              <div className="flex items-center justify-between">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigate("/")}
+                  className="h-8 w-8"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  <span className="sr-only">Go back to home</span>
+                </Button>
+              </div>
               <div className="flex flex-col items-center text-center">
                 <img src="/logo.svg" alt="Alkaa Logo" className="h-full w-full object-contain" />
               </div>
