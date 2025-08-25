@@ -1389,22 +1389,41 @@ const AlkaaLandingPage: React.FC = () => {
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                 Choose the plan that scales with your organization. All plans include the complete HR suite.
               </p>
+              
+              {/* Highlight the key pricing */}
+              <div className="bg-gradient-to-r from-primary/20 to-secondary/20 rounded-2xl p-8 mt-8 mb-8 border-2 border-primary/30">
+                <div className="text-center">
+                  <div className="inline-flex items-center gap-2 bg-primary/20 px-4 py-2 rounded-full mb-4">
+                    <Star className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-semibold text-primary">Special Offer</span>
+                  </div>
+                  <h3 className="text-3xl md:text-4xl font-bold mb-2">
+                    <span className="text-primary">₹1 per day</span> per employee
+                  </h3>
+                  <p className="text-lg text-muted-foreground mb-4">
+                    For complete HR management solution • Annual subscription
+                  </p>
+                  <div className="text-sm text-muted-foreground">
+                    <span className="font-medium">One-time implementation charge: ₹4,999</span>
+                  </div>
+                </div>
+              </div>
             </div>
             
             <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-12">
               <PricingTier
-                title="Starter"
-                price="₹499"
+                title="Small Team"
+                price="₹7,300"
                 description="Perfect for small teams"
-                billingInfo="Up to 20 employees • ₹5,988 annually"
+                billingInfo="20 employees • ₹1/day/employee • Annual billing"
                 buttonText="Start Free Trial"
                 onButtonClick={() => navigate(RouteDict.SignUpPage)}
               />
               <PricingTier
-                title="Growth"
-                price="₹899"
+                title="Growing Business"
+                price="₹18,250"
                 description="Ideal for growing companies"
-                billingInfo="Up to 100 employees • ₹10,788 annually"
+                billingInfo="50 employees • ₹1/day/employee • Annual billing"
                 buttonText="Start Free Trial"
                 highlighted={true}
                 popularTag={true}
@@ -1414,7 +1433,7 @@ const AlkaaLandingPage: React.FC = () => {
                 title="Enterprise"
                 price="Custom"
                 description="For large organizations"
-                billingInfo="Unlimited employees • Custom pricing"
+                billingInfo="50+ employees • Custom pricing • Dedicated support"
                 buttonText="Contact Sales"
                 onButtonClick={() => setDemoDialogOpen(true)}
               />
@@ -1491,9 +1510,17 @@ const AlkaaLandingPage: React.FC = () => {
             </div>
             
             <div className="text-center mt-12 max-w-2xl mx-auto">
+              <div className="bg-card/80 rounded-xl p-6 border border-border mb-6">
+                <h4 className="font-semibold mb-3">Implementation & Setup</h4>
+                <div className="text-2xl font-bold text-primary mb-2">₹4,999</div>
+                <p className="text-sm text-muted-foreground">
+                  One-time setup fee includes data migration, system configuration, and training
+                </p>
+              </div>
+              
               <p className="text-muted-foreground mb-4">
                 Start with a <span className="font-medium text-foreground">14-day free trial</span> - 
-                no credit card required. Upgrade, downgrade, or cancel anytime.
+                no credit card required. Implementation begins after trial approval.
               </p>
               <p className="text-sm text-muted-foreground">
                 Need custom features or integrations? 
