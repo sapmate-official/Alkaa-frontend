@@ -15,6 +15,8 @@ import { useAuth } from '@/services/AuthContext';
 import { APIDictionary } from '@/api/v2/APIdict';
 import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
+import { useAtom } from 'jotai';
+import { permissionListAtom } from '@/store/atom';
 import CreateTaskDialog from './components/CreateTaskDialog';
 import TaskChatView from './components/TaskChatView';
 
@@ -34,6 +36,10 @@ interface Task {
   priority: string;
   dueDate: string;
   createdAt: string;
+  createdBy: {
+    firstName: string;
+    lastName: string;
+  };
   assignments: Array<{
     assignedTo: User;
   }>;
@@ -52,6 +58,7 @@ interface Task {
 const UserView = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [permissionList] = useAtom(permissionListAtom);
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -61,6 +68,9 @@ const UserView = () => {
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [showTaskChat, setShowTaskChat] = useState(false);
+
+  // Check if user has permission to create tasks
+  const canCreateTasks = permissionList.some(p => p.key === 'task_create');
 
   useEffect(() => {
     fetchUsers();
@@ -77,10 +87,12 @@ const UserView = () => {
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`${APIDictionary.user}/org/${user?.organization?.id}`, { 
+      console.log('Fetching users for orgId:', user?.orgId);
+      const response = await axios.get(`${APIDictionary.user}/org/${user?.orgId}`, { 
         withCredentials: true 
       });
-      const usersData = response.data.data || [];
+      console.log('Users response:', response.data);
+      const usersData = response.data.data || response.data || [];
       setUsers(usersData);
       setFilteredUsers(usersData);
     } catch (error) {
@@ -158,7 +170,7 @@ const UserView = () => {
   };
 
   return (
-    <div className="h-full flex">
+    <div className="h-full flex w-full">
       {/* Users List */}
       <div className="w-1/3 border-r border-border">
         <div className="p-4 border-b">
@@ -250,10 +262,12 @@ const UserView = () => {
                     <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
                   </div>
                 </div>
-                <Button onClick={() => setShowCreateTask(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Assign Task
-                </Button>
+                {canCreateTasks && (
+                  <Button onClick={() => setShowCreateTask(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Assign Task
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -265,10 +279,12 @@ const UserView = () => {
                   <p className="text-muted-foreground mb-4">
                     This user doesn't have any tasks assigned yet.
                   </p>
-                  <Button onClick={() => setShowCreateTask(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Assign First Task
-                  </Button>
+                  {canCreateTasks && (
+                    <Button onClick={() => setShowCreateTask(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Assign First Task
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-4">

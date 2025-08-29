@@ -46,10 +46,12 @@ const CreateGroupDialog = ({ open, onOpenChange, onGroupCreated }: CreateGroupDi
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get(`${APIDictionary.user}/org/${user?.organization?.id}`, { 
+      console.log('Fetching users for orgId:', user?.orgId);
+      const response = await axios.get(`${APIDictionary.user}/org/${user?.orgId}`, { 
         withCredentials: true 
       });
-      setUsers(response.data.data || []);
+      console.log('Users response:', response.data);
+      setUsers(response.data.data || response.data || []);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
