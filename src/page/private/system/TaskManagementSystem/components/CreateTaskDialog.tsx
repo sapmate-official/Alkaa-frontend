@@ -61,12 +61,14 @@ const CreateTaskDialog = ({ open, onOpenChange, onTaskCreated }: CreateTaskDialo
 
   const fetchUsersAndGroups = async () => {
     try {
+      console.log('Fetching users for orgId:', user?.orgId);
       const [usersResponse, groupsResponse] = await Promise.all([
-        axios.get(`${APIDictionary.user}/org/${user?.organization?.id}`, { withCredentials: true }),
+        axios.get(`${APIDictionary.user}/org/${user?.orgId}`, { withCredentials: true }),
         axios.get(APIDictionary.taskGroup, { withCredentials: true })
       ]);
       
-      setUsers(usersResponse.data.data || []);
+      console.log('Users response:', usersResponse.data);
+      setUsers(usersResponse.data.data || usersResponse.data || []);
       setTaskGroups(groupsResponse.data.data || []);
     } catch (error) {
       console.error('Error fetching users and groups:', error);

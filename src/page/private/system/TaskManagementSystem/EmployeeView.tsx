@@ -119,8 +119,7 @@ const EmployeeView = () => {
 
     try {
       setIsSubmittingUpdate(true);
-      await axios.post(APIDictionary.taskUpdate, {
-        taskId: selectedTask.id,
+      await axios.post(APIDictionary.taskUpdate(selectedTask.id), {
         message: newUpdate.trim()
       }, { withCredentials: true });
 

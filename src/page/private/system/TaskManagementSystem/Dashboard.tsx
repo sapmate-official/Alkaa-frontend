@@ -2,14 +2,11 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 import { 
   ClipboardList, 
   Plus, 
   Users, 
-  CheckCircle, 
-  Clock, 
-  AlertCircle,
   BarChart3
 } from 'lucide-react';
 import { useAuth } from '@/services/AuthContext';
@@ -18,6 +15,8 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import RouteDict from '@/routes/RouteDict';
 import { useToast } from '@/hooks/use-toast';
+import { useAtom } from 'jotai';
+import { permissionListAtom } from '@/store/atom';
 import CreateTaskDialog from './components/CreateTaskDialog';
 import CreateGroupDialog from './components/CreateGroupDialog';
 import TaskStatsCards from './components/TaskStatsCards';
@@ -30,10 +29,27 @@ interface TaskStats {
   overdue: number;
 }
 
+interface Task {
+  id: string;
+  title: string;
+  description: string;
+  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  priority: string;
+  dueDate: string;
+  createdAt: string;
+  assignments?: Array<{
+    assignedTo: {
+      firstName: string;
+      lastName: string;
+    };
+  }>;
+}
+
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [permissionList] = useAtom(permissionListAtom);
   const [isLoading, setIsLoading] = useState(true);
   const [taskStats, setTaskStats] = useState<TaskStats>({
     total: 0,
@@ -42,10 +58,13 @@ const Dashboard = () => {
     completed: 0,
     overdue: 0
   });
-  const [recentTasks, setRecentTasks] = useState([]);
-  const [taskGroups, setTaskGroups] = useState([]);
+  const [recentTasks, setRecentTasks] = useState<Task[]>([]);
+  const [taskGroups, setTaskGroups] = useState<any[]>([]);
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
+
+  // Check if user has permission to create tasks
+  const canCreateTasks = permissionList.some(p => p.key === 'task_create');
 
   const fetchDashboardData = async () => {
     try {
@@ -56,15 +75,15 @@ const Dashboard = () => {
         axios.get(APIDictionary.taskGroup, { withCredentials: true })
       ]);
 
-      const tasks = tasksResponse.data.data || [];
+      const tasks: Task[] = tasksResponse.data.data || [];
       const groups = groupsResponse.data.data || [];
       
       const stats = {
         total: tasks.length,
-        pending: tasks.filter(t => t.status === 'PENDING').length,
-        inProgress: tasks.filter(t => t.status === 'IN_PROGRESS').length,
-        completed: tasks.filter(t => t.status === 'COMPLETED').length,
-        overdue: tasks.filter(t => new Date(t.dueDate) < new Date() && t.status !== 'COMPLETED').length,
+        pending: tasks.filter((t: Task) => t.status === 'PENDING').length,
+        inProgress: tasks.filter((t: Task) => t.status === 'IN_PROGRESS').length,
+        completed: tasks.filter((t: Task) => t.status === 'COMPLETED').length,
+        overdue: tasks.filter((t: Task) => new Date(t.dueDate) < new Date() && t.status !== 'COMPLETED').length,
       };
 
       setTaskStats(stats);
@@ -130,7 +149,7 @@ const Dashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="space-y-6 p-6">
+      <div className="space-y-6 p-6 w-full">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Task Management Dashboard</h1>
         </div>
@@ -149,7 +168,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-6 w-full">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Task Management Dashboard</h1>
@@ -160,10 +179,12 @@ const Dashboard = () => {
             <Users className="h-4 w-4 mr-2" />
             Create Group
           </Button>
-          <Button onClick={() => setShowCreateTask(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Create Task
-          </Button>
+          {canCreateTasks && (
+            <Button onClick={() => setShowCreateTask(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Task
+            </Button>
+          )}
         </div>
       </div>
 
@@ -183,17 +204,19 @@ const Dashboard = () => {
                 <div className="text-center py-8">
                   <ClipboardList className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">No tasks created yet</p>
-                  <Button 
-                    onClick={() => setShowCreateTask(true)} 
-                    className="mt-4"
-                    variant="outline"
-                  >
-                    Create your first task
-                  </Button>
+                  {canCreateTasks && (
+                    <Button 
+                      onClick={() => setShowCreateTask(true)} 
+                      className="mt-4"
+                      variant="outline"
+                    >
+                      Create your first task
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {recentTasks.map((task: any) => (
+                  {recentTasks.map((task: Task) => (
                     <div key={task.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="space-y-1">
                         <h4 className="font-medium">{task.title}</h4>

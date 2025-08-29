@@ -16,6 +16,8 @@ import { useAuth } from '@/services/AuthContext';
 import { APIDictionary } from '@/api/v2/APIdict';
 import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
+import { useAtom } from 'jotai';
+import { permissionListAtom } from '@/store/atom';
 import CreateTaskDialog from './components/CreateTaskDialog';
 import TaskChatView from './components/TaskChatView';
 
@@ -57,6 +59,7 @@ interface Task {
 const TaskView = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [permissionList] = useAtom(permissionListAtom);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -66,6 +69,9 @@ const TaskView = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [showTaskChat, setShowTaskChat] = useState(false);
+
+  // Check if user has permission to create tasks
+  const canCreateTasks = permissionList.some(p => p.key === 'task_create');
 
   useEffect(() => {
     fetchTasks();
@@ -154,16 +160,18 @@ const TaskView = () => {
   };
 
   return (
-    <div className="h-full flex">
+    <div className="h-full flex w-full">
       {/* Tasks List */}
       <div className="w-1/3 border-r border-border">
         <div className="p-4 border-b">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">Tasks</h2>
-            <Button onClick={() => setShowCreateTask(true)} size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              New Task
-            </Button>
+            {canCreateTasks && (
+              <Button onClick={() => setShowCreateTask(true)} size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                New Task
+              </Button>
+            )}
           </div>
           
           <div className="space-y-3">

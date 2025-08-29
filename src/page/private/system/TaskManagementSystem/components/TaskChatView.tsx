@@ -72,8 +72,7 @@ const TaskChatView = ({ open, onOpenChange, task }: TaskChatViewProps) => {
     try {
       setIsSubmitting(true);
       
-      const response = await axios.post(APIDictionary.taskUpdate, {
-        taskId: task.id,
+      const response = await axios.post(APIDictionary.taskUpdate(task.id), {
         message: newMessage.trim()
       }, { withCredentials: true });
 
