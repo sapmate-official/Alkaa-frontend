@@ -49,7 +49,7 @@ interface Task {
     message: string;
     status: string;
     createdAt: string;
-    createdBy: {
+    updatedBy: {
       firstName: string;
       lastName: string;
     };
@@ -421,7 +421,7 @@ const TaskView = () => {
                           <div key={update.id} className="border-l-2 border-muted pl-4">
                             <div className="flex items-center justify-between mb-1">
                               <p className="text-sm font-medium">
-                                {update.createdBy.firstName} {update.createdBy.lastName}
+                                {update.updatedBy.firstName} {update.updatedBy.lastName}
                               </p>
                               <span className="text-xs text-muted-foreground">
                                 {new Date(update.createdAt).toLocaleDateString()}

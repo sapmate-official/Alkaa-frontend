@@ -21,6 +21,8 @@ interface CreateTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onTaskCreated: () => void;
+  preselectedUser?: User | null;
+  preselectedGroup?: TaskGroup | null;
 }
 
 interface User {
@@ -33,11 +35,17 @@ interface User {
 interface TaskGroup {
   id: string;
   name: string;
-  description: string;
-  members: Array<{ user: User }>;
+  description?: string;
 }
 
-const CreateTaskDialog = ({ open, onOpenChange, onTaskCreated }: CreateTaskDialogProps) => {
+interface TaskGroup {
+  id: string;
+  name: string;
+  description?: string;
+  members?: Array<{ user: User }>;
+}
+
+const CreateTaskDialog = ({ open, onOpenChange, onTaskCreated, preselectedUser, preselectedGroup }: CreateTaskDialogProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -58,6 +66,22 @@ const CreateTaskDialog = ({ open, onOpenChange, onTaskCreated }: CreateTaskDialo
       fetchUsersAndGroups();
     }
   }, [open]);
+
+  // Handle preselected user or group
+  useEffect(() => {
+    if (open) {
+      if (preselectedUser) {
+        setSelectedUsers([preselectedUser.id]);
+        setSelectedGroups([]);
+      } else if (preselectedGroup) {
+        setSelectedGroups([preselectedGroup.id]);
+        setSelectedUsers([]);
+      } else {
+        setSelectedUsers([]);
+        setSelectedGroups([]);
+      }
+    }
+  }, [open, preselectedUser, preselectedGroup]);
 
   const fetchUsersAndGroups = async () => {
     try {

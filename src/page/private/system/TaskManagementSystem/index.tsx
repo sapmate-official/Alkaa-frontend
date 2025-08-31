@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAtom } from 'jotai';
 import RouteDict from '@/routes/RouteDict';
 import { permissionListAtom } from '@/store/atom';
-import PermissionRoute from '@/components/RouteSecurityWrapper/PermissionRoute';
+import PermissionRouteBasedOnKey from '@/components/RouteSecurityWrapper/PermissionBasedOnKey';
 
 const Dashboard = lazy(() => import('./Dashboard'));
 const UserView = lazy(() => import('./UserView'));
@@ -17,17 +17,18 @@ const TaskModule = () => {
   const hasTaskCreate = permissionList.some(p => p.key === 'task_create');
   const hasTaskViewAll = permissionList.some(p => p.key === 'task_view_all');
   const hasTaskManageAll = permissionList.some(p => p.key === 'task_manage_all');
+  console.log('first', hasTaskCreate, hasTaskViewAll, hasTaskManageAll);
 
   // Users with only view permissions should be redirected to employee view
   const hasOnlyViewPermission = hasTaskViewAll && !hasTaskCreate && !hasTaskManageAll;
 
   return (
     <Routes>
-      <Route 
+      <Route  
         path="/" 
         element={
           hasOnlyViewPermission ? 
-            <Navigate to="/employee" replace /> : 
+            <Navigate to="/p/task/employee" replace /> : 
             <Navigate to={RouteDict.Task.Dashboard} replace />
         } 
       />
@@ -36,12 +37,12 @@ const TaskModule = () => {
       <Route 
         path="/dashboard" 
         element={
-          <PermissionRoute 
+          <PermissionRouteBasedOnKey
             requiredPermissions={['task_create', 'task_manage_all']} 
             requireAll={false}
           >
             <Dashboard />
-          </PermissionRoute>
+          </PermissionRouteBasedOnKey>
         } 
       />
       
@@ -49,12 +50,12 @@ const TaskModule = () => {
       <Route 
         path="/user-view" 
         element={
-          <PermissionRoute 
+          <PermissionRouteBasedOnKey
             requiredPermissions={['task_create', 'task_manage_all']} 
             requireAll={false}
           >
             <UserView />
-          </PermissionRoute>
+          </PermissionRouteBasedOnKey>
         } 
       />
       
@@ -62,12 +63,12 @@ const TaskModule = () => {
       <Route 
         path="/task-view" 
         element={
-          <PermissionRoute 
+          <PermissionRouteBasedOnKey
             requiredPermissions={['task_create', 'task_manage_all']} 
             requireAll={false}
           >
             <TaskView />
-          </PermissionRoute>
+          </PermissionRouteBasedOnKey>
         } 
       />
       
@@ -75,12 +76,12 @@ const TaskModule = () => {
       <Route 
         path="/employee" 
         element={
-          <PermissionRoute 
+          <PermissionRouteBasedOnKey
             requiredPermissions={['task_create', 'task_view_all', 'task_manage_all']} 
             requireAll={false}
           >
             <EmployeeView />
-          </PermissionRoute>
+          </PermissionRouteBasedOnKey>
         } 
       />
     </Routes>
