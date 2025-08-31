@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { X } from 'lucide-react';
 import { useAuth } from '@/services/AuthContext';
 import { APIDictionary } from '@/api/v2/APIdict';
@@ -74,28 +75,38 @@ const CreateGroupDialog = ({ open, onOpenChange, onGroupCreated }: CreateGroupDi
       return;
     }
 
-    if (selectedUsers.length === 0) {
-      toast({
-        title: "Validation Error",
-        description: "Please select at least one member",
-        variant: "destructive"
-      });
-      return;
-    }
-
     try {
       setLoading(true);
       
       const groupData = {
         name: formData.name,
         description: formData.description,
-        memberIds: selectedUsers
       };
 
-      await axios.post(APIDictionary.taskGroup, groupData, { withCredentials: true });
+      // Create the group first
+      const groupResponse = await axios.post(APIDictionary.taskGroup, groupData, { withCredentials: true });
+      
+      // If members are selected, add them to the group
+      if (selectedUsers.length > 0) {
+        try {
+          await axios.post(
+            `${APIDictionary.taskGroup}/${groupResponse.data.data.id}/members`,
+            { userIds: selectedUsers },
+            { withCredentials: true }
+          );
+        } catch (memberError) {
+          console.warn('Failed to add members to group:', memberError);
+          // Don't fail the entire operation if member addition fails
+        }
+      }
       
       onGroupCreated();
       resetForm();
+      
+      toast({
+        title: "Success",
+        description: `Group "${formData.name}" created successfully${selectedUsers.length > 0 ? ` with ${selectedUsers.length} member(s)` : ''}`,
+      });
       
     } catch (error) {
       console.error('Error creating group:', error);
@@ -157,7 +168,10 @@ const CreateGroupDialog = ({ open, onOpenChange, onGroupCreated }: CreateGroupDi
           </div>
 
           <div className="space-y-4">
-            <Label>Select Members *</Label>
+            <Label>Select Members (Optional)</Label>
+            <p className="text-sm text-muted-foreground">
+              You can add members now or later. Members can be added and removed at any time.
+            </p>
             
             {selectedUsers.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-3">
@@ -187,7 +201,12 @@ const CreateGroupDialog = ({ open, onOpenChange, onGroupCreated }: CreateGroupDi
                       checked={selectedUsers.includes(user.id)}
                       onCheckedChange={() => toggleUserSelection(user.id)}
                     />
-                    <Label htmlFor={`user-${user.id}`} className="text-sm cursor-pointer">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-blue-100 text-blue-600">
+                        {user.firstName[0]}{user.lastName[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <Label htmlFor={`user-${user.id}`} className="text-sm cursor-pointer flex-1">
                       {user.firstName} {user.lastName} ({user.email})
                     </Label>
                   </div>

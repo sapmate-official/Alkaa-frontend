@@ -23,7 +23,7 @@ interface TaskUpdate {
   message: string;
   status: string;
   createdAt: string;
-  createdBy: {
+  updatedBy: {
     firstName: string;
     lastName: string;
   };
@@ -51,9 +51,10 @@ interface TaskChatViewProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   task: Task | null;
+  onTaskUpdated?: (updatedTask: Task) => void;
 }
 
-const TaskChatView = ({ open, onOpenChange, task }: TaskChatViewProps) => {
+const TaskChatView = ({ open, onOpenChange, task, onTaskUpdated }: TaskChatViewProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [newMessage, setNewMessage] = useState('');
@@ -69,33 +70,36 @@ const TaskChatView = ({ open, onOpenChange, task }: TaskChatViewProps) => {
   const submitMessage = async () => {
     if (!task || !newMessage.trim()) return;
 
+    const messageText = newMessage.trim();
+
     try {
       setIsSubmitting(true);
       
+      // Clear input immediately for better UX
+      setNewMessage('');
+      
       const response = await axios.post(APIDictionary.taskUpdate(task.id), {
-        message: newMessage.trim()
+        message: messageText
       }, { withCredentials: true });
 
-      const newUpdate = {
-        id: response.data.id || Date.now().toString(),
-        message: newMessage.trim(),
-        status: task.status,
-        createdAt: new Date().toISOString(),
-        createdBy: {
-          firstName: user?.firstName || '',
-          lastName: user?.lastName || ''
-        }
-      };
+      // Handle successful response
+      if (response.data.success && response.data.data) {
+        const serverUpdate = response.data.data;
+        
+        // Add the new update to the local state
+        setUpdates(prev => [serverUpdate, ...prev]);
 
-      setUpdates(prev => [newUpdate, ...prev]);
-      setNewMessage('');
-
-      toast({
-        title: "Success",
-        description: "Message sent successfully"
-      });
+        toast({
+          title: "Success",
+          description: "Message sent successfully"
+        });
+      }
     } catch (error) {
       console.error('Error sending message:', error);
+      
+      // Restore the message on error
+      setNewMessage(messageText);
+      
       toast({
         title: "Error",
         description: "Failed to send message",
@@ -165,14 +169,14 @@ const TaskChatView = ({ open, onOpenChange, task }: TaskChatViewProps) => {
               <div key={update.id} className="flex space-x-3">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback>
-                    {update.createdBy.firstName[0]}{update.createdBy.lastName[0]}
+                    {update.updatedBy.firstName[0]}{update.updatedBy.lastName[0]}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
                   <div className="bg-muted rounded-lg p-3">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-sm font-medium">
-                        {update.createdBy.firstName} {update.createdBy.lastName}
+                        {update.updatedBy.firstName} {update.updatedBy.lastName}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         {new Date(update.createdAt).toLocaleString()}

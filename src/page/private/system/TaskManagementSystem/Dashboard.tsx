@@ -7,7 +7,8 @@ import {
   ClipboardList, 
   Plus, 
   Users, 
-  BarChart3
+  BarChart3,
+  ChevronRight
 } from 'lucide-react';
 import { useAuth } from '@/services/AuthContext';
 import { APIDictionary } from '@/api/v2/APIdict';
@@ -19,6 +20,7 @@ import { useAtom } from 'jotai';
 import { permissionListAtom } from '@/store/atom';
 import CreateTaskDialog from './components/CreateTaskDialog';
 import CreateGroupDialog from './components/CreateGroupDialog';
+import GroupDetailsDialog from './components/GroupDetailsDialog';
 import TaskStatsCards from './components/TaskStatsCards';
 
 interface TaskStats {
@@ -62,6 +64,8 @@ const Dashboard = () => {
   const [taskGroups, setTaskGroups] = useState<any[]>([]);
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
+  const [showGroupDetails, setShowGroupDetails] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<any>(null);
 
   // Check if user has permission to create tasks
   const canCreateTasks = permissionList.some(p => p.key === 'task_create');
@@ -123,6 +127,29 @@ const Dashboard = () => {
       title: "Success",
       description: "Task group created successfully"
     });
+  };
+
+  const handleGroupUpdated = () => {
+    fetchDashboardData();
+    toast({
+      title: "Success",
+      description: "Group updated successfully"
+    });
+  };
+
+  const handleGroupDeleted = () => {
+    fetchDashboardData();
+    setShowGroupDetails(false);
+    setSelectedGroup(null);
+    toast({
+      title: "Success",
+      description: "Group deleted successfully"
+    });
+  };
+
+  const openGroupDetails = (group: any) => {
+    setSelectedGroup(group);
+    setShowGroupDetails(true);
   };
 
   const getStatusBadge = (status: string) => {
@@ -266,13 +293,47 @@ const Dashboard = () => {
               ) : (
                 <div className="space-y-3">
                   {taskGroups.map((group: any) => (
-                    <div key={group.id} className="p-3 border rounded-lg">
-                      <h4 className="font-medium">{group.name}</h4>
-                      <p className="text-sm text-muted-foreground">{group.description}</p>
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="text-xs text-muted-foreground">
-                          {group._count?.members || 0} members
-                        </span>
+                    <div 
+                      key={group.id} 
+                      className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-all duration-200 hover:shadow-md border-l-4 border-l-purple-500"
+                      onClick={() => openGroupDetails(group)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                              <Users className="h-4 w-4 text-purple-600" />
+                            </div>
+                            <h4 className="font-semibold text-base">{group.name}</h4>
+                            {group.createdBy && (
+                              <Badge variant="outline" className="text-xs">
+                                Owner: {group.createdBy.firstName} {group.createdBy.lastName}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                            {group.description || 'No description'}
+                          </p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge variant="outline" className="text-xs">
+                              {group.tasks?.length || 0} tasks
+                            </Badge>
+                            <Badge variant="secondary" className="text-xs">
+                              {group.tasks?.filter((t: any) => t.status === 'COMPLETED').length || 0} completed
+                            </Badge>
+                            {group.memberCount !== undefined && (
+                              <Badge variant="default" className="text-xs bg-blue-100 text-blue-800">
+                                {group.memberCount} members
+                              </Badge>
+                            )}
+                            <Badge variant="default" className="text-xs bg-green-100 text-green-800">
+                              {group.tasks?.filter((t: any) => t.status === 'IN_PROGRESS').length || 0} active
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="ml-3 flex items-center">
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -358,6 +419,14 @@ const Dashboard = () => {
         open={showCreateGroup} 
         onOpenChange={setShowCreateGroup}
         onGroupCreated={handleGroupCreated}
+      />
+
+      <GroupDetailsDialog
+        open={showGroupDetails}
+        onOpenChange={setShowGroupDetails}
+        group={selectedGroup}
+        onGroupUpdated={handleGroupUpdated}
+        onGroupDeleted={handleGroupDeleted}
       />
     </div>
   );

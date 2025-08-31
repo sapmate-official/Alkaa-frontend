@@ -219,7 +219,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           href: RouteDict.Billing.Base,
           icon: <FaReceipt className="h-5 w-5" />
         });
-      } else if (permission?.key === "create_task" || permission?.key === "view_all_tasks" || permission?.key === "manage_all_tasks") {
+      } else if (permission?.key === "task_create" || permission?.key === "task_view_all" || permission?.key === "task_manage_all") {
         if (baseLinks.some(link => link.label === "Tasks")) continue;
         baseLinks.push({
           label: "Tasks",
