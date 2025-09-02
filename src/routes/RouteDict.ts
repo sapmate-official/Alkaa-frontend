@@ -195,6 +195,19 @@ const RouteDict = {
         Stats: "/p/activity-log/stats",
         UserActivities: "/p/activity-log/user/:userId",
     },
+    Task: {
+        Base: "/p/task",
+        Dashboard: "/p/task/dashboard",
+        UserView: "/p/task/user-view",
+        TaskView: "/p/task/task-view",
+        EmployeeView: "/p/task/my-tasks",
+        Create: "/p/task/create",
+        Details: (id: string) => `/p/task/details/${id}`,
+        Edit: (id: string) => `/p/task/edit/${id}`,
+        Groups: "/p/task/groups",
+        GroupCreate: "/p/task/groups/create",
+        GroupDetails: (id: string) => `/p/task/groups/${id}`,
+    },
 
 
 
@@ -274,6 +287,7 @@ const RouteDict = {
         Role: "/p/role",
         Permission: "/p/permission",
         Holiday: "/p/holiday",
+        Task: "/p/task",
         Billing: "/p/billing",
         Notification: "/p/notification",
         ActivityLog: "/p/activity-log",
@@ -322,6 +336,7 @@ export const ProtectedRoutes = {
     Payroll: RouteDict.Payroll,
     Department: RouteDict.Department,
     Organization: RouteDict.Organization,
+    Task: RouteDict.Task,
     Billing: RouteDict.Billing,
     System: RouteDict.System,
     Logout: RouteDict.Logout,

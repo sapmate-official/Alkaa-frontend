@@ -8,7 +8,7 @@ import { IoLogOutOutline } from 'react-icons/io5';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../services/AuthContext';
 import { Sidebar, SidebarBody, SidebarLink } from '@/components/ui/sidebar';
-import { Leaf, User2Icon, ShieldCheck, UserCog, Activity, UserPlus } from 'lucide-react';
+import { Leaf, User2Icon, ShieldCheck, UserCog, Activity, UserPlus, ClipboardList } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { APIDictionary } from '@/api/v2/APIdict';
@@ -32,11 +32,12 @@ const SIDEBAR_LINK_RANKING: Record<string, number> = {
   "Leave Request": 10,
   "Leave Balance": 11,
   "Holiday": 12,
-  "Activity Logs": 13,
-  "Payroll": 14,
-  "Billing": 15,
-  "Notification": 16,
-  "Logout": 17
+  "Tasks": 13,
+  "Activity Logs": 14,
+  "Payroll": 15,
+  "Billing": 16,
+  "Notification": 17,
+  "Logout": 18
 };
 
 interface MainLayoutProps {
@@ -217,6 +218,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           label: "Billing",
           href: RouteDict.Billing.Base,
           icon: <FaReceipt className="h-5 w-5" />
+        });
+      } else if (permission?.key === "task_create" || permission?.key === "task_view_all" || permission?.key === "task_manage_all") {
+        if (baseLinks.some(link => link.label === "Tasks")) continue;
+        baseLinks.push({
+          label: "Tasks",
+          href: RouteDict.Task.Base,
+          icon: <ClipboardList className="h-5 w-5" />
         });
       }
     }
