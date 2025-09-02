@@ -20,6 +20,7 @@ import ModernRolePermissionPage from './page/private/system/RoleManagementSystem
 import ModernRolePermissionManager from './page/private/system/RoleManagementSystem/ModernRolePermissionManager.tsx';
 import HolidayManagementSystem from './page/private/system/HolidayManagementSystem/HolidayDashboard.tsx';
 import PrivacyPolicyPage from './page/public/PrivacyPolicyPage.tsx';
+import TaskModule from './page/private/system/TaskManagementSystem/index.tsx';
 
 // Public pages
 const LandingPage = lazy(() => import('./page/public/LandingPage'));
@@ -205,6 +206,7 @@ const ClientRoute = () => {
         </PermissionRouteBasedOnKey>
       } />
       <Route path="/system/*" element={<SystemModule />} />
+      <Route path='/task/*' element={<TaskModule  />} />
 
       <Route path="/logout" element={<Logout />} />
     </Routes>

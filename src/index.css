@@ -109,9 +109,30 @@
     background-color: #404040;
   }
 }
+
+/* Mobile optimizations for task management */
+@media (max-width: 640px) {
+  .mobile-task-grid {
+    min-height: 0;
+    overflow: hidden;
+  }
+  
+  .mobile-touch-friendly {
+    min-height: 44px; /* Apple's recommended minimum touch target */
+  }
+  
+  .mobile-scroll-momentum {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+}
+
+/* Improved scrolling on mobile */
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: rgba(155, 155, 155, 0.5) transparent;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .custom-scrollbar::-webkit-scrollbar {

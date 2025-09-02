@@ -60,4 +60,17 @@ export const APIDictionary = {
 
     // Onboarding Endpoints
     onboarding: `${backendDomain}/api/v2/onboarding`,
+
+    // Task Management Endpoints
+    task: `${backendDomain}/api/v2/task`,
+    taskAssignment: `${backendDomain}/api/v2/task-assignment`,
+    taskGroup: `${backendDomain}/api/v2/task-group`,
+    taskUpdate: (taskId: string) => `${backendDomain}/api/v2/task/${taskId}/updates`,
+    taskDetails: (id: string) => `${backendDomain}/api/v2/task/${id}`,
+    tasksByUser: (userId: string) => `${backendDomain}/api/v2/task/user/${userId}`,
+    tasksByManager: (managerId: string) => `${backendDomain}/api/v2/task/manager/${managerId}`,
+    tasksByGroup: (groupId: string) => `${backendDomain}/api/v2/task/group/${groupId}`,
+    taskAssignmentByTask: (taskId: string) => `${backendDomain}/api/v2/task-assignment/task/${taskId}`,
+    taskUpdatesByTask: (taskId: string) => `${backendDomain}/api/v2/task/${taskId}/updates`,
+    whatsappNotification: `${backendDomain}/api/v2/whatsapp/send`,
 };
