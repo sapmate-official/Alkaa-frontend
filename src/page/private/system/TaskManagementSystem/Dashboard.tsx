@@ -176,7 +176,7 @@ const Dashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="space-y-6 p-6 w-full">
+      <div className="space-y-6 p-6 w-full h-full overflow-y-auto">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Task Management Dashboard</h1>
         </div>
@@ -195,7 +195,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="space-y-6 p-6 w-full">
+    <div className="space-y-6 p-6 w-full h-full overflow-y-auto">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Task Management Dashboard</h1>
@@ -242,9 +242,14 @@ const Dashboard = () => {
                   )}
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-4 max-h-96 overflow-y-auto">
                   {recentTasks.map((task: Task) => (
-                    <div key={task.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div 
+                      key={task.id} 
+                      className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors hover:shadow-md"
+                      onClick={() => navigate(`${RouteDict.Task.TaskView}?taskId=${task.id}`)}
+                      title="Click to view task details"
+                    >
                       <div className="space-y-1">
                         <h4 className="font-medium">{task.title}</h4>
                         <p className="text-sm text-muted-foreground">{task.description}</p>
@@ -258,8 +263,11 @@ const Dashboard = () => {
                           )}
                         </div>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        {task.assignments?.length || 0} assigned
+                      <div className="flex items-center gap-2">
+                        <div className="text-sm text-muted-foreground">
+                          {task.assignments?.length || 0} assigned
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       </div>
                     </div>
                   ))}
@@ -291,7 +299,7 @@ const Dashboard = () => {
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-3 max-h-96 overflow-y-auto">
                   {taskGroups.map((group: any) => (
                     <div 
                       key={group.id} 

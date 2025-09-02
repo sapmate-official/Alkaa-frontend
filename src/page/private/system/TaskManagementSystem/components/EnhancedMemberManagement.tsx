@@ -73,6 +73,7 @@ const EnhancedGroupCard: React.FC<EnhancedGroupCardProps> = ({
   const healthMetrics = useMemo(() => getHealthMetrics(), [getHealthMetrics]);
   const activityAnalysis = useMemo(() => getActivityAnalysis(), [getActivityAnalysis]);
   
+  
   // Quick add/remove functions
   const handleQuickAddMembers = useCallback(async () => {
     try {

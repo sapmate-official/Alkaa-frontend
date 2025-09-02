@@ -4,10 +4,10 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Search, 
-  MessageCircle, 
-  Plus, 
+import {
+  Search,
+  MessageCircle,
+  Plus,
   Calendar,
   Filter,
   ChevronRight
@@ -18,6 +18,7 @@ import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
 import { useAtom } from 'jotai';
 import { permissionListAtom } from '@/store/atom';
+import { useSearchParams } from 'react-router-dom';
 import CreateTaskDialog from './components/CreateTaskDialog';
 import TaskChatView from './components/TaskChatView';
 
@@ -60,6 +61,7 @@ const TaskView = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [permissionList] = useAtom(permissionListAtom);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -77,8 +79,35 @@ const TaskView = () => {
     fetchTasks();
   }, []);
 
+  // Handle task selection from URL parameters
   useEffect(() => {
-    let filtered = tasks.filter(task => 
+    const taskId = searchParams.get('taskId');
+    if (taskId && tasks.length > 0) {
+      const task = tasks.find(t => t.id === taskId);
+      if (task) {
+        setSelectedTask(task);
+        toast({
+          title: "Task Selected",
+          description: `Viewing details for "${task.title}"`,
+        });
+      } else {
+        toast({
+          title: "Task Not Found",
+          description: "The requested task could not be found.",
+          variant: "destructive"
+        });
+      }
+      // Clear the URL parameter after processing
+      setSearchParams(prev => {
+        const newParams = new URLSearchParams(prev);
+        newParams.delete('taskId');
+        return newParams;
+      });
+    }
+  }, [tasks, searchParams, setSearchParams, toast]);
+
+  useEffect(() => {
+    let filtered = tasks.filter(task =>
       task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       task.description.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -97,8 +126,8 @@ const TaskView = () => {
   const fetchTasks = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`${APIDictionary.task}?createdBy=${user?.id}`, { 
-        withCredentials: true 
+      const response = await axios.get(`${APIDictionary.task}?createdBy=${user?.id}`, {
+        withCredentials: true
       });
       const tasksData = response.data.data || [];
       setTasks(tasksData);
@@ -173,7 +202,7 @@ const TaskView = () => {
               </Button>
             )}
           </div>
-          
+
           <div className="space-y-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -184,12 +213,12 @@ const TaskView = () => {
                 className="pl-10"
               />
             </div>
-            
+
             <div className="flex gap-2">
-              <select 
-                value={statusFilter} 
+              <select
+                value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors"
+                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors"
               >
                 <option value="ALL">All Status</option>
                 <option value="PENDING">Pending</option>
@@ -197,11 +226,11 @@ const TaskView = () => {
                 <option value="COMPLETED">Completed</option>
                 <option value="CANCELLED">Cancelled</option>
               </select>
-              
-              <select 
-                value={priorityFilter} 
+
+              <select
+                value={priorityFilter}
                 onChange={(e) => setPriorityFilter(e.target.value)}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors"
+                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors"
               >
                 <option value="ALL">All Priority</option>
                 <option value="LOW">Low</option>
@@ -212,7 +241,7 @@ const TaskView = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="overflow-y-auto h-[calc(100vh-14rem)]">
           {isLoading ? (
             <div className="p-4 space-y-3">
@@ -238,28 +267,27 @@ const TaskView = () => {
                 <div
                   key={task.id}
                   onClick={() => handleTaskSelect(task)}
-                  className={`p-3 rounded-lg cursor-pointer hover:bg-accent transition-colors border-l-4 ${
-                    task.priority === 'HIGH' || task.priority === 'URGENT' 
-                      ? 'border-l-red-500' 
-                      : task.priority === 'MEDIUM' 
-                        ? 'border-l-yellow-500' 
+                  className={`p-3 rounded-lg cursor-pointer hover:bg-accent transition-colors border-l-4 ${task.priority === 'HIGH' || task.priority === 'URGENT'
+                      ? 'border-l-red-500'
+                      : task.priority === 'MEDIUM'
+                        ? 'border-l-yellow-500'
                         : 'border-l-green-500'
-                  } ${selectedTask?.id === task.id ? 'bg-accent' : ''}`}
+                    } ${selectedTask?.id === task.id ? 'bg-accent' : ''}`}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="font-medium text-sm truncate pr-2">{task.title}</h3>
                     <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                   </div>
-                  
+
                   <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
                     {task.description}
                   </p>
-                  
+
                   <div className="flex items-center gap-2 mb-2">
                     {getStatusBadge(task.status)}
                     {getPriorityBadge(task.priority)}
                   </div>
-                  
+
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
@@ -270,7 +298,7 @@ const TaskView = () => {
                       {task.updates?.length || 0}
                     </div>
                   </div>
-                  
+
                   {getTaskAssignees(task).length > 0 && (
                     <div className="flex items-center gap-1 mt-2">
                       <div className="flex -space-x-1">
@@ -310,18 +338,23 @@ const TaskView = () => {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     onClick={() => openTaskChat(selectedTask)}
                   >
                     <MessageCircle className="h-4 w-4 mr-2" />
                     Chat
                   </Button>
-                  <Button size="sm" variant="outline">
-                    <Filter className="h-4 w-4 mr-2" />
-                    Edit
-                  </Button>
+                  {
+                    selectedTask.status !== 'COMPLETED' && (
+                      <Button size="sm" variant="outline">
+                        <Filter className="h-4 w-4 mr-2" />
+                        Edit
+                      </Button>
+                    )
+                  }
+
                 </div>
               </div>
             </div>
@@ -338,7 +371,7 @@ const TaskView = () => {
                       <label className="text-sm font-medium text-muted-foreground">Description</label>
                       <p className="mt-1">{selectedTask.description}</p>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="text-sm font-medium text-muted-foreground">Status</label>
@@ -353,13 +386,13 @@ const TaskView = () => {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="text-sm font-medium text-muted-foreground">Due Date</label>
                         <p className="mt-1">
-                          {selectedTask.dueDate 
-                            ? new Date(selectedTask.dueDate).toLocaleDateString() 
+                          {selectedTask.dueDate
+                            ? new Date(selectedTask.dueDate).toLocaleDateString()
                             : 'No due date set'
                           }
                         </p>
@@ -455,13 +488,13 @@ const TaskView = () => {
         )}
       </div>
 
-      <CreateTaskDialog 
-        open={showCreateTask} 
+      <CreateTaskDialog
+        open={showCreateTask}
         onOpenChange={setShowCreateTask}
         onTaskCreated={handleTaskCreated}
       />
 
-      <TaskChatView 
+      <TaskChatView
         open={showTaskChat}
         onOpenChange={setShowTaskChat}
         task={selectedTask}

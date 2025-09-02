@@ -20,7 +20,6 @@ import ModernRolePermissionPage from './page/private/system/RoleManagementSystem
 import ModernRolePermissionManager from './page/private/system/RoleManagementSystem/ModernRolePermissionManager.tsx';
 import HolidayManagementSystem from './page/private/system/HolidayManagementSystem/HolidayDashboard.tsx';
 import PrivacyPolicyPage from './page/public/PrivacyPolicyPage.tsx';
-import Dashboard from './page/private/system/TaskManagementSystem/Dashboard.tsx';
 import TaskModule from './page/private/system/TaskManagementSystem/index.tsx';
 
 // Public pages
