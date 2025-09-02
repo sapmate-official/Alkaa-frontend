@@ -1,6 +1,6 @@
 # ALKAA - HR Management System
 ## Comprehensive Documentation & Software Requirements Specification
- 
+    
 ![Alkaa Logo](public/assets/logo_icon.svg)
 
 ## Table of Contents
