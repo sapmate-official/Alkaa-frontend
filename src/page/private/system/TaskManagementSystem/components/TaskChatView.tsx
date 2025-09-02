@@ -5,7 +5,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Send, MessageCircle } from 'lucide-react';
-import { useAuth } from '@/services/AuthContext';
 import { APIDictionary } from '@/api/v2/APIdict';
 import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
@@ -54,8 +53,8 @@ interface TaskChatViewProps {
   onTaskUpdated?: (updatedTask: Task) => void;
 }
 
-const TaskChatView = ({ open, onOpenChange, task, onTaskUpdated }: TaskChatViewProps) => {
-  const { user } = useAuth();
+const TaskChatView = ({ open, onOpenChange, task }: TaskChatViewProps) => {
+
   const { toast } = useToast();
   const [newMessage, setNewMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);

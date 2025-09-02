@@ -128,6 +128,13 @@ const GroupDetailsDialog: React.FC<GroupDetailsDialogProps> = ({
     }
   }, [group]);
 
+  // Re-extract members when the dialog opens
+  useEffect(() => {
+    if (open && group) {
+      extractGroupMembers();
+    }
+  }, [open, group]);
+
   const extractGroupMembers = () => {
     if (!group) return;
     setGroupMembers(TaskGroupMemberService.extractGroupMembers(group));
@@ -136,7 +143,10 @@ const GroupDetailsDialog: React.FC<GroupDetailsDialogProps> = ({
   const handleMembersUpdated = () => {
     // Refresh the group data to get updated member information
     onGroupUpdated?.();
-    extractGroupMembers();
+    // Re-extract members from the updated group data
+    setTimeout(() => {
+      extractGroupMembers();
+    }, 100);
   };
 
   const updateGroup = async () => {
@@ -420,7 +430,7 @@ const GroupDetailsDialog: React.FC<GroupDetailsDialogProps> = ({
                 </Button>
               )}
             </div>
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-96 overflow-y-auto">
               {groupMembers.length === 0 ? (
                 <div className="text-center py-8">
                   <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -432,7 +442,7 @@ const GroupDetailsDialog: React.FC<GroupDetailsDialogProps> = ({
                     <div className="flex items-center space-x-3">
                       <Avatar>
                         <AvatarFallback className="bg-blue-100 text-blue-600">
-                          {member.firstName[0]}{member.lastName[0]}
+                          {(member.firstName?.[0] || '') + (member.lastName?.[0] || '')}
                         </AvatarFallback>
                       </Avatar>
                       <div>
@@ -454,14 +464,14 @@ const GroupDetailsDialog: React.FC<GroupDetailsDialogProps> = ({
           </TabsContent>
 
           <TabsContent value="tasks" className="space-y-4">
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-96 overflow-y-auto">
               {group.tasks.length === 0 ? (
                 <div className="text-center py-8">
                   <ClipboardList className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">No tasks in this group</p>
                 </div>
               ) : (
-                group.tasks.map((task) => (
+                group?.tasks?.map((task) => (
                   <div key={task.id} className="p-4 border rounded-lg space-y-3">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -486,7 +496,7 @@ const GroupDetailsDialog: React.FC<GroupDetailsDialogProps> = ({
                         </div>
                       </div>
                       <span>
-                        Created by {task.createdBy.firstName} {task.createdBy.lastName}
+                        Created by {task.createdBy ? `${task.createdBy.firstName ?? ''} ${task.createdBy.lastName ?? ''}`.trim() : 'Unknown'}
                       </span>
                     </div>
 
@@ -497,7 +507,7 @@ const GroupDetailsDialog: React.FC<GroupDetailsDialogProps> = ({
                           {task.assignments.slice(0, 3).map((assignment) => (
                             <Avatar key={assignment.id} className="h-6 w-6 border-2 border-background">
                               <AvatarFallback className="text-xs bg-blue-100 text-blue-600">
-                                {assignment.assignedTo.firstName[0]}{assignment.assignedTo.lastName[0]}
+                                {(assignment.assignedTo && ((assignment.assignedTo.firstName?.[0] || '') + (assignment.assignedTo.lastName?.[0] || ''))) || '?'}
                               </AvatarFallback>
                             </Avatar>
                           ))}

@@ -116,7 +116,10 @@ const ManageMembersDialog: React.FC<ManageMembersDialogProps> = ({
       });
 
       setSelectedUsersToAdd([]);
-      onMembersUpdated();
+      // Trigger refresh after a small delay to ensure backend is updated
+      setTimeout(() => {
+        onMembersUpdated();
+      }, 200);
     } catch (error) {
       console.error('Error adding members:', error);
       toast({
@@ -143,7 +146,10 @@ const ManageMembersDialog: React.FC<ManageMembersDialogProps> = ({
 
       setSelectedUsersToRemove([]);
       setShowRemoveConfirm(false);
-      onMembersUpdated();
+      // Trigger refresh after a small delay to ensure backend is updated
+      setTimeout(() => {
+        onMembersUpdated();
+      }, 200);
     } catch (error) {
       console.error('Error removing members:', error);
       toast({

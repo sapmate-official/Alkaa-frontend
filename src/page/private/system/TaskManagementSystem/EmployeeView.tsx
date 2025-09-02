@@ -13,8 +13,7 @@ import {
   CheckCircle,
   AlertCircle,
   Send,
-  ArrowLeft,
-  Menu
+  ArrowLeft
 } from 'lucide-react';
 import { useAuth } from '@/services/AuthContext';
 import { APIDictionary } from '@/api/v2/APIdict';

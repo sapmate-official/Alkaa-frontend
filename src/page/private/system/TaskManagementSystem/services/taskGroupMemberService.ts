@@ -89,13 +89,39 @@ export class TaskGroupMemberService {
   }
 
   /**
+   * Update member role in a task group
+   * @param groupId - The ID of the task group
+   * @param userId - The ID of the user whose role to update
+   * @param role - The new role ('ADMIN' or 'MEMBER')
+   * @returns Promise with the response data
+   */
+  static async updateMemberRole(groupId: string, userId: string, role: 'ADMIN' | 'MEMBER'): Promise<any> {
+    try {
+      const response = await axios.put(`${APIDictionary.taskGroup}/${groupId}/members/role`, {
+        userId,
+        role
+      }, {
+        withCredentials: true,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating member role:', error);
+      throw new Error(
+        axios.isAxiosError(error) && error.response?.data?.message
+          ? error.response.data.message
+          : 'Failed to update member role'
+      );
+    }
+  }
+
+  /**
    * Get all users in an organization
    * @param orgId - The organization ID
    * @returns Promise with array of users
    */
   static async getOrganizationUsers(orgId: string): Promise<User[]> {
     try {
-      const response = await axios.get(`${APIDictionary.user}/org/${orgId}`, {
+      const response = await axios.get(`${APIDictionary.user}/org/${orgId}?onlyActive=true`, {
         withCredentials: true,
       });
       return response.data.data || response.data || [];
@@ -131,15 +157,33 @@ export class TaskGroupMemberService {
   }
 
   /**
-   * Extract unique members from task assignments in a group
-   * @param group - The task group object with tasks and assignments
+   * Extract unique members from the group's members array (using new TaskGroupMember table)
+   * Falls back to extracting from task assignments for backwards compatibility
+   * @param group - The task group object with members or tasks and assignments
    * @returns Array of unique users who are members of the group
    */
   static extractGroupMembers(group: any): User[] {
+    // Use the new members array if available
+    if (group?.members && Array.isArray(group.members)) {
+      return group.members.map((member: any) => ({
+        id: member.id,
+        firstName: member.firstName,
+        lastName: member.lastName,
+        email: member.email,
+        role: member.role,
+        addedAt: member.addedAt,
+        addedBy: member.addedBy
+      }));
+    }
+    
+    // Fallback to old method for backwards compatibility
     if (!group?.tasks) return [];
 
     const memberMap = new Map<string, User>();
     group.tasks.forEach((task: any) => {
+      // Skip placeholder tasks
+      if (task.title?.startsWith('[GROUP_PLACEHOLDER]')) return;
+      
       task.assignments?.forEach((assignment: any) => {
         const user = assignment.assignedTo;
         if (user && !memberMap.has(user.id)) {
@@ -235,9 +279,11 @@ export class TaskGroupMemberService {
   static getMemberTaskCount(userId: string, group: any): number {
     if (!group?.tasks) return 0;
     
-    return group.tasks.filter((task: any) => 
-      task.assignments?.some((assignment: any) => assignment.assignedTo.id === userId)
-    ).length;
+    return group.tasks.filter((task: any) => {
+      // Skip placeholder tasks
+      if (task.title?.startsWith('[GROUP_PLACEHOLDER]')) return false;
+      return task.assignments?.some((assignment: any) => assignment.assignedTo.id === userId);
+    }).length;
   }
 
   /**
@@ -331,6 +377,7 @@ export class TaskGroupMemberService {
 // Export default functions for easier usage
 export const addMembersToGroup = TaskGroupMemberService.addMembers;
 export const removeMembersFromGroup = TaskGroupMemberService.removeMembers;
+export const updateMemberRole = TaskGroupMemberService.updateMemberRole;
 export const getOrganizationUsers = TaskGroupMemberService.getOrganizationUsers;
 export const getGroupDetails = TaskGroupMemberService.getGroupDetails;
 export const extractGroupMembers = TaskGroupMemberService.extractGroupMembers;
