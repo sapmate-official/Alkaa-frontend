@@ -661,3 +661,61 @@ export interface OnboardingCandidate {
   createdBy?: User;
   reviewedBy?: User;
 }
+
+// Relationship API Interfaces
+export interface RelationshipResponse {
+  success: boolean;
+  data: RelationshipData;
+}
+
+export interface RelationshipData {
+  userId: string;
+  userRoles: string[];
+  isOrgAdmin: boolean;
+  orgId: string;
+  targetUser?: TargetUser;
+  relationship?: UserRelationship;
+  organizationRole?: OrganizationRole;
+  isManager?: boolean;
+  permissions?: PermissionDetail[];
+}
+
+export interface TargetUser {
+  id: string;
+  name: string;
+  email: string;
+  roles: string[];
+  isOrgAdmin: boolean;
+}
+
+export interface UserRelationship {
+  isDirectManager: boolean;
+  isIndirectManager: boolean;
+  isSelf: boolean;
+  canViewProfile: boolean;
+  canEditProfile: boolean;
+  canViewSalary: boolean;
+  canViewBankDetails: boolean;
+  canViewPersonalInfo: boolean;
+  canViewEmploymentInfo: boolean;
+}
+
+export interface OrganizationRole {
+  isManager: boolean;
+  isDepartmentHead: boolean;
+  subordinateCount: number;
+  departmentName: string | null;
+  organizationAdmins: OrganizationAdminInfo[];
+}
+
+export interface OrganizationAdminInfo {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface PermissionDetail {
+  key: string;
+  name: string;
+  description: string;
+}

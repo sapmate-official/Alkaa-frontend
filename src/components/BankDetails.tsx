@@ -5,8 +5,9 @@ import { useAuth } from '@/services/AuthContext';
 import { useAtom } from 'jotai';
 import { permissionListAtom } from '@/store/atom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BuildingLibraryIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { BuildingLibraryIcon, ExclamationTriangleIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { motion } from 'framer-motion';
 import { backendDomain } from '@/lib/constant/Domain';
 import { Link } from 'react-router-dom';
@@ -27,6 +28,7 @@ const BankDetails = ({ userId }: BankDetailsProps) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [bankDetails, setBankDetails] = useState<BankDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showFullDetails, setShowFullDetails] = useState<boolean>(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const [permissionList] = useAtom(permissionListAtom);
@@ -48,6 +50,17 @@ const BankDetails = ({ userId }: BankDetailsProps) => {
     } else {
       return hasPermission('view_bank_all_user');
     }
+  };
+
+  const toggleDetailsVisibility = () => {
+    setShowFullDetails(!showFullDetails);
+  };
+
+  const formatAccountNumber = (accountNumber: string) => {
+    if (showFullDetails) {
+      return accountNumber;
+    }
+    return `••••${accountNumber.slice(-4)}`;
   };
 
   useEffect(() => {
@@ -144,11 +157,31 @@ const BankDetails = ({ userId }: BankDetailsProps) => {
       transition={{ duration: 0.3 }}
     >
       <Card className="shadow-sm hover:shadow-md transition-shadow duration-300">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-xl flex items-center gap-2 text-primary/90">
             <BuildingLibraryIcon className="w-5 h-5" />
             Bank Details
           </CardTitle>
+          {canViewBankDetails() && bankDetails?.accountNumber && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleDetailsVisibility}
+              className="flex items-center gap-2 hover:bg-primary/10"
+            >
+              {showFullDetails ? (
+                <>
+                  <EyeSlashIcon className="h-4 w-4" />
+                  Hide Details
+                </>
+              ) : (
+                <>
+                  <EyeIcon className="h-4 w-4" />
+                  Show Details
+                </>
+              )}
+            </Button>
+          )}
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="space-y-1">
@@ -164,7 +197,7 @@ const BankDetails = ({ userId }: BankDetailsProps) => {
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground font-medium">Account Number</p>
             <p className="font-medium">
-              {bankDetails?.accountNumber ? `••••${bankDetails.accountNumber.slice(-4)}` : 'Not provided'}
+              {bankDetails?.accountNumber ? formatAccountNumber(bankDetails.accountNumber) : 'Not provided'}
             </p>
           </div>
 
