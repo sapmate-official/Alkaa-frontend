@@ -1,7 +1,17 @@
 import { backendDomain } from "@/lib/constant/Domain";
 
 export const APIDictionary = {
+    // Authentication endpoints
     setPassword: `${backendDomain}/api/v1/general/set-password`,
+    login: `${backendDomain}/api/v1/general/login`,
+    checkEmail: `${backendDomain}/api/v1/general/check-email`,
+    verifyPassword: `${backendDomain}/api/v1/general/verify-password`,
+    verifyOtp: `${backendDomain}/api/v1/general/verify-otp`,
+    validateToken: `${backendDomain}/api/v1/general/validate-token`,
+    refreshToken: `${backendDomain}/api/v1/general/refresh-token`,
+    logout: `${backendDomain}/api/v1/general/logout`,
+    
+    // Legacy endpoints
     leaveTypeList: `${backendDomain}/api/v1/leave/type`,
     list_of_leave_manager: `${backendDomain}/api/v1/manager/list-of-leave`,
     list_of_leave_employee: `${backendDomain}/api/v1/employee/list-of-leave`,
@@ -73,4 +83,8 @@ export const APIDictionary = {
     taskAssignmentByTask: (taskId: string) => `${backendDomain}/api/v2/task-assignment/task/${taskId}`,
     taskUpdatesByTask: (taskId: string) => `${backendDomain}/api/v2/task/${taskId}/updates`,
     whatsappNotification: `${backendDomain}/api/v2/whatsapp/send`,
+
+    // Relationship Endpoints
+    relationshipWithUser: (targetUserId: string) => `${backendDomain}/api/v2/relationship/user/${targetUserId}`,
+    relationshipOrganization: `${backendDomain}/api/v2/relationship/organization`,
 };

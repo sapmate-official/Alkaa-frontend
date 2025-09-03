@@ -1,5 +1,5 @@
 import { useToast } from '@/hooks/use-toast'
-import { User } from '@/interface/general'
+import { User, RelationshipResponse, RelationshipData } from '@/interface/general'
 import { APIDictionary } from '@/api/v2/APIdict'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -27,6 +27,7 @@ const ProfileInfo = () => {
     const [isLoading, setIsLoading] = useState(true)
     const { toast } = useToast()
     const [permissionList] = useAtom(permissionListAtom)
+    const [relationshipData, setRelationshipData] = useState<RelationshipData | null>(null)
 
     const fetchProfileInfo = async () => {
         setIsLoading(true)
@@ -54,9 +55,35 @@ const ProfileInfo = () => {
             setIsLoading(false)
         }
     }
+
+    const fetchRelationshipInfo = async () => {
+        try {
+            const targetUserId = id || user?.id || '';
+            let relationshipUrl;
+            
+            // If viewing someone else's profile, get relationship with that user
+            if (id && id !== user?.id) {
+                relationshipUrl = APIDictionary.relationshipWithUser(targetUserId);
+            } else {
+                // If viewing own profile or no ID, get organization relationship
+                relationshipUrl = APIDictionary.relationshipOrganization;
+            }
+            
+            const response = await axios.get(relationshipUrl, { withCredentials: true });
+            
+            if (response.status === 200) {
+                const relationshipResponse: RelationshipResponse = response.data;
+                setRelationshipData(relationshipResponse.data);
+            }
+        } catch (error) {
+            console.error('Error fetching relationship info:', error);
+            // Don't show toast for relationship errors as it's supplementary data
+        }
+    }
     
     useEffect(() => {
         fetchProfileInfo()
+        fetchRelationshipInfo()
     }, [id])
     
     const hasPermission = (permissionKey: string) => {
@@ -64,6 +91,12 @@ const ProfileInfo = () => {
     }
 
     const canDisplayFinancialInfo = () => {
+        // Use relationship API data if available, otherwise fallback to manual checks
+        if (relationshipData?.relationship) {
+            return relationshipData.relationship.canViewSalary;
+        }
+        
+        // Fallback to manual permission checks
         const isOwnProfile = !id || id === user?.id;
         const isSubordinate = user?.id && profileInfo?.managerId === user?.id;
 
@@ -77,6 +110,12 @@ const ProfileInfo = () => {
     };
     
     const canDisplayPersonalInfo = () => {
+        // Use relationship API data if available, otherwise fallback to manual checks
+        if (relationshipData?.relationship) {
+            return relationshipData.relationship.canViewPersonalInfo;
+        }
+        
+        // Fallback to manual permission checks
         const isOwnProfile = !id || id === user?.id;
         const isSubordinate = user?.id && profileInfo?.managerId === user?.id;
         if (isOwnProfile) {
@@ -89,6 +128,12 @@ const ProfileInfo = () => {
     }
     
     const canDisplayEmploymentInfo = () => {
+        // Use relationship API data if available, otherwise fallback to manual checks
+        if (relationshipData?.relationship) {
+            return relationshipData.relationship.canViewEmploymentInfo;
+        }
+        
+        // Fallback to manual permission checks
         const isOwnProfile = !id || id === user?.id;
         const isSubordinate = user?.id && profileInfo?.managerId === user?.id;
         if (isOwnProfile) {
@@ -101,6 +146,12 @@ const ProfileInfo = () => {
     }
 
     const canDisplayBankInfo = () => {
+        // Use relationship API data if available, otherwise fallback to manual checks
+        if (relationshipData?.relationship) {
+            return relationshipData.relationship.canViewBankDetails;
+        }
+        
+        // Fallback to manual permission checks
         const isOwnProfile = !id || id === user?.id;
         const isSubordinate = user?.id && profileInfo?.managerId === user?.id;
 
@@ -111,6 +162,18 @@ const ProfileInfo = () => {
         } else {
             return hasPermission('view_bank_all_user');
         }
+    };
+
+    const canEditProfile = () => {
+        // Use relationship API data if available, otherwise fallback to manual checks
+        if (relationshipData?.relationship) {
+            return relationshipData.relationship.canEditProfile;
+        }
+        
+        // Fallback to manual checks
+        const isOwnProfile = !id || id === user?.id;
+        const isManager = user?.id && profileInfo?.managerId && profileInfo?.managerId === user?.id;
+        return isOwnProfile || isManager;
     };
     
     if (isLoading) {
@@ -166,7 +229,9 @@ const ProfileInfo = () => {
     }
 
     const isOwnProfile = !id || id === user?.id;
-    const isManager = user?.id && profileInfo?.managerId && profileInfo?.managerId === user?.id;
+    const isManager = relationshipData?.relationship?.isDirectManager || 
+                     (user?.id && profileInfo?.managerId && profileInfo?.managerId === user?.id);
+    const isOrgAdmin = relationshipData?.isOrgAdmin;
     const hasFinancialInfo = (info?: User) => {
         return (info?.annualPackage ?? 0) > 0 || (info?.monthlySalary ?? 0) > 0;
     };
@@ -222,7 +287,7 @@ const ProfileInfo = () => {
                                     </div>
                                 </div>
                             </div>
-                            {(isManager || isOwnProfile) && (
+                            {(isManager || isOwnProfile || canEditProfile() || isOrgAdmin) && (
                                 <Button
                                     variant="outline"
                                     size="sm"
