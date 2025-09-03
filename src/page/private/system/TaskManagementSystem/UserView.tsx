@@ -531,7 +531,7 @@ const UserView = () => {
           <h1 className="text-xl font-bold">Task Management</h1>
           <p className="text-sm text-muted-foreground">Organize, assign, and track tasks across your team.</p>
         </div>
-        <ToggleGroup type="single" value={activeView} onValueChange={(value) => value && setActiveView(value)} aria-label="View mode">
+  <ToggleGroup type="single" value={activeView} onValueChange={(value: string | null) => value && setActiveView(value)} aria-label="View mode">
           <ToggleGroupItem value="groups" aria-label="Groups view" className="flex items-center gap-2">
             <FolderOpen className="h-4 w-4" />
             Groups
