@@ -1,6 +1,6 @@
 import { useEffect, useState, lazy, Suspense } from 'react'
 import './App.css'
-import { Route, Routes, Navigate, BrowserRouter, useLocation } from 'react-router-dom';
+import { Route, Routes, BrowserRouter, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './services/AuthContext';
 import Loader from './components/Loader';
 import axios from 'axios';
@@ -9,7 +9,7 @@ import { useAtom } from 'jotai';
 import { permissionListAtom } from './store/atom';
 import PermissionRouteBasedOnKey from './components/RouteSecurityWrapper/PermissionBasedOnKey';
 import { Toaster } from './components/ui/toaster';
-import RouteDict from './routes/RouteDict';
+import ProtectedRouteGuard from './components/auth/ProtectedRoute';
 
 // OPTIMIZED LAZY LOADING STRATEGY - GROUPED BY MODULES
 // Critical/Essential components (load immediately)
@@ -67,11 +67,13 @@ function App() {
             path="/p/*"
             element={
               <AuthProvider>
-                <MainLayout>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <ProtectedRoute />
-                  </Suspense>
-                </MainLayout>
+                <ProtectedRouteGuard>
+                  <MainLayout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ProtectedRoute />
+                    </Suspense>
+                  </MainLayout>
+                </ProtectedRouteGuard>
               </AuthProvider>
             }
           />
@@ -123,10 +125,7 @@ const ProtectedRoute: React.FC = () => {
     return <Loader />;
   }
 
-  if (!user && !isLoading) {
-    return <Navigate to={RouteDict.SignInPage} replace />;
-  }
-
+  // At this point, user is guaranteed to be authenticated by ProtectedRouteGuard
   if (userDetails?.superAdmin) {
     return <SuperAdminRoute />;
   } else {

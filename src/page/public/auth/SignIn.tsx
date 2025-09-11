@@ -3,18 +3,22 @@ import { MultiTenantLoginForm } from "@/components/auth/MultiTenantLoginForm";
 // import { AuthDebugPanel } from "@/components/auth/AuthDebugPanel";
 import { useAuth } from "@/services/AuthContext";
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import RouteDict from "@/routes/RouteDict";
+import { useNavigate, useLocation } from "react-router-dom";
+import { routeUtils } from "@/utils/routeUtils";
 
 export default function SignIn() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isLoading, authStep } = useAuth();
   
   useEffect(() => {
     if (user && !isLoading && authStep.step === 'complete') {
-      navigate(RouteDict.Protected)
+      // Get the intended destination from location state, or default to protected route
+      const intendedPath = location.state?.from;
+      const redirectTo = routeUtils.getRedirectAfterLogin(intendedPath);
+      navigate(redirectTo, { replace: true });
     }
-  }, [user, isLoading, authStep, navigate])
+  }, [user, isLoading, authStep, navigate, location.state])
   
   if (isLoading) {
     return <Loader/>

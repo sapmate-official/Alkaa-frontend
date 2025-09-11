@@ -116,11 +116,20 @@ const setupAxiosInterceptors = (navigate: ReturnType<typeof useNavigate>) => {
                         return axios(originalRequest);
                     }
                 } catch (refreshError) {
-                    // If refresh fails, redirect to login
+                    // If refresh fails, clear tokens and redirect to login
                     tokenStorage.clearTokens();
-                    navigate('/auth/signin');
+                    // Clear browser history and force navigation to login
+                    window.history.replaceState(null, '', '/auth/signin');
+                    navigate('/auth/signin', { replace: true });
                     return Promise.reject(refreshError);
                 }
+            }
+            
+            // For any 401 error (including when refresh token is not available)
+            if (error.response?.status === 401) {
+                tokenStorage.clearTokens();
+                window.history.replaceState(null, '', '/auth/signin');
+                navigate('/auth/signin', { replace: true });
             }
             
             return Promise.reject(error);
@@ -390,9 +399,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         } finally {
             // Always clear tokens and user state
             setUser(null);
+            setUser_id(null);
             tokenStorage.clearTokens();
             setIsLoading(false);
-            navigate('/auth/signin');
+            setAuthStep({ step: 'email' });
+            
+            // Clear browser history and navigate to login
+            // Use replace state to prevent back button access
+            window.history.replaceState(null, '', '/auth/signin');
+            // Navigate to login page using React Router with replace: true to clear stack
+            navigate('/auth/signin', { replace: true });
         }
     };
 

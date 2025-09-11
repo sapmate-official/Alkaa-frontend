@@ -8,7 +8,9 @@ import {
   Plus, 
   Users, 
   BarChart3,
-  ChevronRight
+  ChevronRight,
+  User,
+  Calendar
 } from 'lucide-react';
 import { useAuth } from '@/services/AuthContext';
 import { APIDictionary } from '@/api/v2/APIdict';
@@ -62,6 +64,14 @@ const Dashboard = () => {
   });
   const [recentTasks, setRecentTasks] = useState<Task[]>([]);
   const [taskGroups, setTaskGroups] = useState<any[]>([]);
+  const [myAssignedTasks, setMyAssignedTasks] = useState<Task[]>([]);
+  const [assignedTaskStats, setAssignedTaskStats] = useState<TaskStats>({
+    total: 0,
+    pending: 0,
+    inProgress: 0,
+    completed: 0,
+    overdue: 0
+  });
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [showGroupDetails, setShowGroupDetails] = useState(false);
@@ -74,13 +84,15 @@ const Dashboard = () => {
     try {
       setIsLoading(true);
       
-      const [tasksResponse, groupsResponse] = await Promise.all([
+      const [tasksResponse, groupsResponse, assignedTasksResponse] = await Promise.all([
         axios.get(`${APIDictionary.tasksByManager(user?.id || '')}`, { withCredentials: true }),
-        axios.get(APIDictionary.taskGroup, { withCredentials: true })
+        axios.get(APIDictionary.taskGroup, { withCredentials: true }),
+        axios.get(APIDictionary.tasksByUser(user?.id || ''), { withCredentials: true })
       ]);
 
       const tasks: Task[] = tasksResponse.data.data || [];
       const groups = groupsResponse.data.data || [];
+      const assignedTasks: Task[] = assignedTasksResponse.data.data || [];
       
       const stats = {
         total: tasks.length,
@@ -90,9 +102,19 @@ const Dashboard = () => {
         overdue: tasks.filter((t: Task) => new Date(t.dueDate) < new Date() && t.status !== 'COMPLETED').length,
       };
 
+      const assignedStats = {
+        total: assignedTasks.length,
+        pending: assignedTasks.filter((t: Task) => t.status === 'PENDING').length,
+        inProgress: assignedTasks.filter((t: Task) => t.status === 'IN_PROGRESS').length,
+        completed: assignedTasks.filter((t: Task) => t.status === 'COMPLETED').length,
+        overdue: assignedTasks.filter((t: Task) => new Date(t.dueDate) < new Date() && t.status !== 'COMPLETED').length,
+      };
+
       setTaskStats(stats);
       setRecentTasks(tasks.slice(0, 5));
       setTaskGroups(groups);
+      setMyAssignedTasks(assignedTasks);
+      setAssignedTaskStats(assignedStats);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       toast({
@@ -215,15 +237,179 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <TaskStatsCards stats={taskStats} />
+      {/* Assigned Tasks Notification */}
+      {myAssignedTasks.length > 0 && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <User className="h-4 w-4 text-blue-600" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-blue-900">You have {myAssignedTasks.length} task{myAssignedTasks.length !== 1 ? 's' : ''} assigned to you</h4>
+                  <p className="text-sm text-blue-700">
+                    {myAssignedTasks.filter(t => t.status === 'PENDING').length} pending • {' '}
+                    {myAssignedTasks.filter(t => t.status === 'IN_PROGRESS').length} in progress • {' '}
+                    {myAssignedTasks.filter(t => new Date(t.dueDate) < new Date() && t.status !== 'COMPLETED').length} overdue
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => navigate(RouteDict.Task.EmployeeView)}
+                  className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                >
+                  View My Tasks
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <TaskStatsCards 
+        stats={taskStats} 
+        assignedStats={myAssignedTasks.length > 0 ? assignedTaskStats : undefined} 
+      />
+
+      {/* Assigned Tasks Section - Show prominently if user has assigned tasks */}
+      {myAssignedTasks.length > 0 && (
+        <Card className="border-blue-200">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center">
+                <User className="h-5 w-5 mr-2 text-blue-600" />
+                My Assigned Tasks ({myAssignedTasks.length})
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => navigate(RouteDict.Task.EmployeeView)}
+                className="border-blue-300 text-blue-700 hover:bg-blue-100"
+              >
+                View All
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {/* Quick Stats for Assigned Tasks */}
+            <div className="grid grid-cols-4 gap-4 mb-6 p-4 bg-blue-50 rounded-lg">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">
+                  {myAssignedTasks.filter(t => t.status === 'PENDING').length}
+                </div>
+                <div className="text-xs text-blue-700">Pending</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-orange-600">
+                  {myAssignedTasks.filter(t => t.status === 'IN_PROGRESS').length}
+                </div>
+                <div className="text-xs text-orange-700">In Progress</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-red-600">
+                  {myAssignedTasks.filter(t => new Date(t.dueDate) < new Date() && t.status !== 'COMPLETED').length}
+                </div>
+                <div className="text-xs text-red-700">Overdue</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-purple-600">
+                  {myAssignedTasks.filter(t => t.priority === 'HIGH' || t.priority === 'URGENT').length}
+                </div>
+                <div className="text-xs text-purple-700">High Priority</div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {myAssignedTasks
+                .sort((a, b) => {
+                  // Sort by priority: URGENT > HIGH > MEDIUM > LOW
+                  const priorityOrder = { 'URGENT': 4, 'HIGH': 3, 'MEDIUM': 2, 'LOW': 1 };
+                  const priorityDiff = (priorityOrder[b.priority as keyof typeof priorityOrder] || 0) - 
+                                      (priorityOrder[a.priority as keyof typeof priorityOrder] || 0);
+                  if (priorityDiff !== 0) return priorityDiff;
+                  
+                  // Then by due date (closest first)
+                  if (a.dueDate && b.dueDate) {
+                    return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+                  }
+                  return 0;
+                })
+                .slice(0, 6)
+                .map((task: Task) => {
+                const isOverdue = new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED';
+                const isHighPriority = task.priority === 'HIGH' || task.priority === 'URGENT';
+                
+                return (
+                  <div 
+                    key={task.id} 
+                    className={`p-4 border rounded-lg cursor-pointer transition-colors hover:shadow-md border-l-4 ${
+                      isOverdue 
+                        ? 'border-l-red-500 hover:bg-red-50' 
+                        : isHighPriority 
+                        ? 'border-l-orange-500 hover:bg-orange-50'
+                        : 'border-l-blue-500 hover:bg-blue-50'
+                    }`}
+                    onClick={() => navigate(`${RouteDict.Task.EmployeeView}?taskId=${task.id}`)}
+                    title="Click to view task details"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between">
+                        <h4 className="font-medium text-sm truncate flex-1">{task.title}</h4>
+                        {isOverdue && (
+                          <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full ml-2">
+                            Overdue
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground line-clamp-2">{task.description}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {getStatusBadge(task.status)}
+                        {getPriorityBadge(task.priority)}
+                      </div>
+                      {task.dueDate && (
+                        <div className={`flex items-center gap-1 text-xs ${
+                          isOverdue ? 'text-red-600 font-medium' : 'text-muted-foreground'
+                        }`}>
+                          <Calendar className="h-3 w-3" />
+                          Due: {new Date(task.dueDate).toLocaleDateString()}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {myAssignedTasks.length > 6 && (
+              <div className="mt-4 text-center">
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate(RouteDict.Task.EmployeeView)}
+                  className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                >
+                  View {myAssignedTasks.length - 6} more assigned tasks
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <ClipboardList className="h-5 w-5 mr-2" />
-                Recent Tasks
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <ClipboardList className="h-5 w-5 mr-2" />
+                  Recent Tasks I Created
+                </div>
+                <span className="text-sm text-muted-foreground">
+                  {recentTasks.length} tasks
+                </span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -352,13 +538,29 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
+              <Button 
+                variant="outline" 
+                className="h-20 flex-col relative"
+                onClick={() => navigate(RouteDict.Task.EmployeeView)}
+              >
+                <User className="h-8 w-8 mb-2" />
+                My Tasks
+                {myAssignedTasks.length > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs"
+                  >
+                    {myAssignedTasks.length}
+                  </Badge>
+                )}
+              </Button>
               <Button 
                 variant="outline" 
                 className="h-20 flex-col"
@@ -378,6 +580,45 @@ const Dashboard = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* My Assigned Tasks Summary */}
+        {myAssignedTasks.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <User className="h-5 w-5 mr-2" />
+                My Assigned Tasks ({myAssignedTasks.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3 max-h-48 overflow-y-auto">
+                {myAssignedTasks.slice(0, 3).map((task: Task) => (
+                  <div 
+                    key={task.id} 
+                    className="p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => navigate(`${RouteDict.Task.EmployeeView}?taskId=${task.id}`)}
+                  >
+                    <h4 className="font-medium text-sm">{task.title}</h4>
+                    <div className="flex items-center gap-2 mt-1">
+                      {getStatusBadge(task.status)}
+                      {getPriorityBadge(task.priority)}
+                    </div>
+                  </div>
+                ))}
+                {myAssignedTasks.length > 3 && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => navigate(RouteDict.Task.EmployeeView)}
+                  >
+                    View all {myAssignedTasks.length} assigned tasks
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>

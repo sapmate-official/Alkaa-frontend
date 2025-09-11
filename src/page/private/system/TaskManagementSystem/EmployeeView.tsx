@@ -19,6 +19,7 @@ import { useAuth } from '@/services/AuthContext';
 import { APIDictionary } from '@/api/v2/APIdict';
 import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
+import { useSearchParams } from 'react-router-dom';
 
 interface Task {
   id: string;
@@ -47,6 +48,7 @@ interface Task {
 const EmployeeView = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
@@ -90,6 +92,34 @@ const EmployeeView = () => {
   useEffect(() => {
     fetchMyTasks();
   }, []);
+
+  // Handle task selection from URL parameters
+  useEffect(() => {
+    const taskId = searchParams.get('taskId');
+    if (taskId && tasks.length > 0) {
+      const task = tasks.find(t => t.id === taskId);
+      if (task) {
+        setSelectedTask(task);
+        setIsMobileTaskDetailsOpen(true); // Open details on mobile
+        toast({
+          title: "Task Selected",
+          description: `Viewing details for "${task.title}"`,
+        });
+      } else {
+        toast({
+          title: "Task Not Found",
+          description: "The requested task could not be found.",
+          variant: "destructive"
+        });
+      }
+      // Clear the URL parameter after processing
+      setSearchParams(prev => {
+        const newParams = new URLSearchParams(prev);
+        newParams.delete('taskId');
+        return newParams;
+      });
+    }
+  }, [tasks, searchParams, setSearchParams, toast]);
 
   useEffect(() => {
     let filtered = tasks.filter(task => 
