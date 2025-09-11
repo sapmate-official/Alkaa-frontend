@@ -1,4 +1,3 @@
-import { APIDictionary } from '@/api/v2/APIdict';
 import Loader from '@/components/Loader';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -10,32 +9,13 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { Permission } from '@/interface/general';
 import RouteDict from '@/routes/RouteDict';
-import axios from 'axios';
-import React from 'react'
 import { useNavigate } from 'react-router-dom';
+import { usePermissions } from '@/hooks/usePermissions'
 
 const PermissionHome = () => {
-    const [permissions, setPermissions] = React.useState<Permission[]>([]);
-    const [isLoading, setIsLoading] = React.useState(true);
     const navigate = useNavigate();
-
-    const fetchAllPermissions = async () => {   
-        try {
-            const response = await axios.get(APIDictionary.Permission, { withCredentials: true });
-            const data = response.data;
-            setPermissions(data);
-        } catch (error) {
-            console.error("Error fetching permissions", error);
-        } finally {
-            setIsLoading(false);
-        }
-    }
-
-    React.useEffect(() => {
-        fetchAllPermissions();
-    }, [])
+    const { data: permissions, isLoading } = usePermissions()
 
     const onClick = (href: string) => {
         navigate(href)

@@ -1,16 +1,22 @@
-import  { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useDeviceInfo, useIpAddress, useGeolocation } from '@/hooks/useAttendance';
-import { APIDictionary } from '@/api/v2/APIdict';
-import axios, { AxiosError } from 'axios';
 import { useAuth } from '@/services/AuthContext';
+import { useDateTimeFormat } from '@/hooks/useDateTimeFormat';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { 
   getCurrentTimestamp, 
   createTimestampPayload 
 } from '@/utils/timeUtils';
+// TanStack Query hooks for attendance
+import {
+  useTodaySessionsQuery,
+  usePastNotCheckedDaysQuery,
+  useCheckInMutation,
+  useCheckOutMutation
+} from '@/hooks/queries/useAttendance';
 import {
   Table,
   TableBody,
@@ -47,19 +53,31 @@ const AttendancePanel = () => {
   const { deviceInfo } = useDeviceInfo();
   const { ipAddress } = useIpAddress();
   const { location } = useGeolocation();
-  const [loading, setLoading] = useState(false);
   const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
-  const [todaySessions, setTodaySessions] = useState<AttendanceRecord[]>([]);
   const router = useNavigate();
-  const [PastNotCheckedDayscount, setPastNotCheckedDayscount] = useState(0);
   const [reportDialogOpen, setReportDialogOpen] = useState<boolean>(false);
   const [reportData, setReportData] = useState<reportData>({ "Task 1": "Task 1", "Task 2": "Task 2" });
   const [taskCount, setTaskCount] = useState<number>(2);
   const [fallbackDialogVisible, setFallbackDialogVisible] = useState<boolean>(false);
   const [permissionList] = useAtom(permissionListAtom);
+  
+  // Add organization timezone and formatting hooks
+  const { orgTimezone } = useDateTimeFormat();
 
+  // TanStack Query hooks
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const { data: todaySessions = [], isLoading: sessionsLoading } = useTodaySessionsQuery(today);
+  const { data: pastNotCheckedDays = [], isLoading: pastDaysLoading } = usePastNotCheckedDaysQuery();
+  const checkInMutation = useCheckInMutation();
+  const checkOutMutation = useCheckOutMutation();
+
+  const isLoading = sessionsLoading || pastDaysLoading;
+  const loading = checkInMutation.isPending || checkOutMutation.isPending;
+  const PastNotCheckedDayscount = pastNotCheckedDays.length
+
+  // Permission helpers
   const hasPermission = (key: string) => {
     return permissionList.some(permission => permission.key === key);
   };
@@ -72,9 +90,10 @@ const AttendancePanel = () => {
 
   const canViewOthersAttendance = canViewSubordinatesAttendance || canViewAllUsersAttendance;
 
-  // Helper function to format time in 24-hour format
+  // Helper function to format time in organization timezone
   const formatTime24Hour = (date: Date): string => {
-    return date.toLocaleTimeString('en-GB', { 
+    return date.toLocaleString('en-GB', { 
+      timeZone: orgTimezone,
       hour12: false,
       hour: '2-digit',
       minute: '2-digit',
@@ -82,54 +101,21 @@ const AttendancePanel = () => {
     });
   };
 
-  
-  const fetchData = async () => {
-    try {
-      const response = await axios.get(`${APIDictionary.attendance}/check-out/past`, {
-        withCredentials: true
+  // Update session info when today's sessions change
+  useEffect(() => {
+    if (todaySessions && todaySessions.length > 0) {
+      const lastSession = todaySessions[todaySessions.length - 1];
+      setIsCheckedIn(!lastSession.checkOutTime);
+      setSessionInfo({
+        sessionNumber: lastSession.sessionNumber,
+        totalHours: lastSession.duration?.hours || 0,
+        status: lastSession.status
       });
-      setPastNotCheckedDayscount(response.data.length);
-      setLoading(false);
-    } catch (error) {
-      console.error('Failed to fetch past not checked days:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch past sessions",
-        variant: "destructive",
-      });
+    } else {
+      setIsCheckedIn(false);
+      setSessionInfo(null);
     }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    const checkCurrentSession = async () => {
-      try {
-        const today = format(new Date(), 'yyyy-MM-dd');
-        const response = await axios.get(`${APIDictionary.todaySessions}${today}`, {
-          withCredentials: true
-        });
-
-        const sessions = response.data;
-        setTodaySessions(sessions);
-
-        if (sessions.length > 0) {
-          const lastSession = sessions[sessions.length - 1];
-          setIsCheckedIn(!lastSession.checkOutTime);
-          setSessionInfo({
-            sessionNumber: lastSession.sessionNumber,
-            totalHours: lastSession.duration?.hours || 0,
-            status: lastSession.status
-          });
-        }
-      } catch (error) {
-        console.error('Failed to fetch sessions:', error);
-      }
-    };
-    checkCurrentSession();
-  }, []);
+  }, [todaySessions]);
 
   const handleCheckIn = async () => {
     if (!canMarkAttendance) {
@@ -141,59 +127,41 @@ const AttendancePanel = () => {
       return;
     }
 
-    setLoading(true);
-    try {
-      const currentDate = new Date(); // Client-side time
+    const currentDate = new Date();
+    const formattedDate = format(currentDate, 'yyyy-MM-dd');
 
-      const formattedDate = format(currentDate, 'yyyy-MM-dd');
+    const checkInData = {
+      date: formattedDate,
+      checkInTime: getCurrentTimestamp(),
+      checkInLocation: location ? `${location?.latitude},${location?.longitude}` : '',
+      notes: "",
+      ...createTimestampPayload()
+    };
 
-      const checkInData = {
-        date: formattedDate,
-        checkInTime: getCurrentTimestamp(), // Use ISO timestamp
-        checkInLocation: location ? `${location?.latitude},${location?.longitude}` : '',
-        notes: "",
-        ...createTimestampPayload() // Add timestamp and timezone info
-      };
-
-      const response = await axios.post(APIDictionary.checkIn, checkInData, {
-        withCredentials: true,
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-
-      if (response.status === 201) {
+    checkInMutation.mutate(checkInData, {
+      onSuccess: (response) => {
         setIsCheckedIn(true);
         setSessionInfo({
-          sessionNumber: response.data.sessionNumber,
+          sessionNumber: response.sessionNumber,
           totalHours: 0,
-          status: response.data.status
+          status: response.status
         });
         
         toast({
           title: "Checked in successfully",
-          description: `Session ${response.data.sessionNumber} started at ${formatTime24Hour(currentDate)}`,
+          description: `Session ${response.sessionNumber} started at ${formatTime24Hour(currentDate)}`,
           variant: "default"
         });
-      }
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error('Check-in failed:', error.response?.data?.message || error.message);
+      },
+      onError: (error: any) => {
+        console.error('Check-in failed:', error);
         toast({
           title: "Check-in failed",
           description: error.response?.data?.message || "Please try again",
           variant: "destructive"
         });
-      } else {
-        console.error('Check-in failed:', error);
-        toast({
-          title: "Check-in failed",
-          description: "An unexpected error occurred",
-          variant: "destructive"
-        });
       }
-    }
-    setLoading(false);
+    });
   };
 
   const submitCheckout = async () => {
@@ -206,59 +174,48 @@ const AttendancePanel = () => {
       return;
     }
 
-    setLoading(true);
-    try {
-      const currentDate = new Date(); // Client-side time
-      const checkOutData = {
-        userId: user?.id,
-        date: format(currentDate, 'yyyy-MM-dd'),
-        checkOutTime: getCurrentTimestamp(), // Use ISO timestamp
-        checkOutLocation: location ? `${location?.latitude},${location?.longitude}` : '',
-        notes: JSON.stringify(reportData),
-        deviceInfo: JSON.stringify(deviceInfo),
-        ipAddress,
-        reportContent: JSON.stringify(reportData),
-        ...createTimestampPayload() // Add timestamp and timezone info
-      };
+    const currentDate = new Date();
+    const checkOutData = {
+      userId: user?.id,
+      date: format(currentDate, 'yyyy-MM-dd'),
+      checkOutTime: getCurrentTimestamp(),
+      checkOutLocation: location ? `${location?.latitude},${location?.longitude}` : '',
+      notes: JSON.stringify(reportData),
+      deviceInfo: JSON.stringify(deviceInfo),
+      ipAddress,
+      reportContent: JSON.stringify(reportData),
+      ...createTimestampPayload()
+    };
 
-      const response = await axios.post(APIDictionary.checkOut, checkOutData, {
-        withCredentials: true
-      });
+    checkOutMutation.mutate(checkOutData, {
+      onSuccess: (response) => {
+        setIsCheckedIn(false);
+        if (response?.dailyTotal && response?.session) {
+          setSessionInfo({
+            sessionNumber: response.session.sessionNumber,
+            totalHours: response.dailyTotal.hours,
+            status: response.session.status
+          });
+        }
 
-      setIsCheckedIn(false);
-      if (response?.data?.dailyTotal && response?.data?.session) {
-        setSessionInfo({
-          sessionNumber: response?.data?.session?.sessionNumber,
-          totalHours: response?.data?.dailyTotal?.hours,
-          status: response?.data?.session?.status
+        setReportDialogOpen(false);
+        setFallbackDialogVisible(false);
+
+        toast({
+          title: "Checked out successfully",
+          description: `Session ended at ${formatTime24Hour(currentDate)}. Your daily report has been submitted`,
+          variant: "default"
+        });
+      },
+      onError: (error: any) => {
+        console.error("Checkout error details:", error);
+        toast({
+          title: error?.response?.data?.message || "Checkout failed",
+          description: "Please try again",
+          variant: "destructive"
         });
       }
-
-      setReportDialogOpen(false);
-      setFallbackDialogVisible(false);
-
-      toast({
-        title: "Checked out successfully",
-        description: `Session ended at ${formatTime24Hour(currentDate)}. Your daily report has been submitted`,
-        variant: "default"
-      });
-
-      const today = format(new Date(), 'yyyy-MM-dd');
-      const sessionsResponse = await axios.get(`${APIDictionary.todaySessions}${today}`, {
-        withCredentials: true
-      });
-      setTodaySessions(sessionsResponse.data);
-
-    } catch (error: AxiosError | any) {
-      console.error("Checkout error details:", error.response?.data || error.message);
-      toast({
-        title: error?.response?.data?.message || "Checkout failed",
-        description: "Please try again",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   const handleCheckOut = async () => {
@@ -369,10 +326,10 @@ const AttendancePanel = () => {
                   submitCheckout();
                   setFallbackDialogVisible(false);
                 }}
-                disabled={loading}
+                disabled={checkOutMutation.isPending}
                 className="px-4 py-2 bg-red-500 text-white rounded"
               >
-                {loading ? 'Processing...' : 'Submit & Check Out'}
+                {checkOutMutation.isPending ? 'Processing...' : 'Submit & Check Out'}
               </button>
             </div>
           </div>
@@ -440,10 +397,10 @@ const AttendancePanel = () => {
             <Button
               type="button"
               onClick={submitCheckout}
-              disabled={loading}
+              disabled={checkOutMutation.isPending}
               className="bg-red-500 hover:bg-red-600"
             >
-              {loading ? 'Processing...' : 'Submit & Check Out'}
+              {checkOutMutation.isPending ? 'Processing...' : 'Submit & Check Out'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -637,11 +594,11 @@ const AttendancePanel = () => {
                 {!isCheckedIn ? (
                   <Button
                     onClick={handleCheckIn}
-                    disabled={loading || !canMarkAttendance}
+                    disabled={checkInMutation.isPending || !canMarkAttendance}
                     className="bg-green-600 hover:bg-green-700 text-white py-6 px-8 text-lg"
                     size="lg"
                   >
-                    {loading ? (
+                    {checkInMutation.isPending ? (
                       <>
                         <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
                         Processing...
@@ -656,11 +613,11 @@ const AttendancePanel = () => {
                 ) : (
                   <Button
                     onClick={handleCheckOut}
-                    disabled={loading || !canMarkAttendance}
+                    disabled={checkOutMutation.isPending || !canMarkAttendance}
                     className="bg-red-600 hover:bg-red-700 text-white py-6 px-8 text-lg"
                     size="lg"
                   >
-                    {loading ? (
+                    {checkOutMutation.isPending ? (
                       <>
                         <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
                         Processing...
@@ -740,7 +697,7 @@ const AttendancePanel = () => {
                     {canMarkAttendance && (
                       <Button
                         onClick={handleCheckIn}
-                        disabled={loading || isCheckedIn}
+                        disabled={checkInMutation.isPending || isCheckedIn}
                         className="mt-4 bg-green-600 hover:bg-green-700 text-white"
                       >
                         Check In Now

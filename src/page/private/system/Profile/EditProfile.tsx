@@ -16,6 +16,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { AlertCircle, ArrowLeft, Save } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import RouteDict from '@/routes/RouteDict';
+import { useUserDetailsQuery, useUpdateProfileMutation } from '@/hooks/queries/useProfile';
 
 interface FormDataType {
   firstName: string;
@@ -44,10 +45,22 @@ const ProfileEdit = () => {
   const [managers, setManagers] = useState<User[]>([]);
   const [canEditStatus, setCanEditStatus] = useState(false);
   const [permissionList] = useAtom(permissionListAtom);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const {toast} = useToast();
+  const { toast } = useToast();
+
+  const userId = id || user?.id || ''
+  
+  // Use TanStack Query hooks
+  const { 
+    data: userResponse, 
+    isLoading: loading, 
+    error: userError 
+  } = useUserDetailsQuery(userId)
+  
+  const updateProfileMutation = useUpdateProfileMutation()
+  const submitting = updateProfileMutation.isPending
+
+  const userData = userResponse?.user
 
   const isOwnProfile = !id || id === user?.id;
   const canEditPersonalInfo = permissionList.some(p => p.key === 'update_personal_info') && isOwnProfile;
@@ -88,47 +101,20 @@ const ProfileEdit = () => {
   });
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
+    const fetchDepartmentsAndManagers = async () => {
+      if (!user?.orgId) return;
+      
       try {
-        const userId = id || user?.id;
-        const [userResponse, departmentResponse, managerListResponse] = await Promise.all([
-          axios.get(APIDictionary.userProfile(userId || ''), { withCredentials: true }),
+        const [departmentResponse, managerListResponse] = await Promise.all([
           axios.get(`${APIDictionary.department}/org/${user?.orgId}`, { withCredentials: true }),
           axios.get(`${APIDictionary.user}/fetch-managers/org/${user?.orgId}`, { withCredentials: true })
         ]);
         
         setManagers(managerListResponse.data);
         setDepartments(departmentResponse.data);
-        const userData = userResponse.data?.user;
-        
-        const isManager = userData?.managerId === user?.id;
-        setCanEditStatus(canEditAllUserInfo || (canEditSubordinatesInfo && isManager));
-
-        setFormData({
-          firstName: userData?.firstName || '',
-          lastName: userData?.lastName || '',
-          email: userData?.email || '',
-          address: userData?.address || '',
-          adharNumber: userData?.adharNumber || '',
-          panNumber: userData?.panNumber || '',
-          mobileNumber: userData?.mobileNumber || '',
-          emergencyContact: userData?.emergencyContact || '',
-          dateOfBirth: userData?.dateOfBirth?.split('T')[0] || '',
-          hiredDate: userData?.hiredDate?.split('T')[0] || '',
-          departmentId: userData?.departmentId || '',
-          annualPackage: userData?.annualPackage?.toString() || '',
-          monthlySalary: userData?.monthlySalary?.toString() || '',
-          orgId: userData?.orgId || '',
-          managerId: userData?.managerId || '',
-          status: userData?.status || 'active',
-        });
       } catch (error) {
-        console.error('Error fetching user data:', error);
-        setError('Failed to fetch profile data. Please try again later.');
-      } finally {
-        setLoading(false);
+        console.error('Error fetching departments/managers:', error);
+        setError('Failed to fetch departments and managers. Please try again later.');
       }
     };
     
@@ -142,31 +128,50 @@ const ProfileEdit = () => {
       return;
     }
     
-    fetchData();
-  }, [id, user, canEditProfile, navigate]);
+    fetchDepartmentsAndManagers();
+  }, [user?.orgId, canEditProfile, navigate, toast]);
+
+  // Update form data when user data loads
+  useEffect(() => {
+    if (userData) {
+      const isManager = userData?.managerId === user?.id;
+      setCanEditStatus(canEditAllUserInfo || (canEditSubordinatesInfo && isManager));
+
+      setFormData({
+        firstName: userData?.firstName || '',
+        lastName: userData?.lastName || '',
+        email: userData?.email || '',
+        address: userData?.address || '',
+        adharNumber: userData?.adharNumber || '',
+        panNumber: userData?.panNumber || '',
+        mobileNumber: userData?.mobileNumber || '',
+        emergencyContact: userData?.emergencyContact || '',
+        dateOfBirth: userData?.dateOfBirth?.split('T')[0] || '',
+        hiredDate: userData?.hiredDate?.split('T')[0] || '',
+        departmentId: userData?.departmentId || '',
+        annualPackage: userData?.annualPackage?.toString() || '',
+        monthlySalary: userData?.monthlySalary?.toString() || '',
+        orgId: userData?.orgId || '',
+        managerId: userData?.managerId || '',
+        status: userData?.status || 'active',
+      });
+    }
+  }, [userData, user?.id, canEditAllUserInfo, canEditSubordinatesInfo]);
+
+  // Handle errors
+  if (userError) {
+    setError('Failed to fetch profile data. Please try again later.');
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
     try {
       const userId = id || user?.id;
-      await axios.put(APIDictionary.userProfile(userId || ''), formData, {
-        withCredentials: true,
-      });
-      toast({
-        title: "Success!",
-        description: "Profile updated successfully",
-        variant: "default"
-      });
+      if (!userId) return;
+      
+      updateProfileMutation.mutate({ userId, data: formData });
     } catch (error) {
-      console.error('Error updating profile:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update profile. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setSubmitting(false);
+      console.error('Error in handleSubmit:', error);
     }
   };
 

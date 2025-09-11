@@ -22,6 +22,7 @@ import { useAtom } from 'jotai';
 import { permissionListAtom } from '@/store/atom';
 import { Landmark, SaveIcon } from 'lucide-react';
 import RouteDict from '@/routes/RouteDict';
+import { useBankDetailsQuery, useUpdateBankDetailsMutation } from '@/hooks/queries/useProfile';
 
 const BankDetails = () => {
   const form = useForm<IBankDetails>({
@@ -39,6 +40,16 @@ const BankDetails = () => {
   const navigate = useNavigate();
   const [permissionList] = useAtom(permissionListAtom);
 
+  const userId = id || user?.id || ''
+  
+  // Use TanStack Query hooks
+  const { 
+    data: bankDetails, 
+    error: bankError 
+  } = useBankDetailsQuery(userId)
+  
+  const updateBankMutation = useUpdateBankDetailsMutation()
+
   // Permission checks
   const isOwnProfile = !id || id === user?.id;
   const canEditOwnBank = permissionList.some(p => p.key === 'update_bank_own') && isOwnProfile;
@@ -50,7 +61,14 @@ const BankDetails = () => {
   
   // Determine if the current user is allowed to edit this bank info
   const canEditBankInfo = canEditOwnBank || canEditAllUserBank || (canEditSubordinatesBank && isManager);
-  
+
+  // Update form when bank details load
+  useEffect(() => {
+    if (bankDetails) {
+      form.reset(bankDetails);
+    }
+  }, [bankDetails, form]);
+
   useEffect(() => {
     const checkManagerRelationship = async () => {
       if (id && id !== user?.id) {
@@ -77,24 +95,13 @@ const BankDetails = () => {
     }
     
     checkManagerRelationship();
-    fetchBankDetails();
-  }, [user, id]);
+  }, [user, id, canEditOwnBank, canEditSubordinatesBank, canEditAllUserBank, toast, navigate]);
 
-  const fetchBankDetails = async () => {
-    try {
-      let response;
-      if(id){
-        response = await axios.get(`${APIDictionary.bank}/${id}`);
-        form.reset(response.data);
-      }else if(user?.id){
-        response = await axios.get(`${APIDictionary.bank}/${user?.id}`);
-        form.reset(response.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch bank details:', error);
-    }
+  // Handle bank details error
+  if (bankError) {
+    console.error('Failed to fetch bank details:', bankError);
   }
-  
+
   const onSubmit = async (data: IBankDetails) => {
     if (!canEditBankInfo) {
       toast({ 
@@ -106,18 +113,15 @@ const BankDetails = () => {
     }
     
     try {
-      const userId = id || user?.id;
-      if(!userId) {
+      if (!userId) {
         toast({ title: 'User not found', variant: 'destructive' });
         return;
       }
-      data = {...data, userId};
-      const response = await axios.put(APIDictionary.bank, data, {withCredentials:true});
-      if (response?.status === 200) {
-        toast({ title: 'Bank details saved successfully' });
-      }
+      
+      const bankData = { ...data, userId };
+      updateBankMutation.mutate(bankData);
     } catch (error) {
-      toast({ title: 'Failed to save bank details', variant: 'destructive' });
+      console.error('Error in onSubmit:', error);
     }
   };
 
@@ -244,10 +248,10 @@ const BankDetails = () => {
                   <Button 
                     type="submit" 
                     className="w-full mt-6 flex items-center justify-center gap-2 transition-all duration-200 hover:bg-primary/90" 
-                    disabled={!canEditBankInfo}
+                    disabled={!canEditBankInfo || updateBankMutation.isPending}
                   >
                     <SaveIcon className="h-4 w-4" />
-                    Save Bank Details
+                    {updateBankMutation.isPending ? "Saving..." : "Save Bank Details"}
                   </Button>
                 </form>
               </Form>

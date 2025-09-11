@@ -1,13 +1,10 @@
 import { useToast } from '@/hooks/use-toast'
-import { User, RelationshipResponse, RelationshipData } from '@/interface/general'
-import { APIDictionary } from '@/api/v2/APIdict'
+import { User, RelationshipData } from '@/interface/general'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { BriefcaseIcon, BanknotesIcon, UserIcon, PencilIcon, CalendarIcon, PhoneIcon, MapPinIcon, EnvelopeIcon, IdentificationIcon } from "@heroicons/react/24/outline"
-import axios from 'axios'
-import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/services/AuthContext'
 import { Button } from "@/components/ui/button"
@@ -16,6 +13,7 @@ import { useAtom } from 'jotai'
 import { motion } from 'framer-motion'
 import BankDetails from '@/components/BankDetails'
 import RouteDict from '@/routes/RouteDict'
+import { useProfileQuery, useRelationshipQuery } from '@/hooks/queries/useProfile'
 
 const ProfileInfo = () => {
     const { id } = useParams()
@@ -23,68 +21,32 @@ const ProfileInfo = () => {
     
     const { user } = useAuth()
     const navigate = useNavigate()
-    const [profileInfo, setProfileInfo] = useState<User>()
-    const [isLoading, setIsLoading] = useState(true)
     const { toast } = useToast()
     const [permissionList] = useAtom(permissionListAtom)
-    const [relationshipData, setRelationshipData] = useState<RelationshipData | null>(null)
 
-    const fetchProfileInfo = async () => {
-        setIsLoading(true)
-        try {
-            const profileId = id ? id : user?.id || '';
-            const profileInfo = await axios.get(APIDictionary.userProfile(profileId), { withCredentials: true })
-            
-            if (profileInfo.status == 200) {
-                setProfileInfo(profileInfo.data.user)
-            }
-            else {
-                toast({
-                    title: "Failed to fetch profile info",
-                    description: "Please try again later",
-                    variant: "destructive"
-                })
-            }
-        } catch (error) {
-            toast({
-                title: "Failed to fetch profile info",
-                description: "Please try again later",
-                variant: "destructive"
-            })
-        } finally {
-            setIsLoading(false)
-        }
-    }
-
-    const fetchRelationshipInfo = async () => {
-        try {
-            const targetUserId = id || user?.id || '';
-            let relationshipUrl;
-            
-            // If viewing someone else's profile, get relationship with that user
-            if (id && id !== user?.id) {
-                relationshipUrl = APIDictionary.relationshipWithUser(targetUserId);
-            } else {
-                // If viewing own profile or no ID, get organization relationship
-                relationshipUrl = APIDictionary.relationshipOrganization;
-            }
-            
-            const response = await axios.get(relationshipUrl, { withCredentials: true });
-            
-            if (response.status === 200) {
-                const relationshipResponse: RelationshipResponse = response.data;
-                setRelationshipData(relationshipResponse.data);
-            }
-        } catch (error) {
-            console.error('Error fetching relationship info:', error);
-            // Don't show toast for relationship errors as it's supplementary data
-        }
-    }
+    const profileId = id || user?.id || ''
     
-    useEffect(() => {
-        fetchProfileInfo()
-        fetchRelationshipInfo()
-    }, [id])
+    // Use TanStack Query hooks
+    const { 
+        data: profileInfo, 
+        isLoading, 
+        error: profileError 
+    } = useProfileQuery(profileId)
+    
+    const { 
+        data: relationshipResponse 
+    } = useRelationshipQuery(id && id !== user?.id ? id : undefined)
+    
+    const relationshipData = relationshipResponse?.data as RelationshipData
+
+    // Show error toast if profile fetch fails
+    if (profileError) {
+        toast({
+            title: "Failed to fetch profile info",
+            description: "Please try again later",
+            variant: "destructive"
+        })
+    }
     
     const hasPermission = (permissionKey: string) => {
         return permissionList.some(permission => permission.key === permissionKey);
@@ -220,7 +182,7 @@ const ProfileInfo = () => {
                             </div>
                             <h2 className="text-xl font-semibold">Profile Not Found</h2>
                             <p className="text-muted-foreground">The requested profile information could not be loaded.</p>
-                            <Button onClick={() => fetchProfileInfo()}>Retry</Button>
+                            <Button onClick={() => window.location.reload()}>Retry</Button>
                         </div>
                     </Card>
                 </div>

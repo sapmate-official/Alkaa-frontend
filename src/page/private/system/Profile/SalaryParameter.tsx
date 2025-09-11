@@ -1,9 +1,6 @@
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { ISalaryParameters } from '@/interface/salaryParameters';
-import { APIDictionary } from '@/api/v2/APIdict';
-import axios from 'axios';
-import { useToast } from '@/hooks/use-toast';
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -19,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useAuth } from '@/services/AuthContext';
 import { BanknoteIcon, PercentIcon, SaveIcon } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { useSalaryParametersQuery, useUpdateSalaryParametersMutation } from '@/hooks/queries/useProfile';
 
 const SalaryParameter = ({ userID }: { userID: string }) => {
   const form = useForm<ISalaryParameters>({
@@ -32,48 +30,33 @@ const SalaryParameter = ({ userID }: { userID: string }) => {
     }
   });
   const { user } = useAuth();
-  const { toast } = useToast();
 
+  // Use TanStack Query hooks
+  const { 
+    data: salaryParameters, 
+    error: parametersError 
+  } = useSalaryParametersQuery(userID)
+  
+  const updateParametersMutation = useUpdateSalaryParametersMutation()
+
+  // Update form when salary parameters load
   useEffect(() => {
-    if (user?.id) {
-      fetchSalaryParameters();
+    if (salaryParameters) {
+      form.reset(salaryParameters);
     }
-  }, [user]);
+  }, [salaryParameters, form]);
 
-  const fetchSalaryParameters = async () => {
-    try {
-      if (!user?.id) return;
-      const response = await axios.get(APIDictionary?.payrollParameters?.(userID));
-      console.log(response.data);
-
-      if (response?.data) {
-        form?.reset?.(response?.data);
-        console.log(form?.getValues());
-      }
-    } catch (error) {
-      console.error('Failed to fetch salary parameters:', error);
-    }
-  };
+  // Handle parameters error
+  if (parametersError) {
+    console.error('Failed to fetch salary parameters:', parametersError);
+  }
 
   const onSubmit = async (data: ISalaryParameters) => {
     try {
       if (!user?.id) return;
-      const numericData = {
-        ...data,
-        hraPercentage: parseFloat(data?.hraPercentage?.toString() ?? '0'),
-        daPercentage: parseFloat(data?.daPercentage?.toString() ?? '0'),
-        taPercentage: parseFloat(data?.taPercentage?.toString() ?? '0'),
-        pfPercentage: parseFloat(data?.pfPercentage?.toString() ?? '0'),
-        taxPercentage: parseFloat(data?.taxPercentage?.toString() ?? '0'),
-        insuranceFixed: parseFloat(data?.insuranceFixed?.toString() ?? '0'),
-        userId: userID
-      };
-      const response = await axios.post(APIDictionary?.payrollParameters?.(userID), numericData);
-      if (response?.status === 200) {
-        toast?.({ title: 'Salary parameters saved successfully' });
-      }
+      updateParametersMutation.mutate({ userId: userID, data });
     } catch (error) {
-      toast?.({ title: 'Failed to save salary parameters', variant: 'destructive' });
+      console.error('Error in onSubmit:', error);
     }
   };
 
@@ -179,9 +162,10 @@ const SalaryParameter = ({ userID }: { userID: string }) => {
             <Button
               type="submit"
               className="w-full mt-6 flex items-center justify-center gap-2 transition-all duration-200 hover:bg-primary/90"
+              disabled={updateParametersMutation.isPending}
             >
               <SaveIcon className="h-4 w-4" />
-              Save Salary Parameters
+              {updateParametersMutation.isPending ? "Saving..." : "Save Salary Parameters"}
             </Button>
           </form>
         </Form>

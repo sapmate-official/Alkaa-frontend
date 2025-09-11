@@ -2,6 +2,7 @@ import { useEffect, useState, lazy, Suspense } from 'react'
 import './App.css'
 import { Route, Routes, BrowserRouter, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './services/AuthContext';
+import { TimezoneProvider } from './hooks/useTimezone';
 import Loader from './components/Loader';
 import axios from 'axios';
 import { APIDictionary } from './api/v2/APIdict';
@@ -68,11 +69,13 @@ function App() {
             element={
               <AuthProvider>
                 <ProtectedRouteGuard>
-                  <MainLayout>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <ProtectedRoute />
-                    </Suspense>
-                  </MainLayout>
+                  <TimezoneProvider>
+                    <MainLayout>
+                      <Suspense fallback={<LoadingFallback />}>
+                        <ProtectedRoute />
+                      </Suspense>
+                    </MainLayout>
+                  </TimezoneProvider>
                 </ProtectedRouteGuard>
               </AuthProvider>
             }

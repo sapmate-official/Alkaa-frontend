@@ -66,11 +66,13 @@ import {
   Crown,
   Lock
 } from 'lucide-react';
-import { APIDictionary } from '@/api/v2/APIdict';
-import { useAuth } from '@/services/AuthContext';
-import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
-import { Permission, Role, User, PermissionPreset } from '@/interface/general';
+import { 
+  useRoles, useCreateRole, useUpdateRole, useDeleteRole,
+  Role as TanStackRole, Permission as TanStackPermission
+} from '@/hooks/queries/useRoles';
+import { usePermissions as usePermissionsQuery, usePermissionPresets } from '@/hooks/queries/usePermissions';
+import { useEmployees } from '@/hooks/queries/useEmployees';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -82,7 +84,7 @@ import {
 
 interface PermissionGroup {
   category: string;
-  permissions: Permission[];
+  permissions: TanStackPermission[];
 }
 
 interface LoadingStates {
@@ -96,16 +98,12 @@ interface LoadingStates {
 
 const ModernRolePermissionManager = () => {
   // State management
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [, setPermissions] = useState<Permission[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
   const [permissionGroups, setPermissionGroups] = useState<PermissionGroup[]>([]);
-  const [permissionPresets, setPermissionPresets] = useState<PermissionPreset[]>([]);
   
   // UI state
   const [activeTab, setActiveTab] = useState<'roles' | 'permissions' | 'assignments'>('roles');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [selectedRole, setSelectedRole] = useState<TanStackRole | null>(null);
   const [isCreateRoleOpen, setIsCreateRoleOpen] = useState(false);
   const [isEditRoleOpen, setIsEditRoleOpen] = useState(false);
   const [isDeleteRoleOpen, setIsDeleteRoleOpen] = useState(false);
@@ -118,7 +116,7 @@ const ModernRolePermissionManager = () => {
   const [editedPermissions, setEditedPermissions] = useState<string[]>([]);
   
   // Loading states
-  const [loading, setLoading] = useState<LoadingStates>({
+  const [loading] = useState<LoadingStates>({
     roles: false,
     permissions: false,
     users: false,
@@ -128,22 +126,34 @@ const ModernRolePermissionManager = () => {
   });
 
   const { toast } = useToast();
-  const { user } = useAuth();
+
+  // TanStack Query hooks
+  const { data: roles = [], isLoading: rolesLoading } = useRoles();
+  const { data: permissions = [], isLoading: permissionsLoading } = usePermissionsQuery();
+  const { data: users = [], isLoading: usersLoading } = useEmployees();
+  const { data: permissionPresets = [] } = usePermissionPresets();
+  const createRoleMutation = useCreateRole();
+  const updateRoleMutation = useUpdateRole();
+  const deleteRoleMutation = useDeleteRole();
 
   // Fetch data on component mount
   useEffect(() => {
-    fetchRoles();
-    fetchPermissions();
-    fetchUsers();
-    fetchPermissionPresets();
+    // Data is automatically fetched by TanStack Query hooks
   }, []);
 
+  // Update permission groups when permissions change
+  useEffect(() => {
+    if (permissions.length > 0) {
+      setPermissionGroups(groupPermissionsByCategory(permissions));
+    }
+  }, [permissions]);
+
   // Group permissions by category
-  const groupPermissionsByCategory = (permissions: Permission[]): PermissionGroup[] => {
-    const groups: { [key: string]: Permission[] } = {};
+  const groupPermissionsByCategory = (permissions: TanStackPermission[]): PermissionGroup[] => {
+    const groups: { [key: string]: TanStackPermission[] } = {};
     
     permissions.forEach(permission => {
-      const category = permission.module || 'General';
+      const category = permission.category || 'General';
       if (!groups[category]) {
         groups[category] = [];
       }
@@ -156,65 +166,29 @@ const ModernRolePermissionManager = () => {
     }));
   };
 
-  // API calls
-  const fetchRoles = async () => {
-    setLoading(prev => ({ ...prev, roles: true }));
-    try {
-      const response = await axios.get(`${APIDictionary.role}/org/${user?.orgId}`);
-      setRoles(response.data);
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch roles',
-        variant: 'destructive'
-      });
-    } finally {
-      setLoading(prev => ({ ...prev, roles: false }));
-    }
+  // Get user count for a role
+  const getUserCountForRole = (roleId: string) => {
+    return users.filter((user: any) => 
+      user.roles?.some((userRole: any) => userRole.roleId === roleId)
+    ).length;
   };
 
-  const fetchPermissions = async () => {
-    setLoading(prev => ({ ...prev, permissions: true }));
-    try {
-      const response = await axios.get(`${APIDictionary.permission}/org/${user?.orgId}`);
-      setPermissions(response.data);
-      setPermissionGroups(groupPermissionsByCategory(response.data));
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch permissions',
-        variant: 'destructive'
-      });
-    } finally {
-      setLoading(prev => ({ ...prev, permissions: false }));
-    }
+  const copyRole = (role: TanStackRole) => {
+    setNewRoleName(`${role.name} (Copy)`);
+    setNewRoleDescription(role.description || '');
+    setSelectedPermissions(role.permissions.map(p => p.id));
+    setIsCreateRoleOpen(true);
   };
 
-  const fetchUsers = async () => {
-    setLoading(prev => ({ ...prev, users: true }));
-    try {
-      const response = await axios.get(`${APIDictionary.user}/org/${user?.orgId}`, {
-        withCredentials: true
-      });
-      setUsers(response.data);
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch users',
-        variant: 'destructive'
-      });
-    } finally {
-      setLoading(prev => ({ ...prev, users: false }));
-    }
+  const openEditRole = (role: TanStackRole) => {
+    setSelectedRole(role);
+    setEditedPermissions(role.permissions.map(p => p.id));
+    setIsEditRoleOpen(true);
   };
 
-  const fetchPermissionPresets = async () => {
-    try {
-      const response = await axios.get(`${APIDictionary.permissionPreset}/org/${user?.orgId}`);
-      setPermissionPresets(response.data);
-    } catch (error) {
-      console.error('Failed to fetch permission presets:', error);
-    }
+  const openViewPermissions = (role: TanStackRole) => {
+    setSelectedRole(role);
+    setIsViewPermissionsOpen(true);
   };
 
   const createRole = async () => {
@@ -227,17 +201,12 @@ const ModernRolePermissionManager = () => {
       return;
     }
 
-    setLoading(prev => ({ ...prev, creating: true }));
     try {
-      const roleData = {
+      await createRoleMutation.mutateAsync({
         name: newRoleName,
         description: newRoleDescription,
-        orgId: user?.orgId,
-        isDefault: false,
-        permissionIds: selectedPermissions
-      };
-
-      await axios.post(APIDictionary.role, roleData);
+        permissions: selectedPermissions
+      });
       
       toast({
         title: 'Success',
@@ -250,32 +219,26 @@ const ModernRolePermissionManager = () => {
       setNewRoleDescription('');
       setSelectedPermissions([]);
       setIsCreateRoleOpen(false);
-      
-      // Refresh roles
-      fetchRoles();
     } catch (error) {
       toast({
         title: 'Error',
         description: 'Failed to create role',
         variant: 'destructive'
       });
-    } finally {
-      setLoading(prev => ({ ...prev, creating: false }));
     }
   };
 
   const updateRole = async () => {
     if (!selectedRole) return;
 
-    setLoading(prev => ({ ...prev, updating: true }));
     try {
-      const permissions = editedPermissions.map(permId => ({
-        permissionId: permId,
-        roleId: selectedRole.id
-      }));
-
-      await axios.put(`${APIDictionary.role}/${selectedRole.id}`, { 
-        permissions 
+      await updateRoleMutation.mutateAsync({ 
+        id: selectedRole.id, 
+        data: {
+          name: selectedRole.name,
+          description: selectedRole.description,
+          permissions: editedPermissions
+        }
       });
 
       toast({
@@ -287,24 +250,20 @@ const ModernRolePermissionManager = () => {
       setIsEditRoleOpen(false);
       setSelectedRole(null);
       setEditedPermissions([]);
-      fetchRoles();
     } catch (error) {
       toast({
         title: 'Error',
         description: 'Failed to update role',
         variant: 'destructive'
       });
-    } finally {
-      setLoading(prev => ({ ...prev, updating: false }));
     }
   };
 
   const deleteRole = async () => {
     if (!selectedRole) return;
 
-    setLoading(prev => ({ ...prev, deleting: true }));
     try {
-      await axios.delete(`${APIDictionary.role}/${selectedRole.id}`);
+      await deleteRoleMutation.mutateAsync(selectedRole.id);
       
       toast({
         title: 'Success',
@@ -314,15 +273,12 @@ const ModernRolePermissionManager = () => {
 
       setIsDeleteRoleOpen(false);
       setSelectedRole(null);
-      fetchRoles();
     } catch (error) {
       toast({
         title: 'Error',
         description: 'Failed to delete role',
         variant: 'destructive'
       });
-    } finally {
-      setLoading(prev => ({ ...prev, deleting: false }));
     }
   };
 
@@ -350,36 +306,11 @@ const ModernRolePermissionManager = () => {
     }
   };
 
-  const copyRole = (role: Role) => {
-    setNewRoleName(`${role.name} (Copy)`);
-    setNewRoleDescription(role.description || '');
-    setSelectedPermissions(role.permissions.map(p => p.permissionId));
-    setIsCreateRoleOpen(true);
-  };
-
-  const openEditRole = (role: Role) => {
-    setSelectedRole(role);
-    setEditedPermissions(role.permissions.map(p => p.permissionId));
-    setIsEditRoleOpen(true);
-  };
-
-  const openViewPermissions = (role: Role) => {
-    setSelectedRole(role);
-    setIsViewPermissionsOpen(true);
-  };
-
   // Filter roles based on search term
   const filteredRoles = roles.filter(role =>
     role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     role.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  // Get user count for a role
-  const getUserCountForRole = (roleId: string) => {
-    return users.filter(user => 
-      user.roles?.some(userRole => userRole.roleId === roleId)
-    ).length;
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-6">
@@ -458,7 +389,7 @@ const ModernRolePermissionManager = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {loading.roles ? (
+                {rolesLoading ? (
                   <div className="flex justify-center py-12">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                   </div>
@@ -573,7 +504,7 @@ const ModernRolePermissionManager = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {loading.permissions ? (
+                {permissionsLoading ? (
                   <div className="flex justify-center py-12">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
                   </div>
@@ -626,7 +557,7 @@ const ModernRolePermissionManager = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {loading.users ? (
+                {usersLoading ? (
                   <div className="flex justify-center py-12">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
                   </div>
@@ -650,13 +581,13 @@ const ModernRolePermissionManager = () => {
                             </TableCell>
                             <TableCell className="text-slate-600">{user.email}</TableCell>
                             <TableCell>
-                              {user.Department?.[0]?.name || 'No Department'}
+                              {user.department?.name || 'No Department'}
                             </TableCell>
                             <TableCell>
                               <div className="flex flex-wrap gap-1">
                                 {user.roles?.map((userRole) => (
-                                  <Badge key={userRole.id} variant="secondary" className="text-xs">
-                                    {roles.find(r => r.id === userRole.roleId)?.name || 'Unknown Role'}
+                                  <Badge key={userRole.role.id} variant="secondary" className="text-xs">
+                                    {roles.find(r => r.id === userRole.role.id)?.name || 'Unknown Role'}
                                   </Badge>
                                 )) || (
                                   <Badge variant="outline" className="text-xs">No roles assigned</Badge>
@@ -708,7 +639,7 @@ const ModernRolePermissionManager = () => {
                   <Select onValueChange={(value) => {
                     const preset = permissionPresets.find(p => p.id === value);
                     if (preset) {
-                      handleSelectPreset(preset.permissions);
+                      handleSelectPreset(preset.permissions.map(p => p.id));
                     }
                   }}>
                     <SelectTrigger>
@@ -900,7 +831,7 @@ const ModernRolePermissionManager = () => {
               {selectedRole && (
                 <div className="space-y-4">
                   {permissionGroups.map((group) => {
-                    const rolePermissions = selectedRole.permissions.map(p => p.permissionId);
+                    const rolePermissions = selectedRole.permissions.map(p => p.id);
                     const groupRolePermissions = group.permissions.filter(p => rolePermissions.includes(p.id));
                     
                     if (groupRolePermissions.length === 0) return null;

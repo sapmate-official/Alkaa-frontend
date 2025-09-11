@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/services/AuthContext";
-import { APIDictionary } from "@/api/v2/APIdict";
+import { useCreateNotificationTemplate } from "@/hooks/queries/useNotifications";
 
 enum NotificationType {
   EMAIL = 'EMAIL',
@@ -51,6 +51,9 @@ const formSchema = z.object({
 const NotificationTemplateCreate = () => {
   const { toast } = useToast();
   const { user } = useAuth();
+  
+  // Use TanStack Query mutation
+  const createTemplateMutation = useCreateNotificationTemplate();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -65,27 +68,22 @@ const NotificationTemplateCreate = () => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const response = await fetch(`${APIDictionary?.notification}/template`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...values,
-          variables: values?.variables ? JSON.parse(values.variables) : {},
-          orgId: user?.orgId
-        })
+      await createTemplateMutation.mutateAsync({
+        name: values.name,
+        type: values.type as 'EMAIL' | 'IN_APP' | 'PUSH',
+        subject: values.subject,
+        body: values.content,
+        category: 'GENERAL', // Default category
+        variables: values.variables ? JSON.parse(values.variables) : []
       });
 
-      if (!response?.ok) {
-        throw new Error('Failed to create template');
-      }
-
-      toast?.({
+      toast({
         title: "Success",
         description: "Notification template created successfully",
       });
-      form?.reset();
-    } catch (error:any) {
-      toast?.({
+      form.reset();
+    } catch (error: any) {
+      toast({
         title: "Error",
         description: error?.message || "Something went wrong",
         variant: "destructive",
@@ -191,8 +189,8 @@ const NotificationTemplateCreate = () => {
                 )}
               />
 
-              <Button type="submit" className="w-full">
-                Create Template
+              <Button type="submit" className="w-full" disabled={createTemplateMutation.isPending}>
+                {createTemplateMutation.isPending ? "Creating..." : "Create Template"}
               </Button>
             </form>
           </Form>

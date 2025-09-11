@@ -1,4 +1,3 @@
-import { APIDictionary } from '@/api/v2/APIdict';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/services/AuthContext';
 import {
@@ -10,41 +9,38 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import axios from 'axios';
-import  { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { NotificationSubscribe } from '@/components/ui/NotificationSubscribe';
 import { NotificationTest } from '@/components/ui/NotificationTest';
 import RouteDict from '@/routes/RouteDict';
-
-interface Notification {
-  id: string;
-  content: string;
-  isRead: boolean;
-  readAt: string | null;
-  createdAt: string;
-  metadata: Record<string, any>;
-}
+import { useUserNotifications, type Notification } from '@/hooks/queries/useNotifications';
 
 const ListOfNotification = () => {
-    const {user} = useAuth()
+    const { user } = useAuth()
     const navigate = useNavigate()
-    const [notifications, setNotifications] = useState<Notification[]>([])
+    
+    // Use TanStack Query hook instead of manual state and axios
+    const { data: notifications = [], isLoading, error } = useUserNotifications(user?.id || '');
 
-    const fetchNotification = async () => {
-        try {
-            const response = await axios.get(`${APIDictionary.notification}/${user?.id}`);
-            setNotifications(response.data);
-        } catch (error) {
-            console.error('Failed to fetch notification:', error);
-        }
+    if (isLoading) {
+        return (
+            <div className="p-4 w-full h-full overflow-y-scroll">
+                <div className="flex justify-center items-center h-64">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                </div>
+            </div>
+        );
     }
 
-    useEffect(()=>{
-        if(user){
-            fetchNotification()
-        }
-    },[user])
+    if (error) {
+        return (
+            <div className="p-4 w-full h-full overflow-y-scroll">
+                <div className="flex justify-center items-center h-64">
+                    <p className="text-red-600">Failed to load notifications</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="p-4 w-full h-full overflow-y-scroll">
@@ -75,7 +71,12 @@ const ListOfNotification = () => {
                                     {notification?.isRead ? "Read" : "Unread"}
                                 </Badge>
                             </TableCell>
-                            <TableCell>{notification?.content}</TableCell>
+                            <TableCell>
+                                <div>
+                                    <div className="font-medium">{notification?.title}</div>
+                                    <div className="text-sm text-muted-foreground">{notification?.message}</div>
+                                </div>
+                            </TableCell>
                             <TableCell>
                                 {notification?.createdAt && new Date(notification.createdAt).toLocaleDateString('en-US', {
                                     year: 'numeric',

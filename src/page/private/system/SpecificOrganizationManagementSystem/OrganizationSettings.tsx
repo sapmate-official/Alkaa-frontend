@@ -1,7 +1,5 @@
-import { APIDictionary } from '@/api/v2/APIdict'
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/services/AuthContext'
-import axios from 'axios'
 import { useEffect, useState } from 'react'
 import { useAtom } from 'jotai'
 import { permissionListAtom } from '@/store/atom'
@@ -10,79 +8,63 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
-import { AlertCircle, Info, RefreshCw, Save } from "lucide-react"
+import { AlertCircle, Info, RefreshCw, Save, Clock, Globe } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
-
-interface OrganizationSettingsType {
-  id: string;
-  orgId: string;
-  settings: {
-    weekoff?: number[];
-    [key: string]: any;
-  };
-  createdAt?: string;
-  updatedAt?: string;
-}
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { useOrganizationSettingsQuery, useSaveOrganizationSettings, useResetOrganizationSettings } from '@/hooks/queries/useOrganizationSettings'
 
 const OrganizationSettings = () => {
     const { user } = useAuth()
-    const [organizationSettings, setOrganizationSettings] = useState<OrganizationSettingsType | OrganizationSettingsType[] | null>(null)
-    const [loading, setLoading] = useState<boolean>(false)
-    const [saving, setSaving] = useState<boolean>(false)
+    // Local editable fields derived from query data
     const [editedWeekoffs, setEditedWeekoffs] = useState<number[]>([])
+    const [editedTimezone, setEditedTimezone] = useState<string>('Asia/Kolkata')
+    const [editedWorkingHours, setEditedWorkingHours] = useState<string>('9:00 AM - 6:00 PM')
+    const [saving, setSaving] = useState(false)
     const { toast } = useToast()
     const [permissionList] = useAtom(permissionListAtom)
     
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    
+    // Common timezone options
+    const timezoneOptions = [
+        { value: 'Asia/Kolkata', label: 'India (IST) - Asia/Kolkata' },
+        { value: 'Asia/Dubai', label: 'UAE (GST) - Asia/Dubai' },
+        { value: 'Asia/Singapore', label: 'Singapore (SGT) - Asia/Singapore' },
+        { value: 'Asia/Tokyo', label: 'Japan (JST) - Asia/Tokyo' },
+        { value: 'Europe/London', label: 'UK (GMT/BST) - Europe/London' },
+        { value: 'Europe/Paris', label: 'Central Europe (CET) - Europe/Paris' },
+        { value: 'America/New_York', label: 'US Eastern (EST/EDT) - America/New_York' },
+        { value: 'America/Chicago', label: 'US Central (CST/CDT) - America/Chicago' },
+        { value: 'America/Denver', label: 'US Mountain (MST/MDT) - America/Denver' },
+        { value: 'America/Los_Angeles', label: 'US Pacific (PST/PDT) - America/Los_Angeles' },
+        { value: 'Australia/Sydney', label: 'Australia Eastern (AEST) - Australia/Sydney' },
+        { value: 'Pacific/Auckland', label: 'New Zealand (NZST) - Pacific/Auckland' },
+        { value: 'UTC', label: 'UTC (Coordinated Universal Time)' }
+    ]
 
     // Permission check functions
     const hasViewPermission = permissionList.some(permission => permission.key === 'view_org_settings')
     const hasManagePermission = permissionList.some(permission => permission.key === 'manage_org_setting')
 
+    // Query: fetch organization settings
+    const orgId = user?.organization?.id
+    const { data: normalizedSettings, isLoading } = useOrganizationSettingsQuery(orgId, hasViewPermission)
+
+    // Mutations
+    const saveMutation = useSaveOrganizationSettings()
+    const resetMutation = useResetOrganizationSettings()
+
+    // Sync local editable state when query data arrives
     useEffect(() => {
-        const fetchOrganisation = async () => {
-            // Only fetch if user has at least view permission
-            if (!hasViewPermission) return
-            
-            try {
-                setLoading(true)
-                const settingsUrl = typeof APIDictionary.OrganizationSettings === 'function' 
-                    ? APIDictionary.OrganizationSettings() 
-                    : APIDictionary.OrganizationSettings;
-                const response = await axios.get(`${settingsUrl}/${user?.organization?.id}`);
-                console.log("API Response:", response.data);
-                
-                setOrganizationSettings(response?.data);
-                
-                // Handle different possible response structures
-                let weekoffData: number[] = [];
-                if (Array.isArray(response?.data)) {
-                    // If response.data is an array, try to get weekoff from the first item
-                    weekoffData = response?.data[0]?.settings?.weekoff || [];
-                } else if (response?.data?.settings?.weekoff) {
-                    // If response.data is an object with settings.weekoff
-                    weekoffData = response.data.settings.weekoff;
-                } else if (response?.data?.weekoff) {
-                    // If response.data is an object with direct weekoff property
-                    weekoffData = response.data.weekoff;
-                }
-                
-                setEditedWeekoffs(weekoffData);
-            } catch (error) {
-                console.error('Failed to fetch organisation:', error);
-                toast({
-                    title: "Error",
-                    description: "Failed to fetch organization settings. Please try again.",
-                    variant: "destructive",
-                })
-            } finally {
-                setLoading(false)
-            }
-        }
-        if (user) {
-            fetchOrganisation()
-        }
-    },[user, hasViewPermission])
+      if (normalizedSettings) {
+        setEditedWeekoffs(normalizedSettings.weekoff)
+        setEditedTimezone(normalizedSettings.timezone)
+        setEditedWorkingHours(normalizedSettings.workingHours)
+        // raw retained in query cache if needed
+      }
+    }, [normalizedSettings])
 
     const handleWeekoffChange = (dayIndex: number) => {
         if (editedWeekoffs.includes(dayIndex)) {
@@ -102,60 +84,25 @@ const OrganizationSettings = () => {
             })
             return
         }
-
-        if (!user?.organization?.id) return
-        
-        try {
-            setSaving(true)
-            const settingsUrl = typeof APIDictionary.OrganizationSettings === 'function' 
-                ? APIDictionary.OrganizationSettings() 
-                : APIDictionary.OrganizationSettings;
-            await axios.put(`${settingsUrl}/${user.organization.id}`, {
-                settings: {
-                    weekoff: editedWeekoffs,
-                }
-            })
-            toast({
-                title: "Success",
-                description: "Settings saved successfully",
-                variant: "default",
-            })
-            // Update local state after successful save
-            if (organizationSettings) {
-                // Update in the same structure we received it
-                if (Array.isArray(organizationSettings)) {
-                    const updatedSettings = [...organizationSettings];
-                    if (updatedSettings[0]) {
-                        updatedSettings[0] = {
-                            ...updatedSettings[0],
-                            settings: {
-                                ...updatedSettings[0].settings,
-                                weekoff: editedWeekoffs
-                            }
-                        };
-                    }
-                    setOrganizationSettings(updatedSettings);
-                } else {
-                    const updatedSettings = {
-                        ...organizationSettings,
-                        settings: {
-                            ...organizationSettings.settings,
-                            weekoff: editedWeekoffs
-                        }
-                    };
-                    setOrganizationSettings(updatedSettings);
-                }
-            }
-        } catch (error) {
-            console.error('Failed to save settings:', error)
-            toast({
-                title: "Error",
-                description: "Failed to save settings. Please try again.",
-                variant: "destructive",
-            })
-        } finally {
-            setSaving(false)
-        }
+        if (!orgId) return
+        setSaving(true)
+        saveMutation.mutate(
+          {
+            orgId,
+            weekoff: editedWeekoffs,
+            timezone: editedTimezone,
+            workingHours: editedWorkingHours,
+          },
+          {
+            onSuccess: () => {
+              toast({ title: 'Success', description: 'Settings saved successfully' })
+            },
+            onError: () => {
+              toast({ title: 'Error', description: 'Failed to save settings. Please try again.', variant: 'destructive' })
+            },
+            onSettled: () => setSaving(false)
+          }
+        )
     }
 
     const resetSettings = async () => {
@@ -168,47 +115,20 @@ const OrganizationSettings = () => {
             })
             return
         }
-
-        if (!user?.organization?.id) return
-        
-        try {
-            setSaving(true)
-            const settingsUrl = typeof APIDictionary.OrganizationSettings === 'function' 
-                ? APIDictionary.OrganizationSettings() 
-                : APIDictionary.OrganizationSettings;
-            await axios.post(`${settingsUrl}/reset/${user.organization.id}`)
-            toast({
-                title: "Success",
-                description: "Settings reset to default successfully",
-                variant: "default",
-            })
-            
-            // Refetch the settings
-            const response = await axios.get(`${settingsUrl}/${user?.organization?.id}`);
-            console.log("Reset response:", response.data);
-            setOrganizationSettings(response?.data);
-            
-            // Handle different possible response structures
-            let weekoffData: number[] = [];
-            if (Array.isArray(response?.data)) {
-                weekoffData = response?.data[0]?.settings?.weekoff || [];
-            } else if (response?.data?.settings?.weekoff) {
-                weekoffData = response.data.settings.weekoff;
-            } else if (response?.data?.weekoff) {
-                weekoffData = response.data.weekoff;
-            }
-            
-            setEditedWeekoffs(weekoffData);
-        } catch (error) {
-            console.error('Failed to reset settings:', error)
-            toast({
-                title: "Error",
-                description: "Failed to reset settings. Please try again.",
-                variant: "destructive",
-            })
-        } finally {
-            setSaving(false)
-        }
+        if (!orgId) return
+        setSaving(true)
+        resetMutation.mutate(orgId, {
+          onSuccess: (normalized) => {
+            setEditedWeekoffs(normalized.weekoff)
+            setEditedTimezone(normalized.timezone)
+            setEditedWorkingHours(normalized.workingHours)
+            toast({ title: 'Success', description: 'Settings reset to default successfully' })
+          },
+          onError: () => {
+            toast({ title: 'Error', description: 'Failed to reset settings. Please try again.', variant: 'destructive' })
+          },
+            onSettled: () => setSaving(false)
+        })
     }
 
     // No permission to view
@@ -226,7 +146,7 @@ const OrganizationSettings = () => {
         )
     }
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="p-6 space-y-6 w-full max-w-5xl mx-auto">
                 <Skeleton className="h-8 w-64 mb-6" />
@@ -262,6 +182,71 @@ const OrganizationSettings = () => {
                 <h1 className='text-3xl font-bold'>Organization Settings</h1>
             </div>
             
+            <Card className="mb-6">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Globe className="h-5 w-5" />
+                        Organization Timezone
+                    </CardTitle>
+                    <CardDescription>
+                        Set the timezone for your organization. All timestamps and scheduling will use this timezone.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="timezone-select">Select Timezone</Label>
+                            <Select 
+                                value={editedTimezone} 
+                                onValueChange={setEditedTimezone}
+                                disabled={!hasManagePermission}
+                            >
+                                <SelectTrigger id="timezone-select">
+                                    <SelectValue placeholder="Select a timezone" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {timezoneOptions.map((tz) => (
+                                        <SelectItem key={tz.value} value={tz.value}>
+                                            {tz.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                            Current time in {editedTimezone}: {new Date().toLocaleString('en-US', { timeZone: editedTimezone })}
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card className="mb-6">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Clock className="h-5 w-5" />
+                        Working Hours
+                    </CardTitle>
+                    <CardDescription>
+                        Define the standard working hours for your organization
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-2">
+                        <Label htmlFor="working-hours">Working Hours</Label>
+                        <Input
+                            id="working-hours"
+                            value={editedWorkingHours}
+                            onChange={(e) => setEditedWorkingHours(e.target.value)}
+                            placeholder="e.g., 9:00 AM - 6:00 PM"
+                            disabled={!hasManagePermission}
+                        />
+                        <div className="text-sm text-muted-foreground">
+                            Enter your organization's standard working hours (e.g., "9:00 AM - 6:00 PM")
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
             <Card className="mb-6">
                 <CardHeader>
                     <CardTitle>Weekly Off Days</CardTitle>
