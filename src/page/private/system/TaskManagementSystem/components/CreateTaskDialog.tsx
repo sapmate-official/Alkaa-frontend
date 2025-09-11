@@ -10,12 +10,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/services/AuthContext';
-import { APIDictionary } from '@/api/v2/APIdict';
-import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+// Import TanStack Query hooks
+import { useEmployees, useTaskGroups, useCreateTask } from '@/hooks/queries';
 
 interface CreateTaskDialogProps {
   open: boolean;
@@ -46,26 +45,27 @@ interface TaskGroup {
 }
 
 const CreateTaskDialog = ({ open, onOpenChange, onTaskCreated, preselectedUser, preselectedGroup }: CreateTaskDialogProps) => {
-  const { user } = useAuth();
   const { toast } = useToast();
+  
+  // Use TanStack Query hooks instead of local state
+  const { data: users = [] } = useEmployees();
+  const { data: taskGroups = [] } = useTaskGroups();
+  const createTaskMutation = useCreateTask();
+  
   const [loading, setLoading] = useState(false);
-  const [users, setUsers] = useState<User[]>([]);
-  const [taskGroups, setTaskGroups] = useState<TaskGroup[]>([]);
   const [dueDate, setDueDate] = useState<Date>();
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    title: string;
+    description: string;
+    priority: "MEDIUM" | "LOW" | "HIGH" | "URGENT";
+  }>({
     title: '',
     description: '',
     priority: 'MEDIUM'
   });
-
-  useEffect(() => {
-    if (open) {
-      fetchUsersAndGroups();
-    }
-  }, [open]);
 
   // Handle preselected user or group
   useEffect(() => {
@@ -82,27 +82,6 @@ const CreateTaskDialog = ({ open, onOpenChange, onTaskCreated, preselectedUser, 
       }
     }
   }, [open, preselectedUser, preselectedGroup]);
-
-  const fetchUsersAndGroups = async () => {
-    try {
-      console.log('Fetching users for orgId:', user?.orgId);
-      const [usersResponse, groupsResponse] = await Promise.all([
-        axios.get(`${APIDictionary.user}/org/${user?.orgId}`, { withCredentials: true }),
-        axios.get(APIDictionary.taskGroup, { withCredentials: true })
-      ]);
-      
-      console.log('Users response:', usersResponse.data);
-      setUsers(usersResponse.data.data || usersResponse.data || []);
-      setTaskGroups(groupsResponse.data.data || []);
-    } catch (error) {
-      console.error('Error fetching users and groups:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load users and groups",
-        variant: "destructive"
-      });
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,7 +116,7 @@ const CreateTaskDialog = ({ open, onOpenChange, onTaskCreated, preselectedUser, 
         groupIds: selectedGroups
       };
 
-      await axios.post(APIDictionary.task, taskData, { withCredentials: true });
+      await createTaskMutation.mutateAsync(taskData);
       
       onTaskCreated();
       resetForm();
@@ -218,7 +197,7 @@ const CreateTaskDialog = ({ open, onOpenChange, onTaskCreated, preselectedUser, 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Priority</Label>
-              <Select value={formData.priority} onValueChange={(value) => setFormData(prev => ({ ...prev, priority: value }))}>
+              <Select value={formData.priority} onValueChange={(value: "MEDIUM" | "LOW" | "HIGH" | "URGENT") => setFormData(prev => ({ ...prev, priority: value }))}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>

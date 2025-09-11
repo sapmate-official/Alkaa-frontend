@@ -1,6 +1,4 @@
-import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import {
   Card,
   CardContent,
@@ -26,69 +24,28 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { APIV2Dictionary } from '@/api/v2/Api2Dicts';
 import RouteDict from '@/routes/RouteDict';
-
-interface DashboardData {
-  organization: {
-    name: string;
-    subscriptionPlan: string;
-    activeUsers: number;
-    subscriptionStart: string;
-    subscriptionEnd: string | null;
-    daysRemaining: number | null;
-    subscriptionStatus: string;
-  };
-  billing: {
-    latestBill: any;
-    totalBilledThisYear: number;
-    totalUnpaid: number;
-    unpaidCount: number;
-  };
-  billStatus: {
-    unpaid: number;
-    paid: number;
-    overdue: number;
-    total: number;
-  };
-  recentBills: any[];
-}
+import { useBillingDashboard } from '@/hooks/queries/useBilling';
 
 const BillingDashboard = () => {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get(APIV2Dictionary.billing.getDashboard(), { withCredentials: true });
-        
-        if (response.data.success) {
-          setDashboardData(response.data.data);
-          setError(null);
-        } else {
-          setError(response.data.message || 'Failed to load dashboard data');
-        }
-      } catch (error: any) {
-        console.error('Error fetching billing dashboard:', error);
-        setError(error.response?.data?.message || 'Failed to load dashboard data');
-        
-        toast({
-          title: 'Error loading data',
-          description: error.response?.data?.message || 'Failed to load dashboard data',
-          variant: 'destructive',
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Use TanStack Query hook instead of manual state and axios
+  const { 
+    data: dashboardData, 
+    isLoading: loading, 
+    error
+  } = useBillingDashboard();
 
-    fetchDashboardData();
-  }, [toast]);
+  // Handle error case
+  if (error) {
+    toast({
+      title: 'Error loading data',
+      description: 'Failed to load dashboard data',
+      variant: 'destructive',
+    });
+  }
 
   const getStatusBadge = (status: string | undefined) => {
     switch (status) {
@@ -363,7 +320,7 @@ const BillingDashboard = () => {
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Error</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
+        <AlertDescription>{error?.message || 'Failed to load dashboard data'}</AlertDescription>
       </Alert>
     );
   }

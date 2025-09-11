@@ -20,7 +20,7 @@ interface User {
 interface TaskUpdate {
   id: string;
   message: string;
-  status: string;
+  status?: string;
   createdAt: string;
   updatedBy: {
     firstName: string;
@@ -31,10 +31,10 @@ interface TaskUpdate {
 interface Task {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   status: string;
   priority: string;
-  dueDate: string;
+  dueDate?: string;
   createdAt: string;
   createdBy: {
     firstName: string;

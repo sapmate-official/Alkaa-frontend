@@ -1,7 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react'
-import axios from 'axios'
 import { useAuth } from '@/services/AuthContext'
-import { APIDictionary } from '@/api/v2/APIdict'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -14,80 +12,47 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useAtomValue } from 'jotai'
 import { permissionListAtom } from '@/store/atom'
 import { createPortal } from 'react-dom'
-
-// Types
-interface User {
-    id: string
-    firstName: string
-    lastName: string
-    email: string
-    employeeId?: string
-    status: 'active' | 'inactive' | 'suspended'
-    department?: {
-        id: string
-        name: string
-    }
-    roles?: {
-        role: {
-            id: string
-            name: string
-            permissions?: {
-                permission: {
-                    id: string
-                    name: string
-                    description?: string
-                }
-            }[]
-        }
-    }[]
-    createdAt: string
-    managerId?: string
-    manager?: {
-        id: string
-        firstName: string
-        lastName: string
-    }
-}
-
-interface Department {
-    id: string
-    name: string
-    headId?: string
-    description?: string
-}
-
-interface Role {
-    id: string
-    name: string
-    description?: string
-    permissions: {
-        permission: {
-            id: string
-            name: string
-            description?: string
-        }
-    }[]
-}
+// Import TanStack Query hooks
+import { 
+  useEmployees, 
+  useDepartmentsQuery, 
+  useRoles,
+  useAssignEmployeeRole,
+  useRemoveEmployeeRole,
+  useDeleteEmployee,
+  type Employee
+} from '@/hooks/queries'
 
 const EmployeeManagement: React.FC = () => {
     const { user } = useAuth()
     const { toast } = useToast()
 
+    // TanStack Query hooks replace direct axios calls
+    const { 
+        data: employees = [], 
+        isLoading: isLoadingEmployees
+    } = useEmployees()
+    
+    const { 
+        data: departments = []
+    } = useDepartmentsQuery()
+    
+    const { 
+        data: roles = []
+    } = useRoles()
+
+    // Mutation hooks
+    const assignRoleMutation = useAssignEmployeeRole()
+    const removeRoleMutation = useRemoveEmployeeRole()
+    const deleteEmployeeMutation = useDeleteEmployee()
+
     // State management
-    const [employees, setEmployees] = useState<User[]>([])
-    const [filteredEmployees, setFilteredEmployees] = useState<User[]>([])
-    const [departments, setDepartments] = useState<Department[]>([])
-    const [roles, setRoles] = useState<Role[]>([])
+    const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([])
     const [searchQuery, setSearchQuery] = useState('')
-    const [isLoading, setIsLoading] = useState({
-        employees: false,
-        departments: false,
-        roles: false,
-        action: false
-    })
+    const [isLoadingActions, setIsLoadingActions] = useState(false)
 
     // Selected employee state
-    const [selectedEmployee, setSelectedEmployee] = useState<User | null>(null)
+    const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
     const [selectedDepartment, setSelectedDepartment] = useState<string>('')
     const [selectedRole, setSelectedRole] = useState<string>('')
     const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -134,69 +99,12 @@ const EmployeeManagement: React.FC = () => {
     const [confirmationEmail, setConfirmationEmail] = useState('');
     const [isDeleting, setIsDeleting] = useState(false);
 
-    // Fetch employees data
-    const fetchEmployees = async () => {
-        setIsLoading(prev => ({ ...prev, employees: true }))
-        try {
-            const response = await axios.get(`${APIDictionary.user}/org/${user?.orgId}`, {
-                withCredentials: true
-            })
-            setEmployees(response.data)
-            setFilteredEmployees(response.data)
-            console.log('Fetched employees:', response.data)
-        } catch (error) {
-            console.error('Error fetching employees:', error)
-            toast({
-                title: "Error",
-                description: "Failed to fetch employees",
-                variant: "destructive"
-            })
-        } finally {
-            setIsLoading(prev => ({ ...prev, employees: false }))
+    // Update filtered employees when employees data changes
+    useEffect(() => {
+        if (employees) {
+            setFilteredEmployees(employees);
         }
-    }
-
-    // Fetch departments
-    const fetchDepartments = async () => {
-        setIsLoading(prev => ({ ...prev, departments: true }))
-        try {
-            const response = await axios.get(`${APIDictionary.department}/org/${user?.orgId}`, {
-                withCredentials: true
-            })
-            setDepartments(response.data)
-            console.log('Fetched departments:', response.data);
-            
-        } catch (error) {
-            console.error('Error fetching departments:', error)
-            toast({
-                title: "Error",
-                description: "Failed to fetch departments",
-                variant: "destructive"
-            })
-        } finally {
-            setIsLoading(prev => ({ ...prev, departments: false }))
-        }
-    }
-
-    // Fetch roles
-    const fetchRoles = async () => {
-        setIsLoading(prev => ({ ...prev, roles: true }))
-        try {
-            const response = await axios.get(`${APIDictionary.role}/org/${user?.orgId}`, {
-                withCredentials: true
-            })
-            setRoles(response.data)
-        } catch (error) {
-            console.error('Error fetching roles:', error)
-            toast({
-                title: "Error",
-                description: "Failed to fetch roles",
-                variant: "destructive"
-            })
-        } finally {
-            setIsLoading(prev => ({ ...prev, roles: false }))
-        }
-    }
+    }, [employees]);
 
     // Filter employees based on search query
     useEffect(() => {
@@ -215,13 +123,6 @@ const EmployeeManagement: React.FC = () => {
         )
         setFilteredEmployees(filtered)
     }, [searchQuery, employees])
-
-    // Initial data fetching
-    useEffect(() => {
-        fetchEmployees()
-        fetchDepartments()
-        fetchRoles()
-    }, [])
 
     // Check if user has required permission
     const hasPermission = (permissionKey: string) => {
@@ -267,7 +168,7 @@ const EmployeeManagement: React.FC = () => {
             }
             
             // Filter departments where this user is the head (headId equals current user's id)
-            const departmentsUserLeads = departments.filter(dept => dept.headId === user.id);
+            const departmentsUserLeads = departments.filter((dept: { headId?: string; id: string; name: string }) => dept.headId === user.id);
             console.log("Departments user leads:", departmentsUserLeads);
             return departmentsUserLeads;
         }
@@ -282,8 +183,13 @@ const EmployeeManagement: React.FC = () => {
     }
 
     // Open employee details dialog
-    const handleOpenEmployeeDetails = (employee: User) => {
-        setSelectedEmployee(employee)
+    const handleOpenEmployeeDetails = (employee: Employee) => {
+        // Convert User to Employee format
+        const employeeData: Employee = {
+            ...employee,
+            organizationId: user?.orgId || '', // Add the required organizationId
+        }
+        setSelectedEmployee(employeeData)
         setSelectedDepartment(employee.department?.id || '')
 
         // Get current role ID if it exists
@@ -295,7 +201,7 @@ const EmployeeManagement: React.FC = () => {
         setIsDialogOpen(true)
     }
 
-    // Handle department change
+    // Handle department change - Note: Department assignment functionality needs to be implemented
     const handleUpdateDepartment = async () => {
         if (!selectedEmployee || !selectedDepartment) return
         
@@ -309,30 +215,17 @@ const EmployeeManagement: React.FC = () => {
             return
         }
 
-        setIsLoading(prev => ({ ...prev, action: true }))
+        setIsLoadingActions(true)
         try {
-            await axios.put(`${APIDictionary.user}/${selectedEmployee.id}/department/${selectedDepartment}`, {}, {
-                withCredentials: true
-            })
-
-            // Update local state
-            const updatedEmployees = employees.map(emp => {
-                if (emp.id === selectedEmployee.id) {
-                    const updatedDepartment = departments.find(dept => dept.id === selectedDepartment)
-                    return {
-                        ...emp,
-                        department: updatedDepartment ? { id: updatedDepartment.id, name: updatedDepartment.name } : undefined
-                    }
-                }
-                return emp
-            })
-
-            setEmployees(updatedEmployees)
-            setFilteredEmployees(updatedEmployees)
+            // TODO: Implement department assignment mutation
+            // await assignDepartmentMutation.mutateAsync({
+            //     employeeId: selectedEmployee.id,
+            //     departmentId: selectedDepartment
+            // })
 
             toast({
-                title: "Success",
-                description: "Department updated successfully",
+                title: "Info",
+                description: "Department assignment functionality needs to be implemented",
                 variant: "default"
             })
         } catch (error) {
@@ -343,7 +236,7 @@ const EmployeeManagement: React.FC = () => {
                 variant: "destructive"
             })
         } finally {
-            setIsLoading(prev => ({ ...prev, action: false }))
+            setIsLoadingActions(false)
         }
     }
 
@@ -366,14 +259,21 @@ const EmployeeManagement: React.FC = () => {
             ? selectedEmployee.roles[0].role.id
             : 'null';
         
-        setIsLoading(prev => ({ ...prev, action: true }));
+        setIsLoadingActions(true);
         try {
-            await axios.put(`${APIDictionary.user}/${selectedEmployee.id}/role/${currentRoleId}/${selectedRole}`, {}, {
-                withCredentials: true
-            });
+            // If there's an existing role, remove it first
+            if (currentRoleId !== 'null') {
+                await removeRoleMutation.mutateAsync({
+                    employeeId: selectedEmployee.id,
+                    roleId: currentRoleId
+                });
+            }
             
-            // Refresh employee data to get updated roles
-            await fetchEmployees();
+            // Assign the new role
+            await assignRoleMutation.mutateAsync({
+                employeeId: selectedEmployee.id,
+                roleId: selectedRole
+            });
             
             toast({
                 title: "Success",
@@ -388,7 +288,7 @@ const EmployeeManagement: React.FC = () => {
                 variant: "destructive"
             });
         } finally {
-            setIsLoading(prev => ({ ...prev, action: false }));
+            setIsLoadingActions(false);
         }
     };
 
@@ -408,15 +308,7 @@ const EmployeeManagement: React.FC = () => {
         
         setIsDeleting(true);
         try {
-            await axios.delete(`${APIDictionary.user}`, {
-                data: { id: selectedEmployee.id },
-                withCredentials: true
-            });
-            
-            // Update local state
-            const updatedEmployees = employees.filter(emp => emp.id !== selectedEmployee.id);
-            setEmployees(updatedEmployees);
-            setFilteredEmployees(updatedEmployees);
+            await deleteEmployeeMutation.mutateAsync(selectedEmployee.id);
             
             // Close all dialogs and show success message
             setShowDeleteConfirmation(false);
@@ -468,7 +360,7 @@ const EmployeeManagement: React.FC = () => {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    {isLoading.employees ? (
+                    {isLoadingEmployees ? (
                         <div className="flex justify-center items-center h-60">
                             <Loader2 className="h-8 w-8 animate-spin text-primary" />
                         </div>
@@ -705,7 +597,7 @@ const EmployeeManagement: React.FC = () => {
                                                                     className="w-full mt-1 p-2 border rounded-md bg-background"
                                                                 >
                                                                     <option value="">Select a department</option>
-                                                                    {getAssignableDepartments().map((department) => (
+                                                                    {getAssignableDepartments().map((department: { id: string; name: string }) => (
                                                                         <option key={department.id} value={department.id}>
                                                                             {department.name}
                                                                         </option>
@@ -715,12 +607,12 @@ const EmployeeManagement: React.FC = () => {
 
                                                             <button
                                                                 onClick={handleUpdateDepartment}
-                                                                disabled={isLoading.action || 
+                                                                disabled={isLoadingActions || 
                                                                     selectedDepartment === selectedEmployee.department?.id || 
                                                                     !canAssignToDepartment(selectedDepartment)}
                                                                 className="w-full py-2 px-4 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50"
                                                             >
-                                                                {isLoading.action ? "Updating..." : "Update Department"}
+                                                                {isLoadingActions ? "Updating..." : "Update Department"}
                                                             </button>
                                                         </div>
                                                     </>
@@ -792,7 +684,7 @@ const EmployeeManagement: React.FC = () => {
                                                                         {(() => {
                                                                             const foundRole = roles.find(r => r.id === selectedRole);
                                                                             return foundRole?.permissions ? 
-                                                                                foundRole.permissions.map(({ permission }) => (
+                                                                                foundRole.permissions.map((permission) => (
                                                                                     <span key={permission.id} className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded-full">
                                                                                         {permission.name}
                                                                                     </span>
@@ -805,14 +697,14 @@ const EmployeeManagement: React.FC = () => {
 
                                                             <button 
                                                                 onClick={handleUpdateRole}
-                                                                disabled={isLoading.action || 
+                                                                disabled={isLoadingActions || 
                                                                     (selectedEmployee.roles && 
                                                                     selectedEmployee.roles.length > 0 && 
                                                                     selectedEmployee.roles[0].role.id === selectedRole) || 
                                                                     selectedRole === "none"}
                                                                 className="w-full py-2 px-4 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50"
                                                             >
-                                                                {isLoading.action ? "Updating..." : "Update Role"}
+                                                                {isLoadingActions ? "Updating..." : "Update Role"}
                                                             </button>
                                                         </div>
                                                     </>

@@ -1,4 +1,3 @@
-import { APIDictionary } from '@/api/v2/APIdict'
 import { Button } from '@/components/ui/button'
 import {
     Card,
@@ -10,8 +9,8 @@ import {
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from '@/services/AuthContext'
-import axios from 'axios'
 import { useEffect, useState } from 'react'
+import { useDepartmentsQuery } from '@/hooks/queries/useDepartments'
 import {  useNavigate } from 'react-router-dom'
 import { useAtom } from 'jotai'
 import { permissionListAtom } from '@/store/atom'
@@ -205,7 +204,6 @@ const ListOfDepartment = () => {
     const { toast } = useToast()
     const [allDepartments, setAllDepartments] = useState<Department[]>([])
     const [filteredDepartments, setFilteredDepartments] = useState<Department[]>([])
-    const [loading, setLoading] = useState(true)
     const { user } = useAuth()
     const [permissions] = useAtom(permissionListAtom)
     
@@ -222,24 +220,8 @@ const ListOfDepartment = () => {
     const canViewOwnDepartment = CheckPermission('view_own_department_info', permissions)
     const canCreateDepartment = CheckPermission('create_new_department', permissions)
     
-    const fetchList = async () => {
-        try {
-            setLoading(true)
-            const response = await axios.get(`${APIDictionary.department}/org/${user?.orgId}`, { withCredentials: true })
-            const departments = response.data
-            setAllDepartments(departments)
-            processUserDepartments(departments)
-        } catch (error) {
-            console.error('Error fetching departments:', error)
-            toast({
-                title: 'Error',
-                description: 'Failed to load departments. Please try again.',
-                variant: 'destructive'
-            })
-        } finally {
-            setLoading(false)
-        }
-    }
+    // React Query fetch
+    const { data: deptData, isLoading, isError } = useDepartmentsQuery(user?.orgId, !!user?.orgId)
 
     const processUserDepartments = (departments: Department[]) => {
         if (!user?.id) return
@@ -269,10 +251,20 @@ const ListOfDepartment = () => {
     }
 
     useEffect(() => {
-        if (user?.orgId) {
-            fetchList()
+        if (deptData) {
+            setAllDepartments(deptData)
+            processUserDepartments(deptData)
         }
-    }, [user])
+    }, [deptData])
+    useEffect(() => {
+        if (isError) {
+            toast({
+                title: 'Error',
+                description: 'Failed to load departments. Please try again.',
+                variant: 'destructive'
+            })
+        }
+    }, [isError, toast])
 
     useEffect(() => {
         let filtered = [...allDepartments]
@@ -349,7 +341,7 @@ const ListOfDepartment = () => {
         setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
     }
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="p-4 w-full h-full">
                 <div className="flex justify-between items-center mb-6">
@@ -366,7 +358,7 @@ const ListOfDepartment = () => {
     }
 
     // Check if user has no access to any departments
-    if (!loading && 
+    if (!isLoading && 
         headOfDepartments.length === 0 && 
         (!canViewOwnDepartment || !ownDepartment) && 
         (!canViewAllDepartments || otherDepartments.length === 0)) {

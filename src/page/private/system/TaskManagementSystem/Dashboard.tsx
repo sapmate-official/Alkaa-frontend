@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,8 +13,6 @@ import {
   Calendar
 } from 'lucide-react';
 import { useAuth } from '@/services/AuthContext';
-import { APIDictionary } from '@/api/v2/APIdict';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import RouteDict from '@/routes/RouteDict';
 import { useToast } from '@/hooks/use-toast';
@@ -24,6 +22,13 @@ import CreateTaskDialog from './components/CreateTaskDialog';
 import CreateGroupDialog from './components/CreateGroupDialog';
 import GroupDetailsDialog from './components/GroupDetailsDialog';
 import TaskStatsCards from './components/TaskStatsCards';
+// Import TanStack Query hooks
+import { 
+  useManagerTasks, 
+  useUserTasks, 
+  useTaskGroups,
+  Task
+} from '@/hooks/queries/useTasks';
 
 interface TaskStats {
   total: number;
@@ -33,45 +38,33 @@ interface TaskStats {
   overdue: number;
 }
 
-interface Task {
-  id: string;
-  title: string;
-  description: string;
-  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-  priority: string;
-  dueDate: string;
-  createdAt: string;
-  assignments?: Array<{
-    assignedTo: {
-      firstName: string;
-      lastName: string;
-    };
-  }>;
-}
-
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [permissionList] = useAtom(permissionListAtom);
-  const [isLoading, setIsLoading] = useState(true);
-  const [taskStats, setTaskStats] = useState<TaskStats>({
-    total: 0,
-    pending: 0,
-    inProgress: 0,
-    completed: 0,
-    overdue: 0
-  });
-  const [recentTasks, setRecentTasks] = useState<Task[]>([]);
-  const [taskGroups, setTaskGroups] = useState<any[]>([]);
-  const [myAssignedTasks, setMyAssignedTasks] = useState<Task[]>([]);
-  const [assignedTaskStats, setAssignedTaskStats] = useState<TaskStats>({
-    total: 0,
-    pending: 0,
-    inProgress: 0,
-    completed: 0,
-    overdue: 0
-  });
+  
+  // TanStack Query hooks replace direct axios calls
+  const { 
+    data: managerTasks = [], 
+    isLoading: isLoadingManagerTasks,
+    refetch: refetchManagerTasks
+  } = useManagerTasks(user?.id || '');
+  
+  const { 
+    data: assignedTasks = [], 
+    isLoading: isLoadingAssignedTasks,
+    refetch: refetchAssignedTasks
+  } = useUserTasks(user?.id || '');
+  
+  const { 
+    data: taskGroups = [], 
+    isLoading: isLoadingTaskGroups,
+    refetch: refetchTaskGroups
+  } = useTaskGroups();
+
+  const isLoading = isLoadingManagerTasks || isLoadingAssignedTasks || isLoadingTaskGroups;
+  
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [showGroupDetails, setShowGroupDetails] = useState(false);
@@ -80,61 +73,31 @@ const Dashboard = () => {
   // Check if user has permission to create tasks
   const canCreateTasks = permissionList.some(p => p.key === 'task_create');
 
-  const fetchDashboardData = async () => {
-    try {
-      setIsLoading(true);
-      
-      const [tasksResponse, groupsResponse, assignedTasksResponse] = await Promise.all([
-        axios.get(`${APIDictionary.tasksByManager(user?.id || '')}`, { withCredentials: true }),
-        axios.get(APIDictionary.taskGroup, { withCredentials: true }),
-        axios.get(APIDictionary.tasksByUser(user?.id || ''), { withCredentials: true })
-      ]);
+  // Calculate stats from TanStack Query data
+  const recentTasks = managerTasks?.slice(0, 5) || [];
+  const myAssignedTasks = assignedTasks || [];
 
-      const tasks: Task[] = tasksResponse.data.data || [];
-      const groups = groupsResponse.data.data || [];
-      const assignedTasks: Task[] = assignedTasksResponse.data.data || [];
-      
-      const stats = {
-        total: tasks.length,
-        pending: tasks.filter((t: Task) => t.status === 'PENDING').length,
-        inProgress: tasks.filter((t: Task) => t.status === 'IN_PROGRESS').length,
-        completed: tasks.filter((t: Task) => t.status === 'COMPLETED').length,
-        overdue: tasks.filter((t: Task) => new Date(t.dueDate) < new Date() && t.status !== 'COMPLETED').length,
-      };
-
-      const assignedStats = {
-        total: assignedTasks.length,
-        pending: assignedTasks.filter((t: Task) => t.status === 'PENDING').length,
-        inProgress: assignedTasks.filter((t: Task) => t.status === 'IN_PROGRESS').length,
-        completed: assignedTasks.filter((t: Task) => t.status === 'COMPLETED').length,
-        overdue: assignedTasks.filter((t: Task) => new Date(t.dueDate) < new Date() && t.status !== 'COMPLETED').length,
-      };
-
-      setTaskStats(stats);
-      setRecentTasks(tasks.slice(0, 5));
-      setTaskGroups(groups);
-      setMyAssignedTasks(assignedTasks);
-      setAssignedTaskStats(assignedStats);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load dashboard data",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  // Calculate task stats
+  const taskStats: TaskStats = {
+    total: managerTasks?.length || 0,
+    pending: managerTasks?.filter((t: Task) => t.status === 'PENDING').length || 0,
+    inProgress: managerTasks?.filter((t: Task) => t.status === 'IN_PROGRESS').length || 0,
+    completed: managerTasks?.filter((t: Task) => t.status === 'COMPLETED').length || 0,
+    overdue: managerTasks?.filter((t: Task) => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'COMPLETED').length || 0,
   };
 
-  useEffect(() => {
-    if (user?.id) {
-      fetchDashboardData();
-    }
-  }, [user?.id]);
+  const assignedTaskStats: TaskStats = {
+    total: assignedTasks?.length || 0,
+    pending: assignedTasks?.filter((t: Task) => t.status === 'PENDING').length || 0,
+    inProgress: assignedTasks?.filter((t: Task) => t.status === 'IN_PROGRESS').length || 0,
+    completed: assignedTasks?.filter((t: Task) => t.status === 'COMPLETED').length || 0,
+    overdue: assignedTasks?.filter((t: Task) => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'COMPLETED').length || 0,
+  };
 
   const handleTaskCreated = () => {
-    fetchDashboardData();
+    refetchManagerTasks();
+    refetchAssignedTasks();
+    refetchTaskGroups();
     setShowCreateTask(false);
     toast({
       title: "Success",
@@ -143,7 +106,7 @@ const Dashboard = () => {
   };
 
   const handleGroupCreated = () => {
-    fetchDashboardData();
+    refetchTaskGroups();
     setShowCreateGroup(false);
     toast({
       title: "Success",
@@ -152,7 +115,7 @@ const Dashboard = () => {
   };
 
   const handleGroupUpdated = () => {
-    fetchDashboardData();
+    refetchTaskGroups();
     toast({
       title: "Success",
       description: "Group updated successfully"
@@ -160,7 +123,7 @@ const Dashboard = () => {
   };
 
   const handleGroupDeleted = () => {
-    fetchDashboardData();
+    refetchTaskGroups();
     setShowGroupDetails(false);
     setSelectedGroup(null);
     toast({
@@ -251,7 +214,7 @@ const Dashboard = () => {
                   <p className="text-sm text-blue-700">
                     {myAssignedTasks.filter(t => t.status === 'PENDING').length} pending • {' '}
                     {myAssignedTasks.filter(t => t.status === 'IN_PROGRESS').length} in progress • {' '}
-                    {myAssignedTasks.filter(t => new Date(t.dueDate) < new Date() && t.status !== 'COMPLETED').length} overdue
+                    {myAssignedTasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'COMPLETED').length} overdue
                   </p>
                 </div>
               </div>
@@ -311,7 +274,7 @@ const Dashboard = () => {
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-red-600">
-                  {myAssignedTasks.filter(t => new Date(t.dueDate) < new Date() && t.status !== 'COMPLETED').length}
+                  {myAssignedTasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'COMPLETED').length}
                 </div>
                 <div className="text-xs text-red-700">Overdue</div>
               </div>
@@ -340,7 +303,7 @@ const Dashboard = () => {
                 })
                 .slice(0, 6)
                 .map((task: Task) => {
-                const isOverdue = new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED';
+                const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED';
                 const isHighPriority = task.priority === 'HIGH' || task.priority === 'URGENT';
                 
                 return (

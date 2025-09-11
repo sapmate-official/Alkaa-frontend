@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import {
   Search,
@@ -13,62 +13,36 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useAuth } from '@/services/AuthContext';
-import { APIDictionary } from '@/api/v2/APIdict';
-import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
 import { useAtom } from 'jotai';
 import { permissionListAtom } from '@/store/atom';
 import { useSearchParams } from 'react-router-dom';
 import CreateTaskDialog from './components/CreateTaskDialog';
 import TaskChatView from './components/TaskChatView';
-
-interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  avatar?: string;
-}
-
-interface Task {
-  id: string;
-  title: string;
-  description: string;
-  status: string;
-  priority: string;
-  dueDate: string;
-  createdAt: string;
-  createdBy: {
-    firstName: string;
-    lastName: string;
-  };
-  assignments: Array<{
-    assignedTo: User;
-  }>;
-  updates: Array<{
-    id: string;
-    message: string;
-    status: string;
-    createdAt: string;
-    updatedBy: {
-      firstName: string;
-      lastName: string;
-    };
-  }>;
-}
+// Import TanStack Query hooks
+import { 
+  useManagerTasks,
+  Task
+} from '@/hooks/queries/useTasks';
 
 const TaskView = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [permissionList] = useAtom(permissionListAtom);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [tasks, setTasks] = useState<Task[]>([]);
+  
+  // Use TanStack Query hook instead of direct axios calls
+  const { 
+    data: tasks = [], 
+    isLoading,
+    refetch: refetchTasks 
+  } = useManagerTasks(user?.id || '');
+  
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [priorityFilter, setPriorityFilter] = useState('ALL');
-  const [isLoading, setIsLoading] = useState(false);
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [showTaskChat, setShowTaskChat] = useState(false);
 
@@ -76,8 +50,11 @@ const TaskView = () => {
   const canCreateTasks = permissionList.some(p => p.key === 'task_create');
 
   useEffect(() => {
-    fetchTasks();
-  }, []);
+    // Update filtered tasks when tasks data changes
+    if (tasks) {
+      setFilteredTasks(tasks);
+    }
+  }, [tasks]);
 
   // Handle task selection from URL parameters
   useEffect(() => {
@@ -109,7 +86,7 @@ const TaskView = () => {
   useEffect(() => {
     let filtered = tasks.filter(task =>
       task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      task.description.toLowerCase().includes(searchTerm.toLowerCase())
+      (task.description && task.description.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     if (statusFilter !== 'ALL') {
@@ -123,34 +100,13 @@ const TaskView = () => {
     setFilteredTasks(filtered);
   }, [tasks, searchTerm, statusFilter, priorityFilter]);
 
-  const fetchTasks = async () => {
-    try {
-      setIsLoading(true);
-      const response = await axios.get(`${APIDictionary.task}?createdBy=${user?.id}`, {
-        withCredentials: true
-      });
-      const tasksData = response.data.data || [];
-      setTasks(tasksData);
-      setFilteredTasks(tasksData);
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load tasks",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleTaskSelect = (task: Task) => {
     setSelectedTask(task);
   };
 
   const handleTaskCreated = () => {
     setShowCreateTask(false);
-    fetchTasks();
+    refetchTasks(); // Use TanStack Query refetch instead
     toast({
       title: "Success",
       description: "Task created successfully"
@@ -304,7 +260,6 @@ const TaskView = () => {
                       <div className="flex -space-x-1">
                         {getTaskAssignees(task).slice(0, 3).map((assignee, idx) => (
                           <Avatar key={idx} className="h-5 w-5 border-2 border-background">
-                            <AvatarImage src={assignee.avatar} />
                             <AvatarFallback className="text-xs">
                               {assignee.firstName[0]}{assignee.lastName[0]}
                             </AvatarFallback>
@@ -420,7 +375,6 @@ const TaskView = () => {
                         {getTaskAssignees(selectedTask).map((assignee, idx) => (
                           <div key={idx} className="flex items-center space-x-3">
                             <Avatar className="h-8 w-8">
-                              <AvatarImage src={assignee.avatar} />
                               <AvatarFallback>
                                 {assignee.firstName[0]}{assignee.lastName[0]}
                               </AvatarFallback>
