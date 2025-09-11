@@ -83,6 +83,8 @@ export const APIDictionary = {
     taskAssignmentByTask: (taskId: string) => `${backendDomain}/api/v2/task-assignment/task/${taskId}`,
     taskUpdatesByTask: (taskId: string) => `${backendDomain}/api/v2/task/${taskId}/updates`,
     whatsappNotification: `${backendDomain}/api/v2/whatsapp/send`,
+    taskGroups: `${backendDomain}/api/v2/task-group`,
+    taskGroupById: (id: string) => `${backendDomain}/api/v2/task-group/${id}`,
 
     // Relationship Endpoints
     relationshipWithUser: (targetUserId: string) => `${backendDomain}/api/v2/relationship/user/${targetUserId}`,

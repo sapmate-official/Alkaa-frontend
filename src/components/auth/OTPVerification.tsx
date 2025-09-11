@@ -58,6 +58,32 @@ export const OTPVerification: React.FC<OTPVerificationProps> = ({
         }
     };
 
+    const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>, index: number) => {
+        e.preventDefault();
+        const pasteData = e.clipboardData.getData('text').replace(/\D/g, ''); // Remove non-digits
+        
+        if (pasteData.length > 0) {
+            const newOtp = [...otp];
+            const remainingSlots = 6 - index;
+            const digitsToFill = Math.min(pasteData.length, remainingSlots);
+            
+            for (let i = 0; i < digitsToFill; i++) {
+                newOtp[index + i] = pasteData[i];
+            }
+            
+            setOtp(newOtp);
+            
+            // Focus the next empty input or the last filled input
+            const nextFocusIndex = Math.min(index + digitsToFill, 5);
+            inputRefs.current[nextFocusIndex]?.focus();
+            
+            // Auto submit if all fields are filled
+            if (newOtp.every(val => val !== '') && newOtp.join('').length === 6) {
+                onVerify(newOtp.join(''));
+            }
+        }
+    };
+
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
         if (e.key === 'Backspace' && !otp[index] && index > 0) {
             inputRefs.current[index - 1]?.focus();
@@ -129,6 +155,7 @@ export const OTPVerification: React.FC<OTPVerificationProps> = ({
                                     value={data}
                                     onChange={(e) => handleChange(e.target, index)}
                                     onKeyDown={(e) => handleKeyDown(e, index)}
+                                    onPaste={(e) => handlePaste(e, index)}
                                     className="w-12 h-12 text-center text-lg font-semibold"
                                     disabled={isLoading}
                                     autoComplete="off"

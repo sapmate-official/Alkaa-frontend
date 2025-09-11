@@ -3,7 +3,7 @@ import {
   ClipboardList, 
   Clock, 
   CheckCircle, 
-  AlertCircle 
+  AlertCircle
 } from 'lucide-react';
 
 interface TaskStatsCardsProps {
@@ -14,12 +14,20 @@ interface TaskStatsCardsProps {
     completed: number;
     overdue: number;
   };
+  assignedStats?: {
+    total: number;
+    pending: number;
+    inProgress: number;
+    completed: number;
+    overdue: number;
+  };
 }
 
-const TaskStatsCards = ({ stats }: TaskStatsCardsProps) => {
+const TaskStatsCards = ({ stats, assignedStats }: TaskStatsCardsProps) => {
   const statCards = [
     {
-      title: 'Total Tasks',
+      title: 'Total Created',
+      subtitle: assignedStats ? `(${assignedStats.total} assigned to me)` : '',
       value: stats.total,
       icon: ClipboardList,
       color: 'text-blue-600',
@@ -27,6 +35,7 @@ const TaskStatsCards = ({ stats }: TaskStatsCardsProps) => {
     },
     {
       title: 'In Progress',
+      subtitle: assignedStats ? `(${assignedStats.inProgress} mine)` : '',
       value: stats.inProgress,
       icon: Clock,
       color: 'text-orange-600',
@@ -34,6 +43,7 @@ const TaskStatsCards = ({ stats }: TaskStatsCardsProps) => {
     },
     {
       title: 'Completed',
+      subtitle: assignedStats ? `(${assignedStats.completed} mine)` : '',
       value: stats.completed,
       icon: CheckCircle,
       color: 'text-green-600',
@@ -41,6 +51,7 @@ const TaskStatsCards = ({ stats }: TaskStatsCardsProps) => {
     },
     {
       title: 'Overdue',
+      subtitle: assignedStats ? `(${assignedStats.overdue} mine)` : '',
       value: stats.overdue,
       icon: AlertCircle,
       color: 'text-red-600',
@@ -59,6 +70,9 @@ const TaskStatsCards = ({ stats }: TaskStatsCardsProps) => {
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
                   <p className="text-2xl font-bold">{stat.value}</p>
+                  {stat.subtitle && (
+                    <p className="text-xs text-muted-foreground mt-1">{stat.subtitle}</p>
+                  )}
                 </div>
                 <div className={`p-3 rounded-full ${stat.bgColor}`}>
                   <Icon className={`h-6 w-6 ${stat.color}`} />
