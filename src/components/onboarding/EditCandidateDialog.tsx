@@ -30,10 +30,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/services/AuthContext';
-import { APIDictionary } from '@/api/v2/APIdict';
-import { Department } from '@/interface/general';
-import axios from 'axios';
+import { useAuth } from '@/providers/AuthContext';
 import {
   User,
   Mail,
@@ -45,6 +42,7 @@ import {
   FileText,
   DollarSign
 } from 'lucide-react';
+import { useCandidate, useDepartments, useUpdateCandidate } from '@/hooks/queries/useOnboarding';
 
 const editCandidateSchema = z.object({
   // Basic Information
@@ -82,10 +80,13 @@ interface EditCandidateDialogProps {
 const EditCandidateDialog = ({ candidateId, isOpen, onClose, onSuccess }: EditCandidateDialogProps) => {
   const { toast } = useToast();
   const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [departments, setDepartments] = useState<any[]>([]);
-  
+
+  // Use TanStack Query hooks
+  const { data: candidate, isLoading: candidateLoading } = useCandidate(candidateId);
+  const { data: departments } = useDepartments(user?.orgId || '');
+  const updateCandidateMutation = useUpdateCandidate();
+
   const form = useForm({
     resolver: zodResolver(editCandidateSchema),
     defaultValues: {
@@ -109,131 +110,49 @@ const EditCandidateDialog = ({ candidateId, isOpen, onClose, onSuccess }: EditCa
   });
 
   useEffect(() => {
-    if (isOpen && candidateId) {
-      fetchCandidateData();
-      fetchDepartments();
+    if (isOpen && candidate) {
+      // Populate form with candidate data
+      form.reset({
+        firstName: candidate.firstName || '',
+        lastName: candidate.lastName || '',
+        email: candidate.email || '',
+        mobileNumber: candidate.mobileNumber || '',
+        departmentId: candidate.departmentId || 'none',
+        annualPackage: candidate.annualPackage || 0,
+        hiredDate: candidate.hiredDate || '',
+        emergencyContact: candidate.emergencyContact || '',
+        dateOfBirth: candidate.dateOfBirth || '',
+        address: candidate.address || '',
+        adharNumber: candidate.adharNumber || '',
+        panNumber: candidate.panNumber || '',
+        bankAccountNumber: (candidate as any).bankAccountNumber || '',
+        bankIFSC: (candidate as any).bankIFSC || '',
+        bankName: (candidate as any).bankName || '',
+        accountHolderName: (candidate as any).accountHolderName || '',
+      });
     } else if (!isOpen) {
       // Reset form and states when dialog closes
       form.reset();
-      setDepartments([]);
     }
-  }, [candidateId, isOpen]);
-
-  const fetchDepartments = async () => {
-    try {
-      const response = await axios.get(`${APIDictionary.department}/org/${user?.orgId}`, {
-        withCredentials: true,
-      });
-      const departmentData = response.data || [];
-      console.log('Fetched departments:', departmentData);
-      
-      // Filter out any departments with invalid IDs
-      const validDepartments: Department[] = departmentData.filter((dept: any): dept is Department => 
-        dept && dept.id && dept.id.toString().trim() !== ''
-      );
-      
-      setDepartments(validDepartments);
-    } catch (error) {
-      console.error('Error fetching departments:', error);
-    }
-  };
-
-  const fetchCandidateData = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get(
-        `${APIDictionary.onboarding}/${candidateId}`,
-        { withCredentials: true }
-      );
-      
-      const candidate = response.data;
-      
-      // Populate basic information
-      form.setValue('firstName', candidate.firstName || '');
-      form.setValue('lastName', candidate.lastName || '');
-      form.setValue('email', candidate.email || '');
-      form.setValue('mobileNumber', candidate.mobileNumber || '');
-      
-      // Ensure departmentId is never an empty string
-      const departmentId = candidate.departmentId && candidate.departmentId.toString().trim() !== '' 
-        ? candidate.departmentId.toString() 
-        : 'none';
-      form.setValue('departmentId', departmentId);
-      
-      form.setValue('annualPackage', candidate.annualPackage || 0);
-      form.setValue('hiredDate', candidate.hiredDate ? candidate.hiredDate.split('T')[0] : '');
-      
-      // Populate form data if available
-      const formData = candidate.formData || {};
-      form.setValue('emergencyContact', formData.emergencyContact || '');
-      form.setValue('dateOfBirth', formData.dateOfBirth ? formData.dateOfBirth.split('T')[0] : '');
-      form.setValue('address', formData.address || '');
-      form.setValue('adharNumber', formData.adharNumber || '');
-      form.setValue('panNumber', formData.panNumber || '');
-      
-      // Populate bank details if available
-      const bankDetails = formData.bankDetails || {};
-      form.setValue('bankAccountNumber', bankDetails.accountNumber || '');
-      form.setValue('bankIFSC', bankDetails.ifscCode || '');
-      form.setValue('bankName', bankDetails.bankName || '');
-      form.setValue('accountHolderName', bankDetails.accountHolderName || '');
-      
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: 'Failed to load candidate data',
-        variant: 'destructive',
-      });
-      console.error('Error fetching candidate data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [candidate, isOpen, form]);
 
   const onSubmit = async (data: any) => {
     try {
       setSaving(true);
-      
-      const updatePayload = {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        mobileNumber: data.mobileNumber,
-        departmentId: data.departmentId && data.departmentId !== 'none' && data.departmentId.toString().trim() !== '' 
-          ? data.departmentId.toString() 
-          : undefined,
-        annualPackage: data.annualPackage || undefined,
-        hiredDate: data.hiredDate || undefined,
-        // Personal information
-        emergencyContact: data.emergencyContact,
-        dateOfBirth: data.dateOfBirth,
-        address: data.address,
-        adharNumber: data.adharNumber,
-        panNumber: data.panNumber,
-        // Bank details
-        bankAccountNumber: data.bankAccountNumber,
-        bankIFSC: data.bankIFSC,
-        bankName: data.bankName,
-        accountHolderName: data.accountHolderName,
-      };
-
-      await axios.put(
-        `${APIDictionary.onboarding}/${candidateId}`,
-        updatePayload,
-        { withCredentials: true }
-      );
+      await updateCandidateMutation.mutateAsync({ id: candidateId, data });
 
       toast({
         title: 'Success',
-        description: 'Candidate information updated successfully',
+        description: 'Candidate updated successfully',
       });
-      
+
       onSuccess?.();
       onClose();
     } catch (error: any) {
+      console.error('Error updating candidate:', error);
       toast({
         title: 'Error',
-        description: error?.response?.data?.error || 'Failed to update candidate',
+        description: error.response?.data?.error || 'Failed to update candidate',
         variant: 'destructive',
       });
     } finally {
@@ -246,15 +165,25 @@ const EditCandidateDialog = ({ candidateId, isOpen, onClose, onSuccess }: EditCa
     onClose();
   };
 
-  if (loading) {
+  if (candidateLoading) {
     return (
-      <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <div className="flex items-center justify-center p-8">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p>Loading candidate data...</p>
-            </div>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent>
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p>Loading candidate data...</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  if (!candidate) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent>
+          <div className="flex items-center justify-center h-64">
+            <p>Candidate not found</p>
           </div>
         </DialogContent>
       </Dialog>
@@ -366,8 +295,8 @@ const EditCandidateDialog = ({ candidateId, isOpen, onClose, onSuccess }: EditCa
                         <FormLabel>Department</FormLabel>
                         <Select 
                           onValueChange={field.onChange} 
-                          value={field.value || 'none'}
-                          disabled={departments.length === 0}
+                          defaultValue={field.value}
+                          disabled={!departments || departments.length === 0}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -376,14 +305,12 @@ const EditCandidateDialog = ({ candidateId, isOpen, onClose, onSuccess }: EditCa
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="none">No Department</SelectItem>
-                            {departments.length > 0 ? (
-                              departments
-                                .filter(dept => dept.id && dept.id.toString().trim() !== '')
-                                .map((dept) => (
-                                  <SelectItem key={dept.id} value={dept.id.toString()}>
-                                    {dept.name}
-                                  </SelectItem>
-                                ))
+                            {departments && departments.length > 0 ? (
+                              departments.map((dept: any) => (
+                                <SelectItem key={dept.id} value={dept.id}>
+                                  {dept.name}
+                                </SelectItem>
+                              ))
                             ) : (
                               <SelectItem value="loading" disabled>
                                 Loading departments...
