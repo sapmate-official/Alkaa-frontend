@@ -5,8 +5,6 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Network, User, Users, Maximize2 } from 'lucide-react';
-import axios from 'axios';
-import { APIDictionary } from '@/services/api/v2/APIdict';
 import { toast } from '@/hooks/use-toast';
 import { 
   ReactFlow, 
@@ -14,8 +12,7 @@ import {
   Edge, 
   Controls, 
   Background, 
-  useNodesState, 
-  useEdgesState, 
+ 
   Position,
   MarkerType,
   Handle,
@@ -24,6 +21,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useAuth } from '@/providers/AuthContext';
+import { useOrganizationManagerChart } from '@/hooks/queries';
 
 interface UserData {
   id: string;
@@ -193,107 +191,25 @@ const OrganizationChartFlow = ({
   onUserClick,
   onAdminStatusChange 
 }: OrganizationChartFlowProps) => {
-  const [, setNodes, onNodesChange] = useNodesState<Node<CustomNodeData>>([]);
-  const [, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [users, setUsers] = useState<UserData[]>([]);
-  const [isOrgAdmin, setIsOrgAdmin] = useState(false);
+  const [_isOrgAdmin, setIsOrgAdmin] = useState(false);
   const { setViewport } = useReactFlow();
   const { user: currentUser } = useAuth();
 
-  const fetchOrganizationData = async () => {
-    if (!organization?.id) return;
+  // Use TanStack Query hook for organization chart data
+  const { data: chartData, isLoading, error } = useOrganizationManagerChart(
+    organization?.id, 
+    currentUser?.id,
+    !!organization?.id
+  );
+
+  // Extract users from chart data
+  const users = useMemo(() => {
+    if (!chartData?.chart) return [];
     
-    setIsLoading(true);
-    try {
-      // Use the manager-subordinate focused API with current user as center
-      const response = await axios.get(
-        APIDictionary.OrganizationManagerChart(organization.id, currentUser?.id),
-        { withCredentials: true }
-      );
-
-      let userData: UserData[] = [];
-      
-      if (response.data && response.data.chart) {
-        // Extract users from the manager-subordinate chart structure
-        userData = extractUsersFromManagerChart(response.data.chart);
-        // Set organization admin status
-        const adminStatus = response.data.isOrgAdmin || false;
-        setIsOrgAdmin(adminStatus);
-        onAdminStatusChange?.(adminStatus);
-      } else {
-        // Fallback: try the regular chart endpoint
-        const fallbackResponse = await axios.get(
-          APIDictionary.OrganizationChart(organization.id),
-          { withCredentials: true }
-        );
-        
-        if (fallbackResponse.data && fallbackResponse.data.chart) {
-          userData = extractUsersFromChart(fallbackResponse.data.chart);
-        } else {
-          // Final fallback: fetch users directly from organization API
-          const orgResponse = await axios.get(
-            `${APIDictionary.Organization}/${organization.id}`,
-            { withCredentials: true }
-          );
-          userData = orgResponse.data?.users || [];
-        }
-        setIsOrgAdmin(false); // Default to false for fallback
-      }
-
-      console.log('Fetched user data:', userData);
-      console.log('Is Organization Admin:', isOrgAdmin);
-      setUsers(userData);
-      
-    } catch (error) {
-      console.error('Failed to fetch organization data:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load organization chart',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const extractUsersFromChart = (chartData: any[]): UserData[] => {
-    const users: UserData[] = [];
-    
-    const extractFromNode = (node: any) => {
-      if (node.type === 'user') {
-        users.push({
-          id: node.id,
-          firstName: node.firstName,
-          lastName: node.lastName,
-          email: node.email,
-          employeeId: node.employeeId,
-          position: node.position,
-          role: node.role,
-          departmentName: node.departmentName,
-          managerId: node.managerId,
-          manager: node.manager,
-          subordinates: node.subordinates || [],
-          isHead: node.isHead,
-          isManager: node.isManager || (node.subordinates && node.subordinates.length > 0)
-        });
-      }
-      
-      if (node.children) {
-        node.children.forEach(extractFromNode);
-      }
-    };
-
-    chartData.forEach(extractFromNode);
-    return users;
-  };
-
-  const extractUsersFromManagerChart = (chartData: any[]): UserData[] => {
-    const users: UserData[] = [];
-    
+    const extractedUsers: UserData[] = [];
     const extractFromManagerNode = (node: any) => {
       if (node.type === 'user') {
-        users.push({
+        extractedUsers.push({
           id: node.id,
           firstName: node.firstName,
           lastName: node.lastName,
@@ -315,9 +231,28 @@ const OrganizationChartFlow = ({
       }
     };
 
-    chartData.forEach(extractFromManagerNode);
-    return users;
-  };
+    chartData.chart.forEach(extractFromManagerNode);
+    return extractedUsers;
+  }, [chartData]);
+
+  // Set admin status when data loads
+  useEffect(() => {
+    if (chartData?.isOrgAdmin !== undefined) {
+      setIsOrgAdmin(chartData.isOrgAdmin);
+      onAdminStatusChange?.(chartData.isOrgAdmin);
+    }
+  }, [chartData?.isOrgAdmin, onAdminStatusChange]);
+
+  // Show error toast if there's an error
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to load organization chart',
+        variant: 'destructive'
+      });
+    }
+  }, [error]);
 
   const { flowNodes, flowEdges } = useMemo(() => {
     if (users.length === 0) return { flowNodes: [] as Node<CustomNodeData>[], flowEdges: [] as Edge[] };
@@ -712,16 +647,7 @@ const OrganizationChartFlow = ({
   }, [flowNodes, setViewport]);
 
   useEffect(() => {
-    fetchOrganizationData();
-  }, [organization, currentUser?.id]);
-
-  useEffect(() => {
-    setNodes(flowNodes);
-    setEdges(flowEdges);
-  }, [flowNodes, flowEdges, setNodes, setEdges]);
-
-  // Center on current user when data loads
-  useEffect(() => {
+    // Center on current user when data loads
     if (flowNodes.length > 0 && currentUser?.id) {
       const timer = setTimeout(() => {
         centerOnCurrentUser();
@@ -790,8 +716,6 @@ const OrganizationChartFlow = ({
       <ReactFlow<Node<CustomNodeData>, Edge>
         nodes={flowNodes}
         edges={flowEdges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
         fitView={false}
         attributionPosition="bottom-left"

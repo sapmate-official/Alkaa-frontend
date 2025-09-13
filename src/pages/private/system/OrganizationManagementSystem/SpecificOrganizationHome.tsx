@@ -1,122 +1,123 @@
-import { APIDictionary } from "@/services/api/v2/APIdict"
 import { useToast } from "@/hooks/use-toast"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import axios from "axios"
-import { useEffect, useState } from "react"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useParams } from "react-router-dom"
-
-interface SubscriptionPlan {
-  id: string;
-  name: string;
-  description?: string;
-  monthlyPrice: number;
-  annualPrice: number;
-  maxUsers: number;
-  features?: any;
-}
-
-interface Organization {
-  id: string;
-  name: string;
-  industry: string;
-  subscriptionPlanId: string;
-  subscriptionPlan: SubscriptionPlan;
-  subscriptionEnd: string;
-  isActive: boolean;
-  settings: string;
-}
+import { useOrganization, useUpdateOrganization, OrganizationType } from '@/hooks/queries'
+import { useSubscriptionPlans } from '@/hooks/queries/useBilling'
+import { useEffect, useState } from "react"
 
 const SpecificOrganizationHome = () => {
   const { organizationId } = useParams<{ organizationId: string }>()
   const { toast } = useToast()
-  const [organization, setOrganization] = useState<Organization | null>(null)
+
+  // Use TanStack Query hooks
+  const { data: organization, isLoading: isLoadingOrg, error: orgError } = useOrganization(organizationId)
+  const { data: subscriptionPlans = [], isLoading: isLoadingPlans } = useSubscriptionPlans()
+  const updateMutation = useUpdateOrganization()
+
   const [isEditing, setIsEditing] = useState(false)
-  const [formData, setFormData] = useState<Partial<Organization>>({})
-  const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([])
+  const [formData, setFormData] = useState<Partial<OrganizationType>>({})
 
-  const fetchOrganization = async () => {
-    try {
-      const response = await axios.get(`${APIDictionary.Organization}/${organizationId}`)
-      setOrganization(response.data)
-      setFormData(response.data)
-    } catch (error) {
-      console.error('Failed to fetch organization:', error)
-      toast({
-        title: "Error",
-        description: "Failed to fetch organization. Please try again.",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const fetchSubscriptionPlans = async () => {
-    try {
-      const response = await axios.get(`${APIDictionary.Organization}/subscription-plans`)
-      setSubscriptionPlans(response.data)
-    } catch (error) {
-      console.error('Failed to fetch subscription plans:', error)
-      toast({
-        title: "Error",
-        description: "Failed to fetch subscription plans. Please try again.",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const handleSave = async () => {
-    try {
-      await axios.patch(`${APIDictionary.Organization}`, formData)
-      toast({
-        title: "Success",
-        description: "Organization updated successfully",
-      })
-      setIsEditing(false)
-      fetchOrganization()
-    } catch (error) {
-      console.error('Failed to update organization:', error)
-      toast({
-        title: "Error",
-        description: "Failed to update organization. Please try again.",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const handleStatusToggle = async (checked: boolean) => {
-    try {
-      await axios.patch(`${APIDictionary.Organization}`, {
-        ...formData,
-        isActive: checked
-      })
-      toast({
-        title: "Success",
-        description: `Organization ${checked ? 'activated' : 'deactivated'} successfully`,
-      })
-      setFormData(prev => ({ ...prev, isActive: checked }))
-      fetchOrganization()
-    } catch (error) {
-      console.error('Failed to update organization status:', error)
-      toast({
-        title: "Error",
-        description: "Failed to update organization status. Please try again.",
-        variant: "destructive",
-      })
-    }
-  }
-
+  // Sync form data when organization data loads
   useEffect(() => {
-    fetchOrganization()
-    fetchSubscriptionPlans()
-  }, [])
+    if (organization) {
+      setFormData(organization)
+    }
+  }, [organization])
 
-  if (!organization) return <div>Loading...</div>
+  const handleSave = () => {
+    if (!organization) return
+
+    updateMutation.mutate(formData, {
+      onSuccess: () => {
+        toast({
+          title: "Success",
+          description: "Organization updated successfully",
+        })
+        setIsEditing(false)
+      },
+      onError: () => {
+        toast({
+          title: "Error",
+          description: "Failed to update organization. Please try again.",
+          variant: "destructive",
+        })
+      }
+    })
+  }
+
+  const handleStatusToggle = (checked: boolean) => {
+    if (!organization) return
+
+    const updatedData = { ...formData, isActive: checked }
+    setFormData(updatedData)
+
+    updateMutation.mutate(updatedData, {
+      onSuccess: () => {
+        toast({
+          title: "Success",
+          description: `Organization ${checked ? 'activated' : 'deactivated'} successfully`,
+        })
+      },
+      onError: () => {
+        toast({
+          title: "Error",
+          description: "Failed to update organization status. Please try again.",
+          variant: "destructive",
+        })
+      }
+    })
+  }
+
+  if (isLoadingOrg) {
+    return (
+      <Card className="w-full mt-8">
+        <CardHeader>
+          <Skeleton className="h-6 w-48 mb-2" />
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (orgError) {
+    return (
+      <Card className="w-full mt-8">
+        <CardHeader>
+          <CardTitle className="text-destructive">Error Loading Organization</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">Failed to load organization data. Please try again.</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (!organization) {
+    return (
+      <Card className="w-full mt-8">
+        <CardHeader>
+          <CardTitle>Organization Not Found</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">The requested organization could not be found.</p>
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
-    <Card className="w-full  mt-8">
+    <Card className="w-full mt-8">
       <CardHeader>
         <CardTitle className="flex justify-between items-center">
           <div className="flex items-center gap-4">
@@ -125,15 +126,18 @@ const SpecificOrganizationHome = () => {
               <Switch
                 checked={formData.isActive}
                 onCheckedChange={handleStatusToggle}
-                disabled={!isEditing}
+                disabled={!isEditing || updateMutation.isPending}
               />
               <span className={`text-sm ${formData.isActive ? 'text-green-600' : 'text-red-600'}`}>
                 {formData.isActive ? 'Active' : 'Inactive'}
               </span>
             </div>
           </div>
-          <Button onClick={() => isEditing ? handleSave() : setIsEditing(true)}>
-            {isEditing ? 'Save' : 'Edit'}
+          <Button
+            onClick={() => isEditing ? handleSave() : setIsEditing(true)}
+            disabled={updateMutation.isPending}
+          >
+            {updateMutation.isPending ? 'Saving...' : isEditing ? 'Save' : 'Edit'}
           </Button>
         </CardTitle>
       </CardHeader>
@@ -142,7 +146,7 @@ const SpecificOrganizationHome = () => {
           <div>
             <label className="text-sm font-medium">Name</label>
             <Input
-              value={formData.name}
+              value={formData.name || ''}
               disabled={!isEditing}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             />
@@ -150,7 +154,7 @@ const SpecificOrganizationHome = () => {
           <div>
             <label className="text-sm font-medium">Industry</label>
             <Input
-              value={formData.industry}
+              value={formData.industry || ''}
               disabled={!isEditing}
               onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
             />
@@ -158,9 +162,10 @@ const SpecificOrganizationHome = () => {
           <div>
             <label className="text-sm font-medium">Subscription Plan</label>
             {isEditing ? (
-              <Select 
-                value={formData.subscriptionPlanId} 
+              <Select
+                value={formData.subscriptionPlanId || ''}
                 onValueChange={(value) => setFormData({ ...formData, subscriptionPlanId: value })}
+                disabled={isLoadingPlans}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a subscription plan" />
@@ -168,7 +173,7 @@ const SpecificOrganizationHome = () => {
                 <SelectContent>
                   {subscriptionPlans.map((plan) => (
                     <SelectItem key={plan.id} value={plan.id}>
-                      {plan.name} - ${plan.monthlyPrice}/month
+                      {plan.name} - ${plan.price}/month
                     </SelectItem>
                   ))}
                 </SelectContent>

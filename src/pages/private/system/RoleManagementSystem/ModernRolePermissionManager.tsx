@@ -1,3 +1,4 @@
+import { useAuth } from '@/providers/AuthContext';
 import { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -98,6 +99,9 @@ interface LoadingStates {
 }
 
 const ModernRolePermissionManager = () => {
+  // User context
+  const { user } = useAuth();
+  
   // State management
   const [permissionGroups, setPermissionGroups] = useState<PermissionGroup[]>([]);
   
@@ -129,9 +133,9 @@ const ModernRolePermissionManager = () => {
   const { toast } = useToast();
 
   // TanStack Query hooks
-  const { data: roles = [], isLoading: rolesLoading } = useRoles();
-  const { data: permissions = [], isLoading: permissionsLoading } = usePermissionsQuery();
-  const { data: users = [], isLoading: usersLoading } = useEmployees();
+  const { data: roles = [], isLoading: rolesLoading } = useRoles(user?.orgId);
+  const { data: permissions = [], isLoading: permissionsLoading } = usePermissionsQuery(user?.orgId);
+  const { data: users = [], isLoading: usersLoading } = useEmployees({ orgId: user?.orgId });
   const { data: permissionPresets = [] } = usePermissionPresets();
   const createRoleMutation = useCreateRole();
   const updateRoleMutation = useUpdateRole();
@@ -204,6 +208,7 @@ const ModernRolePermissionManager = () => {
 
     try {
       await createRoleMutation.mutateAsync({
+        orgId: user?.orgId || '',
         name: newRoleName,
         description: newRoleDescription,
         permissions: selectedPermissions

@@ -69,9 +69,11 @@ export const permissionKeys = {
 
 // API Functions
 const permissionsApi = {
-  async getAllPermissions(filters?: Record<string, any>): Promise<Permission[]> {
-    const params = new URLSearchParams(filters)
-    const response = await axios.get(`${APIDictionary.Permission}?${params}`, { withCredentials: true })
+  async getAllPermissions(orgId?: string): Promise<Permission[]> {
+    if (!orgId) {
+      throw new Error('Organization ID is required to fetch permissions');
+    }
+    const response = await axios.get(`${APIDictionary.permission}/org/${orgId}`, { withCredentials: true })
     return response.data.data || response.data
   },
 
@@ -130,10 +132,11 @@ const permissionsApi = {
 }
 
 // Query Hooks
-export function usePermissions(filters?: Record<string, any>) {
+export function usePermissions(orgId?: string) {
   return useQuery<Permission[]>({
-    queryKey: permissionKeys.list(filters || {}),
-    queryFn: () => permissionsApi.getAllPermissions(filters),
+    queryKey: permissionKeys.list({ orgId: orgId || '' }),
+    queryFn: () => permissionsApi.getAllPermissions(orgId),
+    enabled: !!orgId,
     staleTime: 10 * 60 * 1000, // 10 minutes - permissions change less frequently
   })
 }

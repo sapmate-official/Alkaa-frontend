@@ -65,8 +65,11 @@ export const roleKeys = {
 
 // API Functions
 const rolesApi = {
-  async getAllRoles(): Promise<Role[]> {
-    const response = await axios.get(APIDictionary.role, { withCredentials: true })
+  async getAllRoles(orgId?: string): Promise<Role[]> {
+    if (!orgId) {
+      throw new Error('Organization ID is required to fetch roles');
+    }
+    const response = await axios.get(`${APIDictionary.role}/org/${orgId}`, { withCredentials: true })
     return response.data.data || response.data
   },
 
@@ -75,7 +78,7 @@ const rolesApi = {
     return response.data.data || response.data
   },
 
-  async createRole(data: CreateRoleRequest): Promise<Role> {
+  async createRole(data: CreateRoleRequest & { orgId: string }): Promise<Role> {
     const response = await axios.post(APIDictionary.role, data, { withCredentials: true })
     return response.data.data || response.data
   },
@@ -130,10 +133,11 @@ const rolesApi = {
 }
 
 // Query Hooks
-export function useRoles(filters?: Record<string, any>) {
+export function useRoles(orgId?: string) {
   return useQuery<Role[]>({
-    queryKey: roleKeys.list(filters || {}),
-    queryFn: rolesApi.getAllRoles,
+    queryKey: roleKeys.list({ orgId: orgId || '' }),
+    queryFn: () => rolesApi.getAllRoles(orgId),
+    enabled: !!orgId,
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 }
@@ -169,7 +173,7 @@ export function useCreateRole() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: rolesApi.createRole,
+    mutationFn: (data: CreateRoleRequest & { orgId: string }) => rolesApi.createRole(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: roleKeys.lists() })
     },
