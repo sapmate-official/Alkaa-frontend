@@ -4,8 +4,13 @@ import { APIDictionary } from '@/services/api/v2/APIdict'
 export const employeesApi = {
   // Employee CRUD
   async getAllEmployees(filters?: Record<string, any>): Promise<any[]> {
-    const params = new URLSearchParams(filters)
-    const response = await axios.get(`${APIDictionary.user}?${params}`, { withCredentials: true })
+    // Use the correct endpoint for fetching users by organization
+    if (filters?.orgId) {
+      const response = await axios.get(`${APIDictionary.user}/org/${filters.orgId}`, { withCredentials: true })
+      return response.data.data || response.data
+    }
+    // Fallback to user-list endpoint if no orgId provided
+    const response = await axios.get(`${APIDictionary.user}/user-list`, { withCredentials: true })
     return response.data.data || response.data
   },
 

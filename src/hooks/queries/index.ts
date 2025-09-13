@@ -204,3 +204,12 @@ export {
   // Leave query keys
   leaveQueryKeys
 } from './useLeaves'
+
+// Organization Management
+export {
+  // Organization hooks
+  useOrganization, useOrganizations, useOrganizationDepartments, useTeamMembers, useUpdateOrganization,
+  useOrganizationChart, useOrganizationManagerChart,
+  type OrganizationType, type Department, type TeamMember, type User,
+  organizationKeys
+} from './useOrganizations'

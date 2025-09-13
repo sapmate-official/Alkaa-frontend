@@ -1,36 +1,60 @@
-import { APIDictionary } from '@/services/api/v2/APIdict';
-import { Organization } from '@/types/general';
-import { useAuth } from '@/providers/AuthContext';
-import axios from 'axios';
-import  { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Building2, Users, Calendar } from "lucide-react";
+import { PlusCircle, Building2, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import RouteDict from '@/routes/RouteDict';
+import { useOrganizations } from '@/hooks/queries';
 
 const OrganizationHome = () => {
-    const { user } = useAuth();
-    const [organizationList, setOrganizationList] = useState<Organization[]>([]);
     const navigate = useNavigate();
 
-    const fetchOrganizationList = async () => {
-        try {
-            const response = await axios.get(APIDictionary.Organization, { withCredentials: true });
-            if (response.status === 200) {
-                console.log("Organization list: ", response.data);
-                
-                setOrganizationList(response.data);
-            }
-        } catch (error) {
-            console.log("Error fetching organization list: ", error);
-        }
+    // Use TanStack Query hook
+    const { data: organizationList = [], isLoading, error } = useOrganizations();
+
+    if (isLoading) {
+        return (
+            <div className="container mx-auto py-6 overflow-y-auto">
+                <div className="flex justify-between items-center mb-6">
+                    <div>
+                        <Skeleton className="h-8 w-64 mb-2" />
+                        <Skeleton className="h-4 w-96" />
+                    </div>
+                    <Skeleton className="h-10 w-48" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                        <Card key={i}>
+                            <CardHeader>
+                                <Skeleton className="h-6 w-32 mb-2" />
+                                <Skeleton className="h-4 w-48" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-4">
+                                    <Skeleton className="h-4 w-full" />
+                                    <Skeleton className="h-4 w-full" />
+                                    <Skeleton className="h-4 w-full" />
+                                    <Skeleton className="h-10 w-full" />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            </div>
+        );
     }
 
-    useEffect(() => {
-        fetchOrganizationList();
-    }, [user]);
+    if (error) {
+        return (
+            <div className="container mx-auto py-6 overflow-y-auto">
+                <div className="text-center py-12">
+                    <h3 className="text-lg font-medium text-destructive mb-2">Error Loading Organizations</h3>
+                    <p className="text-muted-foreground">Failed to load organization data. Please try again.</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="container mx-auto py-6 overflow-y-auto ">
@@ -67,12 +91,8 @@ const OrganizationHome = () => {
                                     <Users className="mr-2 h-4 w-4" />
                                     <span>{org?.users?.length || 0} Users</span>
                                 </div>
-                                <div className="flex items-center text-sm">
-                                    <Calendar className="mr-2 h-4 w-4" />
-                                    <span>Created: {new Date(org?.createdAt).toLocaleDateString()}</span>
-                                </div>
-                                <Button 
-                                    variant="outline" 
+                                <Button
+                                    variant="outline"
                                     className="w-full mt-4"
                                     onClick={() => navigate(RouteDict.SuperAdmin.OrganizationDetails(org?.id))}
                                 >
@@ -83,7 +103,7 @@ const OrganizationHome = () => {
                     </Card>
                 ))}
             </div>
-            
+
             {organizationList.length === 0 && (
                 <div className="text-center py-12">
                     <h3 className="text-lg font-medium">No organizations found</h3>
