@@ -30,9 +30,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/services/AuthContext';
-import { APIDictionary } from '@/api/v2/APIdict';
-import { Department } from '@/interface/general';
+import { useAuth } from '@/providers/AuthContext';
+import { APIDictionary } from '@/services/api/v2/APIdict';
+import { Department } from '@/types/general';
 import axios from 'axios';
 import {
   User,

@@ -36,13 +36,13 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { APIDictionary } from '@/api/v2/APIdict';
+import { APIDictionary } from '@/services/api/v2/APIdict';
 import axios from 'axios';
 import { 
   OnboardingCandidate, 
   OnboardingStatus, 
   Department 
-} from '@/interface/general';
+} from '@/types/general';
 import {
   Mail,
   Phone,

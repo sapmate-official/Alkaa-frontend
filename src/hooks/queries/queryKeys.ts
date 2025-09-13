@@ -8,10 +8,9 @@ export { holidayKeys, holidayTypeKeys } from './useHolidays'
 export { payrollKeys } from './usePayroll'
 export { billingKeys } from './useBilling'
 export { notificationKeys } from './useNotifications'
-export { authKeys, publicKeys } from './useAuth'
-
-// Export existing keys from other modules
-export { attendanceKeys } from './useAttendance'
+export { authKeys, publicKeys } from './authKeys'
+export { employeeKeys } from './employeeKeys'
+export { attendanceKeys } from './attendanceKeys'
 
 // Global query patterns for common invalidation
 export const globalKeys = {

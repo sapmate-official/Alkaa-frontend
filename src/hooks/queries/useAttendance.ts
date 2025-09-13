@@ -1,18 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import axios from 'axios'
-import { APIDictionary } from '@/api/v2/APIdict'
+import { useState, useEffect } from 'react'
+import { attendanceApi } from '@/services/api/attendanceApi'
 import { format } from 'date-fns'
-import { AttendanceRecord } from '@/interface/general'
-
-// Query Keys
-export const attendanceKeys = {
-  all: ['attendance'] as const,
-  sessions: (date: string) => [...attendanceKeys.all, 'sessions', date] as const,
-  history: (filters?: any) => [...attendanceKeys.all, 'history', filters] as const,
-  pastDays: () => [...attendanceKeys.all, 'past-days'] as const,
-  livePanel: () => [...attendanceKeys.all, 'live-panel'] as const,
-  verification: () => [...attendanceKeys.all, 'verification'] as const,
-}
+import type { AttendanceRecord } from '@/types/general'
+import { attendanceKeys } from './attendanceKeys'
 
 // Today's Sessions Query
 export const useTodaySessionsQuery = (date?: string) => {
@@ -20,12 +11,7 @@ export const useTodaySessionsQuery = (date?: string) => {
   
   return useQuery<AttendanceRecord[]>({
     queryKey: attendanceKeys.sessions(queryDate),
-    queryFn: async () => {
-      const { data } = await axios.get(`${APIDictionary.todaySessions}${queryDate}`, {
-        withCredentials: true
-      })
-      return data
-    },
+    queryFn: () => attendanceApi.getTodaySessions(queryDate),
     staleTime: 1000 * 60, // 1 minute
   })
 }
@@ -34,12 +20,7 @@ export const useTodaySessionsQuery = (date?: string) => {
 export const usePastNotCheckedDaysQuery = () => {
   return useQuery<any[]>({
     queryKey: attendanceKeys.pastDays(),
-    queryFn: async () => {
-      const { data } = await axios.get(`${APIDictionary.attendance}/check-out/past`, {
-        withCredentials: true
-      })
-      return data
-    },
+    queryFn: attendanceApi.getPastNotCheckedDays,
     staleTime: 1000 * 60 * 5, // 5 minutes
   })
 }
@@ -48,13 +29,7 @@ export const usePastNotCheckedDaysQuery = () => {
 export const useAttendanceHistoryQuery = (filters?: any) => {
   return useQuery({
     queryKey: attendanceKeys.history(filters),
-    queryFn: async () => {
-      const { data } = await axios.get(APIDictionary.attendanceHistory, {
-        params: filters,
-        withCredentials: true
-      })
-      return data
-    },
+    queryFn: () => attendanceApi.getAttendanceHistory(filters),
     staleTime: 1000 * 60 * 2, // 2 minutes
   })
 }
@@ -64,13 +39,7 @@ export const useCheckInMutation = () => {
   const queryClient = useQueryClient()
   
   return useMutation({
-    mutationFn: async (checkInData: any) => {
-      const { data } = await axios.post(APIDictionary.checkIn, checkInData, {
-        withCredentials: true,
-        headers: { 'Content-Type': 'application/json' }
-      })
-      return data
-    },
+    mutationFn: attendanceApi.checkIn,
     onSuccess: () => {
       // Invalidate today's sessions to refetch
       const today = format(new Date(), 'yyyy-MM-dd')
@@ -85,12 +54,7 @@ export const useCheckOutMutation = () => {
   const queryClient = useQueryClient()
   
   return useMutation({
-    mutationFn: async (checkOutData: any) => {
-      const { data } = await axios.post(APIDictionary.checkOut, checkOutData, {
-        withCredentials: true
-      })
-      return data
-    },
+    mutationFn: attendanceApi.checkOut,
     onSuccess: () => {
       // Invalidate today's sessions and past days
       const today = format(new Date(), 'yyyy-MM-dd')
@@ -106,12 +70,8 @@ export const useAttendanceUpdateMutation = () => {
   const queryClient = useQueryClient()
   
   return useMutation({
-    mutationFn: async ({ attendanceId, updateData }: { attendanceId: string, updateData: any }) => {
-      const { data } = await axios.put(`${APIDictionary.attendance}/${attendanceId}`, updateData, {
-        withCredentials: true
-      })
-      return data
-    },
+    mutationFn: ({ attendanceId, updateData }: { attendanceId: string, updateData: any }) =>
+      attendanceApi.updateAttendance(attendanceId, updateData),
     onSuccess: () => {
       // Invalidate all attendance-related queries
       queryClient.invalidateQueries({ queryKey: attendanceKeys.all })
@@ -123,12 +83,7 @@ export const useAttendanceUpdateMutation = () => {
 export const useLivePanelQuery = () => {
   return useQuery({
     queryKey: attendanceKeys.livePanel(),
-    queryFn: async () => {
-      const { data } = await axios.get(`${APIDictionary.attendance}/live`, {
-        withCredentials: true
-      })
-      return data
-    },
+    queryFn: attendanceApi.getLivePanel,
     staleTime: 1000 * 30, // 30 seconds for live data
     refetchInterval: 1000 * 60, // Auto-refetch every minute
   })
@@ -138,12 +93,7 @@ export const useLivePanelQuery = () => {
 export const useVerificationQueueQuery = () => {
   return useQuery({
     queryKey: attendanceKeys.verification(),
-    queryFn: async () => {
-      const { data } = await axios.get(`${APIDictionary.attendance}/verification`, {
-        withCredentials: true
-      })
-      return data
-    },
+    queryFn: attendanceApi.getVerificationQueue,
     staleTime: 1000 * 60 * 2, // 2 minutes
   })
 }
@@ -153,15 +103,8 @@ export const useAttendanceVerificationMutation = () => {
   const queryClient = useQueryClient()
   
   return useMutation({
-    mutationFn: async ({ attendanceId, action, remarks }: { attendanceId: string, action: 'approve' | 'reject', remarks?: string }) => {
-      const { data } = await axios.patch(`${APIDictionary.attendance}/${attendanceId}/verify`, {
-        action,
-        remarks
-      }, {
-        withCredentials: true
-      })
-      return data
-    },
+    mutationFn: ({ attendanceId, action, remarks }: { attendanceId: string, action: 'approve' | 'reject', remarks?: string }) =>
+      attendanceApi.verifyAttendance(attendanceId, action, remarks),
     onSuccess: () => {
       // Invalidate verification queue and history
       queryClient.invalidateQueries({ queryKey: attendanceKeys.verification() })
@@ -169,3 +112,43 @@ export const useAttendanceVerificationMutation = () => {
     },
   })
 }
+
+// Utility hooks for attendance
+export const useDeviceInfo = () => {
+  return {
+    deviceInfo: {
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      language: navigator.language,
+    },
+  };
+};
+
+export const useIpAddress = () => {
+  const [ipAddress, setIpAddress] = useState<string>('');
+
+  useEffect(() => {
+    fetch('https://api.ipify.org?format=json')
+      .then((response) => response.json())
+      .then((data) => setIpAddress(data.ip));
+  }, []);
+
+  return { ipAddress };
+};
+
+export const useGeolocation = () => {
+  const [location, setLocation] = useState<{latitude: number; longitude: number} | null>(null);
+
+  useEffect(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        setLocation({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+      });
+    }
+  }, []);
+
+  return { location };
+};

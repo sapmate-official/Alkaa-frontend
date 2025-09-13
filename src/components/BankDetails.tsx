@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/services/AuthContext';
+import { useAuth } from '@/providers/AuthContext';
 import { useAtom } from 'jotai';
 import { permissionListAtom } from '@/store/atom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BuildingLibraryIcon, ExclamationTriangleIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { motion } from 'framer-motion';
-import { backendDomain } from '@/lib/constant/Domain';
+import { backendDomain } from '@/constants/Domain';
 import { Link } from 'react-router-dom';
 
 type BankDetail = {

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
-import { APIDictionary } from '@/api/v2/APIdict'
+import { APIDictionary } from '@/services/api/v2/APIdict'
 
 // Types
 export interface Notification {

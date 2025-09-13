@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { APIDictionary } from "@/api/v2/APIdict";
+import { APIDictionary } from "@/services/api/v2/APIdict";
 import { MapPin, Clock, XCircle, History } from "lucide-react";
 import axios from "axios";
 import LazyLocationViewer from "./LazyLocationViewer";

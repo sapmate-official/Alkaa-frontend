@@ -3,7 +3,7 @@
  * These functions can be used in development to verify auth behavior
  */
 
-import { tokenStorage } from '@/services/AuthContext';
+import { tokenStorage } from '@/providers/AuthContext';
 import { routeUtils } from './routeUtils';
 
 export const authTestUtils = {

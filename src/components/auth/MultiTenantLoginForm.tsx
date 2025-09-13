@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/services/AuthContext";
+import { useAuth } from "@/providers/AuthContext";
 import { Eye, EyeOff, ArrowLeft, Mail, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { OrganizationSelector } from "@/components/auth/OrganizationSelector";

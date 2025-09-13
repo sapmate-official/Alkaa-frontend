@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
-import { APIDictionary } from '@/api/v2/APIdict'
+import { APIDictionary } from '@/services/api/v2/APIdict'
 import { useToast } from '@/hooks/use-toast'
 
 export interface Department {
@@ -28,9 +28,6 @@ export const departmentQueryKeys = {
   detail: (id: string) => ['departments', 'detail', id] as const,
   employees: (id: string) => ['departments', id, 'employees'] as const,
 }
-
-// Legacy function for backward compatibility
-const departmentsKey = (orgId?: string) => ['departments', orgId]
 
 export const useDepartmentsQuery = (orgId?: string, enabled: boolean = true) => {
   return useQuery<Department[]>({

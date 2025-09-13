@@ -1,4 +1,4 @@
-import { APIDictionary } from "@/api/v2/APIdict";
+import { APIDictionary } from "@/services/api/v2/APIdict";
 
 /**
  * Send an immediate notification to a user

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/services/AuthContext';
+import { useAuth } from '@/providers/AuthContext';
 import { notificationService } from '@/services/NotificationService';
 
 export function NotificationSubscribe() {
