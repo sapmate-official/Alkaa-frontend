@@ -25,4 +25,4 @@ jobs:
         run: npm run build  # Or your custom build command
 
       - name: Deploy to Vercel
-        run: npx vercel --prod --token ${{ secrets.VERCEL_TOKEN }} --yes --name "alkaa-frontend"
+        run: npx vercel --prod --token ${{ secrets.VERCEL_TOKEN }} --yes --name "alkaa-frontend-test"
