@@ -22,6 +22,13 @@ export interface User {
     name: string;
   };
   subordinates?: User[];
+  // Additional fields that might be available from onboarding
+  adharNumber?: string;
+  panNumber?: string;
+  mobileNumber?: string;
+  dateOfBirth?: string;
+  address?: string;
+  emergencyContact?: string;
 }
 
 export interface OrganizationType {
