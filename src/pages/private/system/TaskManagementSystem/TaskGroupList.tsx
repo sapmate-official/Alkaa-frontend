@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { useAuth } from '@/providers/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
