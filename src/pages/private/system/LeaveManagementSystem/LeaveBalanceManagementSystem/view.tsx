@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { APIDictionary } from '@/services/api/v2/APIdict'
 import {
   Table,
   TableBody,

@@ -15,7 +15,6 @@ import {
   useLeaveTypesQuery,
   useDeleteLeaveTypeMutation
 } from '@/hooks/queries'
-import { api } from "@/utils/api";
 
 interface LeaveType {
     id: string;

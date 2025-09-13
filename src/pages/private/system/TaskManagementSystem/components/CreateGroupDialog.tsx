@@ -8,7 +8,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { X } from 'lucide-react';
-import { useAuth } from '@/providers/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
 // Import TanStack Query hooks
@@ -20,15 +19,9 @@ interface CreateGroupDialogProps {
   onGroupCreated: () => void;
 }
 
-interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-}
+
 
 const CreateGroupDialog = ({ open, onOpenChange, onGroupCreated }: CreateGroupDialogProps) => {
-  const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);

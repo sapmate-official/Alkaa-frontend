@@ -1,6 +1,4 @@
-import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { useAuth } from '@/providers/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,31 +6,31 @@ import { Skeleton } from "@/components/ui/skeleton";
 // Import TanStack Query hooks
 import { useTaskGroup } from '@/hooks/queries/useTasks';
 
-interface Task {
-    id: string;
-    title: string;
-    status: string;
-}
+// interface Task {
+//     id: string;
+//     title: string;
+//     status: string;
+// }
 
-interface Member {
-    id: string;
-    firstName: string;
-    lastName: string;
-}
-interface TaskGroup {
-  id: string;
-  name: string;
-  description: string;
-  tasks: Task[];
-  members: { user: Member }[];
-}
+// interface Member {
+//     id: string;
+//     firstName: string;
+//     lastName: string;
+// }
+// interface TaskGroup {
+//   id: string;
+//   name: string;
+//   description: string;
+//   tasks: Task[];
+//   members: { user: Member }[];
+// }
 
 const TaskGroupDetails = () => {
   const { groupId } = useParams();
   
   // TanStack Query hook
   const { data: group, isLoading } = useTaskGroup(groupId || '');
-  const { user } = useAuth();
+  
 
   if (isLoading) {
     return (
