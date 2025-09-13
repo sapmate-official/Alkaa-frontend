@@ -1,4 +1,4 @@
-import { APIDictionary } from "@/api/v2/APIdict";
+import { APIDictionary } from "@/services/api/v2/APIdict";
 
 // Rename your interface to avoid conflict with browser's PushSubscription
 interface PushSubscriptionPayload {

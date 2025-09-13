@@ -13,7 +13,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { APIDictionary } from '@/api/v2/APIdict';
+import { APIDictionary } from '@/services/api/v2/APIdict';
 import axios from 'axios';
 import {
   User,

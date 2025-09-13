@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useAuth } from "@/services/AuthContext"
+import { useAuth } from "@/providers/AuthContext"
 import { useState } from "react"
 import { Eye, EyeOff, ArrowLeft } from "lucide-react" // Import ArrowLeft icon
 import { useNavigate } from "react-router-dom" // Import useNavigate
