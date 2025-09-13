@@ -39,6 +39,7 @@ import CreateTaskDialog from './components/CreateTaskDialog';
 import TaskChatView from './components/TaskChatView';
 import GroupDetailsDialog from './components/GroupDetailsDialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { TaskGroup as ImportedTaskGroup, Task as ImportedTask } from '@/hooks/queries/useTasks';
 
 interface User {
   id: string;
@@ -48,50 +49,9 @@ interface User {
   avatar?: string;
 }
 
-interface TaskGroup {
-  id: string;
-  name: string;
-  description?: string;
-  createdBy: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-  tasks: Task[];
-  _count?: {
-    tasks: number;
-  };
-  createdAt: string;
-}
-
-interface Task {
-  id: string;
-  title: string;
-  description: string;
-  status: string;
-  priority: string;
-  dueDate: string;
-  createdAt: string;
-  createdBy: {
-    firstName: string;
-    lastName: string;
-  };
-  assignments: Array<{
-    id: string;
-    assignedTo: User;
-  }>;
-  updates: Array<{
-    id: string;
-    message: string;
-    status: string;
-    createdAt: string;
-    updatedBy: {
-      firstName: string;
-      lastName: string;
-    };
-  }>;
-}
+// Use the imported types to avoid conflicts
+type TaskGroup = ImportedTaskGroup;
+type Task = ImportedTask;
 
 interface TaskGroupStats {
   groupId: string;

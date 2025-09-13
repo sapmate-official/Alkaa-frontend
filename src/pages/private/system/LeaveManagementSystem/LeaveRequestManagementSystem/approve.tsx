@@ -1,8 +1,6 @@
-import { APIDictionary } from "@/services/api/v2/APIdict"
-import { LeaveRequest } from "@/types/general"
+import { LeaveRequest } from "@/hooks/queries/useLeaves"
 import { useAuth } from "@/providers/AuthContext"
 import { useToast } from "@/hooks/use-toast"
-import axios from "axios"
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -45,54 +43,51 @@ import {
     ChevronRight,
     FileCheck
 } from "lucide-react"
+import {
+  useManagerLeaveRequestsQuery,
+  useApproveLeaveRequestMutation,
+  useRejectLeaveRequestMutation
+} from '@/hooks/queries'
+import axios from 'axios'
 
 const LeaveRequestApprove = () => {
-    const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([])
     const [selectedRequest, setSelectedRequest] = useState<LeaveRequest | null>(null)
     const [rejectionReason, setRejectionReason] = useState("")
-    const [loading, setLoading] = useState(true)
     const [actionLoading, setActionLoading] = useState(false)
     const [searchTerm, setSearchTerm] = useState("")
     const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL')
+    const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([])
+    const [loading, setLoading] = useState(false)
     const { user } = useAuth()
     const { toast } = useToast()
 
-    const fetchLeaveRequests = async () => {
-        try {
-            setLoading(true)
-            const response = await axios.get(`${APIDictionary.leave_request}/manager/${user?.id}`, { 
-                withCredentials: true 
-            })
-            if (response.status === 200) {
-                setLeaveRequests(response.data || [])
-                // If selected request is no longer available, clear selection
-                if (selectedRequest) {
-                    const updatedRequest = response.data.find((req: LeaveRequest) => req.id === selectedRequest.id)
-                    if (updatedRequest) {
-                        setSelectedRequest(updatedRequest)
-                    } else {
-                        setSelectedRequest(null)
-                    }
-                }
+    // TanStack Query hooks
+    const { data: leaveRequestsData = [], isLoading, refetch } = useManagerLeaveRequestsQuery(user?.id, !!user?.id)
+    const approveMutation = useApproveLeaveRequestMutation()
+    const rejectMutation = useRejectLeaveRequestMutation()
+
+    // Update local state when data changes
+    useEffect(() => {
+        setLeaveRequests(leaveRequestsData)
+        setLoading(isLoading)
+        
+        // If selected request is no longer available, clear selection
+        if (selectedRequest) {
+            const updatedRequest = leaveRequestsData.find((req: LeaveRequest) => req.id === selectedRequest.id)
+            if (updatedRequest) {
+                setSelectedRequest(updatedRequest)
+            } else {
+                setSelectedRequest(null)
             }
-        } catch (error) {
-            console.error('Error fetching leave requests:', error)
-            toast({
-                title: "Error",
-                description: "Failed to fetch leave requests",
-                variant: "destructive"
-            })
-        } finally {
-            setLoading(false)
         }
-    }
+    }, [leaveRequestsData, isLoading, selectedRequest])
 
     const handleApprove = async (id: string) => {
+        if (!user?.id) return
+        
         try {
             setActionLoading(true)
-            await axios.post(`${APIDictionary.leave_request}/approve/${id}`, {
-                approvedBy: user?.id
-            }, { withCredentials: true });
+            await approveMutation.mutateAsync({ id, approvedBy: user.id })
 
             toast({
                 title: "Success",
@@ -101,7 +96,7 @@ const LeaveRequestApprove = () => {
             });
             
             // Refresh the list to get updated data
-            await fetchLeaveRequests();
+            refetch()
 
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -115,7 +110,7 @@ const LeaveRequestApprove = () => {
 
                 // If the request was invalid or not found, refresh the list
                 if (error.response?.status === 404 || error.response?.status === 400) {
-                    await fetchLeaveRequests();
+                    refetch()
                 }
             } else {
                 toast({
@@ -139,12 +134,11 @@ const LeaveRequestApprove = () => {
             return
         }
 
+        if (!user?.id) return
+
         try {
             setActionLoading(true)
-            await axios.post(`${APIDictionary.leave_request}/reject/${id}`, {
-                approvedBy: user?.id,
-                rejectedReason: rejectionReason
-            }, { withCredentials: true })
+            await rejectMutation.mutateAsync({ id, approvedBy: user.id, rejectedReason: rejectionReason })
             
             toast({
                 title: "Success",
@@ -153,7 +147,7 @@ const LeaveRequestApprove = () => {
             
             setRejectionReason("")
             // Refresh the list to get updated data
-            await fetchLeaveRequests()
+            refetch()
         } catch (error) {
             toast({
                 title: "Error",
@@ -206,10 +200,6 @@ const LeaveRequestApprove = () => {
     const pendingRequests = filteredRequests.filter(req => req.status === 'PENDING')
     const processedRequests = filteredRequests.filter(req => req.status !== 'PENDING')
 
-    useEffect(() => {
-        fetchLeaveRequests()
-    }, [user?.id])
-
     const cardVariants = {
         hidden: { opacity: 0, y: 20 },
         visible: { opacity: 1, y: 0 },
@@ -259,7 +249,7 @@ const LeaveRequestApprove = () => {
                         </div>
                     </div>
                     <Button
-                        onClick={fetchLeaveRequests}
+                        onClick={() => refetch()}
                         variant="outline"
                         size="sm"
                         disabled={loading}
@@ -332,7 +322,7 @@ const LeaveRequestApprove = () => {
                                             </Badge>
                                         </div>
                                         <AnimatePresence>
-                                            {pendingRequests.map((request, index) => (
+                                            {pendingRequests.map((request: LeaveRequest, index: number) => (
                                                 <motion.div
                                                     key={request.id}
                                                     variants={cardVariants}
@@ -408,7 +398,7 @@ const LeaveRequestApprove = () => {
                                             </Badge>
                                         </div>
                                         <AnimatePresence>
-                                            {processedRequests.map((request, index) => (
+                                            {processedRequests.map((request: LeaveRequest, index: number) => (
                                                 <motion.div
                                                     key={request.id}
                                                     variants={cardVariants}

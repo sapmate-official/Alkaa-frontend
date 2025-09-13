@@ -5,9 +5,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Send, MessageCircle } from 'lucide-react';
-import { APIDictionary } from '@/services/api/v2/APIdict';
-import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
+
+// Import TanStack Query hooks
+import { useTaskUpdates, useCreateTaskUpdate } from '@/hooks/queries/useTasks';
 
 interface User {
   id: string;
@@ -17,7 +18,7 @@ interface User {
   avatar?: string;
 }
 
-interface TaskUpdate {
+interface TaskUpdateLocal {
   id: string;
   message: string;
   status?: string;
@@ -43,7 +44,7 @@ interface Task {
   assignments: Array<{
     assignedTo: User;
   }>;
-  updates: TaskUpdate[];
+  updates: TaskUpdateLocal[];
 }
 
 interface TaskChatViewProps {
@@ -58,11 +59,14 @@ const TaskChatView = ({ open, onOpenChange, task }: TaskChatViewProps) => {
   const { toast } = useToast();
   const [newMessage, setNewMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [updates, setUpdates] = useState<TaskUpdate[]>([]);
+
+  // TanStack Query hooks
+  const { data: updates = [] } = useTaskUpdates(task?.id || '');
+  const createTaskUpdateMutation = useCreateTaskUpdate();
 
   useEffect(() => {
     if (task) {
-      setUpdates(task.updates || []);
+      // This effect is no longer needed as we're using query to fetch updates
     }
   }, [task]);
 
@@ -73,30 +77,19 @@ const TaskChatView = ({ open, onOpenChange, task }: TaskChatViewProps) => {
 
     try {
       setIsSubmitting(true);
-      
-      // Clear input immediately for better UX
       setNewMessage('');
       
-      const response = await axios.post(APIDictionary.taskUpdate(task.id), {
-        message: messageText
-      }, { withCredentials: true });
+      await createTaskUpdateMutation.mutateAsync({
+        taskId: task.id,
+        data: { message: messageText }
+      });
 
-      // Handle successful response
-      if (response.data.success && response.data.data) {
-        const serverUpdate = response.data.data;
-        
-        // Add the new update to the local state
-        setUpdates(prev => [serverUpdate, ...prev]);
-
-        toast({
-          title: "Success",
-          description: "Message sent successfully"
-        });
-      }
+      toast({
+        title: "Success",
+        description: "Message sent successfully"
+      });
     } catch (error) {
       console.error('Error sending message:', error);
-      
-      // Restore the message on error
       setNewMessage(messageText);
       
       toast({

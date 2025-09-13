@@ -15,6 +15,8 @@ import RouteDict from './routes/RouteDict';
 // Critical/Essential components (load immediately)
 import Home from './pages/private/Home.tsx';
 import { MainLayout } from './pages/private/layout/MainLayout';
+import RolesPermissionsManagement from './pages/private/system/RoleManagementSystem/RoleManagementDashboard.tsx';
+import { TimezoneProvider } from './hooks/useTimezone.tsx';
 
 // Public pages
 const LandingPage = lazy(() => import('./pages/public/LandingPage'));
@@ -29,9 +31,13 @@ const EmployeeModule = lazy(() => import('./pages/private/system/EmployeeManagem
 const PayrollModule = lazy(() => import('./pages/private/system/PayrollManagementSystem/New_version/PayrollModule.tsx'));
 const BillingModule = lazy(() => import('./pages/private/system/BillingManagementSystem/BillingModule'));
 const LeaveModule = lazy(() => import('./pages/private/system/LeaveManagementSystem/LeaveModule'));
+const OnboardingModule = lazy(() => import('./pages/private/system/OnboardingManagementSystem/OnboardingModule'));
+const TaskModule = lazy(() => import('./pages/private/system/TaskManagementSystem/index.tsx'));
+import HolidayManagementSystem from './pages/private/system/HolidayManagementSystem/HolidayDashboard.tsx';
+
 
 // Admin modules (less frequently used)
-const OrganizationModule = lazy(() => import('./pages/private/system/OrganizationManagementSystem/OrganizationModule'));
+const OrganizationModule = lazy(() => import('./pages/private/system/SpecificOrganizationManagementSystem/ClientOrganizationModule.tsx'));
 const SystemModule = lazy(() => import('./pages/private/system/SystemManagement/SystemModule'));
 
 // Individual components that don't fit into modules
@@ -54,12 +60,15 @@ function App() {
           <Route
             path="/p/*"
             element={
+              
               <AuthProvider>
-                <MainLayout>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <ProtectedRoute />
-                  </Suspense>
-                </MainLayout>
+                <TimezoneProvider>
+                  <MainLayout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ProtectedRoute />
+                    </Suspense>
+                  </MainLayout>
+                </TimezoneProvider>
               </AuthProvider>
             }
           />
@@ -165,8 +174,30 @@ const ClientRoute = () => {
           <OrganizationModule />
         </PermissionRouteBasedOnKey>
       } />
+      <Route path="/onboarding/*" element={
+        <PermissionRouteBasedOnKey requiredPermissions={['create_user']}>
+          <OnboardingModule />
+        </PermissionRouteBasedOnKey>
+      } />
+       <Route path="/role/" element={
+        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['manage_role', 'view_organization_basic_details', 'view_employee_management']}>
+          <RolesPermissionsManagement />
+        </PermissionRouteBasedOnKey>
+      } />
+      {/* <Route path="/role/modern" element={
+        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['manage_role', 'view_organization_basic_details', 'view_employee_management']}>
+          <ModernRolePermissionPage />
+        </PermissionRouteBasedOnKey>
+      } /> */}
+      <Route path="/holiday/" element={
+        <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['holiday_view', 'holiday_manage', 'create_holiday', 'view_holiday', 'update_holiday', 'delete_holiday']}>
+          <HolidayManagementSystem />
+        </PermissionRouteBasedOnKey>
+      } />
 
       <Route path="/system/*" element={<SystemModule />} />
+
+      <Route path='/task/*' element={<TaskModule  />} />
 
       <Route path="/logout" element={<Logout />} />
     </Routes>

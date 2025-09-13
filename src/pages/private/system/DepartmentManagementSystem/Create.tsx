@@ -1,9 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { APIDictionary } from '../../../../services/api/v2/APIdict'
-import axios from 'axios'
 import {
   Form,
   FormControl,
@@ -41,25 +39,9 @@ import { useAtom } from 'jotai'
 import { permissionListAtom } from '@/store/atom'
 import CheckPermission from '@/services/PermissionCheck'
 import RouteDict from '@/routes/RouteDict'
+import { useDepartmentsQuery, useCreateDepartmentMutation } from '@/hooks/queries/useDepartments'
+import { useEmployees } from '@/hooks/queries/useEmployees'
 
-interface Department {
-  id: string
-  name: string
-  code?: string
-  status: boolean
-}
-
-interface Employee {
-  id: string
-  firstName: string
-  lastName: string
-  email: string
-  employeeId: string
-  role?: string
-}
-//warning: chunk-I5X52QIP.js?v=178ef040:42 Select is changing from uncontrolled to controlled. Components should not switch from controlled to uncontrolled (or vice versa). Decide between using a controlled or uncontrolled value for the lifetime of the component.
-
-// Extend the schema to be more strict and provide better validation
 const formSchema = z.object({
   name: z
     .string()
@@ -101,13 +83,16 @@ const CreateDepartment = () => {
   const { user } = useAuth()
   const { toast } = useToast()
   const [permissions] = useAtom(permissionListAtom)
-  const [departments, setDepartments] = useState<Department[]>([])
-  const [employees, setEmployees] = useState<Employee[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSaving, setIsSaving] = useState(false)
   const navigate = useNavigate()
 
   const canCreateDepartment = CheckPermission('create_new_department', permissions)
+
+  // TanStack Query hooks
+  const { data: departments = [], isLoading: departmentsLoading } = useDepartmentsQuery(user?.orgId, !!user?.orgId)
+  const { data: employees = [], isLoading: employeesLoading } = useEmployees({ orgId: user?.orgId })
+  const createMutation = useCreateDepartmentMutation()
+
+  const isLoading = departmentsLoading || employeesLoading
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -154,37 +139,7 @@ const CreateDepartment = () => {
       navigate(RouteDict.Department.Base)
       return
     }
-
-    const fetchData = async () => {
-      setIsLoading(true)
-      try {
-        if (!user?.orgId) {
-          throw new Error('Organization ID not found')
-        }
-
-        // Fetch departments
-        const deptResponse = await axios.get(`${APIDictionary.department}/org/${user?.orgId}`)
-        setDepartments(deptResponse?.data || [])
-
-        // Fetch employees
-        const empResponse = await axios.get(`${APIDictionary.Organization}/employee-list/${user?.orgId}`)
-        setEmployees(empResponse?.data || [])
-      } catch (error) {
-        console.error('Error fetching data:', error)
-        toast({
-          title: 'Error',
-          description: 'Failed to fetch required data. Please try again later.',
-          variant: 'destructive',
-        })
-        setDepartments([])
-        setEmployees([])
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchData()
-  }, [user?.orgId, canCreateDepartment])
+  }, [canCreateDepartment, toast, navigate])
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
@@ -195,33 +150,18 @@ const CreateDepartment = () => {
       if (values.headId === 'none') {
         values.headId = null
       }
-
-      setIsSaving(true)
       
-      const response = await axios.post(APIDictionary.department, {
+      const result = await createMutation.mutateAsync({
         ...values,
+        headId: values.headId || undefined,
+        parentId: values.parentId || undefined,
         orgId: user?.orgId,
-      })
-
-      toast({
-        title: 'Department created',
-        description: 'The department has been successfully created',
       })
       
       // Navigate to the new department
-      navigate(RouteDict.Department.Details(response.data.id))
-    } catch (error: any) {
-      console.error('Error creating department:', error)
-      
-      // Show more specific error message if available
-      const errorMessage = error.response?.data?.message || 'Failed to create department';
-      
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive',
-      })
-      setIsSaving(false)
+      navigate(RouteDict.Department.Details(result.id))
+    } catch (error) {
+      // Error handling is done in the mutation hook
     }
   }
 
@@ -367,7 +307,7 @@ const CreateDepartment = () => {
                         <FormLabel>Parent Department</FormLabel>
                         <Select 
                           onValueChange={field.onChange} 
-                          value={field.value ?? undefined}
+                          value={field.value || ""}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -409,7 +349,7 @@ const CreateDepartment = () => {
                         <FormLabel>Department Head</FormLabel>
                         <Select 
                           onValueChange={field.onChange} 
-                          value={field.value ?? undefined}
+                          value={field.value || ""}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -499,10 +439,10 @@ const CreateDepartment = () => {
               <CardFooter className="flex justify-end border-t pt-6">
                 <Button 
                   type="submit"
-                  disabled={isSaving}
+                  disabled={createMutation.isPending}
                   className="ml-auto"
                 >
-                  {isSaving ? "Creating..." : "Create Department"}
+                  {createMutation.isPending ? "Creating..." : "Create Department"}
                 </Button>
               </CardFooter>
             </Card>

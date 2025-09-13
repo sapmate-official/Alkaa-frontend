@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { APIDictionary } from '@/services/api/v2/APIdict'
+import { APIV2Dictionary } from '@/services/api/v2/Api2Dicts'
 
 // Types
 export interface Bill {
@@ -220,13 +221,15 @@ export const billingKeys = {
 const billingApi = {
   // Bills
   async getAllBills(filters?: Record<string, any>): Promise<Bill[]> {
+    // Use history endpoint as list source (backend exposes /api/v2/billing/history)
     const params = new URLSearchParams(filters)
-    const response = await axios.get(`${APIDictionary.payroll}/billing?${params}`, { withCredentials: true })
+    const url = `${APIV2Dictionary.billing.getHistory()}${params.toString() ? `?${params}` : ''}`
+    const response = await axios.get(url, { withCredentials: true })
     return response.data.data || response.data
   },
 
   async getBillById(id: string): Promise<Bill> {
-    const response = await axios.get(`${APIDictionary.payroll}/billing/${id}`, { withCredentials: true })
+    const response = await axios.get(APIV2Dictionary.billing.getBill(id), { withCredentials: true })
     return response.data.data || response.data
   },
 
@@ -245,16 +248,17 @@ const billingApi = {
   },
 
   async getBillingHistory(orgId?: string): Promise<Bill[]> {
+    const base = APIV2Dictionary.billing.getHistory()
     const endpoint = orgId 
-      ? `${APIDictionary.payroll}/billing/history?organizationId=${orgId}`
-      : `${APIDictionary.payroll}/billing/history`
+      ? `${base}?organizationId=${orgId}`
+      : base
     const response = await axios.get(endpoint, { withCredentials: true })
     return response.data.data || response.data
   },
 
   // Invoices
   async getInvoiceByBill(billId: string): Promise<Invoice> {
-    const response = await axios.get(`${APIDictionary.payroll}/billing/${billId}/invoice`, { withCredentials: true })
+    const response = await axios.get(APIV2Dictionary.billing.getInvoice(billId), { withCredentials: true })
     return response.data.data || response.data
   },
 
@@ -324,7 +328,7 @@ const billingApi = {
 
   // Dashboard
   async getBillingDashboard(): Promise<BillingDashboardData> {
-    const response = await axios.get(`${APIDictionary.payroll}/billing/dashboard`, {
+    const response = await axios.get(APIV2Dictionary.billing.getDashboard(), {
       withCredentials: true
     })
     return response.data.data
@@ -341,7 +345,8 @@ const billingApi = {
 
   // Utility functions
   async markBillAsPaid(billId: string, paymentDetails?: any): Promise<Bill> {
-    const response = await axios.patch(`${APIDictionary.payroll}/billing/${billId}/mark-paid`, paymentDetails, { withCredentials: true })
+    // Align with backend: POST /api/v2/billing/bill/:id/pay
+    const response = await axios.post(APIV2Dictionary.billing.payBill(billId), paymentDetails || {}, { withCredentials: true })
     return response.data.data || response.data
   },
 

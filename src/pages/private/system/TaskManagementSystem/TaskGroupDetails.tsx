@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { taskGroupService } from './services/taskGroupService';
 import { useAuth } from '@/providers/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+
+// Import TanStack Query hooks
+import { useTaskGroup } from '@/hooks/queries/useTasks';
 
 interface Task {
     id: string;
@@ -27,25 +29,10 @@ interface TaskGroup {
 
 const TaskGroupDetails = () => {
   const { groupId } = useParams();
-  const [group, setGroup] = useState<TaskGroup | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  
+  // TanStack Query hook
+  const { data: group, isLoading } = useTaskGroup(groupId || '');
   const { user } = useAuth();
-
-  useEffect(() => {
-    const fetchGroupDetails = async () => {
-      if (!user || !groupId) return;
-      try {
-        const response = await taskGroupService.getGroupById(groupId);
-        setGroup(response.data);
-      } catch (error) {
-        console.error('Failed to fetch task group details', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchGroupDetails();
-  }, [user, groupId]);
 
   if (isLoading) {
     return (

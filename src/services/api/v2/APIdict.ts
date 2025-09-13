@@ -89,4 +89,12 @@ export const APIDictionary = {
     // Relationship Endpoints
     relationshipWithUser: (targetUserId: string) => `${backendDomain}/api/v2/relationship/user/${targetUserId}`,
     relationshipOrganization: `${backendDomain}/api/v2/relationship/organization`,
+
+    // Additional Leave Management Endpoints
+    leave_request_user: (userId: string) => `${backendDomain}/api/v2/leave-request/user/${userId}`,
+    leave_request_manager: (userId: string) => `${backendDomain}/api/v2/leave-request/manager/${userId}`,
+    leave_request_approve: (id: string) => `${backendDomain}/api/v2/leave-request/approve/${id}`,
+    leave_request_reject: (id: string) => `${backendDomain}/api/v2/leave-request/reject/${id}`,
+    leave_balance_user: (userId: string) => `${backendDomain}/api/v2/leave-balance/user/${userId}`,
+    leave_balance_type_user: (leaveTypeId: string, userId: string) => `${backendDomain}/api/v2/leave-balance/${leaveTypeId}/${userId}`,
 };

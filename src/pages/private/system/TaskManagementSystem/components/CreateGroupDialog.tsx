@@ -9,10 +9,10 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { X } from 'lucide-react';
 import { useAuth } from '@/providers/AuthContext';
-import { APIDictionary } from '@/services/api/v2/APIdict';
-import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
-import { useEffect } from 'react';
+
+// Import TanStack Query hooks
+import { useEmployees, useCreateTaskGroup, useAddGroupMembers } from '@/hooks/queries';
 
 interface CreateGroupDialogProps {
   open: boolean;
@@ -31,37 +31,17 @@ const CreateGroupDialog = ({ open, onOpenChange, onGroupCreated }: CreateGroupDi
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [users, setUsers] = useState<User[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  
+  // TanStack Query hooks
+  const { data: users = [] } = useEmployees();
+  const createTaskGroupMutation = useCreateTaskGroup();
+  const addGroupMembersMutation = useAddGroupMembers();
   
   const [formData, setFormData] = useState({
     name: '',
     description: ''
   });
-
-  useEffect(() => {
-    if (open) {
-      fetchUsers();
-    }
-  }, [open]);
-
-  const fetchUsers = async () => {
-    try {
-      console.log('Fetching users for orgId:', user?.orgId);
-      const response = await axios.get(`${APIDictionary.user}/org/${user?.orgId}`, { 
-        withCredentials: true 
-      });
-      console.log('Users response:', response.data);
-      setUsers(response.data.data || response.data || []);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load users",
-        variant: "destructive"
-      });
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,22 +58,19 @@ const CreateGroupDialog = ({ open, onOpenChange, onGroupCreated }: CreateGroupDi
     try {
       setLoading(true);
       
-      const groupData = {
+      // Create the group using TanStack Query mutation
+      const newGroup = await createTaskGroupMutation.mutateAsync({
         name: formData.name,
-        description: formData.description,
-      };
-
-      // Create the group first
-      const groupResponse = await axios.post(APIDictionary.taskGroup, groupData, { withCredentials: true });
+        description: formData.description
+      });
       
       // If members are selected, add them to the group
       if (selectedUsers.length > 0) {
         try {
-          await axios.post(
-            `${APIDictionary.taskGroup}/${groupResponse.data.data.id}/members`,
-            { userIds: selectedUsers },
-            { withCredentials: true }
-          );
+          await addGroupMembersMutation.mutateAsync({
+            groupId: newGroup.id,
+            userIds: selectedUsers
+          });
         } catch (memberError) {
           console.warn('Failed to add members to group:', memberError);
           // Don't fail the entire operation if member addition fails
@@ -105,7 +82,7 @@ const CreateGroupDialog = ({ open, onOpenChange, onGroupCreated }: CreateGroupDi
       
       toast({
         title: "Success",
-        description: `Group "${formData.name}" created successfully${selectedUsers.length > 0 ? ` with ${selectedUsers.length} member(s)` : ''}`,
+        description: `Group "${formData.name}" created successfully${selectedUsers.length > 0 ? ` with ${selectedUsers.length} member(s)` : ''}`
       });
       
     } catch (error) {

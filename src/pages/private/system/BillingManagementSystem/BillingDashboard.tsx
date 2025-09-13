@@ -26,6 +26,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import RouteDict from '@/routes/RouteDict';
 import { useBillingDashboard } from '@/hooks/queries/useBilling';
+import { useEffect } from 'react';
 
 const BillingDashboard = () => {
   const navigate = useNavigate();
@@ -38,14 +39,16 @@ const BillingDashboard = () => {
     error
   } = useBillingDashboard();
 
-  // Handle error case
-  if (error) {
-    toast({
-      title: 'Error loading data',
-      description: 'Failed to load dashboard data',
-      variant: 'destructive',
-    });
-  }
+  // Show toast as a side-effect when error changes to avoid re-render loop
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: 'Error loading data',
+        description: 'Failed to load dashboard data',
+        variant: 'destructive',
+      });
+    }
+  }, [error, toast]);
 
   const getStatusBadge = (status: string | undefined) => {
     switch (status) {

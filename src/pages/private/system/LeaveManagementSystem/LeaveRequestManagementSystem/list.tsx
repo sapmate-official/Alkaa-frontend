@@ -1,9 +1,7 @@
-import { useState, useEffect } from 'react'
 import { useAuth } from '@/providers/AuthContext'
 import { useToast } from '@/hooks/use-toast'
-import { APIDictionary } from '@/services/api/v2/APIdict'
-import axios from 'axios'
 import { format } from 'date-fns'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -40,6 +38,10 @@ import { useAtom } from 'jotai'
 import { permissionListAtom } from '@/store/atom'
 import RouteDict from '@/routes/RouteDict'
 import { motion, AnimatePresence } from 'framer-motion'
+import {
+  useLeaveRequestsQuery,
+  useDeleteLeaveRequestMutation
+} from '@/hooks/queries'
 
 interface LeaveRequest {
   id: string
@@ -48,7 +50,7 @@ interface LeaveRequest {
   startDate: string
   endDate: string
   numberOfDays: number
-  status: 'PENDING' | 'APPROVED' | 'REJECTED'
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
   reason: string
   approvedBy: string | null
   approvedAt: string | null
@@ -62,19 +64,19 @@ interface LeaveRequest {
 }
 
 const LeaveRequestList = () => {
-  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([])
   const [filteredRequests, setFilteredRequests] = useState<LeaveRequest[]>([])
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL')
-  // const [viewMode, setViewMode] = useState<'table' | 'cards'>('cards')
   const [canCreateLeaveRequest, setCanCreateLeaveRequest] = useState(false)
   const [canApproveLeaveRequest, setCanApproveLeaveRequest] = useState(false)
   const { user } = useAuth()
   const { toast } = useToast()
   const navigate = useNavigate()
   const [permissionList] = useAtom(permissionListAtom)
+
+  // TanStack Query hooks
+  const { data: leaveRequests = [], isLoading, refetch } = useLeaveRequestsQuery(user?.id, !!user?.id)
+  const deleteMutation = useDeleteLeaveRequestMutation()
 
   const checkPermissions = () => {
     setCanCreateLeaveRequest(permissionList.some(permission => permission.key === 'leave_request'))
@@ -83,29 +85,7 @@ const LeaveRequestList = () => {
     )
   }
 
-  const fetchLeaveRequests = async () => {
-    try {
-      setLoading(true)
-      const response = await axios.get(`${APIDictionary.leave_request}/user/${user?.id}`, {
-        withCredentials: true
-      })
-      if (response?.status === 200) {
-        setLeaveRequests(response?.data)
-        setFilteredRequests(response?.data)
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to fetch leave requests",
-        variant: "destructive"
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
   useEffect(() => {
-    fetchLeaveRequests()
     checkPermissions()
   }, [permissionList])
 
@@ -171,21 +151,14 @@ const LeaveRequestList = () => {
       return
     }
 
-    setIsDeleting(true)
     try {
-      const response = await axios.delete(`${APIDictionary.leave_request}/${id}`, {
-        withCredentials: true
+      await deleteMutation.mutateAsync(id)
+      toast({
+        title: "Success",
+        description: "Leave request deleted successfully",
+        variant: "default"
       })
-
-      if (response.status === 204) {
-        toast({
-          title: "Success",
-          description: "Leave request deleted successfully",
-          variant: "default"
-        })
-        // Refresh the leave requests list
-        fetchLeaveRequests()
-      }
+      refetch() // Refetch the leave requests after deletion
     } catch (error: any) {
       toast({
         title: "Error",
@@ -193,8 +166,6 @@ const LeaveRequestList = () => {
         variant: "destructive"
       })
       console.error("Error deleting leave request:", error)
-    } finally {
-      setIsDeleting(false)
     }
   }
 
@@ -207,7 +178,7 @@ const LeaveRequestList = () => {
   const renderCardView = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <AnimatePresence>
-        {filteredRequests.map((request, index) => (
+        {filteredRequests.map((request: LeaveRequest, index: number) => (
           <motion.div
             key={request.id}
             variants={cardVariants}
@@ -276,7 +247,6 @@ const LeaveRequestList = () => {
                             variant="ghost"
                             size="sm"
                             className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
-                            disabled={isDeleting}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -376,7 +346,7 @@ const LeaveRequestList = () => {
   //   </Card>
   // )
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="h-screen w-full flex items-center justify-center">
         <motion.div 
@@ -405,13 +375,13 @@ const LeaveRequestList = () => {
         </div>
         <div className='flex space-x-3'>
           <Button
-            onClick={fetchLeaveRequests}
+            onClick={() => refetch()}
             variant="outline"
             size="sm"
-            disabled={loading}
+            disabled={isLoading}
             className="flex items-center space-x-2"
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
           </Button>
           {canApproveLeaveRequest && (
