@@ -1,40 +1,14 @@
-import  { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { taskGroupService } from './services/taskGroupService';
 import { useAuth } from '@/providers/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
-interface TaskGroup {
-  id: string;
-  name: string;
-  description: string;
-  memberCount: number;
-  _count?: {
-    members: number;
-  };
-}
+// Import TanStack Query hooks
+import { useTaskGroups } from '@/hooks/queries/useTasks';
 
 const TaskGroupList = () => {
-  const [groups, setGroups] = useState<TaskGroup[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { user } = useAuth();
-
-  useEffect(() => {
-    const fetchGroups = async () => {
-      if (!user?.orgId) return;
-      try {
-        const response = await taskGroupService.getAllGroups();
-        setGroups(response.data);
-      } catch (error) {
-        console.error('Failed to fetch task groups', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchGroups();
-  }, [user?.orgId]);
+  // TanStack Query hook
+  const { data: groups = [], isLoading } = useTaskGroups();
 
   if (isLoading) {
     return (
@@ -66,7 +40,7 @@ const TaskGroupList = () => {
         {groups.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {groups.map((group) => {
-                    const memberCount = group.memberCount ?? group._count?.members ?? 0;
+                    const memberCount = group._count?.members ?? 0;
                     return (
                     <Link to={`/p/task/group/${group.id}`} key={group.id} className="block">
                         <Card className="hover:shadow-lg transition-shadow duration-200 h-full">

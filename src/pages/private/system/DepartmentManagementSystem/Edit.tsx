@@ -1,6 +1,4 @@
-import { APIDictionary } from '@/services/api/v2/APIdict'
-import { Department, User } from '@/types/general'
-import axios from 'axios'
+import { User } from '@/types/general'
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
@@ -36,6 +34,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import RouteDict from '@/routes/RouteDict'
+import { useDepartmentQuery, useUpdateDepartmentMutation, useDeleteDepartmentMutation } from '@/hooks/queries/useDepartments'
 
 //warning : Warning: validateDOMNesting(...): <div> cannot appear as a descendant of <p>.
 
@@ -67,7 +66,6 @@ export const ButtonOfSpecificDepartmentEdit = ({id, user}: {
 
 const SpecificDepartmentEdit = () => {
   const { id } = useParams()
-  const [department, setDepartment] = useState<Department | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -88,44 +86,42 @@ const SpecificDepartmentEdit = () => {
   const navigate = useNavigate()
   const [permissions] = useAtom(permissionListAtom)
   const hasDeletePermission = CheckPermission('delete_department', permissions)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSaving, setIsSaving] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
 
-  const fetchDepartment = async () => {
-    try {
-      setIsLoading(true)
-      const response = await axios.get(`${APIDictionary.department}/${id}`)
-      setDepartment(response?.data)
-      
-      const data = {
-        name: response?.data?.name ?? '',
-        description: response?.data?.description ?? '',
-        code: response?.data?.code ?? '',
-        location: response?.data?.location ?? '',
-        budget: response?.data?.budget ?? 0,
-        status: response?.data?.status ?? true
-      }
-      
-      setFormData(data)
-      setInitialFormData(data)
-    } catch (error) {
-      console.error('Error fetching department details:', error)
+  // TanStack Query hooks
+  const { data: department, isLoading, error } = useDepartmentQuery(id || '')
+  const updateMutation = useUpdateDepartmentMutation()
+  const deleteMutation = useDeleteDepartmentMutation()
+
+  // Handle loading and error states
+  useEffect(() => {
+    if (error) {
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to fetch department details"
       })
       navigate(RouteDict.Department.List)
-    } finally {
-      setIsLoading(false)
     }
-  }
+  }, [error, toast, navigate])
 
+  // Update form data when department data is loaded
   useEffect(() => {
-    fetchDepartment()
-  }, [id])
+    if (department) {
+      const data = {
+        name: department.name ?? '',
+        description: department.description ?? '',
+        code: department.code ?? '',
+        location: department.location ?? '',
+        budget: department.budget ?? 0,
+        status: department.status ?? true
+      }
+      
+      setFormData(data)
+      setInitialFormData(data)
+    }
+  }, [department])
 
   useEffect(() => {
     // Check if form data has changed from initial values
@@ -161,48 +157,28 @@ const SpecificDepartmentEdit = () => {
   }
 
   const handleDelete = async () => {
+    if (!id) return
+    
     try {
-      setIsSaving(true)
-      await axios.delete(`${APIDictionary.department}/${id}`)
-      toast({
-        title: "Department deleted",
-        description: "Department has been successfully deleted"
-      })
+      await deleteMutation.mutateAsync(id)
       navigate(RouteDict.Department.List)
-    } catch (error) {
-      console.error('Error deleting department:', error)
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to delete department"
-      })
-    } finally {
-      setIsSaving(false)
       setIsDeleteDialogOpen(false)
+    } catch (error) {
+      // Error handling is done in the mutation hook
     }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!id) return
+    
     try {
-      setIsSaving(true)
-      await axios.put(`${APIDictionary.department}/${id}`, formData)
+      await updateMutation.mutateAsync({ id, data: formData })
       setInitialFormData(formData) // Update initial data to reflect saved state
       setHasChanges(false)
-      toast({
-        title: "Changes saved",
-        description: "Department information has been updated successfully"
-      })
-      navigate(RouteDict.Department.Edit(id || ''))
+      navigate(RouteDict.Department.Edit(id))
     } catch (error) {
-      console.error('Error updating department:', error)
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update department"
-      })
-    } finally {
-      setIsSaving(false)
+      // Error handling is done in the mutation hook
     }
   }
 
@@ -345,7 +321,7 @@ const SpecificDepartmentEdit = () => {
                       type="button"
                       variant="destructive"
                       className="gap-2"
-                      disabled={isSaving}
+                      disabled={deleteMutation.isPending}
                     >
                       <Trash className="h-4 w-4" />
                       Delete Department
@@ -355,23 +331,23 @@ const SpecificDepartmentEdit = () => {
                     <AlertDialogHeader>
                       <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        <div className="space-y-2">
-                          <p>This will permanently delete the department <strong>{department?.name}</strong>.</p>
-                          <div className="flex items-center p-3 bg-amber-50 text-amber-800 rounded-md border border-amber-200">
-                            <AlertTriangle className="h-5 w-5 mr-2 flex-shrink-0" />
-                            <p className="text-sm">All users in this department will need to be reassigned. This action cannot be undone.</p>
-                          </div>
+                        This will permanently delete the department <strong>{department?.name}</strong>.
+                        <br />
+                        <br />
+                        <div className="flex items-center p-3 bg-amber-50 text-amber-800 rounded-md border border-amber-200">
+                          <AlertTriangle className="h-5 w-5 mr-2 flex-shrink-0" />
+                          <span className="text-sm">All users in this department will need to be reassigned. This action cannot be undone.</span>
                         </div>
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel disabled={isSaving}>Cancel</AlertDialogCancel>
+                      <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={handleDelete}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        disabled={isSaving}
+                        disabled={deleteMutation.isPending}
                       >
-                        {isSaving ? "Deleting..." : "Delete Department"}
+                        {deleteMutation.isPending ? "Deleting..." : "Delete Department"}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
@@ -381,11 +357,11 @@ const SpecificDepartmentEdit = () => {
             
             <Button 
               type="submit" 
-              disabled={isSaving || !hasChanges}
+              disabled={updateMutation.isPending || !hasChanges}
               className="gap-2"
             >
               <Save className="h-4 w-4" />
-              {isSaving ? "Saving..." : "Save Changes"}
+              {updateMutation.isPending ? "Saving..." : "Save Changes"}
             </Button>
           </CardFooter>
         </Card>

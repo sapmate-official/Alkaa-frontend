@@ -1,4 +1,3 @@
-import { APIDictionary } from '@/services/api/v2/APIdict'
 import { useAuth } from '@/providers/AuthContext'
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -6,7 +5,6 @@ import { Calendar } from "@/components/ui/calendar"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { format } from "date-fns"
 import { CalendarDays, Clock, FileText, ArrowLeft, Check, User, CheckCircle } from "lucide-react"
@@ -18,6 +16,13 @@ import { Checkbox } from "@/components/ui/checkbox"
 import RouteDict from '@/routes/RouteDict'
 import { motion } from "framer-motion"
 import { Spinner } from '@/components/ui/spinner'
+import axios from 'axios'
+import {
+  useLeaveTypesQuery,
+  useLeaveBalanceQuery,
+  useCreateLeaveRequestMutation
+} from '@/hooks/queries'
+import { APIDictionary } from '@/services/api/v2/APIdict'
 
 interface LeaveType {
   id: string;
@@ -49,27 +54,19 @@ const LeaveRequestCreate = () => {
   const [isSameDayLeave, setIsSameDayLeave] = useState(false)
   const navigate = useNavigate()
 
-  // Fetch leave types
-  useEffect(() => {
-    const fetchLeaveTypes = async () => {
-      try {
-        const response = await axios.get(`${APIDictionary.get_all_org_leave_type(user?.orgId ?? "")}`, {
-          withCredentials: true
-        })
-        setLeaveTypes(response.data)
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to fetch leave types",
-          variant: "destructive"
-        })
-      }
-    }
+  // TanStack Query hooks
+  const { data: leaveTypesData = [] } = useLeaveTypesQuery(user?.orgId, !!user?.orgId)
+  const { data: leaveBalanceData } = useLeaveBalanceQuery(formData.leaveTypeId, user?.id || '')
+  const createMutation = useCreateLeaveRequestMutation()
 
-    if (user?.orgId) {
-      fetchLeaveTypes()
-    }
-  }, [user?.orgId])
+  // Update local state when data changes
+  useEffect(() => {
+    setLeaveTypes(leaveTypesData)
+  }, [leaveTypesData])
+
+  useEffect(() => {
+    setLeaveBalance(leaveBalanceData?.remainingDays ?? null)
+  }, [leaveBalanceData])
 
   useEffect(() => {
     if (isSameDayLeave) {
@@ -83,26 +80,9 @@ const LeaveRequestCreate = () => {
     }
   }, [isSameDayLeave]);
 
-  const validateLeaveBalance = async () => {
-    try {
-      const response = await axios.get(`${APIDictionary.leave_balance}/${formData?.leaveTypeId}/${user?.id}`, {
-        withCredentials: true
-      })
-      const balance = response?.data
-      return balance?.remainingDays > 0
-    } catch (error) {
-      toast({
-          title: "Error",
-          description: "Failed to check leave balance",
-          variant: "destructive"
-      })
-      return false
-    }
-  }
-
   const fetchLeaveBalance = async (leaveTypeId: string) => {
     try {
-      const response = await axios.get(`${APIDictionary.leave_balance}/${leaveTypeId}/${user?.id}`, {
+      const response = await axios.get(APIDictionary.leave_balance_type_user(leaveTypeId, user?.id || ''), {
         withCredentials: true
       })
       setLeaveBalance(response?.data?.remainingDays ?? null)
@@ -132,8 +112,7 @@ const LeaveRequestCreate = () => {
       }
 
       // Check leave balance
-      const hasBalance = await validateLeaveBalance()
-      if (!hasBalance) {
+      if (leaveBalance !== null && leaveBalance <= 0) {
         toast({
           title: "Error",
           description: "Insufficient leave balance",
@@ -152,25 +131,17 @@ const LeaveRequestCreate = () => {
       }
 
       // Submit request
-      const response = await axios.post(APIDictionary.leave_request, requestData, {
-        withCredentials: true
+      await createMutation.mutateAsync(requestData)
+      
+      // Reset form
+      setFormData({
+        leaveTypeId: '',
+        startDate: null,
+        endDate: null,
+        reason: '',
+        isSameDayLeave: false
       })
-
-      if (response.status === 201) {
-        toast({
-          title: "Success",
-          description: "Leave request submitted successfully"
-        })
-        // Reset form
-        setFormData({
-          leaveTypeId: '',
-          startDate: null,
-          endDate: null,
-          reason: '',
-          isSameDayLeave: false
-        })
-        navigate(RouteDict.Leave.Requests.List);
-      }
+      navigate(RouteDict.Leave.Requests.List);
     } catch (error) {
       toast({
         title: "Error",

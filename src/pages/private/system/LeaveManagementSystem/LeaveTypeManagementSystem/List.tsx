@@ -1,8 +1,6 @@
-import { APIDictionary } from "@/services/api/v2/APIdict";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/providers/AuthContext";
-import axios from "axios";
 import { Edit2, Plus, Trash2, Clock, CheckCircle, XCircle, Calendar, Shield, RefreshCw, Search, Filter, CalendarDays } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -13,6 +11,11 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  useLeaveTypesQuery,
+  useDeleteLeaveTypeMutation
+} from '@/hooks/queries'
+import { api } from "@/utils/api";
 
 interface LeaveType {
     id: string;
@@ -38,45 +41,20 @@ export default function LeaveTypeList() {
     const { toast } = useToast();
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const fetchLeaveTypes = async () => {
-        try {
-            setLoading(true);
-            if (!user?.orgId) return;
-            const response = await axios.get(
-                APIDictionary.get_all_org_leave_type(user?.orgId),
-                { withCredentials: true }
-            );
-            console.log("Leave types:", response?.data);
-            setLeaveTypes(response?.data || []);
-        } catch (error) {
-            console.error("Error fetching leave types:", error);
-            setLeaveTypes([]);
-            toast({
-                title: "Error",
-                description: "Failed to fetch leave types",
-                variant: "destructive"
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
+    // TanStack Query hooks
+    const { data: leaveTypesData = [], isLoading, refetch } = useLeaveTypesQuery(user?.orgId, !!user?.orgId)
+    const deleteMutation = useDeleteLeaveTypeMutation()
+
+    // Update local state when data changes
+    useEffect(() => {
+        setLeaveTypes(leaveTypesData)
+        setLoading(isLoading)
+    }, [leaveTypesData, isLoading])
 
     const handleDelete = async (id: string) => {
         try {
-            setIsDeleting(true);
-            
-            const response = await axios.delete(
-                APIDictionary.leave_type(id),
-                { withCredentials: true }
-            );
-            
-            if (response.status === 200) {
-                toast({
-                    title: "Success",
-                    description: "Leave type deleted successfully"
-                });
-                fetchLeaveTypes();
-            }
+            setIsDeleting(true)
+            await deleteMutation.mutateAsync(id)
         } catch (error: any) {
             console.error("Error deleting leave type:", error);
             
@@ -87,13 +65,9 @@ export default function LeaveTypeList() {
                 variant: "destructive"
             });
         } finally {
-            setIsDeleting(false);
+            setIsDeleting(false)
         }
     };
-
-    useEffect(() => {
-        fetchLeaveTypes();
-    }, [user]);
 
     const handleEdit = (id: string) => {
         navigate(RouteDict.Leave.Types.Edit(id));
@@ -197,7 +171,7 @@ export default function LeaveTypeList() {
                     </div>
                     <div className="flex items-center space-x-3">
                         <Button
-                            onClick={fetchLeaveTypes}
+                            onClick={() => refetch()}
                             variant="outline"
                             size="sm"
                             disabled={loading}

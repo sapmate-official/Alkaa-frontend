@@ -19,8 +19,9 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { TaskGroupMemberService } from '../services/taskGroupMemberService';
-import { batchMemberOperations, useMemberManagement } from '../utils/memberManagementUtils';
+
+// Import TanStack Query hooks
+import { useAddGroupMembers, useRemoveGroupMembers } from '@/hooks/queries';
 
 interface User {
   id: string;
@@ -29,12 +30,23 @@ interface User {
   email: string;
 }
 
+interface TaskGroupMember {
+  id: string;
+  userId: string;
+  groupId: string;
+  role: 'ADMIN' | 'MEMBER';
+  addedAt: string;
+  addedBy: string;
+  user: User;
+}
+
 interface TaskGroup {
   id: string;
   name: string;
   description?: string;
   createdBy: User;
   tasks: any[];
+  members: TaskGroupMember[];
 }
 
 interface EnhancedGroupCardProps {
@@ -56,23 +68,103 @@ const EnhancedGroupCard: React.FC<EnhancedGroupCardProps> = ({
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   
-  // Use the enhanced member management hook
-  const {
-    getMemberStats,
-    getMembersByRole,
-    checkMembership,
-    getHealthMetrics,
-    getActivityAnalysis
-  } = useMemberManagement(group);
+  // TanStack Query hooks
+  const addGroupMembersMutation = useAddGroupMembers();
+  const removeGroupMembersMutation = useRemoveGroupMembers();
   
-  // Memoized calculations
-  const memberStats = useMemo(() => getMemberStats(), [getMemberStats]);
-  const { owner, members } = useMemo(() => getMembersByRole(), [getMembersByRole]);
-  const isCurrentUserMember = useMemo(() => checkMembership(currentUser.id), [checkMembership, currentUser.id]);
-  const isOwner = useMemo(() => TaskGroupMemberService.isGroupOwner(currentUser.id, group), [currentUser.id, group]);
-  const healthMetrics = useMemo(() => getHealthMetrics(), [getHealthMetrics]);
-  const activityAnalysis = useMemo(() => getActivityAnalysis(), [getActivityAnalysis]);
+  // Calculate member stats directly
+  const memberStats = useMemo(() => {
+    if (!group.members) return null;
+    
+    const totalMembers = group.members.length;
+    const membersWithTasks = group.members.filter(member => 
+      group.tasks?.some(task => 
+        task.assignments?.some((assignment: any) => assignment.assignedToId === member.userId)
+      )
+    ).length;
+    
+    return {
+      totalMembers,
+      membersWithTasks,
+      membersWithoutTasks: totalMembers - membersWithTasks
+    };
+  }, [group.members, group.tasks]);
   
+  const healthMetrics = useMemo(() => {
+    if (!memberStats || !group.tasks) return null;
+    
+    const totalTasks = group.tasks.length;
+    const completedTasks = group.tasks.filter(task => task.status === 'COMPLETED').length;
+    const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    const averageTasksPerMember = memberStats.totalMembers > 0 ? Math.round(totalTasks / memberStats.totalMembers) : 0;
+    const activeMemberPercentage = memberStats.totalMembers > 0 ? Math.round((memberStats.membersWithTasks / memberStats.totalMembers) * 100) : 0;
+    
+    // Calculate health score based on activity and completion
+    const activityScore = activeMemberPercentage;
+    const completionScore = completionRate;
+    const healthScore = Math.round((activityScore + completionScore) / 2);
+    
+    return {
+      healthScore,
+      taskMetrics: {
+        totalTasks,
+        completedTasks,
+        completionRate,
+        averageTasksPerMember
+      },
+      memberMetrics: {
+        activeMemberPercentage
+      }
+    };
+  }, [memberStats, group.tasks]);
+  
+  const activityAnalysis = useMemo(() => {
+    if (!group.members) return [];
+    
+    return group.members.map(member => {
+      const taskCount = group.tasks?.filter(task => 
+        task.assignments?.some((assignment: any) => assignment.assignedToId === member.userId)
+      ).length || 0;
+      
+      const completedTasks = group.tasks?.filter(task => 
+        task.status === 'COMPLETED' && 
+        task.assignments?.some((assignment: any) => assignment.assignedToId === member.userId)
+      ).length || 0;
+      
+      const completionRate = taskCount > 0 ? (completedTasks / taskCount) * 100 : 0;
+      
+      return {
+        member: member.user,
+        stats: {
+          totalTasks: taskCount,
+          completedTasks,
+          completionRate
+        },
+        role: member.role
+      };
+    }).sort((a, b) => b.stats.completionRate - a.stats.completionRate);
+  }, [group.members, group.tasks]);
+  
+  // Calculate members by role directly (for future use if needed)
+  const getMembersByRole = useCallback(() => {
+    const owner = group.members?.find(member => member.userId === group.createdBy.id);
+    const admins = group.members?.filter(member => member.role === 'ADMIN' && member.userId !== group.createdBy.id) || [];
+    const regularMembers = group.members?.filter(member => member.role === 'MEMBER') || [];
+    
+    return { owner, admins, regularMembers };
+  }, [group.members, group.createdBy.id]);
+  
+  // Note: getMembersByRole is calculated but not currently used in the render
+  getMembersByRole();
+  
+  // Calculate if current user is a member
+  const isCurrentUserMember = useMemo(() => 
+    group.members?.some(member => member.userId === currentUser.id) || false, 
+    [group.members, currentUser.id]
+  );
+
+  // Check if current user is the owner
+  const isOwner = currentUser?.id === group.createdBy.id;
   
   // Quick add/remove functions
   const handleQuickAddMembers = useCallback(async () => {
@@ -80,7 +172,9 @@ const EnhancedGroupCard: React.FC<EnhancedGroupCardProps> = ({
       setIsProcessing(true);
       
       // Get available users (not already members)
-      const availableUsers = TaskGroupMemberService.getAvailableUsers(allUsers, members);
+      const availableUsers = allUsers.filter(user => 
+        !group.members?.some(member => member.user.id === user.id)
+      );
       
       if (availableUsers.length === 0) {
         toast({
@@ -94,16 +188,14 @@ const EnhancedGroupCard: React.FC<EnhancedGroupCardProps> = ({
       // For demonstration, add the first 2 available users
       const usersToAdd = availableUsers.slice(0, 2).map(user => user.id);
       
-      const result = await batchMemberOperations.addMembersWithValidation(
-        group.id,
-        usersToAdd,
-        allUsers,
-        members
-      );
+      await addGroupMembersMutation.mutateAsync({
+        groupId: group.id,
+        userIds: usersToAdd
+      });
       
       toast({
         title: "Members Added",
-        description: result.summary,
+        description: `Added ${usersToAdd.length} member(s) to the group`,
         variant: "default"
       });
       
@@ -117,17 +209,19 @@ const EnhancedGroupCard: React.FC<EnhancedGroupCardProps> = ({
     } finally {
       setIsProcessing(false);
     }
-  }, [group.id, allUsers, members, toast, onGroupUpdated]);
+  }, [group.id, allUsers, group.members, toast, addGroupMembersMutation, onGroupUpdated]);
   
   const handleQuickRemoveInactiveMembers = useCallback(async () => {
     try {
       setIsProcessing(true);
       
       // Find members with no tasks
-      const inactiveMembers = members.filter(member => 
-        TaskGroupMemberService.getMemberTaskCount(member.id, group) === 0 &&
-        member.id !== owner?.id // Don't remove the owner
-      );
+      const inactiveMembers = group.members?.filter(member => 
+        group.tasks?.filter(task => 
+          task.assignments?.some((assignment: any) => assignment.assignedTo.id === member.user.id)
+        ).length === 0 &&
+        member.user.id !== group.createdBy.id // Don't remove the owner
+      ) || [];
       
       if (inactiveMembers.length === 0) {
         toast({
@@ -138,17 +232,16 @@ const EnhancedGroupCard: React.FC<EnhancedGroupCardProps> = ({
         return;
       }
       
-      const userIdsToRemove = inactiveMembers.map(member => member.id);
+      const userIdsToRemove = inactiveMembers.map(member => member.user.id);
       
-      const result = await batchMemberOperations.removeMembersWithConfirmation(
-        group.id,
-        userIdsToRemove,
-        members
-      );
+      await removeGroupMembersMutation.mutateAsync({
+        groupId: group.id,
+        userIds: userIdsToRemove
+      });
       
       toast({
         title: "Inactive Members Removed",
-        description: `Removed ${result.removedMemberDetails.length} inactive members`,
+        description: `Removed ${userIdsToRemove.length} inactive members`,
         variant: "default"
       });
       
@@ -162,7 +255,7 @@ const EnhancedGroupCard: React.FC<EnhancedGroupCardProps> = ({
     } finally {
       setIsProcessing(false);
     }
-  }, [group, members, owner, toast, onGroupUpdated]);
+  }, [group, toast, removeGroupMembersMutation, onGroupUpdated]);
   
   if (!memberStats || !healthMetrics) return null;
   
@@ -236,7 +329,10 @@ const EnhancedGroupCard: React.FC<EnhancedGroupCardProps> = ({
             {isCurrentUserMember && (
               <div className="text-right">
                 <div className="text-lg font-bold">
-                  {TaskGroupMemberService.getMemberTaskCount(currentUser.id, group)}
+                  {group.members?.find(member => member.userId === currentUser.id) ? 
+                    group.tasks?.filter(task => 
+                      task.assignments?.some((assignment: any) => assignment.assignedToId === currentUser.id)
+                    ).length || 0 : 0}
                 </div>
                 <div className="text-xs text-muted-foreground">Your Tasks</div>
               </div>
@@ -253,58 +349,57 @@ const EnhancedGroupCard: React.FC<EnhancedGroupCardProps> = ({
             </div>
             <div className="space-y-1">
               {activityAnalysis.slice(0, 3).map((analysis, index) => (
-                <div key={analysis.member.id} className="flex items-center justify-between text-sm p-2 bg-muted/30 rounded">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="w-6 h-6 flex items-center justify-center text-xs p-0">
-                      {index + 1}
-                    </Badge>
-                    <span>{analysis.member.firstName} {analysis.member.lastName}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">
-                      {analysis.stats.totalTasks} tasks
-                    </span>
-                    <Badge variant={analysis.stats.completionRate >= 80 ? "default" : "secondary"} className="text-xs">
-                      {Math.round(analysis.stats.completionRate)}%
-                    </Badge>
-                  </div>
-                </div>
-              ))}
+                <div key={analysis.member.id} className="flex items-center justify-between text-sm p-2 bg-muted/30 rounded">              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="w-6 h-6 flex items-center justify-center text-xs p-0">
+                  {index + 1}
+                </Badge>
+                <span>{analysis.member.firstName} {analysis.member.lastName}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  {analysis.stats.totalTasks} tasks
+                </span>
+                <Badge variant={analysis.stats.completionRate >= 80 ? "default" : "secondary"} className="text-xs">
+                  {Math.round(analysis.stats.completionRate)}%
+                </Badge>
+              </div>
             </div>
-          </div>
-        )}
-        
-        {/* Owner Actions */}
-        {isOwner && (
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Quick Actions</p>
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleQuickAddMembers}
-                disabled={isProcessing}
-                className="flex-1"
-              >
-                <UserPlus className="h-4 w-4 mr-1" />
-                Add Members
-              </Button>
-              
-              {memberStats.membersWithoutTasks > 0 && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleQuickRemoveInactiveMembers}
-                  disabled={isProcessing}
-                  className="flex-1"
-                >
-                  <UserMinus className="h-4 w-4 mr-1" />
-                  Remove Inactive
-                </Button>
-              )}
-            </div>
-          </div>
-        )}
+          ))}
+        </div>
+      </div>
+    )}
+    
+    {/* Owner Actions */}
+    {isOwner && (
+      <div className="space-y-2">
+        <p className="text-sm font-medium">Quick Actions</p>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleQuickAddMembers}
+            disabled={isProcessing}
+            className="flex-1"
+          >
+            <UserPlus className="h-4 w-4 mr-1" />
+            Add Members
+          </Button>
+          
+          {memberStats.membersWithoutTasks > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleQuickRemoveInactiveMembers}
+              disabled={isProcessing}
+              className="flex-1"
+            >
+              <UserMinus className="h-4 w-4 mr-1" />
+              Remove Inactive
+            </Button>
+          )}
+        </div>
+      </div>
+    )}
         
         {/* Health Insights */}
         <div className="text-xs text-muted-foreground space-y-1">
@@ -336,13 +431,19 @@ const EnhancedMemberSearch: React.FC<{
     
     // Apply search term
     if (searchTerm) {
-      filtered = TaskGroupMemberService.searchUsers(filtered, searchTerm);
+      filtered = filtered.filter(user => 
+        user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase())
+      );
     }
     
     // Apply filter type
     switch (filterType) {
       case 'available':
-        filtered = TaskGroupMemberService.getAvailableUsers(filtered, currentMembers);
+        filtered = filtered.filter(user => 
+          !currentMembers.some(member => member.id === user.id)
+        );
         break;
       case 'members':
         filtered = filtered.filter(user => 
@@ -351,12 +452,16 @@ const EnhancedMemberSearch: React.FC<{
         break;
       case 'active':
         filtered = filtered.filter(user => 
-          TaskGroupMemberService.getMemberTaskCount(user.id, group) > 0
+          group.tasks?.filter(task => 
+            task.assignments?.some((assignment: any) => assignment.assignedToId === user.id)
+          ).length > 0
         );
         break;
       case 'inactive':
         filtered = currentMembers.filter(user => 
-          TaskGroupMemberService.getMemberTaskCount(user.id, group) === 0
+          group.tasks?.filter(task => 
+            task.assignments?.some((assignment: any) => assignment.assignedToId === user.id)
+          ).length === 0
         );
         break;
     }
@@ -392,8 +497,10 @@ const EnhancedMemberSearch: React.FC<{
       
       <div className="space-y-2 max-h-60 overflow-y-auto">
         {filteredUsers.map(user => {
-          const taskCount = TaskGroupMemberService.getMemberTaskCount(user.id, group);
-          const isMember = TaskGroupMemberService.isGroupMember(user.id, group);
+          const taskCount = group.tasks?.filter(task => 
+            task.assignments?.some((assignment: any) => assignment.assignedToId === user.id)
+          ).length || 0;
+          const isMember = group.members?.some(member => member.userId === user.id) || false;
           
           return (
             <div

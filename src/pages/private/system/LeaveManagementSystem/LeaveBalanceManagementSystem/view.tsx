@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { APIDictionary } from '@/services/api/v2/APIdict'
-import axios from 'axios'
 import {
   Table,
   TableBody,
@@ -11,6 +10,9 @@ import {
 } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from '@/providers/AuthContext'
+import {
+  useLeaveBalancesQuery
+} from '@/hooks/queries'
 
 interface LeaveType {
   id: string;
@@ -45,22 +47,19 @@ const ViewLeaveBalance = () => {
   const [error, setError] = useState<string | null>(null)
   const { user } = useAuth()
 
-  useEffect(() => {
-    const fetchLeaveBalance = async () => {
-      try {
-        const response = await axios.get(`${APIDictionary.leave_balance}/user/${user?.id}`)
-        setLeaveBalances(response.data)
-        setLoading(false)
-      } catch (err) {
-        setError('Failed to fetch leave balance')
-        setLoading(false)
-      }
-    }
+  // TanStack Query hook
+  const { data: leaveBalancesData = [], isLoading, isError } = useLeaveBalancesQuery(user?.id, !!user?.id)
 
-    if (user?.id) {
-      fetchLeaveBalance()
+  // Update local state when data changes
+  useEffect(() => {
+    setLeaveBalances(leaveBalancesData)
+    setLoading(isLoading)
+    if (isError) {
+      setError('Failed to fetch leave balance')
+    } else {
+      setError(null)
     }
-  }, [user])
+  }, [leaveBalancesData, isLoading, isError])
 
   if (error) {
     return (

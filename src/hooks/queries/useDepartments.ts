@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { APIDictionary } from '@/services/api/v2/APIdict'
 import { useToast } from '@/hooks/use-toast'
+import { User } from '@/types/general'
 
 export interface Department {
   id: string
@@ -15,9 +16,11 @@ export interface Department {
   departmentHead?: {
     firstName: string
     lastName: string
+    email: string
+    employeeId: string
     id?: string
   }
-  users?: { id: string }[]
+  users?: User[]
   [key: string]: any
 }
 
@@ -182,6 +185,48 @@ export const useDeleteDepartmentMutation = () => {
       toast({
         title: "Error",
         description: "Failed to delete department. Please try again.",
+        variant: "destructive"
+      })
+    }
+  })
+}
+
+// Change Department Head Mutation
+export const useChangeDepartmentHeadMutation = () => {
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+
+  return useMutation({
+    mutationFn: async ({ departmentId, userId }: { departmentId: string; userId: string }) => {
+      const response = await axios.put(
+        `${APIDictionary.department}/${departmentId}/head/${userId}`,
+        {},
+        { withCredentials: true }
+      )
+      return response.data
+    },
+    onSuccess: (_, variables) => {
+      // Invalidate specific department
+      queryClient.invalidateQueries({
+        queryKey: departmentQueryKeys.detail(variables.departmentId)
+      })
+      
+      // Also invalidate the departments list
+      queryClient.invalidateQueries({
+        queryKey: departmentQueryKeys.all
+      })
+      
+      toast({
+        title: "Success",
+        description: "Department head updated successfully",
+        variant: "default"
+      })
+    },
+    onError: (error) => {
+      console.error('Error updating department head:', error)
+      toast({
+        title: "Error",
+        description: "Failed to update department head",
         variant: "destructive"
       })
     }

@@ -153,6 +153,18 @@ export * from './useDepartments'
 export * from './useOrganizationSettings'
 export * from './useProfile'
 
+// Onboarding Management
+export {
+  // Onboarding hooks
+  useCandidate, useCandidateReview, useDepartments,
+  useUpdateCandidate, useApproveCandidate, useRequestChanges,
+  useRejectCandidate, useMarkUnderReview,
+  // Onboarding types
+  type CandidateReviewData, type UpdateCandidateRequest, type ReviewCandidateRequest,
+  // Onboarding query keys
+  onboardingKeys
+} from './useOnboarding'
+
 // Employee Management
 export {
   // Employee hooks
@@ -177,3 +189,18 @@ export {
 
 // Re-export TanStack Query core hooks for convenience
 export { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
+
+// Leave Management
+export {
+  // Leave hooks
+  useLeaveTypesQuery, useLeaveTypeQuery,
+  useLeaveRequestsQuery, useManagerLeaveRequestsQuery, useLeaveRequestQuery,
+  useLeaveBalancesQuery, useLeaveBalanceQuery,
+  useCreateLeaveTypeMutation, useUpdateLeaveTypeMutation, useDeleteLeaveTypeMutation,
+  useCreateLeaveRequestMutation, useUpdateLeaveRequestMutation, useDeleteLeaveRequestMutation,
+  useApproveLeaveRequestMutation, useRejectLeaveRequestMutation,
+  // Leave types
+  type LeaveType, type LeaveRequest, type LeaveBalance,
+  // Leave query keys
+  leaveQueryKeys
+} from './useLeaves'

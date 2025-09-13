@@ -50,9 +50,14 @@ import {
   Settings,
 } from 'lucide-react';
 import { useAuth } from '@/providers/AuthContext';
-import { APIDictionary } from '@/services/api/v2/APIdict';
-import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
+
+// Import TanStack Query hooks
+import { 
+  useUpdateTaskGroup,
+  useDeleteTaskGroup,
+  type TaskGroup
+} from '@/hooks/queries/useTasks';
 import ManageMembersDialog from './ManageMembersDialog';
 import { TaskGroupMemberService } from '../services/taskGroupMemberService';
 
@@ -61,38 +66,6 @@ interface User {
   firstName: string;
   lastName: string;
   email: string;
-}
-
-interface Task {
-  id: string;
-  title: string;
-  description: string;
-  status: string;
-  priority: string;
-  dueDate: string;
-  createdAt: string;
-  createdBy: {
-    firstName: string;
-    lastName: string;
-  };
-  assignments: Array<{
-    id: string;
-    assignedTo: User;
-  }>;
-}
-
-interface TaskGroup {
-  id: string;
-  name: string;
-  description?: string;
-  createdBy: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-  tasks: Task[];
-  createdAt: string;
 }
 
 interface GroupDetailsDialogProps {
@@ -119,6 +92,10 @@ const GroupDetailsDialog: React.FC<GroupDetailsDialogProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('members');
   const [showManageMembers, setShowManageMembers] = useState(false);
+
+  // TanStack Query hooks
+  const updateTaskGroupMutation = useUpdateTaskGroup();
+  const deleteTaskGroupMutation = useDeleteTaskGroup();
 
   useEffect(() => {
     if (group) {
@@ -154,27 +131,26 @@ const GroupDetailsDialog: React.FC<GroupDetailsDialogProps> = ({
 
     try {
       setIsLoading(true);
-      await axios.patch(
-        `${APIDictionary.taskGroup}/${group.id}`,
-        {
+      await updateTaskGroupMutation.mutateAsync({
+        id: group.id,
+        data: {
           name: editedName,
-          description: editedDescription,
-        },
-        { withCredentials: true }
-      );
+          description: editedDescription
+        }
+      });
 
       setIsEditing(false);
       onGroupUpdated?.();
       toast({
         title: "Success",
-        description: "Group updated successfully",
+        description: "Group updated successfully"
       });
     } catch (error) {
       console.error('Error updating group:', error);
       toast({
         title: "Error",
         description: "Failed to update group",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
@@ -186,21 +162,19 @@ const GroupDetailsDialog: React.FC<GroupDetailsDialogProps> = ({
 
     try {
       setIsLoading(true);
-      await axios.delete(`${APIDictionary.taskGroup}/${group.id}`, {
-        withCredentials: true,
-      });
+      await deleteTaskGroupMutation.mutateAsync(group.id);
 
       onGroupDeleted?.();
       toast({
         title: "Success",
-        description: "Group deleted successfully",
+        description: "Group deleted successfully"
       });
     } catch (error) {
       console.error('Error deleting group:', error);
       toast({
         title: "Error",
         description: "Failed to delete group",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
@@ -488,7 +462,7 @@ const GroupDetailsDialog: React.FC<GroupDetailsDialogProps> = ({
                       <div className="flex items-center gap-4">
                         <div className="flex items-center gap-1">
                           <Calendar className="h-4 w-4" />
-                          Due: {new Date(task.dueDate).toLocaleDateString()}
+                          Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No due date'}
                         </div>
                         <div className="flex items-center gap-1">
                           <Users className="h-4 w-4" />

@@ -30,11 +30,10 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/providers/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  TaskGroupMemberService,
-  addMembersToGroup,
-  removeMembersFromGroup 
-} from '../services/taskGroupMemberService';
+
+// Import TanStack Query hooks
+import { useEmployees, useAddGroupMembers, useRemoveGroupMembers } from '@/hooks/queries';
+import { TaskGroupMemberService } from '../services/taskGroupMemberService';
 
 interface User {
   id: string;
@@ -73,50 +72,41 @@ const ManageMembersDialog: React.FC<ManageMembersDialogProps> = ({
   const { user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUsersToAdd, setSelectedUsersToAdd] = useState<string[]>([]);
   const [selectedUsersToRemove, setSelectedUsersToRemove] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<'add' | 'remove'>('add');
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
 
+  // TanStack Query hooks
+  const { data: allUsers = [] } = useEmployees();
+  const addGroupMembersMutation = useAddGroupMembers();
+  const removeGroupMembersMutation = useRemoveGroupMembers();
+
   useEffect(() => {
     if (open) {
-      fetchAllUsers();
       setSelectedUsersToAdd([]);
       setSelectedUsersToRemove([]);
       setSearchTerm('');
     }
   }, [open]);
 
-  const fetchAllUsers = async () => {
-    try {
-      const users = await TaskGroupMemberService.getOrganizationUsers(user?.orgId || '');
-      setAllUsers(users);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load users",
-        variant: "destructive",
-      });
-    }
-  };
-
   const addMembers = async () => {
     if (!group || selectedUsersToAdd.length === 0) return;
 
     try {
       setIsLoading(true);
-      const result = await addMembersToGroup(group.id, selectedUsersToAdd);
+      await addGroupMembersMutation.mutateAsync({
+        groupId: group.id,
+        userIds: selectedUsersToAdd
+      });
 
       toast({
         title: "Success",
-        description: result.message || `Added ${selectedUsersToAdd.length} member(s) to the group`,
+        description: `Added ${selectedUsersToAdd.length} member(s) to the group`
       });
 
       setSelectedUsersToAdd([]);
-      // Trigger refresh after a small delay to ensure backend is updated
       setTimeout(() => {
         onMembersUpdated();
       }, 200);
@@ -125,7 +115,7 @@ const ManageMembersDialog: React.FC<ManageMembersDialogProps> = ({
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to add members to the group",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
@@ -137,16 +127,18 @@ const ManageMembersDialog: React.FC<ManageMembersDialogProps> = ({
 
     try {
       setIsLoading(true);
-      const result = await removeMembersFromGroup(group.id, selectedUsersToRemove);
+      await removeGroupMembersMutation.mutateAsync({
+        groupId: group.id,
+        userIds: selectedUsersToRemove
+      });
 
       toast({
         title: "Success",
-        description: result.message || `Removed ${selectedUsersToRemove.length} member(s) from the group`,
+        description: `Removed ${selectedUsersToRemove.length} member(s) from the group`
       });
 
       setSelectedUsersToRemove([]);
       setShowRemoveConfirm(false);
-      // Trigger refresh after a small delay to ensure backend is updated
       setTimeout(() => {
         onMembersUpdated();
       }, 200);
@@ -155,7 +147,7 @@ const ManageMembersDialog: React.FC<ManageMembersDialogProps> = ({
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to remove members from the group",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
@@ -289,7 +281,7 @@ const ManageMembersDialog: React.FC<ManageMembersDialogProps> = ({
                         {searchTerm ? 'No users found matching your search' : 'All organization members are already in this group'}
                       </p>
                     ) : (
-                      availableUsers.map(user => (
+                      availableUsers.map((user: any) => (
                         <div key={user.id} className="flex items-center space-x-3 p-2 hover:bg-muted rounded-lg">
                           <Checkbox
                             id={`add-user-${user.id}`}
@@ -359,7 +351,7 @@ const ManageMembersDialog: React.FC<ManageMembersDialogProps> = ({
                         {searchTerm ? 'No members found matching your search' : 'No members in this group'}
                       </p>
                     ) : (
-                      removableMembers.map(member => (
+                      removableMembers.map((member: any) => (
                         <div key={member.id} className="flex items-center space-x-3 p-2 hover:bg-muted rounded-lg">
                           <Checkbox
                             id={`remove-user-${member.id}`}

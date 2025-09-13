@@ -16,50 +16,38 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { useAuth } from '@/providers/AuthContext';
-import { APIDictionary } from '@/services/api/v2/APIdict';
-import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
 import { useSearchParams } from 'react-router-dom';
 
-interface Task {
-  id: string;
-  title: string;
-  description: string;
-  status: string;
-  priority: string;
-  dueDate: string;
-  createdAt: string;
-  createdBy?: {
-    firstName: string;
-    lastName: string;
-  };
-  updates: Array<{
-    id: string;
-    message: string;
-    status: string;
-    createdAt: string;
-    updatedBy?: {
-      firstName: string;
-      lastName: string;
-    };
-  }>;
-}
+// Import TanStack Query hooks
+import { 
+  useUserTasks,
+  useUpdateTask,
+  useCreateTaskUpdate,
+  Task
+} from '@/hooks/queries/useTasks';
 
 const EmployeeView = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [isLoading, setIsLoading] = useState(false);
   const [newUpdate, setNewUpdate] = useState('');
   const [isSubmittingUpdate, setIsSubmittingUpdate] = useState(false);
   const [updatingTaskId, setUpdatingTaskId] = useState<string | null>(null);
   const [isMobileTaskDetailsOpen, setIsMobileTaskDetailsOpen] = useState(false);
+
+  // TanStack Query hooks
+  const { 
+    data: tasks = [], 
+    isLoading
+  } = useUserTasks(user?.id || '');
+  
+  const updateTaskMutation = useUpdateTask();
+  const createTaskUpdateMutation = useCreateTaskUpdate();
 
   // Auto-scroll to bottom when new messages are added
   const scrollToBottom = () => {
@@ -72,26 +60,16 @@ const EmployeeView = () => {
     }
   }, [selectedTask?.updates?.length]);
 
-  // Helper function to update both tasks and filtered tasks
-  const updateTasksState = (newTasks: Task[]) => {
-    setTasks(newTasks);
-    
-    // Apply current filters to the new tasks
-    let filtered = newTasks.filter(task => 
+  // Filter tasks based on search term and status
+  const filteredTasks = tasks.filter(task => {
+    const matchesSearch = searchTerm === '' || 
       task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      task.description.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    if (statusFilter !== 'ALL') {
-      filtered = filtered.filter(task => task.status === statusFilter);
-    }
-
-    setFilteredTasks(filtered);
-  };
-
-  useEffect(() => {
-    fetchMyTasks();
-  }, []);
+      (task.description && task.description.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    const matchesStatus = statusFilter === 'ALL' || task.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
 
   // Handle task selection from URL parameters
   useEffect(() => {
@@ -100,7 +78,7 @@ const EmployeeView = () => {
       const task = tasks.find(t => t.id === taskId);
       if (task) {
         setSelectedTask(task);
-        setIsMobileTaskDetailsOpen(true); // Open details on mobile
+        setIsMobileTaskDetailsOpen(true);
         toast({
           title: "Task Selected",
           description: `Viewing details for "${task.title}"`,
@@ -121,84 +99,14 @@ const EmployeeView = () => {
     }
   }, [tasks, searchParams, setSearchParams, toast]);
 
-  useEffect(() => {
-    let filtered = tasks.filter(task => 
-      task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      task.description.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    if (statusFilter !== 'ALL') {
-      filtered = filtered.filter(task => task.status === statusFilter);
-    }
-
-    setFilteredTasks(filtered);
-    
-    // If selectedTask exists, ensure it stays updated with the latest data from tasks
-    // but only if it's actually different (not a reference change)
-    if (selectedTask) {
-      const updatedSelectedTask = tasks.find(task => task.id === selectedTask.id);
-      if (updatedSelectedTask && 
-          (updatedSelectedTask.updates?.length !== selectedTask.updates?.length ||
-           JSON.stringify(updatedSelectedTask) !== JSON.stringify(selectedTask))) {
-        setSelectedTask(updatedSelectedTask);
-      }
-    }
-  }, [tasks, searchTerm, statusFilter]);
-
-  const fetchMyTasks = async () => {
-    try {
-      setIsLoading(true);
-      const response = await axios.get(APIDictionary.tasksByUser(user?.id || ''), { 
-        withCredentials: true 
-      });
-      const tasksData = response.data.data || [];
-      updateTasksState(tasksData);
-    } catch (error) {
-      console.error('Error fetching my tasks:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load your tasks",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const updateTaskStatus = async (taskId: string, newStatus: string) => {
+  const updateTaskStatus = async (taskId: string, newStatus: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED') => {
     try {
       setUpdatingTaskId(taskId);
       
-      // Optimistic update - update UI immediately
-      const updatedTasks = tasks.map(task => 
-        task.id === taskId 
-          ? { ...task, status: newStatus }
-          : task
-      );
-      updateTasksState(updatedTasks);
-      
-      // Update selected task if it's the one being updated
-      if (selectedTask?.id === taskId) {
-        setSelectedTask({ ...selectedTask, status: newStatus });
-      }
-
-      // Make API call
-      const response = await axios.patch(`${APIDictionary.task}/${taskId}`, {
-        status: newStatus
-      }, { withCredentials: true });
-
-      // Update with server response to ensure consistency
-      if (response.data.success && response.data.data) {
-        const serverTask = response.data.data;
-        const finalUpdatedTasks = tasks.map(task => 
-          task.id === taskId ? { ...task, ...serverTask } : task
-        );
-        updateTasksState(finalUpdatedTasks);
-        
-        if (selectedTask?.id === taskId) {
-          setSelectedTask({ ...selectedTask, ...serverTask });
-        }
-      }
+      await updateTaskMutation.mutateAsync({
+        id: taskId,
+        data: { status: newStatus }
+      });
       
       toast({
         title: "Success",
@@ -206,10 +114,6 @@ const EmployeeView = () => {
       });
     } catch (error) {
       console.error('Error updating task status:', error);
-      
-      // Revert optimistic update on error
-      fetchMyTasks();
-      
       toast({
         title: "Error",
         description: "Failed to update task status",
@@ -223,63 +127,24 @@ const EmployeeView = () => {
   const submitUpdate = async () => {
     if (!selectedTask || !newUpdate.trim()) return;
 
-    const originalMessage = newUpdate.trim();
+    const messageText = newUpdate.trim();
 
     try {
       setIsSubmittingUpdate(true);
-      
-      // Clear input immediately for better UX
       setNewUpdate('');
+      
+      await createTaskUpdateMutation.mutateAsync({
+        taskId: selectedTask.id,
+        data: { message: messageText }
+      });
 
-      // Make API call first
-      const response = await axios.post(APIDictionary.taskUpdate(selectedTask.id), {
-        message: originalMessage
-      }, { withCredentials: true });
-
-      // Handle successful response
-      if (response.data.success && response.data.data) {
-        const serverUpdate = response.data.data;
-        
-        // Create updated selected task first
-        const updatedSelectedTask = {
-          ...selectedTask,
-          updates: [...(selectedTask.updates || []), serverUpdate]
-        };
-        
-        // Update tasks state with new update
-        const updatedTasks = tasks.map(task => {
-          if (task.id === selectedTask.id) {
-            return updatedSelectedTask;
-          }
-          return task;
-        });
-        
-        // Update both states with the same data to ensure consistency
-        setTasks(updatedTasks);
-        setSelectedTask(updatedSelectedTask);
-        
-        // Apply current filters to maintain filtered view
-        let filtered = updatedTasks.filter(task => 
-          task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          task.description.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-
-        if (statusFilter !== 'ALL') {
-          filtered = filtered.filter(task => task.status === statusFilter);
-        }
-
-        setFilteredTasks(filtered);
-
-        toast({
-          title: "Success",
-          description: "Update posted successfully"
-        });
-      }
+      toast({
+        title: "Success",
+        description: "Update posted successfully"
+      });
     } catch (error) {
       console.error('Error posting update:', error);
-      
-      // Restore the text on error
-      setNewUpdate(originalMessage);
+      setNewUpdate(messageText);
       
       toast({
         title: "Error",
@@ -296,7 +161,7 @@ const EmployeeView = () => {
       PENDING: { label: 'Pending', variant: 'secondary' as const, icon: Clock },
       IN_PROGRESS: { label: 'In Progress', variant: 'default' as const, icon: Clock },
       COMPLETED: { label: 'Completed', variant: 'default' as const, icon: CheckCircle },
-      CANCELLED: { label: 'Cancelled', variant: 'destructive' as const, icon: AlertCircle }
+      CANCELLED: { label: 'Cancelled', variant: "destructive" as const, icon: AlertCircle }
     };
     const config = statusConfig[status as keyof typeof statusConfig];
     const Icon = config?.icon || Clock;

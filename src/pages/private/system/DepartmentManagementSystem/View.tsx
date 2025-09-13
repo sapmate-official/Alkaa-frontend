@@ -1,5 +1,3 @@
-import { APIDictionary } from '@/services/api/v2/APIdict'
-import axios from 'axios'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -52,40 +50,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import RouteDict from '@/routes/RouteDict'
-
-interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  employeeId: string;
-  role?: string;
-  hiredDate?: string;
-}
-
-interface Department {
-  id: string;
-  name: string;
-  description: string;
-  code: string;
-  location: string;
-  budget: number;
-  status: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-  parentDepartment?: {
-    id: string;
-    name: string;
-  } | null;
-  departmentHead: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    employeeId: string;
-  } | null;
-  users: User[];
-}
+import { useDepartmentQuery, useChangeDepartmentHeadMutation } from '@/hooks/queries/useDepartments'
+import { useEmployees } from '@/hooks/queries/useEmployees'
+import { User } from '@/types/general'
 
 const MemberAvatar = ({ user }: { user: User }) => (
   <TooltipProvider>
@@ -109,91 +76,49 @@ const MemberAvatar = ({ user }: { user: User }) => (
 const SpecificDepartmentView = () => {
   const { id } = useParams()
   const { user } = useAuth()
-  const [department, setDepartment] = useState<Department | null>(null)
   const navigate = useNavigate()
   const { toast } = useToast()
   const [permissions] = useAtom(permissionListAtom)
-  const [employeeList, setEmployeeList] = useState<User[]>([])
   const [searchQuery, setSearchQuery] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
   const [confirmHeadChange, setConfirmHeadChange] = useState<User | null>(null)
-  const [headChangeLoading, setHeadChangeLoading] = useState(false)
+
+  // TanStack Query hooks
+  const { data: department, isLoading, error } = useDepartmentQuery(id || user?.Department?.[0]?.id || '')
+  const { data: employeeList = [] } = useEmployees({ orgId: user?.orgId })
+  const changeHeadMutation = useChangeDepartmentHeadMutation()
 
   const hasChangeHeadPermission = CheckPermission("change_department_head", permissions)
   const isCurrentUserHead = department?.departmentHead?.id === user?.id
   const canChangeHead = isCurrentUserHead || hasChangeHeadPermission
   const hasEditPermission = CheckPermission("edit_department", permissions)
 
-  const fetchEmployeeList = async () => {
-    try {
-      const response = await axios.get(`${APIDictionary.Organization}/employee-list/${user?.orgId}`)
-      setEmployeeList(response.data)
-    } catch (error) {
-      console.error('Error fetching employee list:', error)
-      toast({
-        title: 'Error',
-        description: 'Error fetching employee list',
-        variant: 'destructive'
-      })
-    }
-  }
-
-  const fetchDepartment = async () => {
-    setIsLoading(true)
-    try {
-      let response;
-      if (id) {
-        response = await axios.get(`${APIDictionary.department}/${id}`)
-        setDepartment(response.data)
-      } else if (user?.Department?.[0]?.id) {
-        response = await axios.get(`${APIDictionary.department}/${user.Department[0].id}`)
-        setDepartment(response.data)
-        if (!response.data) {
-          navigate(RouteDict.Department.Base)
-        }
-      } else {
-        navigate(RouteDict.Department.Base)
-      }
-    } catch (error) {
-      console.error('Error fetching department:', error)
+  // Handle loading and error states
+  useEffect(() => {
+    if (error) {
       toast({
         title: 'Error',
         description: 'Failed to load department information',
         variant: 'destructive'
       })
       navigate(RouteDict.Department.Base)
-    } finally {
-      setIsLoading(false)
     }
-  }
+  }, [error, toast, navigate])
 
+  // Redirect if no department found
   useEffect(() => {
-    fetchDepartment()
-  }, [id, user])
+    if (!isLoading && !department && !id && !user?.Department?.[0]?.id) {
+      navigate(RouteDict.Department.Base)
+    }
+  }, [department, isLoading, id, user, navigate])
 
   const handleChangeHead = async (userId: string) => {
-    setHeadChangeLoading(true)
+    if (!department?.id) return
+    
     try {
-      const response = await axios.put(
-        `${APIDictionary.department}/${id}/head/${userId}`,
-        {},
-        { withCredentials: true }
-      )
-      toast({
-        title: 'Success',
-        description: 'Department head updated successfully',
-      })
-      setDepartment(response.data)
-    } catch (error) {
-      console.error('Error updating department head:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to update department head',
-        variant: 'destructive'
-      })
-    } finally {
-      setHeadChangeLoading(false)
+      await changeHeadMutation.mutateAsync({ departmentId: department.id, userId })
       setConfirmHeadChange(null)
+    } catch (error) {
+      // Error handling is done in the mutation hook
     }
   }
 
@@ -338,7 +263,9 @@ const SpecificDepartmentView = () => {
             </CardTitle>
             {canChangeHead && (
               <Dialog onOpenChange={(isOpen) => {
-                if (isOpen) fetchEmployeeList();
+                if (isOpen) {
+                  // Employee list is already fetched via useEmployees hook
+                }
               }}>
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm" className="ml-auto">
@@ -424,7 +351,7 @@ const SpecificDepartmentView = () => {
                     variant="ghost"
                     size="sm"
                     className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
-                    onClick={() => department.departmentHead && navigate(RouteDict.Profile.Info(department.departmentHead.id))}
+                    onClick={() => department.departmentHead?.id && navigate(RouteDict.Profile.Info(department.departmentHead.id))}
                   >
                     View Profile
                   </Button>
@@ -466,9 +393,9 @@ const SpecificDepartmentView = () => {
                 {department?.users?.slice(0, 10).map((member) => (
                   <MemberAvatar key={member.id} user={member} />
                 ))}
-                {department?.users?.length > 10 && (
+                {department?.users && department.users.length > 10 && (
                   <Badge variant="secondary" className="ml-2 h-9 rounded-full px-2">
-                    +{department?.users?.length - 10} more
+                    +{(department.users.length - 10)} more
                   </Badge>
                 )}
               </div>
@@ -536,12 +463,12 @@ const SpecificDepartmentView = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={headChangeLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => confirmHeadChange && handleChangeHead(confirmHeadChange.id)}
-              disabled={headChangeLoading}
+              disabled={changeHeadMutation.isPending}
             >
-              {headChangeLoading ? "Updating..." : "Confirm"}
+              {changeHeadMutation.isPending ? "Updating..." : "Confirm"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

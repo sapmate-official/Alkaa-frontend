@@ -1,15 +1,10 @@
-import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/providers/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { backendDomain } from '@/constants/Domain';
 import RouteDict from '@/routes/RouteDict';
-import axios from 'axios';
-import { useAtom } from 'jotai';
-import { permissionListAtom } from '@/store/atom';
 import { format } from 'date-fns';
 import { 
   Calendar, 
@@ -27,40 +22,16 @@ import {
   TrendingUp,
   Activity
 } from 'lucide-react';
-
-interface LeaveType {
-  id: string;
-  name: string;
-  description: string;
-  annualLimit: number;
-  requiresApproval: boolean;
-  isPaid: boolean;
-  carryForward: boolean;
-  maxCarryForward: number;
-}
-
-interface LeaveBalance {
-  id: string;
-  usedDays: number;
-  remainingDays: number;
-  carryForward: number;
-  leaveType: LeaveType;
-}
-
-interface LeaveRequest {
-  id: string;
-  startDate: string;
-  endDate: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
-  numberOfDays: number;
-  reason: string;
-  leaveType: LeaveType;
-  user?: {
-    firstName: string;
-    lastName: string;
-  };
-  createdAt: string;
-}
+import { useAtom } from 'jotai';
+import { permissionListAtom } from '@/store/atom';
+import {
+  useLeaveTypesQuery,
+  useLeaveRequestsQuery,
+  useLeaveBalancesQuery,
+  useManagerLeaveRequestsQuery,
+  useApproveLeaveRequestMutation,
+  useRejectLeaveRequestMutation
+} from '@/hooks/queries';
 
 const LeaveDashboard = () => {
   const { user } = useAuth();
@@ -68,86 +39,36 @@ const LeaveDashboard = () => {
   const navigate = useNavigate();
   const [permissionList] = useAtom(permissionListAtom);
   
-  const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
-  const [leaveBalances, setLeaveBalances] = useState<LeaveBalance[]>([]);
-  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
-  const [pendingApprovals, setPendingApprovals] = useState<LeaveRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-
   // Check if user has approval permissions
   const canApproveLeaveRequests = permissionList.some(permission => 
     permission.key === 'approve_leave' || permission.key === 'leave_request_approve'
   );
 
-  useEffect(() => {
-    if (user?.organization?.id) {
-      fetchDashboardData();
-    }
-  }, [user, canApproveLeaveRequests]);
+  // TanStack Query hooks
+  const { data: leaveTypes = [], isLoading: leaveTypesLoading } = useLeaveTypesQuery(user?.orgId, !!user?.orgId);
+  const { data: leaveRequests = [], isLoading: leaveRequestsLoading } = useLeaveRequestsQuery(user?.id, !!user?.id);
+  const { data: leaveBalances = [], isLoading: leaveBalancesLoading } = useLeaveBalancesQuery(user?.id, !!user?.id);
+  const { data: pendingApprovals = [], isLoading: pendingApprovalsLoading } = useManagerLeaveRequestsQuery(
+    canApproveLeaveRequests ? user?.id : undefined, 
+    canApproveLeaveRequests && !!user?.id
+  );
 
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      
-      const requests = [
-        axios.get(`${backendDomain}/api/v2/leave-type/org/${user?.organization?.id}`, {
-          withCredentials: true,
-        }),
-        axios.get(`${backendDomain}/api/v2/leave-balance/user/${user?.id}`, {
-          withCredentials: true,
-        }),
-        axios.get(`${backendDomain}/api/v2/leave-request/user/${user?.id}`, {
-          withCredentials: true,
-        }),
-      ];
+  // Mutations
+  const approveMutation = useApproveLeaveRequestMutation();
+  const rejectMutation = useRejectLeaveRequestMutation();
 
-      // Add pending approvals request if user has approval permissions
-      if (canApproveLeaveRequests) {
-        requests.push(
-          axios.get(`${backendDomain}/api/v2/leave-request/manager/${user?.id}`, {
-            withCredentials: true,
-          })
-        );
-      }
-
-      const responses = await Promise.all(requests);
-      
-      setLeaveTypes(responses[0].data);
-      setLeaveBalances(responses[1].data);
-      setLeaveRequests(responses[2].data);
-      
-      // Set pending approvals if the request was made
-      if (canApproveLeaveRequests && responses[3]) {
-        const pendingRequests = responses[3].data.filter((req: LeaveRequest) => req.status === 'PENDING');
-        setPendingApprovals(pendingRequests);
-      }
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch leave dashboard data",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const isLoading = leaveTypesLoading || leaveRequestsLoading || leaveBalancesLoading || pendingApprovalsLoading;
 
   const handleQuickApprove = async (requestId: string) => {
+    if (!user?.id) return;
+    
     try {
-      await axios.post(`${backendDomain}/api/v2/leave-request/approve/${requestId}`, {
-        approvedBy: user?.id
-      }, {
-        withCredentials: true,
-      });
+      await approveMutation.mutateAsync({ id: requestId, approvedBy: user.id });
 
       toast({
         title: "Success",
         description: "Leave request approved successfully",
       });
-
-      // Refresh pending approvals
-      fetchDashboardData();
     } catch (error) {
       toast({
         title: "Error",
@@ -158,21 +79,15 @@ const LeaveDashboard = () => {
   };
 
   const handleQuickReject = async (requestId: string) => {
+    if (!user?.id) return;
+    
     try {
-      await axios.post(`${backendDomain}/api/v2/leave-request/reject/${requestId}`, {
-        approvedBy: user?.id,
-        rejectedReason: "Quick rejection from dashboard"
-      }, {
-        withCredentials: true,
-      });
+      await rejectMutation.mutateAsync({ id: requestId, approvedBy: user.id, rejectedReason: "Quick rejection from dashboard" });
 
       toast({
         title: "Success",
         description: "Leave request rejected",
       });
-
-      // Refresh pending approvals
-      fetchDashboardData();
     } catch (error) {
       toast({
         title: "Error",
@@ -201,7 +116,7 @@ const LeaveDashboard = () => {
   const totalUsedDays = leaveBalances.reduce((sum, balance) => sum + balance.usedDays, 0);
   const totalRemainingDays = leaveBalances.reduce((sum, balance) => sum + balance.remainingDays, 0);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="w-full h-full flex items-center justify-center">
         <div className="text-center">
@@ -265,7 +180,7 @@ const LeaveDashboard = () => {
                           {request.user?.firstName} {request.user?.lastName}
                         </div>
                         <Badge variant="outline" className="text-orange-600 border-orange-300">
-                          {request.leaveType.name}
+                          {request.leaveType?.name || 'Unknown'}
                         </Badge>
                         <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
                           {request.numberOfDays} {request.numberOfDays === 1 ? 'day' : 'days'}
@@ -433,7 +348,7 @@ const LeaveDashboard = () => {
                   <div key={request.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium">{request.leaveType.name}</span>
+                        <span className="font-medium">{request.leaveType?.name || 'Unknown'}</span>
                         <Badge className={getStatusColor(request.status)}>
                           {request.status}
                         </Badge>
@@ -485,7 +400,7 @@ const LeaveDashboard = () => {
                 {leaveBalances.map((balance) => (
                   <div key={balance.id} className="p-3 border rounded-lg">
                     <div className="flex justify-between items-center mb-2">
-                      <span className="font-medium">{balance.leaveType.name}</span>
+                      <span className="font-medium">{balance.leaveType?.name || 'Unknown'}</span>
                       <span className="text-sm text-gray-600">
                         {balance.remainingDays} / {balance.remainingDays + balance.usedDays} days
                       </span>
