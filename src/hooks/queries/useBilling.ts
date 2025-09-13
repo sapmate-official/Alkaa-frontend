@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
-import { APIDictionary } from '@/api/v2/APIdict'
+import { APIDictionary } from '@/services/api/v2/APIdict'
 
 // Types
 export interface Bill {
@@ -573,7 +573,7 @@ export function useMarkBillAsPaid() {
   return useMutation({
     mutationFn: ({ billId, paymentDetails }: { billId: string; paymentDetails?: any }) =>
       billingApi.markBillAsPaid(billId, paymentDetails),
-    onSuccess: (updatedBill, { billId }) => {
+    onSuccess: (_updatedBill, { billId }) => {
       queryClient.invalidateQueries({ queryKey: billingKeys.bill(billId) })
       queryClient.invalidateQueries({ queryKey: billingKeys.bills() })
       queryClient.invalidateQueries({ queryKey: billingKeys.billPayments(billId) })

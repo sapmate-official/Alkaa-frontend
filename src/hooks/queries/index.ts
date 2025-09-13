@@ -131,17 +131,21 @@ export {
   useLogin, useLogout, useVerifyPassword, useVerifyOtp, useRefreshToken,
   useForgotPassword, useResetPassword, useSetPassword, useVerifyEmail,
   useResendVerificationEmail, useSubmitOnboardingForm,
-  useAuthenticatedQuery, useAuthenticatedMutation,
-  // Auth types
-  type LoginRequest, type LoginResponse, type RegisterRequest,
-  type ForgotPasswordRequest, type ResetPasswordRequest, type SetPasswordRequest,
-  type VerifyEmailRequest, type RefreshTokenRequest, type CheckEmailRequest,
-  type CheckEmailResponse, type VerifyPasswordRequest, type VerifyOtpRequest,
-  type ValidateTokenRequest, type ValidateTokenResponse, type PublicOrganizationInfo,
-  type OnboardingFormData,
-  // Auth query keys
-  authKeys, publicKeys
+  useAuthenticatedQuery, useAuthenticatedMutation
 } from './useAuth'
+
+// Auth types
+export type {
+  LoginRequest, LoginResponse, RegisterRequest,
+  ForgotPasswordRequest, ResetPasswordRequest, SetPasswordRequest,
+  VerifyEmailRequest, RefreshTokenRequest, CheckEmailRequest,
+  CheckEmailResponse, VerifyPasswordRequest, VerifyOtpRequest,
+  ValidateTokenRequest, ValidateTokenResponse, PublicOrganizationInfo,
+  OnboardingFormData
+} from '@/types/auth'
+
+// Auth query keys
+export { authKeys, publicKeys } from './authKeys'
 
 // Existing modules
 export * from './useAttendance'
@@ -154,13 +158,17 @@ export {
   // Employee hooks
   useEmployees, useEmployee, useEmployeesByDepartment, useEmployeesByManager,
   useEmployeeRoles, useCreateEmployee, useUpdateEmployee, useDeleteEmployee,
-  useAssignEmployeeRole, useRemoveEmployeeRole, useUpdateEmployeeStatus,
-  // Employee types
-  type Employee, type CreateEmployeeRequest, type UpdateEmployeeRequest,
-  type AssignEmployeeRoleRequest,
-  // Employee query keys
-  employeeKeys
+  useAssignEmployeeRole, useRemoveEmployeeRole, useUpdateEmployeeStatus
 } from './useEmployees'
+
+// Employee types
+export type {
+  Employee, CreateEmployeeRequest, UpdateEmployeeRequest,
+  AssignEmployeeRoleRequest
+} from '@/types/employees'
+
+// Employee query keys
+export { employeeKeys } from './employeeKeys'
 
 // Query keys and utilities
 export {

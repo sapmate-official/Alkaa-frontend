@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext, createContext, ReactNode } from 'react';
-import { useAuth } from '../services/AuthContext';
+import { useAuth } from '../providers/AuthContext';
 import { useOrganizationSettingsQuery } from './queries/useOrganizationSettings';
 
 interface TimezoneContextType {

@@ -1,9 +1,9 @@
 import React from 'react';
-import { useAuth } from '@/services/AuthContext';
+import { useAuth } from '@/providers/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { tokenStorage } from '@/services/AuthContext';
+import { tokenStorage } from '@/providers/AuthContext';
 
 export const AuthDebugPanel: React.FC = () => {
     const { user, authStep, logout, resetAuthFlow } = useAuth();

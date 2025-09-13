@@ -1,9 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { APIDictionary } from '@/api/v2/APIdict'
+import { APIDictionary } from '@/services/api/v2/APIdict'
 import axios from 'axios'
-import { User } from '@/interface/general'
-import { IBankDetails } from '@/interface/bankDetails'
-import { ISalaryParameters } from '@/interface/salaryParameters'
+import { User } from '@/types/general'
+import { IBankDetails } from '@/types/bankDetails'
+import { ISalaryParameters } from '@/types/salaryParameters'
 import { useToast } from '@/hooks/use-toast'
 
 // Query Keys
