@@ -27,3 +27,4 @@ localhost.pem
 package-lock.json
 cypress
 cypress.config.ts
+.env
