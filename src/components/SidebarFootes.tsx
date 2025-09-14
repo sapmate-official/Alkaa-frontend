@@ -4,17 +4,18 @@ import { IoLogOutOutline } from "react-icons/io5";
 import { ChevronsUpDown } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 export interface SidebarFooterProps {
     user: any;
     theme: 'light' | 'dark';
     setTheme: (theme: 'light' | 'dark') => void;
-    logout: () => void;
     open: boolean;
 }
 
-const SidebarFooter: React.FC<SidebarFooterProps> = ({ user, theme, setTheme, logout, open }) => {
+const SidebarFooter: React.FC<SidebarFooterProps> = ({ user, theme, setTheme, open }) => {
     const [isOpen, setIsOpen] = React.useState(false);
+    const navigate = useNavigate();
 
     const handleThemeToggle = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -23,7 +24,8 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({ user, theme, setTheme, lo
 
     const handleLogout = (e: React.MouseEvent) => {
         e.stopPropagation();
-        logout();
+        // Navigate to logout route which will handle the logout process
+        navigate('/p/logout');
     };
 
     if (!open) {
