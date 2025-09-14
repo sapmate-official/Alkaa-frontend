@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { APIV3Dictionary } from '../api/v3/Api3Dicts';
+import { APIV3Dictionary } from '../services/api/v3/Api3Dicts';
 import { PayslipPDFGenerator, PayslipData } from '../utils/payslipPDFGenerator';
 
 // Import the PayrollStatistics interface

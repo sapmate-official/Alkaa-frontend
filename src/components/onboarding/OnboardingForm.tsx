@@ -18,9 +18,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { APIDictionary } from '@/api/v2/APIdict';
+import { APIDictionary } from '@/services/api/v2/APIdict';
 import axios from 'axios';
-import { OnboardingCandidate, OnboardingStatus } from '@/interface/general';
+import { OnboardingCandidate, OnboardingStatus } from '@/types/general';
 import {
   CheckCircle,
   AlertCircle,
