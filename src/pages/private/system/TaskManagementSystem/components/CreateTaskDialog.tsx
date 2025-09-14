@@ -56,6 +56,8 @@ const CreateTaskDialog = ({ open, onOpenChange, onTaskCreated, preselectedUser, 
   const [dueDate, setDueDate] = useState<Date>();
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [groupSearchQuery, setGroupSearchQuery] = useState('');
   
   const [formData, setFormData] = useState<{
     title: string;
@@ -138,7 +140,20 @@ const CreateTaskDialog = ({ open, onOpenChange, onTaskCreated, preselectedUser, 
     setDueDate(undefined);
     setSelectedUsers([]);
     setSelectedGroups([]);
+    setUserSearchQuery('');
+    setGroupSearchQuery('');
   };
+
+  // Filter functions
+  const filteredUsers = users.filter((user: User) => {
+    const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+    return fullName.includes(userSearchQuery.toLowerCase()) || 
+           user.email.toLowerCase().includes(userSearchQuery.toLowerCase());
+  });
+
+  const filteredGroups = taskGroups.filter((group: TaskGroup) => 
+    group.name.toLowerCase().includes(groupSearchQuery.toLowerCase())
+  );
 
   const toggleUserSelection = (userId: string) => {
     setSelectedUsers(prev => 
@@ -166,158 +181,190 @@ const CreateTaskDialog = ({ open, onOpenChange, onTaskCreated, preselectedUser, 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl h-[85vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Create New Task</DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="title">Task Title *</Label>
-            <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="Enter task title"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Enter task description"
-              rows={3}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+        <div className="flex-1 overflow-y-auto pr-2">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label>Priority</Label>
-              <Select value={formData.priority} onValueChange={(value: "MEDIUM" | "LOW" | "HIGH" | "URGENT") => setFormData(prev => ({ ...prev, priority: value }))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="LOW">Low</SelectItem>
-                  <SelectItem value="MEDIUM">Medium</SelectItem>
-                  <SelectItem value="HIGH">High</SelectItem>
-                  <SelectItem value="URGENT">Urgent</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="title">Task Title *</Label>
+              <Input
+                id="title"
+                value={formData.title}
+                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                placeholder="Enter task title"
+                required
+              />
             </div>
 
             <div className="space-y-2">
-              <Label>Due Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !dueDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dueDate ? format(dueDate, "PPP") : "Pick a date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={dueDate}
-                    onSelect={setDueDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Enter task description"
+                rows={3}
+              />
             </div>
-          </div>
 
-          <div className="space-y-4">
-            <Label>Assign to Users *</Label>
-            
-            {selectedUsers.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-3">
-                {selectedUsers.map(userId => {
-                  const user = users.find(u => u.id === userId);
-                  return user ? (
-                    <Badge key={userId} variant="secondary" className="flex items-center gap-1">
-                      {user.firstName} {user.lastName}
-                      <X 
-                        className="h-3 w-3 cursor-pointer" 
-                        onClick={() => removeUser(userId)}
-                      />
-                    </Badge>
-                  ) : null;
-                })}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Priority</Label>
+                <Select value={formData.priority} onValueChange={(value: "MEDIUM" | "LOW" | "HIGH" | "URGENT") => setFormData(prev => ({ ...prev, priority: value }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="LOW">Low</SelectItem>
+                    <SelectItem value="MEDIUM">Medium</SelectItem>
+                    <SelectItem value="HIGH">High</SelectItem>
+                    <SelectItem value="URGENT">Urgent</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            )}
 
-            <div className="max-h-32 overflow-y-auto border rounded-md p-2 space-y-2">
-              {users.map(user => (
-                <div key={user.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`user-${user.id}`}
-                    checked={selectedUsers.includes(user.id)}
-                    onCheckedChange={() => toggleUserSelection(user.id)}
-                  />
-                  <Label htmlFor={`user-${user.id}`} className="text-sm">
-                    {user.firstName} {user.lastName} ({user.email})
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <Label>Assign to Groups</Label>
-            
-            {selectedGroups.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-3">
-                {selectedGroups.map(groupId => {
-                  const group = taskGroups.find(g => g.id === groupId);
-                  return group ? (
-                    <Badge key={groupId} variant="outline" className="flex items-center gap-1">
-                      {group.name}
-                      <X 
-                        className="h-3 w-3 cursor-pointer" 
-                        onClick={() => removeGroup(groupId)}
-                      />
-                    </Badge>
-                  ) : null;
-                })}
+              <div className="space-y-2">
+                <Label>Due Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !dueDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dueDate ? format(dueDate, "PPP") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={dueDate}
+                      onSelect={setDueDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
-            )}
-
-            <div className="max-h-32 overflow-y-auto border rounded-md p-2 space-y-2">
-              {taskGroups.map(group => (
-                <div key={group.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`group-${group.id}`}
-                    checked={selectedGroups.includes(group.id)}
-                    onCheckedChange={() => toggleGroupSelection(group.id)}
-                  />
-                  <Label htmlFor={`group-${group.id}`} className="text-sm">
-                    {group.name} ({group.members?.length || 0} members)
-                  </Label>
-                </div>
-              ))}
             </div>
-          </div>
 
-          <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Creating...' : 'Create Task'}
-            </Button>
-          </div>
-        </form>
+            <div className="space-y-4">
+              <Label>Assign to Users *</Label>
+              
+              {selectedUsers.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {selectedUsers.map(userId => {
+                    const user = users.find((u: User) => u.id === userId);
+                    return user ? (
+                      <Badge key={userId} variant="secondary" className="flex items-center gap-1">
+                        {user.firstName} {user.lastName}
+                        <X 
+                          className="h-3 w-3 cursor-pointer" 
+                          onClick={() => removeUser(userId)}
+                        />
+                      </Badge>
+                    ) : null;
+                  })}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Input
+                  placeholder="Search users by name or email..."
+                  value={userSearchQuery}
+                  onChange={(e) => setUserSearchQuery(e.target.value)}
+                  className="mb-2"
+                />
+                
+                <div className="h-32 overflow-y-auto border rounded-md p-2 space-y-2">
+                  {filteredUsers.length > 0 ? (
+                    filteredUsers.map((user: User) => (
+                      <div key={user.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`user-${user.id}`}
+                          checked={selectedUsers.includes(user.id)}
+                          onCheckedChange={() => toggleUserSelection(user.id)}
+                        />
+                        <Label htmlFor={`user-${user.id}`} className="text-sm">
+                          {user.firstName} {user.lastName} ({user.email})
+                        </Label>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-sm text-muted-foreground p-2">
+                      {userSearchQuery ? 'No users found matching your search.' : 'No users available.'}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <Label>Assign to Groups</Label>
+              
+              {selectedGroups.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {selectedGroups.map(groupId => {
+                    const group = taskGroups.find((g: TaskGroup) => g.id === groupId);
+                    return group ? (
+                      <Badge key={groupId} variant="outline" className="flex items-center gap-1">
+                        {group.name}
+                        <X 
+                          className="h-3 w-3 cursor-pointer" 
+                          onClick={() => removeGroup(groupId)}
+                        />
+                      </Badge>
+                    ) : null;
+                  })}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Input
+                  placeholder="Search groups by name..."
+                  value={groupSearchQuery}
+                  onChange={(e) => setGroupSearchQuery(e.target.value)}
+                  className="mb-2"
+                />
+                
+                <div className="h-32 overflow-y-auto border rounded-md p-2 space-y-2">
+                  {filteredGroups.length > 0 ? (
+                    filteredGroups.map((group: TaskGroup) => (
+                      <div key={group.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`group-${group.id}`}
+                          checked={selectedGroups.includes(group.id)}
+                          onCheckedChange={() => toggleGroupSelection(group.id)}
+                        />
+                        <Label htmlFor={`group-${group.id}`} className="text-sm">
+                          {group.name} ({group.members?.length || 0} members)
+                        </Label>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-sm text-muted-foreground p-2">
+                      {groupSearchQuery ? 'No groups found matching your search.' : 'No groups available.'}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div className="flex justify-end gap-3 pt-4 border-t flex-shrink-0">
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={loading} onClick={handleSubmit}>
+            {loading ? 'Creating...' : 'Create Task'}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
