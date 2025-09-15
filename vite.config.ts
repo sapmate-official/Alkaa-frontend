@@ -63,28 +63,28 @@ export default defineConfig({
           }
           
           // Feature-based chunks
-          if (id.includes('src/page/private/system/BillingManagement')) {
+          if (id.includes('src/pages/private/system/BillingManagement')) {
             return 'billing-feature';
           }
           
-          if (id.includes('src/page/private/system/PayrollManagement')) {
+          if (id.includes('src/pages/private/system/PayrollManagement')) {
             return 'payroll-feature';
           }
           
-          if (id.includes('src/page/private/system/AttendanceManagement')) {
+          if (id.includes('src/pages/private/system/AttendanceManagement')) {
             return 'attendance-feature';
           }
           
-          if (id.includes('src/page/private/system/EmployeeManagement') || 
-              id.includes('src/page/private/system/DepartmentManagement') ||
-              id.includes('src/page/private/system/OrganizationManagement')) {
+          if (id.includes('src/pages/private/system/EmployeeManagement') || 
+              id.includes('src/pages/private/system/DepartmentManagement') ||
+              id.includes('src/pages/private/system/OrganizationManagement')) {
             return 'organization-feature';
           }
           
           // System/admin features
-          if (id.includes('src/page/private/system/Permission') ||
-              id.includes('src/page/private/system/Role') ||
-              id.includes('src/page/private/system/ActivityLog')) {
+          if (id.includes('src/pages/private/system/Permission') ||
+              id.includes('src/pages/private/system/Role') ||
+              id.includes('src/pages/private/system/ActivityLog')) {
             return 'system-feature';
           }
           
