@@ -38,15 +38,15 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/services/AuthContext';
-import { APIDictionary } from '@/api/v2/APIdict';
+import { useAuth } from '@/providers/AuthContext';
+import { APIDictionary } from '@/services/api/v2/APIdict';
 import axios from 'axios';
 import { 
   OnboardingCandidate, 
   OnboardingStatus, 
   Department,
   User 
-} from '@/interface/general';
+} from '@/types/general';
 
 // Interface for manager dropdown options
 interface ManagerOption extends Pick<User, 'id' | 'firstName' | 'lastName' | 'email' | 'status'> {

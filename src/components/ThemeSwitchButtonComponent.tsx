@@ -1,4 +1,4 @@
-import { useTheme } from '@/provider/ThemeProvider'
+import { useTheme } from '@/providers/ThemeProvider'
 import { FaSun, FaMoon } from 'react-icons/fa'
 import { Button } from '@/components/ui/button'
 import { motion, AnimatePresence } from 'framer-motion'

@@ -1,18 +1,11 @@
 import { useState, useEffect } from "react";
-import { APIDictionary } from "@/api/v2/APIdict";
 import { MapPin, Clock, XCircle, History } from "lucide-react";
-import axios from "axios";
 import LazyLocationViewer from "./LazyLocationViewer";
+import { useTodaySessionsQuery, useCheckInMutation, useCheckOutMutation } from '@/hooks/queries/useAttendance';
+
 interface Location {
   lat: number | null;
   lon: number | null;
-}
-
-interface AttendanceSession {
-  id: string;
-  checkInTime: string;
-  checkOutTime: string | null;
-  location: Location;
 }
 
 const LocationComponent = () => {
@@ -20,43 +13,27 @@ const LocationComponent = () => {
   const [location, setLocation] = useState<Location>({ lat: null, lon: null });
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
-  const [activeSession, setActiveSession] = useState<AttendanceSession | null>(null);
-  const [todaySessions, setTodaySessions] = useState<AttendanceSession[]>([]);
-  const [totalHoursToday, setTotalHoursToday] = useState<number>(0);
+
+  // Use TanStack Query hooks
+  const { data: todaySessions, refetch: refetchSessions } = useTodaySessionsQuery();
+  const checkInMutation = useCheckInMutation();
+  const checkOutMutation = useCheckOutMutation();
+
+  // Calculate derived state from query data
+  const activeSession = todaySessions?.find(s => !s.checkOutTime) || null;
+  const totalHoursToday = todaySessions ? 
+    todaySessions.reduce((total: number, session: any) => {
+      if (session.checkOutTime) {
+        const checkIn = new Date(session.checkInTime).getTime();
+        const checkOut = new Date(session.checkOutTime).getTime();
+        return total + (checkOut - checkIn) / (1000 * 60);
+      }
+      return total;
+    }, 0) / 60 : 0;
 
   useEffect(() => {
-    fetchTodaySessions();
+    // No longer needed since we're using TanStack Query
   }, []);
-
-  const fetchTodaySessions = async () => {
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      const response = await axios.get<AttendanceSession[]>(`${APIDictionary.todaySessions}?date=${today}`, {
-        withCredentials: true
-      });
-      
-      const sessions = response.data;
-      setTodaySessions(sessions);
-      
-      const active = sessions.find(s => !s.checkOutTime);
-      setActiveSession(active || null);
-
-      // Calculate total hours 
-      const totalMinutes = sessions.reduce((total: number, session: AttendanceSession) => {
-        if (session.checkOutTime) {
-          const checkIn = new Date(session.checkInTime).getTime();
-          const checkOut = new Date(session.checkOutTime).getTime();
-          return total + (checkOut - checkIn) / (1000 * 60);
-        }
-        return total;
-      }, 0);
-
-      setTotalHoursToday(totalMinutes / 60);
-    } catch (err) {
-      const error = err as Error;
-      setError(error.message || "Failed to fetch sessions");
-    }
-  };
 
   const getLocation = () => {
     return new Promise((resolve, reject) => {
@@ -96,17 +73,15 @@ const LocationComponent = () => {
         [activeSession ? 'checkOutLocation' : 'checkInLocation']: locationData
       };
 
-      const { data } = await axios({
-        method: 'POST',
-        url: APIDictionary[activeSession ? 'checkOut' : 'checkIn'],
-        headers: { 'Content-Type': 'application/json' },
-        data: payload,
-        withCredentials: true
-      });
-      console.log(data);
-      
-      // Refresh sessions after successful check-in/out
-      await fetchTodaySessions();
+      // Use TanStack Query mutations instead of direct axios calls
+      if (activeSession) {
+        await checkOutMutation.mutateAsync(payload);
+      } else {
+        await checkInMutation.mutateAsync(payload);
+      }
+
+      // Refetch sessions after successful check-in/out
+      refetchSessions();
 
     } catch (err:any) {
       setError(err.response?.data?.message || err.message || "An error occurred");
@@ -158,10 +133,10 @@ const LocationComponent = () => {
         </div>
 
         {/* Sessions List */}
-        {todaySessions.length > 0 && (
+        {todaySessions && todaySessions.length > 0 && (
           <div className="mt-2 space-y-2">
             <h3 className="text-sm font-medium text-muted-foreground">Today's Sessions:</h3>
-            {todaySessions.map((session, index) => (
+            {todaySessions.map((session: any, index: number) => (
               <div key={session.id} className="p-2 rounded bg-accent/20 text-sm">
                 <div>Session {index + 1}:</div>
                 <div>In: {new Date(session.checkInTime).toLocaleTimeString()}</div>
