@@ -15,7 +15,6 @@ import RouteDict from './routes/RouteDict';
 // Critical/Essential components (load immediately)
 import Home from './pages/private/Home.tsx';
 import { MainLayout } from './pages/private/layout/MainLayout';
-import RolesPermissionsManagement from './pages/private/system/RoleManagementSystem/RoleManagementDashboard.tsx';
 import { TimezoneProvider } from './hooks/useTimezone.tsx';
 
 // Public pages
