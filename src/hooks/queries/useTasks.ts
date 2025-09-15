@@ -208,16 +208,13 @@ const tasksApi = {
   },
 
   async assignTask(taskId: string, data: AssignTaskRequest): Promise<TaskAssignment[]> {
-    const response = await axios.post(`${APIDictionary.taskAssignment}`, {
-      taskId,
-      ...data
-    }, { withCredentials: true })
+    const response = await axios.post(APIDictionary.taskAssignment(taskId), data, { withCredentials: true })
     return response.data.data || response.data
   },
 
   async unassignTask(taskId: string, userId: string): Promise<void> {
-    await axios.delete(`${APIDictionary.taskAssignment}`, {
-      data: { taskId, userId },
+    await axios.delete(APIDictionary.taskUnassignment(taskId), {
+      data: { userId },
       withCredentials: true
     })
   },

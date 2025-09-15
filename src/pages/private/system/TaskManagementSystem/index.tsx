@@ -63,14 +63,18 @@ const SmartTaskRoute = () => {
   }
 
   // Priority logic:
-  // 1. If user has only view permission -> Employee View
-  // 2. If user has assigned tasks -> Employee View (first priority)
-  // 3. If user has management permissions and no assigned tasks -> Dashboard
+  // 1. If user has management permissions (task_create or task_manage_all) -> Dashboard
+  // 2. If user has only view permission -> Employee View
+  // 3. If user has assigned tasks but no management permissions -> Employee View
+  if (hasTaskCreate || hasTaskManageAll) {
+    return <Navigate to={RouteDict.Task.Dashboard} replace />;
+  }
+
   if (hasOnlyViewPermission || hasAssignedTasks) {
     return <Navigate to="/p/task/employee" replace />;
   }
 
-  // User has management permissions but no assigned tasks
+  // Fallback to dashboard (shouldn't reach here normally)
   return <Navigate to={RouteDict.Task.Dashboard} replace />;
 };
 
