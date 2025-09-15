@@ -34,6 +34,8 @@ export const APIDictionary = {
     role: `${backendDomain}/api/v2/role`,
     user: `${backendDomain}/api/v2/user`,
     role_permission: `${backendDomain}/api/v2/role-permission`,
+    roleAddPermissions: (roleId: string) => `${backendDomain}/api/v2/role/${roleId}/permissions/add`,
+    roleRemovePermissions: (roleId: string) => `${backendDomain}/api/v2/role/${roleId}/permissions/remove`,
     user_role: `${backendDomain}/api/v2/user-role`,
     leave_type: (id:string)=>`${backendDomain}/api/v2/leave-type/${id}`,
     get_all_org_leave_type: (org_id:string)=>`${backendDomain}/api/v2/leave-type/org/${org_id}`,

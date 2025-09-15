@@ -62,6 +62,8 @@ export function MultiTenantLoginForm({
                 setOrganizations(result.organizations);
             }
         } catch (err: any) {
+            console.log(err);
+            
             setError(err.message || "Failed to check email");
         } finally {
             setIsLoading(false);
