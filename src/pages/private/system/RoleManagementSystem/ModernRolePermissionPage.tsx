@@ -127,7 +127,7 @@ const ModernRolePermissionPage = () => {
   const [permissionSearchTerm, setPermissionSearchTerm] = useState('');
   const [editPermissionSearchTerm, setEditPermissionSearchTerm] = useState('');
   
-  // Pagination state for users
+
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage, setUsersPerPage] = useState(24); // Show 24 users per page for better performance
   const [totalUsers, setTotalUsers] = useState(0);
@@ -135,6 +135,7 @@ const ModernRolePermissionPage = () => {
   // Debounced search state
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   
+
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -158,6 +159,7 @@ const ModernRolePermissionPage = () => {
     fetchData();
   }, []);
 
+
   // Debounce search term to improve performance
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -168,6 +170,7 @@ const ModernRolePermissionPage = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+
   // Calculate user counts whenever users change
   useEffect(() => {
     if (roles.length > 0 && users.length > 0) {
@@ -175,10 +178,12 @@ const ModernRolePermissionPage = () => {
     }
   }, [users, calculateUserCounts]);
 
+
   // Clear search term when switching tabs
   useEffect(() => {
     setSearchTerm('');
   }, [selectedTab]);
+
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -445,6 +450,7 @@ const ModernRolePermissionPage = () => {
     }
   };
 
+
   const openChangeRoleDialog = useCallback((user: User) => {
     setSelectedUser(user);
     setSelectedRoleForUser(user.roles?.[0]?.role?.id || 'no-role');
@@ -473,9 +479,10 @@ const ModernRolePermissionPage = () => {
           setIsChangeRoleDialogOpen(false);
           setSelectedUser(null);
           setSelectedRoleForUser('');
-          
+
           // Refresh data efficiently - only update the modified user
           await fetchUsers();
+
           return;
         } catch (error: any) {
           const errorMessage = error?.response?.data?.message || 'Failed to remove user role';
@@ -487,8 +494,10 @@ const ModernRolePermissionPage = () => {
           });
           setIsLoading(false);
           return;
+
         } finally {
           setIsLoading(false);
+
         }
       }
       
@@ -525,8 +534,10 @@ const ModernRolePermissionPage = () => {
       setSelectedUser(null);
       setSelectedRoleForUser('');
       
+
       // Refresh data efficiently
       await fetchUsers();
+
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || 'Failed to update user role';
       
@@ -623,6 +634,7 @@ const ModernRolePermissionPage = () => {
     if (!searchTerm.trim()) {
       return permissionGroups;
     }
+
 
     return permissionGroups.map(group => ({
       ...group,
@@ -905,6 +917,7 @@ const ModernRolePermissionPage = () => {
 
   return (
     <ScrollArea className="h-screen w-full">
+
       <div className="p-6 space-y-6  mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
@@ -957,6 +970,7 @@ const ModernRolePermissionPage = () => {
                         placeholder="Enter role description"
                       />
                     </div>
+
                   </div>
                   
                   <Separator />
@@ -1049,6 +1063,7 @@ const ModernRolePermissionPage = () => {
                     </div>
                   </div>
                   
+
                   <Separator />
                   
                   <div>
@@ -1058,24 +1073,30 @@ const ModernRolePermissionPage = () => {
                         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                           placeholder="Search permissions..."
+
                           value={editPermissionSearchTerm}
                           onChange={(e) => setEditPermissionSearchTerm(e.target.value)}
+
                           className="pl-8"
                         />
                       </div>
                       <ScrollArea className="h-64 border rounded-md p-4">
+
                         {getFilteredPermissionGroups(editPermissionSearchTerm).map((group) => (
+
                           <div key={group.category} className="mb-4">
                             <h4 className="font-medium text-sm mb-2">{group.category}</h4>
                             <div className="space-y-2 pl-4">
                               {group.permissions.map((permission) => (
                                 <div key={permission.id} className="flex items-center space-x-2">
                                   <Switch
+
                                     id={`edit-perm-${permission.id}`}
                                     checked={editRolePermissions.includes(permission.id)}
                                     onCheckedChange={() => handleEditPermissionToggle(permission.id)}
                                   />
                                   <Label htmlFor={`edit-perm-${permission.id}`} className="text-sm">
+
                                     {permission.name}
                                   </Label>
                                 </div>
@@ -1083,7 +1104,9 @@ const ModernRolePermissionPage = () => {
                             </div>
                           </div>
                         ))}
+
                         {getFilteredPermissionGroups(editPermissionSearchTerm).length === 0 && (
+
                           <div className="text-center py-8 text-muted-foreground">
                             <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
                             <p>No permissions found</p>
@@ -1096,6 +1119,7 @@ const ModernRolePermissionPage = () => {
                   
                   <div className="flex justify-end space-x-2">
                     <Button variant="outline" onClick={() => {
+
                       setIsEditDialogOpen(false);
                       setEditPermissionSearchTerm('');
                     }}>
@@ -1103,11 +1127,13 @@ const ModernRolePermissionPage = () => {
                     </Button>
                     <Button onClick={updateRole} disabled={isLoading}>
                       {isLoading ? 'Updating...' : 'Update Role'}
+
                     </Button>
                   </div>
                 </div>
               </DialogContent>
             </Dialog>
+
           </div>
         </div>
 
@@ -1340,6 +1366,7 @@ const ModernRolePermissionPage = () => {
             </DialogContent>
           </Dialog>
         )}
+
 
         {/* Change User Role Dialog */}
         <Dialog open={isChangeRoleDialogOpen} onOpenChange={setIsChangeRoleDialogOpen}>
