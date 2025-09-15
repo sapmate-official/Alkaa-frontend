@@ -10,8 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, User, Shield, Users, AlertCircle, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/services/AuthContext';
-import { APIDictionary } from '@/api/v2/APIdict';
+import { useAuth } from '@/providers/AuthContext';
+import { APIDictionary } from '@/services/api/v2/APIdict';
 import axios from 'axios';
 
 interface Role {

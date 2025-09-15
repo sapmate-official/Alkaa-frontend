@@ -1,4 +1,4 @@
-import { Permission, User } from '@/interface/general'
+import { Permission, User } from '@/types/general'
 import {atom} from 'jotai'
 
 interface DashboardData {

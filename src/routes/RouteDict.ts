@@ -200,7 +200,7 @@ const RouteDict = {
         Dashboard: "/p/task/dashboard",
         UserView: "/p/task/user-view",
         TaskView: "/p/task/task-view",
-        EmployeeView: "/p/task/my-tasks",
+        EmployeeView: "/p/task/employee",
         Create: "/p/task/create",
         Details: (id: string) => `/p/task/details/${id}`,
         Edit: (id: string) => `/p/task/edit/${id}`,
