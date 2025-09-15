@@ -1,4 +1,5 @@
-import { backendDomain } from '../../lib/constant/Domain';
+import { backendDomain } from "@/constants/Domain";
+
 
 export const AttendanceAPIV3Dictionary = {
     // Health check

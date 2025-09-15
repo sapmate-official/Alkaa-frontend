@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
@@ -9,7 +9,7 @@ import { Badge } from '../../ui/badge';
 import { Alert, AlertDescription } from '../../ui/alert';
 import { Plus, Edit, Trash2, AlertTriangle, CheckCircle, Clock, Calendar } from 'lucide-react';
 import { useAttendanceRules, useCreateRule, useToggleRule, useDeleteRule } from '../../../hooks/useAttendance';
-import { CreateRuleRequest, AttendanceRule } from '../../../interface/attendance';
+import { CreateRuleRequest, AttendanceRule } from '../../../types/attendance';
 
 interface AttendanceRulesManagerProps {
   orgId: string;
@@ -30,7 +30,49 @@ const AttendanceRulesManager: React.FC<AttendanceRulesManagerProps> = ({ orgId }
   const toggleRuleMutation = useToggleRule(orgId);
   const deleteRuleMutation = useDeleteRule(orgId);
 
-  const rules = rulesData?.data || [];
+  // Handle different response structures and add debug logging
+  console.log('Rules Data Debug:', { rulesData, orgId });
+  
+  const rules = useMemo(() => {
+    if (!rulesData) return [];
+    
+    // Try different possible data structures
+    const data = rulesData as any; // Type assertion to handle unknown structure
+    
+    // Check if it's the expected API response format
+    if (data.success && data.data) {
+      if (Array.isArray(data.data.rules)) {
+        console.log('Using rulesData.data.rules:', data.data.rules);
+        return data.data.rules;
+      }
+      if (Array.isArray(data.data)) {
+        console.log('Using rulesData.data:', data.data);
+        return data.data;
+      }
+      // Handle the case where rules are in a nested object format
+      if (data.data.rules && typeof data.data.rules === 'object' && !Array.isArray(data.data.rules)) {
+        console.log('Converting rules object to array:', data.data.rules);
+        // Convert rules object to array format
+        return Object.entries(data.data.rules).map(([ruleType, ruleData]: [string, any]) => ({
+          id: ruleData.id || `${orgId}-${ruleType}`,
+          ruleType: ruleType.toUpperCase(),
+          threshold: ruleData.threshold || 0,
+          penalty: ruleData.penalty || 0,
+          description: `${ruleType.replace('_', ' ')} rule`,
+          isActive: ruleData.isActive || false,
+          ...ruleData
+        }));
+      }
+    }
+    
+    if (Array.isArray(data)) {
+      console.log('Using rulesData directly:', data);
+      return data;
+    }
+    
+    console.warn('Could not determine rules array structure, falling back to empty array');
+    return [];
+  }, [rulesData, orgId]);
 
   const handleCreateRule = async () => {
     try {
@@ -211,7 +253,7 @@ const AttendanceRulesManager: React.FC<AttendanceRulesManagerProps> = ({ orgId }
 
       {/* Rules List */}
       <div className="grid gap-4">
-        {rules.length === 0 ? (
+        {(!Array.isArray(rules) || rules.length === 0) ? (
           <Card>
             <CardContent className="flex items-center justify-center h-64">
               <div className="text-center">
@@ -222,7 +264,7 @@ const AttendanceRulesManager: React.FC<AttendanceRulesManagerProps> = ({ orgId }
             </CardContent>
           </Card>
         ) : (
-          rules.map((rule: AttendanceRule) => (
+          Array.isArray(rules) && rules.map((rule: AttendanceRule) => (
             <Card key={rule.id}>
               <CardHeader>
                 <div className="flex items-start justify-between">

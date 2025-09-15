@@ -7,7 +7,7 @@ import { Switch } from '../../ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Badge } from '../../ui/badge';
 import { Alert, AlertDescription } from '../../ui/alert';
-import { MapPin, Plus, Edit, Trash2, CheckCircle, Clock, Navigation } from 'lucide-react';
+import { MapPin, Plus, Edit, Trash2, CheckCircle, Clock, Navigation, AlertTriangle } from 'lucide-react';
 import { 
   useGeofences, 
   useCreateGeofence, 
@@ -16,7 +16,7 @@ import {
   useValidateLocation,
   useLocationPermission
 } from '../../../hooks/useAttendance';
-import { Geofence, CreateGeofenceRequest, ValidateLocationRequest } from '../../../interface/attendance';
+import { Geofence, CreateGeofenceRequest, ValidateLocationRequest } from '../../../types/attendance';
 
 interface GeofencingManagementProps {
   orgId: string;
@@ -36,7 +36,7 @@ const GeofencingManagement: React.FC<GeofencingManagementProps> = ({ orgId }) =>
     isActive: true
   });
 
-  const { data: geofencesData, isLoading } = useGeofences(orgId);
+  const { data: geofencesData, isLoading, error } = useGeofences(orgId);
   const createGeofenceMutation = useCreateGeofence(orgId);
   const updateGeofenceMutation = useUpdateGeofence(orgId);
   const deleteGeofenceMutation = useDeleteGeofence(orgId);
@@ -44,6 +44,25 @@ const GeofencingManagement: React.FC<GeofencingManagementProps> = ({ orgId }) =>
   const { getCurrentLocation, hasPermission } = useLocationPermission();
 
   const geofences = geofencesData?.data || [];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert>
+        <AlertTriangle className="h-4 w-4" />
+        <AlertDescription>
+          Failed to load geofences. Please try again.
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   const handleCreateGeofence = async () => {
     try {

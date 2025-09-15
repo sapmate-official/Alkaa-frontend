@@ -4,13 +4,13 @@ import { BrowserRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
 
 // Import components to test
-import AttendanceDashboard from '../src/components/attendance/AttendanceDashboard';
-import AttendanceRulesManager from '../src/components/attendance/rules/AttendanceRulesManager';
-import BreakManagement from '../src/components/attendance/breaks/BreakManagement';
-import GeofencingManagement from '../src/components/attendance/geofencing/GeofencingManagement';
+import AttendanceDashboard from '../components/attendance/AttendanceDashboard';
+import AttendanceRulesManager from '../components/attendance/rules/AttendanceRulesManager';
+import BreakManagement from '../components/attendance/breaks/BreakManagement';
+import GeofencingManagement from '../components/attendance/geofencing/GeofencingManagement';
 
 // Mock the attendance services
-jest.mock('../src/services/AttendanceService', () => ({
+jest.mock('../services/AttendanceService', () => ({
   AttendanceRulesService: {
     getRules: jest.fn(),
     createRule: jest.fn(),
@@ -44,7 +44,7 @@ jest.mock('../src/services/AttendanceService', () => ({
 }));
 
 // Mock the attendance hooks
-jest.mock('../src/hooks/useAttendance', () => ({
+jest.mock('../hooks/useAttendance', () => ({
   useAttendanceRules: () => ({
     data: mockRules,
     isLoading: false,
