@@ -13,11 +13,15 @@ import {
   CheckCircle,
   AlertCircle,
   Send,
-  ArrowLeft
+  ArrowLeft,
+  LayoutDashboard
 } from 'lucide-react';
 import { useAuth } from '@/providers/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useAtom } from 'jotai';
+import { permissionListAtom } from '@/store/atom';
+import RouteDict from '@/routes/RouteDict';
 
 // Import TanStack Query hooks
 import { 
@@ -30,7 +34,9 @@ import {
 const EmployeeView = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [permissionList] = useAtom(permissionListAtom);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -48,6 +54,17 @@ const EmployeeView = () => {
   
   const updateTaskMutation = useUpdateTask();
   const createTaskUpdateMutation = useCreateTaskUpdate();
+
+  // Check if user has management permissions
+  const hasTaskCreate = permissionList.some(p => p.key === 'task_create');
+  const hasTaskManageAll = permissionList.some(p => p.key === 'task_manage_all');
+  console.log(hasTaskCreate,hasTaskManageAll)
+  const canAccessDashboard = hasTaskCreate || hasTaskManageAll;
+
+  // Handle navigation to dashboard
+  const handleNavigateToDashboard = () => {
+    navigate(RouteDict.Task.Dashboard);
+  };
 
   // Auto-scroll to bottom when new messages are added
   const scrollToBottom = () => {
@@ -209,6 +226,21 @@ const EmployeeView = () => {
     <div className="h-full flex flex-col w-full min-h-0 overflow-hidden">
       {/* Header Stats */}
       <div className="p-2 sm:p-4 border-b flex-shrink-0">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-lg sm:text-xl font-semibold">My Tasks</h1>
+          {canAccessDashboard && (
+            <Button
+              onClick={handleNavigateToDashboard}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <LayoutDashboard className="h-4 w-4" />
+              <span className="hidden sm:inline">Dashboard</span>
+            </Button>
+          )}
+        </div>
+        
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-4">
           <Card>
             <CardContent className="p-2 sm:p-4">
