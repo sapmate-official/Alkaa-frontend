@@ -45,6 +45,7 @@ export interface UpdateRoleRequest {
   description?: string
   permissions?: string[]
   isDefault?: boolean
+  updateType?: 'add' | 'remove' | 'replace'
 }
 
 export interface AssignPermissionsRequest {
@@ -104,6 +105,20 @@ const rolesApi = {
       data: { roleId, permissionIds },
       withCredentials: true
     })
+  },
+
+  async addPermissionsToRole(roleId: string, permissionIds: string[]): Promise<Role> {
+    const response = await axios.post(APIDictionary.roleAddPermissions(roleId), {
+      permissions: permissionIds
+    }, { withCredentials: true })
+    return response.data.role || response.data
+  },
+
+  async removePermissionsFromRole(roleId: string, permissionIds: string[]): Promise<Role> {
+    const response = await axios.post(APIDictionary.roleRemovePermissions(roleId), {
+      permissions: permissionIds
+    }, { withCredentials: true })
+    return response.data.role || response.data
   },
 
   async getRoleHierarchy(): Promise<RoleHierarchy[]> {
@@ -264,6 +279,32 @@ export function useRemoveUserRole() {
       rolesApi.removeUserRole(userId, roleId),
     onSuccess: (_, { userId }) => {
       queryClient.invalidateQueries({ queryKey: roleKeys.userRoles(userId) })
+    },
+  })
+}
+
+export function useAddPermissionsToRole() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ roleId, permissionIds }: { roleId: string; permissionIds: string[] }) =>
+      rolesApi.addPermissionsToRole(roleId, permissionIds),
+    onSuccess: (_, { roleId }) => {
+      queryClient.invalidateQueries({ queryKey: roleKeys.detail(roleId) })
+      queryClient.invalidateQueries({ queryKey: roleKeys.lists() })
+    },
+  })
+}
+
+export function useRemovePermissionsFromRole() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ roleId, permissionIds }: { roleId: string; permissionIds: string[] }) =>
+      rolesApi.removePermissionsFromRole(roleId, permissionIds),
+    onSuccess: (_, { roleId }) => {
+      queryClient.invalidateQueries({ queryKey: roleKeys.detail(roleId) })
+      queryClient.invalidateQueries({ queryKey: roleKeys.lists() })
     },
   })
 }
