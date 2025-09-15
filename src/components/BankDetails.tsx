@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/services/AuthContext';
+import { useAuth } from '@/providers/AuthContext';
 import { useAtom } from 'jotai';
 import { permissionListAtom } from '@/store/atom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,29 +8,20 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BuildingLibraryIcon, ExclamationTriangleIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { motion } from 'framer-motion';
-import { backendDomain } from '@/lib/constant/Domain';
-import { Link } from 'react-router-dom';
-
-type BankDetail = {
-  id: string;
-  accountHolder: string;
-  accountNumber: string;
-  bankName: string;
-  ifscCode: string;
-};
+import { useBankDetailsQuery } from '@/hooks/queries/useProfile';
 
 interface BankDetailsProps {
   userId: string;
 }
 
 const BankDetails = ({ userId }: BankDetailsProps) => {
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [bankDetails, setBankDetails] = useState<BankDetail | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [showFullDetails, setShowFullDetails] = useState<boolean>(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const [permissionList] = useAtom(permissionListAtom);
+
+  // Use TanStack Query hook instead of direct axios call
+  const { data: bankData, isLoading: queryLoading, error: queryError } = useBankDetailsQuery(userId);
 
   const hasPermission = (permissionKey: string) => {
     return permissionList.some(permission => permission.key === permissionKey);
@@ -56,6 +46,22 @@ const BankDetails = ({ userId }: BankDetailsProps) => {
     setShowFullDetails(!showFullDetails);
   };
 
+  // Update state based on query results
+  useEffect(() => {
+    if (!canViewBankDetails()) {
+      return;
+    }
+
+    if (queryError) {
+      console.error('Error fetching bank details:', queryError);
+      toast({
+        title: 'Error',
+        description: 'Could not load bank details',
+        variant: 'destructive',
+      });
+    }
+  }, [queryError, canViewBankDetails, toast]);
+
   const formatAccountNumber = (accountNumber: string) => {
     if (showFullDetails) {
       return accountNumber;
@@ -63,45 +69,7 @@ const BankDetails = ({ userId }: BankDetailsProps) => {
     return `••••${accountNumber.slice(-4)}`;
   };
 
-  useEffect(() => {
-    const fetchBankDetails = async () => {
-      if (!canViewBankDetails()) {
-        setError("You don't have permission to view these bank details");
-        setIsLoading(false);
-        return;
-      }
-
-      setIsLoading(true);
-      try {
-        const response = await axios.get(`${backendDomain}/api/v2/bank-details/${userId}`, {
-          withCredentials: true,
-        });
-        
-        if (response.status === 200) {
-          setBankDetails(response.data);
-        }
-      } catch (err: any) {
-        console.error('Error fetching bank details:', err);
-        setError(err.response?.data?.error || 'Failed to fetch bank details');
-        toast({
-          title: 'Error',
-          description: 'Could not load bank details',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchBankDetails();
-  }, [userId]);
-
-  const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
-  };
-
-  if (isLoading) {
+  if (queryLoading) {
     return (
       <Card className="shadow-sm">
         <CardHeader>
@@ -116,7 +84,7 @@ const BankDetails = ({ userId }: BankDetailsProps) => {
     );
   }
 
-  if (error) {
+  if (queryError) {
     return (
       <Card className="shadow-sm bg-muted/30">
         <CardHeader className="flex flex-row items-center gap-2 pb-2">
@@ -124,36 +92,36 @@ const BankDetails = ({ userId }: BankDetailsProps) => {
           <CardTitle className="text-lg text-muted-foreground">Bank Details Unavailable</CardTitle>
         </CardHeader>
         <CardContent className="pt-2">
-          <p className="text-sm text-muted-foreground">{error}</p>
+          <p className="text-sm text-muted-foreground">Could not load bank details</p>
         </CardContent>
       </Card>
     );
   }
 
-  if (!bankDetails) {
+  if (!canViewBankDetails()) {
     return (
       <Card className="shadow-sm bg-muted/30">
         <CardHeader className="flex flex-row items-center gap-2 pb-2">
-          <BuildingLibraryIcon className="h-5 w-5 text-muted-foreground" />
-          <CardTitle className="text-lg text-muted-foreground">No Bank Details</CardTitle>
+          <ExclamationTriangleIcon className="h-5 w-5 text-muted-foreground" />
+          <CardTitle className="text-lg text-muted-foreground">Bank Details Unavailable</CardTitle>
         </CardHeader>
         <CardContent className="pt-2">
-          <p className="text-sm text-muted-foreground">
-            No bank account information has been added yet.
-          </p>
-          <Link to="/p/profile/edit/bank" className="text-primary hover:underline">
-            Add Bank Details
-          </Link>
+          <p className="text-sm text-muted-foreground">You don't have permission to view these bank details</p>
         </CardContent>
       </Card>
     );
   }
+
+  const bankDetails = bankData;
 
   return (
     <motion.div
       initial="hidden"
       animate="visible"
-      variants={cardVariants}
+      variants={{
+        hidden: { opacity: 0, y: 20 },
+        visible: { opacity: 1, y: 0 },
+      }}
       transition={{ duration: 0.3 }}
     >
       <Card className="shadow-sm hover:shadow-md transition-shadow duration-300">
