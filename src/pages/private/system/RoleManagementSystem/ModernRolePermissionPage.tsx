@@ -511,65 +511,7 @@ const ModernRolePermissionPage = () => {
     }
   };
 
-  // Permission management functions (available for future use)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const addPermissionsToRole = async (roleId: string, permissionIds: string[]) => {
-    setIsLoading(true);
-    try {
-      const response = await axios.post(APIDictionary.roleAddPermissions(roleId), {
-        permissions: permissionIds
-      });
-      
-      toast({
-        title: 'Success',
-        description: response.data.message || 'Permissions added successfully',
-        variant: 'default'
-      });
-      
-      fetchRoles(); // Refresh data
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Failed to add permissions';
-      const invalidIds = error?.response?.data?.invalidIds;
-      
-      toast({
-        title: 'Error',
-        description: invalidIds 
-          ? `${errorMessage}. Invalid permission IDs: ${invalidIds.join(', ')}`
-          : errorMessage,
-        variant: 'destructive'
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const removePermissionsFromRole = async (roleId: string, permissionIds: string[]) => {
-    setIsLoading(true);
-    try {
-      const response = await axios.post(APIDictionary.roleRemovePermissions(roleId), {
-        permissions: permissionIds
-      });
-      
-      toast({
-        title: 'Success',
-        description: response.data.message || 'Permissions removed successfully',
-        variant: 'default'
-      });
-      
-      fetchRoles(); // Refresh data
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Failed to remove permissions';
-      
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive'
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const exportRoles = () => {
     try {
