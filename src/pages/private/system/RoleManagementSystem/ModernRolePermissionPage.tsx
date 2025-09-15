@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { 
   Card, 
   CardContent, 
@@ -70,7 +70,11 @@ import {
   Check,
   Crown,
   UserPlus,
-  Key
+  Key,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
 } from 'lucide-react';
 import { APIDictionary } from '@/services/api/v2/APIdict';
 import { useAuth } from '@/providers/AuthContext';
@@ -123,6 +127,15 @@ const ModernRolePermissionPage = () => {
   const [permissionSearchTerm, setPermissionSearchTerm] = useState('');
   const [editPermissionSearchTerm, setEditPermissionSearchTerm] = useState('');
   
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [usersPerPage, setUsersPerPage] = useState(24); // Show 24 users per page for better performance
+  const [totalUsers, setTotalUsers] = useState(0);
+  
+  // Debounced search state
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  
+
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -146,12 +159,31 @@ const ModernRolePermissionPage = () => {
     fetchData();
   }, []);
 
+
+  // Debounce search term to improve performance
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setCurrentPage(1); // Reset to first page when searching
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+
   // Calculate user counts whenever users change
   useEffect(() => {
     if (roles.length > 0 && users.length > 0) {
       calculateUserCounts();
     }
   }, [users, calculateUserCounts]);
+
+
+  // Clear search term when switching tabs
+  useEffect(() => {
+    setSearchTerm('');
+  }, [selectedTab]);
+
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -193,6 +225,7 @@ const ModernRolePermissionPage = () => {
       });
       setUsers(response.data);
     } catch (error) {
+      console.error('Error fetching users:', error);
       toast({
         title: 'Error',
         description: 'Failed to fetch users',
@@ -417,11 +450,12 @@ const ModernRolePermissionPage = () => {
     }
   };
 
-  const openChangeRoleDialog = (user: User) => {
+
+  const openChangeRoleDialog = useCallback((user: User) => {
     setSelectedUser(user);
     setSelectedRoleForUser(user.roles?.[0]?.role?.id || 'no-role');
     setIsChangeRoleDialogOpen(true);
-  };
+  }, []);
 
   const changeUserRole = async () => {
     if (!selectedUser || !selectedRoleForUser || selectedRoleForUser === 'no-role') {
@@ -445,9 +479,10 @@ const ModernRolePermissionPage = () => {
           setIsChangeRoleDialogOpen(false);
           setSelectedUser(null);
           setSelectedRoleForUser('');
-          
-          // Refresh data
-          fetchUsers();
+
+          // Refresh data efficiently - only update the modified user
+          await fetchUsers();
+
           return;
         } catch (error: any) {
           const errorMessage = error?.response?.data?.message || 'Failed to remove user role';
@@ -459,6 +494,10 @@ const ModernRolePermissionPage = () => {
           });
           setIsLoading(false);
           return;
+
+        } finally {
+          setIsLoading(false);
+
         }
       }
       
@@ -495,9 +534,10 @@ const ModernRolePermissionPage = () => {
       setSelectedUser(null);
       setSelectedRoleForUser('');
       
-      // Refresh data
-      fetchUsers();
-      // User counts will be recalculated automatically via useEffect
+
+      // Refresh data efficiently
+      await fetchUsers();
+
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || 'Failed to update user role';
       
@@ -595,6 +635,7 @@ const ModernRolePermissionPage = () => {
       return permissionGroups;
     }
 
+
     return permissionGroups.map(group => ({
       ...group,
       permissions: group.permissions.filter(permission =>
@@ -615,10 +656,28 @@ const ModernRolePermissionPage = () => {
     return matchesSearch && matchesFilter;
   });
 
-  const filteredUsers = users.filter(user =>
-    `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Memoized filtered users for better performance
+  const filteredUsers = useMemo(() => {
+    return users.filter(user =>
+      `${user.firstName} ${user.lastName}`.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+    );
+  }, [users, debouncedSearchTerm]);
+
+  // Memoized paginated users
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * usersPerPage;
+    const endIndex = startIndex + usersPerPage;
+    return filteredUsers.slice(startIndex, endIndex);
+  }, [filteredUsers, currentPage, usersPerPage]);
+
+  // Update total users count when filtered users change
+  useEffect(() => {
+    setTotalUsers(filteredUsers.length);
+  }, [filteredUsers]);
+
+  // Calculate total pages
+  const totalPages = Math.ceil(totalUsers / usersPerPage);
 
   const getRoleColor = (roleName: string) => {
     const colors = {
@@ -710,7 +769,7 @@ const ModernRolePermissionPage = () => {
     </Card>
   );
 
-  const UserRoleCard = ({ user }: { user: User }) => {
+  const UserRoleCard = memo(({ user }: { user: User }) => {
     const userRole = user.roles?.[0]?.role;
     
     return (
@@ -760,10 +819,105 @@ const ModernRolePermissionPage = () => {
         </CardContent>
       </Card>
     );
-  };
+  });
+
+  // Pagination component
+  const PaginationControls = () => (
+    <div className="flex flex-col sm:flex-row items-center justify-between mt-6 space-y-4 sm:space-y-0">
+      <div className="flex items-center space-x-4">
+        <div className="text-sm text-muted-foreground">
+          Showing {((currentPage - 1) * usersPerPage) + 1} to {Math.min(currentPage * usersPerPage, totalUsers)} of {totalUsers} users
+        </div>
+        <div className="flex items-center space-x-2">
+          <span className="text-sm text-muted-foreground">Show:</span>
+          <Select
+            value={usersPerPage.toString()}
+            onValueChange={(value) => {
+              setUsersPerPage(Number(value));
+              setCurrentPage(1); // Reset to first page when changing page size
+            }}
+          >
+            <SelectTrigger className="w-20">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="12">12</SelectItem>
+              <SelectItem value="24">24</SelectItem>
+              <SelectItem value="48">48</SelectItem>
+              <SelectItem value="96">96</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      
+      <div className="flex items-center space-x-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setCurrentPage(1)}
+          disabled={currentPage === 1}
+        >
+          <ChevronsLeft className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        
+        <div className="flex items-center space-x-1">
+          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+            let pageNumber;
+            if (totalPages <= 5) {
+              pageNumber = i + 1;
+            } else if (currentPage <= 3) {
+              pageNumber = i + 1;
+            } else if (currentPage >= totalPages - 2) {
+              pageNumber = totalPages - 4 + i;
+            } else {
+              pageNumber = currentPage - 2 + i;
+            }
+            
+            return (
+              <Button
+                key={pageNumber}
+                variant={currentPage === pageNumber ? "default" : "outline"}
+                size="sm"
+                onClick={() => setCurrentPage(pageNumber)}
+                className="w-8 h-8 p-0"
+              >
+                {pageNumber}
+              </Button>
+            );
+          })}
+        </div>
+        
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+          disabled={currentPage === totalPages}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setCurrentPage(totalPages)}
+          disabled={currentPage === totalPages}
+        >
+          <ChevronsRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
-    <ScrollArea className="h-screen">
+    <ScrollArea className="h-screen w-full">
+
       <div className="p-6 space-y-6  mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
@@ -816,6 +970,7 @@ const ModernRolePermissionPage = () => {
                         placeholder="Enter role description"
                       />
                     </div>
+
                   </div>
                   
                   <Separator />
@@ -908,6 +1063,7 @@ const ModernRolePermissionPage = () => {
                     </div>
                   </div>
                   
+
                   <Separator />
                   
                   <div>
@@ -917,24 +1073,30 @@ const ModernRolePermissionPage = () => {
                         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                           placeholder="Search permissions..."
+
                           value={editPermissionSearchTerm}
                           onChange={(e) => setEditPermissionSearchTerm(e.target.value)}
+
                           className="pl-8"
                         />
                       </div>
                       <ScrollArea className="h-64 border rounded-md p-4">
+
                         {getFilteredPermissionGroups(editPermissionSearchTerm).map((group) => (
+
                           <div key={group.category} className="mb-4">
                             <h4 className="font-medium text-sm mb-2">{group.category}</h4>
                             <div className="space-y-2 pl-4">
                               {group.permissions.map((permission) => (
                                 <div key={permission.id} className="flex items-center space-x-2">
                                   <Switch
+
                                     id={`edit-perm-${permission.id}`}
                                     checked={editRolePermissions.includes(permission.id)}
                                     onCheckedChange={() => handleEditPermissionToggle(permission.id)}
                                   />
                                   <Label htmlFor={`edit-perm-${permission.id}`} className="text-sm">
+
                                     {permission.name}
                                   </Label>
                                 </div>
@@ -942,7 +1104,9 @@ const ModernRolePermissionPage = () => {
                             </div>
                           </div>
                         ))}
+
                         {getFilteredPermissionGroups(editPermissionSearchTerm).length === 0 && (
+
                           <div className="text-center py-8 text-muted-foreground">
                             <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
                             <p>No permissions found</p>
@@ -955,6 +1119,7 @@ const ModernRolePermissionPage = () => {
                   
                   <div className="flex justify-end space-x-2">
                     <Button variant="outline" onClick={() => {
+
                       setIsEditDialogOpen(false);
                       setEditPermissionSearchTerm('');
                     }}>
@@ -962,11 +1127,13 @@ const ModernRolePermissionPage = () => {
                     </Button>
                     <Button onClick={updateRole} disabled={isLoading}>
                       {isLoading ? 'Updating...' : 'Update Role'}
+
                     </Button>
                   </div>
                 </div>
               </DialogContent>
             </Dialog>
+
           </div>
         </div>
 
@@ -989,8 +1156,10 @@ const ModernRolePermissionPage = () => {
               <div className="flex items-center space-x-2">
                 <Users className="h-8 w-8 text-green-600" />
                 <div>
-                  <p className="text-2xl font-bold">{users.length}</p>
-                  <p className="text-xs text-muted-foreground">Total Users</p>
+                  <p className="text-2xl font-bold">{selectedTab === 'users' && debouncedSearchTerm ? totalUsers : users.length}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {selectedTab === 'users' && debouncedSearchTerm ? 'Filtered Users' : 'Total Users'}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -1038,6 +1207,11 @@ const ModernRolePermissionPage = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-8 w-full sm:w-64"
                 />
+                {selectedTab === 'users' && searchTerm !== debouncedSearchTerm && (
+                  <div className="absolute right-2 top-2.5">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                  </div>
+                )}
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -1073,42 +1247,79 @@ const ModernRolePermissionPage = () => {
           </div>
 
           <TabsContent value="roles" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredRoles.map((role) => (
-                <RoleCard key={role.id} role={role} />
-              ))}
-            </div>
-            
-            {filteredRoles.length === 0 && (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-8">
-                  <Shield className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium">No roles found</h3>
-                  <p className="text-muted-foreground text-center">
-                    {searchTerm ? 'Try adjusting your search terms.' : 'Create your first role to get started.'}
-                  </p>
-                </CardContent>
-              </Card>
+            {filteredRoles.length === 0 ? (
+              <div className="w-full">
+                <Card className="w-full">
+                  <CardContent className="flex flex-col items-center justify-center py-12 px-6">
+                    <Shield className="h-16 w-16 text-muted-foreground mb-6" />
+                    <h3 className="text-xl font-semibold mb-2">No roles found</h3>
+                    <p className="text-muted-foreground text-center max-w-md">
+                      {searchTerm ? 'Try adjusting your search terms or filter settings.' : 'Create your first role to get started with managing permissions.'}
+                    </p>
+                    {!searchTerm && (
+                      <div className="mt-6">
+                        <Button onClick={() => setIsCreateDialogOpen(true)}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create Your First Role
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 gap-4">
+                {filteredRoles.map((role) => (
+                  <RoleCard key={role.id} role={role} />
+                ))}
+              </div>
             )}
           </TabsContent>
 
           <TabsContent value="users" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
-              {filteredUsers.map((user) => (
-                <UserRoleCard key={user.id} user={user} />
-              ))}
-            </div>
-            
-            {filteredUsers.length === 0 && (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-8">
-                  <Users className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium">No users found</h3>
-                  <p className="text-muted-foreground text-center">
-                    {searchTerm ? 'Try adjusting your search terms.' : 'No users available.'}
-                  </p>
-                </CardContent>
-              </Card>
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
+                {Array.from({ length: 8 }).map((_, index) => (
+                  <Card key={index} className="animate-pulse">
+                    <CardContent className="p-4">
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                          <div className="space-y-1 flex-1">
+                            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                            <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                          </div>
+                        </div>
+                        <div className="flex justify-center">
+                          <div className="h-6 bg-gray-200 rounded w-20"></div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
+                  {paginatedUsers.map((user) => (
+                    <UserRoleCard key={user.id} user={user} />
+                  ))}
+                </div>
+                
+                {paginatedUsers.length === 0 && (
+                  <Card>
+                    <CardContent className="flex flex-col items-center justify-center py-8">
+                      <Users className="h-12 w-12 text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-medium">No users found</h3>
+                      <p className="text-muted-foreground text-center">
+                        {debouncedSearchTerm ? 'Try adjusting your search terms.' : 'No users available.'}
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+                
+                {totalUsers > usersPerPage && <PaginationControls />}
+              </>
             )}
           </TabsContent>
         </Tabs>
@@ -1155,6 +1366,7 @@ const ModernRolePermissionPage = () => {
             </DialogContent>
           </Dialog>
         )}
+
 
         {/* Change User Role Dialog */}
         <Dialog open={isChangeRoleDialogOpen} onOpenChange={setIsChangeRoleDialogOpen}>
