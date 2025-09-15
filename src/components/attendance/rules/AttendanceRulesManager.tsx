@@ -1,0 +1,293 @@
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
+import { Button } from '../../ui/button';
+import { Input } from '../../ui/input';
+import { Label } from '../../ui/label';
+import { Switch } from '../../ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
+import { Badge } from '../../ui/badge';
+import { Alert, AlertDescription } from '../../ui/alert';
+import { Plus, Edit, Trash2, AlertTriangle, CheckCircle, Clock, Calendar } from 'lucide-react';
+import { useAttendanceRules, useCreateRule, useToggleRule, useDeleteRule } from '../../../hooks/useAttendance';
+import { CreateRuleRequest, AttendanceRule } from '../../../interface/attendance';
+
+interface AttendanceRulesManagerProps {
+  orgId: string;
+}
+
+const AttendanceRulesManager: React.FC<AttendanceRulesManagerProps> = ({ orgId }) => {
+  const [isCreating, setIsCreating] = useState(false);
+  const [newRule, setNewRule] = useState<CreateRuleRequest>({
+    ruleType: 'LATE_ARRIVAL',
+    threshold: 0,
+    penalty: 0,
+    description: '',
+    isActive: true
+  });
+
+  const { data: rulesData, isLoading, error } = useAttendanceRules(orgId);
+  const createRuleMutation = useCreateRule(orgId);
+  const toggleRuleMutation = useToggleRule(orgId);
+  const deleteRuleMutation = useDeleteRule(orgId);
+
+  const rules = rulesData?.data || [];
+
+  const handleCreateRule = async () => {
+    try {
+      await createRuleMutation.mutateAsync(newRule);
+      setIsCreating(false);
+      setNewRule({
+        ruleType: 'LATE_ARRIVAL',
+        threshold: 0,
+        penalty: 0,
+        description: '',
+        isActive: true
+      });
+    } catch (error) {
+      console.error('Failed to create rule:', error);
+    }
+  };
+
+  const handleToggleRule = async (ruleId: string, isActive: boolean) => {
+    try {
+      await toggleRuleMutation.mutateAsync({ ruleId, isActive });
+    } catch (error) {
+      console.error('Failed to toggle rule:', error);
+    }
+  };
+
+  const handleDeleteRule = async (ruleId: string) => {
+    if (window.confirm('Are you sure you want to delete this rule?')) {
+      try {
+        await deleteRuleMutation.mutateAsync(ruleId);
+      } catch (error) {
+        console.error('Failed to delete rule:', error);
+      }
+    }
+  };
+
+  const getRuleTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      'LATE_ARRIVAL': 'Late Arrival',
+      'EARLY_DEPARTURE': 'Early Departure',
+      'MINIMUM_HOURS': 'Minimum Hours',
+      'BREAK_VIOLATION': 'Break Violation',
+      'GEOFENCE_VIOLATION': 'Geofence Violation',
+      'ABSENTEEISM': 'Absenteeism'
+    };
+    return labels[type] || type;
+  };
+
+  const getRuleTypeColor = (type: string) => {
+    const colors: Record<string, string> = {
+      'LATE_ARRIVAL': 'bg-yellow-100 text-yellow-800',
+      'EARLY_DEPARTURE': 'bg-orange-100 text-orange-800',
+      'MINIMUM_HOURS': 'bg-blue-100 text-blue-800',
+      'BREAK_VIOLATION': 'bg-purple-100 text-purple-800',
+      'GEOFENCE_VIOLATION': 'bg-pink-100 text-pink-800',
+      'ABSENTEEISM': 'bg-red-100 text-red-800'
+    };
+    return colors[type] || 'bg-gray-100 text-gray-800';
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert>
+        <AlertTriangle className="h-4 w-4" />
+        <AlertDescription>
+          Failed to load attendance rules. Please try again.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold">Attendance Rules</h2>
+          <p className="text-gray-600">Manage progressive deduction rules and penalties</p>
+        </div>
+        <Button onClick={() => setIsCreating(true)} className="flex items-center gap-2">
+          <Plus className="h-4 w-4" />
+          Create Rule
+        </Button>
+      </div>
+
+      {/* Create Rule Form */}
+      {isCreating && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Create New Attendance Rule</CardTitle>
+            <CardDescription>
+              Define a new rule with conditions and progressive penalties
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="rule-type">Rule Type</Label>
+                <Select 
+                  value={newRule.ruleType} 
+                  onValueChange={(value) => setNewRule({...newRule, ruleType: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select rule type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="LATE_ARRIVAL">Late Arrival</SelectItem>
+                    <SelectItem value="EARLY_DEPARTURE">Early Departure</SelectItem>
+                    <SelectItem value="MINIMUM_HOURS">Minimum Hours</SelectItem>
+                    <SelectItem value="BREAK_VIOLATION">Break Violation</SelectItem>
+                    <SelectItem value="GEOFENCE_VIOLATION">Geofence Violation</SelectItem>
+                    <SelectItem value="ABSENTEEISM">Absenteeism</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="threshold">Threshold (minutes)</Label>
+                <Input
+                  id="threshold"
+                  type="number"
+                  value={newRule.threshold}
+                  onChange={(e) => setNewRule({...newRule, threshold: parseInt(e.target.value) || 0})}
+                  placeholder="Enter threshold"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="description">Description</Label>
+                <Input
+                  id="description"
+                  value={newRule.description || ''}
+                  onChange={(e) => setNewRule({...newRule, description: e.target.value})}
+                  placeholder="Describe when this rule applies"
+                />
+              </div>
+              <div>
+                <Label htmlFor="penalty">Penalty Amount</Label>
+                <Input
+                  id="penalty"
+                  type="number"
+                  value={newRule.penalty}
+                  onChange={(e) => setNewRule({...newRule, penalty: parseInt(e.target.value) || 0})}
+                  placeholder="Enter penalty amount"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch 
+                checked={newRule.isActive}
+                onCheckedChange={(checked) => setNewRule({...newRule, isActive: checked})}
+              />
+              <Label>Active</Label>
+            </div>
+
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setIsCreating(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleCreateRule}
+                disabled={!newRule.description || createRuleMutation.isPending}
+              >
+                {createRuleMutation.isPending ? 'Creating...' : 'Create Rule'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Rules List */}
+      <div className="grid gap-4">
+        {rules.length === 0 ? (
+          <Card>
+            <CardContent className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No rules configured</h3>
+                <p className="text-gray-500">Create your first attendance rule to get started</p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          rules.map((rule: AttendanceRule) => (
+            <Card key={rule.id}>
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center space-x-3">
+                    <Badge className={getRuleTypeColor(rule.ruleType)}>
+                      {getRuleTypeLabel(rule.ruleType)}
+                    </Badge>
+                    <div>
+                      <CardTitle className="text-lg">{getRuleTypeLabel(rule.ruleType)}</CardTitle>
+                      <CardDescription>{rule.description}</CardDescription>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch 
+                      checked={rule.isActive}
+                      onCheckedChange={(checked) => handleToggleRule(rule.id, checked)}
+                      disabled={toggleRuleMutation.isPending}
+                    />
+                    <Button variant="ghost" size="sm">
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => handleDeleteRule(rule.id)}
+                      disabled={deleteRuleMutation.isPending}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center space-x-6 text-sm text-gray-600">
+                  <div className="flex items-center space-x-1">
+                    <Clock className="h-4 w-4" />
+                    <span>
+                      Threshold: {rule.threshold} minutes
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <AlertTriangle className="h-4 w-4" />
+                    <span>Penalty: {rule.penalty}</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    {rule.isActive ? (
+                      <>
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <span className="text-green-600">Active</span>
+                      </>
+                    ) : (
+                      <>
+                        <Clock className="h-4 w-4 text-gray-400" />
+                        <span className="text-gray-400">Inactive</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default AttendanceRulesManager;
