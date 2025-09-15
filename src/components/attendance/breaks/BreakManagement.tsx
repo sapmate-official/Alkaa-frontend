@@ -13,7 +13,7 @@ import {
   useBreakTimer, 
   useLocationPermission 
 } from '../../../hooks/useAttendance';
-import { BreakRecord, StartBreakRequest } from '../../../interface/attendance';
+import { BreakRecord, StartBreakRequest } from '../../../types/attendance';
 
 interface BreakManagementProps {
   userId: string;

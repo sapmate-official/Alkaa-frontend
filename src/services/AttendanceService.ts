@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { APIV3Dictionary } from '../api/v3/Api3Dicts';
+import { APIV3Dictionary } from './api/v3/Api3Dicts';
 import {
   AttendanceRule,
   AttendanceRuleViolation,
@@ -25,7 +25,7 @@ import {
   APIResponse,
   PaginatedResponse,
   PaginationParams
-} from '../interface/attendance';
+} from '../types/attendance';
 
 // Set up axios defaults
 axios.defaults.withCredentials = true;

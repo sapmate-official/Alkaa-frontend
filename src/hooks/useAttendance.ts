@@ -1,9 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { attendanceApi } from '@/services/api/attendanceApi'
 import { format } from 'date-fns'
 import type { AttendanceRecord } from '@/types/general'
 import { attendanceKeys } from './queries/attendanceKeys'
+import {
+  BreakRecord,
+  BreakPolicies,
+  AlertConfiguration,
+  CreateRuleRequest,
+  CreateGeofenceRequest,
+  StartBreakRequest,
+  ValidateLocationRequest
+} from '../types/attendance';
 
 // Today's Sessions Query
 export const useTodaySessionsQuery = (date?: string) => {
@@ -113,47 +122,6 @@ export const useAttendanceVerificationMutation = () => {
   })
 }
 
-// Utility hooks for attendance
-export const useDeviceInfo = () => {
-  return {
-    deviceInfo: {
-      userAgent: navigator.userAgent,
-      platform: navigator.platform,
-      language: navigator.language,
-    },
-  };
-};
-
-export const useIpAddress = () => {
-  const [ipAddress, setIpAddress] = useState<string>('');
-
-  useEffect(() => {
-    fetch('https://api.ipify.org?format=json')
-      .then((response) => response.json())
-      .then((data) => setIpAddress(data.ip));
-  }, []);
-
-  return { ipAddress };
-};
-
-export const useGeolocation = () => {
-  const [location, setLocation] = useState<{latitude: number; longitude: number} | null>(null);
-
-  useEffect(() => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        setLocation({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
-      });
-    }
-  }, []);
-
-  return { location };
-};
-import { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   AttendanceRulesService,
   BreakManagementService,
@@ -161,15 +129,7 @@ import {
   AlertsService,
   AnalyticsService
 } from '../services/AttendanceService';
-import {
-  BreakRecord,
-  BreakPolicies,
-  AlertConfiguration,
-  CreateRuleRequest,
-  CreateGeofenceRequest,
-  StartBreakRequest,
-  ValidateLocationRequest
-} from '../interface/attendance';
+
 
 // =====================================================
 // UTILITY HOOKS FOR DEVICE AND LOCATION
