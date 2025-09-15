@@ -355,50 +355,6 @@ const ModernRolePermissionManager = () => {
     }
   };
 
-  // Quick action functions for permission management
-  const addPermissionToRole = async (role: TanStackRole, permissionId: string) => {
-    try {
-      await addPermissionsMutation.mutateAsync({
-        roleId: role.id,
-        permissionIds: [permissionId]
-      });
-      
-      toast({
-        title: 'Success',
-        description: 'Permission added to role successfully',
-        variant: 'default'
-      });
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Failed to add permission';
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive'
-      });
-    }
-  };
-
-  const removePermissionFromRole = async (role: TanStackRole, permissionId: string) => {
-    try {
-      await removePermissionsMutation.mutateAsync({
-        roleId: role.id,
-        permissionIds: [permissionId]
-      });
-      
-      toast({
-        title: 'Success',
-        description: 'Permission removed from role successfully',
-        variant: 'default'
-      });
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Failed to remove permission';
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive'
-      });
-    }
-  };
 
   // Filter roles based on search term
   const filteredRoles = roles.filter(role =>

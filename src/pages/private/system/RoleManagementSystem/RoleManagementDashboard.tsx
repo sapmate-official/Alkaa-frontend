@@ -357,50 +357,6 @@ const RolesPermissionsManagement = () => {
   }, []);
 
   // Quick action functions for permission management
-  const addPermissionToRole = useCallback(async (role: Role, permissionId: string) => {
-    try {
-      await addPermissionsMutation.mutateAsync({
-        roleId: role.id,
-        permissionIds: [permissionId]
-      });
-      
-      toast({
-        title: 'Success',
-        description: 'Permission added to role successfully',
-        variant: 'default'
-      });
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Failed to add permission';
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive'
-      });
-    }
-  }, [addPermissionsMutation, toast]);
-
-  const removePermissionFromRole = useCallback(async (role: Role, permissionId: string) => {
-    try {
-      await removePermissionsMutation.mutateAsync({
-        roleId: role.id,
-        permissionIds: [permissionId]
-      });
-      
-      toast({
-        title: 'Success',
-        description: 'Permission removed from role successfully',
-        variant: 'default'
-      });
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Failed to remove permission';
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive'
-      });
-    }
-  }, [removePermissionsMutation, toast]);
-
   const LoadingButton = ({ loading, children, ...props }: LoadingButtonProps) => (
     <Button disabled={loading} {...props}>
       {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
