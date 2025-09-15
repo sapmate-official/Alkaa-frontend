@@ -34,6 +34,7 @@ const LeaveModule = lazy(() => import('./pages/private/system/LeaveManagementSys
 const OnboardingModule = lazy(() => import('./pages/private/system/OnboardingManagementSystem/OnboardingModule'));
 const TaskModule = lazy(() => import('./pages/private/system/TaskManagementSystem/index.tsx'));
 import HolidayManagementSystem from './pages/private/system/HolidayManagementSystem/HolidayDashboard.tsx';
+import ModernRolePermissionPage from './pages/private/system/RoleManagementSystem/ModernRolePermissionPage.tsx';
 
 
 // Admin modules (less frequently used)
@@ -181,7 +182,7 @@ const ClientRoute = () => {
       } />
        <Route path="/role/" element={
         <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['manage_role', 'view_organization_basic_details', 'view_employee_management']}>
-          <RolesPermissionsManagement />
+          <ModernRolePermissionPage />
         </PermissionRouteBasedOnKey>
       } />
       {/* <Route path="/role/modern" element={

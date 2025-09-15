@@ -70,6 +70,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { 
   useRoles, useCreateRole, useUpdateRole, useDeleteRole,
+  useAddPermissionsToRole, useRemovePermissionsFromRole,
   Role as TanStackRole, Permission as TanStackPermission
 } from '@/hooks/queries/useRoles';
 import { usePermissions as usePermissionsQuery, usePermissionPresets } from '@/hooks/queries/usePermissions';
@@ -119,6 +120,7 @@ const ModernRolePermissionManager = () => {
   const [newRoleDescription, setNewRoleDescription] = useState('');
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
   const [editedPermissions, setEditedPermissions] = useState<string[]>([]);
+  const [permissionUpdateMode, setPermissionUpdateMode] = useState<'add' | 'remove' | 'replace'>('replace');
   
   // Loading states
   const [loading] = useState<LoadingStates>({
@@ -140,6 +142,8 @@ const ModernRolePermissionManager = () => {
   const createRoleMutation = useCreateRole();
   const updateRoleMutation = useUpdateRole();
   const deleteRoleMutation = useDeleteRole();
+  const addPermissionsMutation = useAddPermissionsToRole();
+  const removePermissionsMutation = useRemovePermissionsFromRole();
 
   // Fetch data on component mount
   useEffect(() => {
@@ -225,10 +229,16 @@ const ModernRolePermissionManager = () => {
       setNewRoleDescription('');
       setSelectedPermissions([]);
       setIsCreateRoleOpen(false);
-    } catch (error) {
+    } catch (error: any) {
+      // Enhanced error handling for new backend validation
+      const errorMessage = error?.response?.data?.message || 'Failed to create role';
+      const invalidIds = error?.response?.data?.invalidIds;
+      
       toast({
         title: 'Error',
-        description: 'Failed to create role',
+        description: invalidIds 
+          ? `${errorMessage}. Invalid permission IDs: ${invalidIds.join(', ')}`
+          : errorMessage,
         variant: 'destructive'
       });
     }
@@ -238,14 +248,40 @@ const ModernRolePermissionManager = () => {
     if (!selectedRole) return;
 
     try {
-      await updateRoleMutation.mutateAsync({ 
-        id: selectedRole.id, 
-        data: {
-          name: selectedRole.name,
-          description: selectedRole.description,
-          permissions: editedPermissions
+      if (permissionUpdateMode === 'add') {
+        // Use dedicated add permissions endpoint
+        const existingPermissionIds = selectedRole.permissions.map(p => p.id);
+        const newPermissionIds = editedPermissions.filter(id => !existingPermissionIds.includes(id));
+        
+        if (newPermissionIds.length > 0) {
+          await addPermissionsMutation.mutateAsync({
+            roleId: selectedRole.id,
+            permissionIds: newPermissionIds
+          });
         }
-      });
+      } else if (permissionUpdateMode === 'remove') {
+        // Use dedicated remove permissions endpoint
+        const existingPermissionIds = selectedRole.permissions.map(p => p.id);
+        const permissionsToRemove = existingPermissionIds.filter(id => !editedPermissions.includes(id));
+        
+        if (permissionsToRemove.length > 0) {
+          await removePermissionsMutation.mutateAsync({
+            roleId: selectedRole.id,
+            permissionIds: permissionsToRemove
+          });
+        }
+      } else {
+        // Use regular update with replace mode (default)
+        await updateRoleMutation.mutateAsync({ 
+          id: selectedRole.id, 
+          data: {
+            name: selectedRole.name,
+            description: selectedRole.description,
+            permissions: editedPermissions,
+            updateType: 'replace'
+          }
+        });
+      }
 
       toast({
         title: 'Success',
@@ -256,10 +292,17 @@ const ModernRolePermissionManager = () => {
       setIsEditRoleOpen(false);
       setSelectedRole(null);
       setEditedPermissions([]);
-    } catch (error) {
+      setPermissionUpdateMode('replace');
+    } catch (error: any) {
+      // Enhanced error handling for new backend validation
+      const errorMessage = error?.response?.data?.message || 'Failed to update role';
+      const invalidIds = error?.response?.data?.invalidIds;
+      
       toast({
         title: 'Error',
-        description: 'Failed to update role',
+        description: invalidIds 
+          ? `${errorMessage}. Invalid permission IDs: ${invalidIds.join(', ')}`
+          : errorMessage,
         variant: 'destructive'
       });
     }
@@ -309,6 +352,51 @@ const ModernRolePermissionManager = () => {
           ? prev.filter(id => id !== permissionId)
           : [...prev, permissionId]
       );
+    }
+  };
+
+  // Quick action functions for permission management
+  const addPermissionToRole = async (role: TanStackRole, permissionId: string) => {
+    try {
+      await addPermissionsMutation.mutateAsync({
+        roleId: role.id,
+        permissionIds: [permissionId]
+      });
+      
+      toast({
+        title: 'Success',
+        description: 'Permission added to role successfully',
+        variant: 'default'
+      });
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || 'Failed to add permission';
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const removePermissionFromRole = async (role: TanStackRole, permissionId: string) => {
+    try {
+      await removePermissionsMutation.mutateAsync({
+        roleId: role.id,
+        permissionIds: [permissionId]
+      });
+      
+      toast({
+        title: 'Success',
+        description: 'Permission removed from role successfully',
+        variant: 'default'
+      });
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || 'Failed to remove permission';
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive'
+      });
     }
   };
 
@@ -753,6 +841,26 @@ const ModernRolePermissionManager = () => {
             </DialogHeader>
             
             <div className="space-y-6 py-4">
+              {/* Permission Update Mode Selector */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Update Mode</Label>
+                <Select value={permissionUpdateMode} onValueChange={(value: 'add' | 'remove' | 'replace') => setPermissionUpdateMode(value)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="replace">Replace All Permissions</SelectItem>
+                    <SelectItem value="add">Add Permissions (Keep Existing)</SelectItem>
+                    <SelectItem value="remove">Remove Selected Permissions</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {permissionUpdateMode === 'replace' && 'All current permissions will be replaced with selected ones'}
+                  {permissionUpdateMode === 'add' && 'Selected permissions will be added to existing ones'}
+                  {permissionUpdateMode === 'remove' && 'Selected permissions will be removed from the role'}
+                </p>
+              </div>
+
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <Label className="text-base font-semibold">Permissions</Label>

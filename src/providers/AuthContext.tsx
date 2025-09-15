@@ -291,6 +291,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             
             throw new Error('Invalid response from server');
         } catch (error) {
+            console.log(error);
+            
             if (axios.isAxiosError(error)) {
                 throw new Error(error.response?.data?.message || 'Failed to check email');
             }
