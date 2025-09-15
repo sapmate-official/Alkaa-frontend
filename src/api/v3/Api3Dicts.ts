@@ -1,4 +1,5 @@
 import { backendDomain } from '../../lib/constant/Domain';
+import { AttendanceAPIV3Dictionary } from './AttendanceAPI';
 
 export const APIV3Dictionary = {
     permission: `${backendDomain}/api/v3/permission`,
@@ -13,5 +14,6 @@ export const APIV3Dictionary = {
             `${backendDomain}/api/v3/payroll/download/${salaryRecordId}`,
         preStatistics: (month: string | number, year: string | number, userId: string = 'undefined') =>
             `${backendDomain}/api/v3/payroll/pre-stats/${month}/${year}/${userId}`,
-    }
+    },
+    attendance: AttendanceAPIV3Dictionary
 };
