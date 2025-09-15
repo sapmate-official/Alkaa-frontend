@@ -36,13 +36,12 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { APIDictionary } from '@/api/v2/APIdict';
+import { APIDictionary } from '@/services/api/v2/APIdict';
 import axios from 'axios';
 import { 
   OnboardingCandidate, 
-  OnboardingStatus, 
   Department 
-} from '@/interface/general';
+} from '@/types/general';
 import {
   Mail,
   Phone,
@@ -56,56 +55,7 @@ import {
   UserCheck,
   MessageCircle
 } from 'lucide-react';
-
-interface CandidateReviewData {
-  candidateInfo: {
-    id: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    mobileNumber?: string;
-    status: OnboardingStatus;
-    createdAt: string;
-    formSubmittedAt?: string;
-  };
-  initialData: {
-    annualPackage?: number;
-    hiredDate?: string;
-    departmentId?: string;
-    department?: Department;
-  };
-  submittedData: {
-    personalInfo: {
-      firstName: string;
-      lastName: string;
-      mobileNumber?: string;
-      emergencyContact?: string;
-      dateOfBirth?: string;
-      address?: string;
-      adharNumber?: string;
-      panNumber?: string;
-    };
-    bankDetails: {
-      accountNumber?: string;
-      ifscCode?: string;
-      bankName?: string;
-      accountHolderName?: string;
-    };
-    documents?: any;
-    additionalInfo?: any;
-  };
-  reviewHistory: {
-    reviewedBy?: any;
-    reviewedAt?: string;
-    rejectionReason?: string;
-  };
-  metadata: {
-    createdBy: any;
-    organization: any;
-    tokenExpiry?: string;
-    verificationToken?: string;
-  };
-}
+import { useCandidateReview, useApproveCandidate, useRequestChanges, useRejectCandidate, useMarkUnderReview } from '@/hooks/queries/useOnboarding';
 
 const reviewFormSchema = z.object({
   action: z.enum(['approve', 'request_changes', 'reject']),
@@ -134,7 +84,6 @@ export const CandidateReviewDialog: React.FC<CandidateReviewDialogProps> = ({
   onReviewComplete
 }) => {
   const { toast } = useToast();
-  const [reviewData, setReviewData] = useState<CandidateReviewData | null>(null);
   const [loading, setLoading] = useState(false);
   const [editMode, setEditMode] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
@@ -146,6 +95,13 @@ export const CandidateReviewDialog: React.FC<CandidateReviewDialogProps> = ({
       feedback: '',
     }
   });
+
+  // Use TanStack Query hooks
+  const { data: reviewData, isLoading: reviewLoading, error: reviewError } = useCandidateReview(candidate?.id || '');
+  const approveMutation = useApproveCandidate();
+  const requestChangesMutation = useRequestChanges();
+  const rejectMutation = useRejectCandidate();
+  const markUnderReviewMutation = useMarkUnderReview();
 
   // Fetch detailed review data when candidate changes
   useEffect(() => {
@@ -160,7 +116,7 @@ export const CandidateReviewDialog: React.FC<CandidateReviewDialogProps> = ({
         );
 
         if (response.data.success) {
-          setReviewData(response.data.data);
+          // setReviewData(response.data.data);
         }
       } catch (error: any) {
         console.error('Error fetching review data:', error);
@@ -179,30 +135,26 @@ export const CandidateReviewDialog: React.FC<CandidateReviewDialogProps> = ({
     }
   }, [candidate?.id, open, toast]);
 
-  // Handle review submission
+  // Handle review submission using TanStack Query mutations
   const handleReview = async (data: any) => {
     if (!candidate?.id) return;
 
     try {
       setLoading(true);
-      let endpoint = '';
-      let payload: any = {};
 
       switch (data.action) {
         case 'approve':
-          endpoint = `${APIDictionary.onboarding}/${candidate.id}/approve`;
+          await approveMutation.mutateAsync(candidate.id);
           break;
         case 'request_changes':
-          endpoint = `${APIDictionary.onboarding}/${candidate.id}/request-changes`;
-          payload = { feedback: data.feedback };
+          await requestChangesMutation.mutateAsync({ id: candidate.id, feedback: data.feedback });
           break;
         case 'reject':
-          endpoint = `${APIDictionary.onboarding}/${candidate.id}/reject`;
-          payload = { reason: data.feedback };
+          await rejectMutation.mutateAsync({ id: candidate.id, reason: data.feedback });
           break;
+        default:
+          throw new Error('Invalid action');
       }
-
-      await axios.post(endpoint, payload, { withCredentials: true });
 
       toast({
         title: 'Success',
@@ -223,17 +175,13 @@ export const CandidateReviewDialog: React.FC<CandidateReviewDialogProps> = ({
     }
   };
 
-  // Mark candidate under review
+  // Mark candidate under review using TanStack Query mutation
   const markUnderReview = async () => {
     if (!candidate?.id) return;
 
     try {
       setLoading(true);
-      await axios.post(
-        `${APIDictionary.onboarding}/${candidate.id}/mark-review`,
-        {},
-        { withCredentials: true }
-      );
+      await markUnderReviewMutation.mutateAsync(candidate.id);
 
       toast({
         title: 'Success',
@@ -271,15 +219,25 @@ export const CandidateReviewDialog: React.FC<CandidateReviewDialogProps> = ({
     }).format(amount);
   };
 
-  if (!reviewData && loading) {
+  if (!reviewData && reviewLoading) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-hidden">
           <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-              <p>Loading candidate details...</p>
-            </div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p>Loading candidate details...</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  if (reviewError) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-hidden">
+          <div className="flex items-center justify-center h-64">
+            <p className="text-destructive">Error loading candidate details</p>
           </div>
         </DialogContent>
       </Dialog>

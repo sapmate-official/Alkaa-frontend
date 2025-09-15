@@ -1,0 +1,103 @@
+import { backendDomain } from "@/constants/Domain";
+
+export const APIDictionary = {
+    // Authentication endpoints
+    setPassword: `${backendDomain}/api/v1/general/set-password`,
+    login: `${backendDomain}/api/v1/general/login`,
+    checkEmail: `${backendDomain}/api/v1/general/check-email`,
+    verifyPassword: `${backendDomain}/api/v1/general/verify-password`,
+    verifyOtp: `${backendDomain}/api/v1/general/verify-otp`,
+    validateToken: `${backendDomain}/api/v1/general/validate-token`,
+    refreshToken: `${backendDomain}/api/v1/general/refresh-token`,
+    logout: `${backendDomain}/api/v1/general/logout`,
+    
+    // Legacy endpoints
+    leaveTypeList: `${backendDomain}/api/v1/leave/type`,
+    list_of_leave_manager: `${backendDomain}/api/v1/manager/list-of-leave`,
+    list_of_leave_employee: `${backendDomain}/api/v1/employee/list-of-leave`,
+    leaveRequest: `${backendDomain}/api/v1/employee/leave/apply`,
+    respondLeaveRequest: `${backendDomain}/api/v1/manager/respond-leave`,
+    leaveTypeCreate: `${backendDomain}/api/v1/manager/leave-type/create`,
+    leaveBalance:`${backendDomain}/api/v1/employee/leave-balance`,
+    employee_list:`${backendDomain}/api/v1/manager/employee-list`,
+    create_employee:`${backendDomain}/api/v1/employee/register`,
+    checkIn:`${backendDomain}/api/v2/attendance/check-in`,
+    checkOut:`${backendDomain}/api/v2/attendance/check-out`,
+    todaySessions:`${backendDomain}/api/v2/attendance/session/`,
+    attendanceHistory:`${backendDomain}/api/v2/attendance/history`,
+    userProfile: (id: string) => `${backendDomain}/api/v2/user/${id}`,
+    updateProfile: (id: string) => `${backendDomain}/api/v2/user/${id}`,
+    Organization: `${backendDomain}/api/v2/organization`,
+    OrganizationChart: (orgId: string) => `${backendDomain}/api/v2/organization/${orgId}/chart`,
+    OrganizationManagerChart: (orgId: string, userId?: string) => `${backendDomain}/api/v2/organization/${orgId}/manager-chart${userId ? `?userId=${userId}` : ''}`,
+    Permission: `${backendDomain}/api/v2/permission`,
+    role: `${backendDomain}/api/v2/role`,
+    user: `${backendDomain}/api/v2/user`,
+    role_permission: `${backendDomain}/api/v2/role-permission`,
+    roleAddPermissions: (roleId: string) => `${backendDomain}/api/v2/role/${roleId}/permissions/add`,
+    roleRemovePermissions: (roleId: string) => `${backendDomain}/api/v2/role/${roleId}/permissions/remove`,
+    user_role: `${backendDomain}/api/v2/user-role`,
+    leave_type: (id:string)=>`${backendDomain}/api/v2/leave-type/${id}`,
+    get_all_org_leave_type: (org_id:string)=>`${backendDomain}/api/v2/leave-type/org/${org_id}`,
+    leave_request: `${backendDomain}/api/v2/leave-request`,
+    leave_balance: `${backendDomain}/api/v2/leave-balance`,
+    attendance: `${backendDomain}/api/v2/attendance`,
+    payroll: `${backendDomain}/api/v2/payroll`,
+    events: `${backendDomain}/api/v2/events`,
+    bank: `${backendDomain}/api/v2/bank-details`,
+    payrollParameters: (userId: string) => `${backendDomain}/api/v2/payroll/parameters/${userId}`,
+    notification: `${backendDomain}/api/v2/notification`,
+    department: `${backendDomain}/api/v2/department`,
+    dashboard: (userId: string) => `${backendDomain}/api/v2/screen/dashboard/${userId}`,
+    get_payroll: (userId: string) => `${backendDomain}/api/v2/payroll/user/${userId}`,
+    get_payroll_stats: (userId: string) => `${backendDomain}/api/v2/payroll/statistics/${userId}`,
+    permission: `${backendDomain}/api/v2/permission`,
+    holiday: `${backendDomain}/api/v2/holiday`,
+    holiday_by_org: (orgId:string) => `${backendDomain}/api/v2/holiday/${orgId}`,
+    holiday_type: `${backendDomain}/api/v2/holiday-type`,
+    holiday_type_by_org: (orgId:string) => `${backendDomain}/api/v2/holiday-type/${orgId}`,
+    OrganizationSettings: () => `${backendDomain}/api/v3/settings`,
+    SalaryRecordExistence: (userId: string, month: number, year: number) => `${backendDomain}/api/v2/salary/user/${userId}/monthly/${month}/year/${year}`,
+    permissionPreset: `${backendDomain}/api/v3/permission-preset`,
+
+    // Bank Endpoints
+    bankDetails: (userId: string) => `${backendDomain}/api/v2/bank-details/${userId}`,
+    bankDetailsByUserId: (userId: string) => `${backendDomain}/api/v2/bank-details/user/${userId}`,
+    allBankDetails: () => `${backendDomain}/api/v2/bank-details`,
+
+    // Activity Logs Endpoints
+    activityLogs: `${backendDomain}/api/v2/activity-logs`,
+    activityStats: `${backendDomain}/api/v2/activity-logs/stats`,
+    userRecentActivities: (targetUserId: string) => `${backendDomain}/api/v2/activity-logs/user/${targetUserId}/recent`,
+
+    // Onboarding Endpoints
+    onboarding: `${backendDomain}/api/v2/onboarding`,
+
+    // Task Management Endpoints
+    task: `${backendDomain}/api/v2/task`,
+    taskAssignment: (taskId: string) => `${backendDomain}/api/v2/task/${taskId}/assign`,
+    taskUnassignment: (taskId: string) => `${backendDomain}/api/v2/task/${taskId}/unassign`,
+    taskGroup: `${backendDomain}/api/v2/task-group`,
+    taskUpdate: (taskId: string) => `${backendDomain}/api/v2/task/${taskId}/updates`,
+    taskDetails: (id: string) => `${backendDomain}/api/v2/task/${id}`,
+    tasksByUser: (userId: string) => `${backendDomain}/api/v2/task/user/${userId}`,
+    tasksByManager: (managerId: string) => `${backendDomain}/api/v2/task/manager/${managerId}`,
+    tasksByGroup: (groupId: string) => `${backendDomain}/api/v2/task/group/${groupId}`,
+    taskAssignmentByTask: (taskId: string) => `${backendDomain}/api/v2/task/${taskId}/assignments`,
+    taskUpdatesByTask: (taskId: string) => `${backendDomain}/api/v2/task/${taskId}/updates`,
+    whatsappNotification: `${backendDomain}/api/v2/whatsapp/send`,
+    taskGroups: `${backendDomain}/api/v2/task-group`,
+    taskGroupById: (id: string) => `${backendDomain}/api/v2/task-group/${id}`,
+
+    // Relationship Endpoints
+    relationshipWithUser: (targetUserId: string) => `${backendDomain}/api/v2/relationship/user/${targetUserId}`,
+    relationshipOrganization: `${backendDomain}/api/v2/relationship/organization`,
+
+    // Additional Leave Management Endpoints
+    leave_request_user: (userId: string) => `${backendDomain}/api/v2/leave-request/user/${userId}`,
+    leave_request_manager: (userId: string) => `${backendDomain}/api/v2/leave-request/manager/${userId}`,
+    leave_request_approve: (id: string) => `${backendDomain}/api/v2/leave-request/approve/${id}`,
+    leave_request_reject: (id: string) => `${backendDomain}/api/v2/leave-request/reject/${id}`,
+    leave_balance_user: (userId: string) => `${backendDomain}/api/v2/leave-balance/user/${userId}`,
+    leave_balance_type_user: (leaveTypeId: string, userId: string) => `${backendDomain}/api/v2/leave-balance/${leaveTypeId}/${userId}`,
+};

@@ -1,6 +1,4 @@
-import { APIDictionary } from '@/api/v2/APIdict'
-import axios from 'axios'
-import  { useEffect, useState } from 'react'
+import  { useState } from 'react'
 import {
   Table,
   TableBody,
@@ -15,20 +13,13 @@ import { Card, CardHeader, CardContent } from '@/components/ui/card'
 import { ChevronDown, ChevronRight, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { useAttendanceHistoryQuery } from '@/hooks/queries/useAttendance'
 
 const AttendanceList = () => {
-    const [attendanceList, setAttendanceList] = useState<any[]>([])
     const [expandedUser, setExpandedUser] = useState<string | null>(null)
 
-    const fetchAttendanceList = async () => {
-        const response  = await axios.get(APIDictionary.attendanceHistory,{withCredentials:true})
-        setAttendanceList(response.data)
-        console.log(response.data);
-        
-    }
-    useEffect(()=>{
-        fetchAttendanceList()   
-    },[])
+    // Use TanStack Query hook instead of manual fetch
+    const { data: attendanceList } = useAttendanceHistoryQuery()
 
     const formatDuration = (duration: { hours: number, minutes: number }) => {
         return `${Math.floor(duration.hours)}h ${duration.minutes}m`
@@ -47,9 +38,14 @@ const AttendanceList = () => {
         setExpandedUser(expandedUser === userId ? null : userId)
     }
 
+    // Handle loading state
+    if (!attendanceList) {
+        return <div>Loading attendance data...</div>
+    }
+
     return (
         <div className="space-y-4 w-full p-4">
-            {attendanceList.map((user) => (
+            {attendanceList.map((user: any) => (
                 <Card key={user.id} className="w-full">
                     <CardHeader className="p-4">
                         <Button 

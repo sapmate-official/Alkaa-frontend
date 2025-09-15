@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/services/AuthContext';
+import { useAuth } from '@/providers/AuthContext';
 import RouteDict from '@/routes/RouteDict';
 import Loader from '@/components/Loader';
 import { routeUtils } from '@/utils/routeUtils';
