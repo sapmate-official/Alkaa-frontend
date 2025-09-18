@@ -4,7 +4,7 @@ import { AttendanceSession } from '@/types/attendance';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { format, isToday } from 'date-fns';
+import { format } from 'date-fns';
 import {
   Accordion,
   AccordionContent,
@@ -18,6 +18,7 @@ import { permissionListAtom } from '@/store/atom';
 import { CalendarX2, Clock, MapPin, UserCheck } from 'lucide-react';
 import { motion } from "framer-motion";
 import { DayPicker } from 'react-day-picker';
+import { useDateTimeFormat } from '@/hooks/useDateTimeFormat';
 
 interface GroupedSessions {
   [date: string]: AttendanceSession[];
@@ -40,6 +41,14 @@ const AttendanceHistory = () => {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedDaySessions, setSelectedDaySessions] = useState<AttendanceSession[]>([]);
+
+  // Initialize timezone-aware formatting
+  const { 
+    formatDateTime, 
+    formatTime, 
+    isToday,
+    orgTimezone 
+  } = useDateTimeFormat();
 
   // Check permissions
   const hasViewSubordinatesPermission = permissionList.some(p => p.key === 'view_subordinates_attendance');
@@ -99,12 +108,13 @@ const AttendanceHistory = () => {
       const sessions = response.data;
       
       const grouped = sessions.reduce((acc: GroupedSessions, session: AttendanceSession) => {
-        const date = format(new Date(session.date), 'yyyy-MM-dd');
-        if (!acc[date]) {
-          acc[date] = [];
+        // Use timezone-aware date formatting for grouping
+        const dateKey = format(new Date(session.date), 'yyyy-MM-dd'); // Keep as key for consistency
+        if (!acc[dateKey]) {
+          acc[dateKey] = [];
         }
         
-        acc[date].push(session);
+        acc[dateKey].push(session);
         return acc;
       }, {});
       
@@ -150,9 +160,9 @@ const AttendanceHistory = () => {
     return `${hours}h ${minutes}m`;
   };
 
-  const formatTime = (dateString: string) => {
+  const formatAttendanceTimeDisplay = (dateString: string) => {
     if (!dateString) return '—';
-    return format(new Date(dateString), 'hh:mm a');
+    return formatTime(dateString);
   };
 
   const getSelectedUserName = () => {
@@ -213,8 +223,13 @@ const AttendanceHistory = () => {
     return (
       <div className="space-y-3 mt-2">
         <h3 className="font-medium text-gray-700">
-          {format(selectedDate, 'EEEE, dd MMMM yyyy')}
-          {isToday(selectedDate) && <Badge className="ml-2 bg-blue-500">Today</Badge>}
+          {formatDateTime(selectedDate.toISOString(), { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          })}
+          {isToday(selectedDate.toISOString()) && <Badge className="ml-2 bg-blue-500">Today</Badge>}
         </h3>
         <p className="text-sm text-gray-500 flex items-center gap-1.5">
           <Clock className="h-4 w-4" />
@@ -244,7 +259,7 @@ const AttendanceHistory = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <p className="text-xs text-gray-500">Check-in</p>
-                        <p className="text-sm font-medium">{formatTime(session?.checkInTime)}</p>
+                        <p className="text-sm font-medium">{formatAttendanceTimeDisplay(session?.checkInTime)}</p>
                         {session?.checkInLocation && (
                           <div className="flex items-center gap-1 mt-1 text-xs text-gray-500">
                             <MapPin className="h-3 w-3" />
@@ -260,7 +275,7 @@ const AttendanceHistory = () => {
                       <div>
                         <p className="text-xs text-gray-500">Check-out</p>
                         <p className={`text-sm font-medium ${!session?.checkOutTime ? 'text-amber-500' : ''}`}>
-                          {formatTime(session?.checkOutTime)}
+                          {formatAttendanceTimeDisplay(session?.checkOutTime)}
                         </p>
                         {session?.checkOutLocation && (
                           <div className="flex items-center gap-1 mt-1 text-xs text-gray-500">
@@ -306,7 +321,12 @@ const AttendanceHistory = () => {
         transition={{ duration: 0.3 }}
         className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3"
       >
-        <h2 className="text-xl sm:text-2xl font-bold">Attendance History</h2>
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold">Attendance History</h2>
+          <p className="text-sm text-gray-500 mt-1">
+            All times displayed in {orgTimezone} timezone
+          </p>
+        </div>
         
         {canViewOthers && users.length > 0 && (
           <motion.div 
@@ -390,7 +410,12 @@ const AttendanceHistory = () => {
                                 {new Date(date).getDate()}
                               </span>
                               <span>
-                                {format(new Date(date), 'EEEE, dd MMMM yyyy')}
+                                {formatDateTime(new Date(date).toISOString(), { 
+                                  weekday: 'long', 
+                                  year: 'numeric', 
+                                  month: 'long', 
+                                  day: 'numeric' 
+                                })}
                               </span>
                             </h3>
                             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -431,10 +456,10 @@ const AttendanceHistory = () => {
                                           <p className="text-sm font-semibold">Session {session?.sessionNumber}</p>
                                           <div className="text-xs sm:text-sm text-gray-500 mt-1 flex items-center gap-1">
                                             <Clock className="h-3 w-3" />
-                                            <span className="font-medium">{formatTime(session?.checkInTime)}</span>
+                                            <span className="font-medium">{formatAttendanceTimeDisplay(session?.checkInTime)}</span>
                                             <span className="mx-1">→</span>
                                             <span className={`${!session?.checkOutTime ? 'text-amber-500' : ''} font-medium`}>
-                                              {formatTime(session?.checkOutTime)}
+                                              {formatAttendanceTimeDisplay(session?.checkOutTime)}
                                             </span>
                                           </div>
                                         </div>

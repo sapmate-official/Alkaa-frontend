@@ -29,7 +29,7 @@ const GeofencingManagement: React.FC<GeofencingManagementProps> = ({ orgId }) =>
   const [newGeofence, setNewGeofence] = useState<CreateGeofenceRequest>({
     name: '',
     description: '',
-    type: 'OFFICE',
+    type: 'MAIN_OFFICE',
     latitude: 0,
     longitude: 0,
     radius: 100,
@@ -71,7 +71,7 @@ const GeofencingManagement: React.FC<GeofencingManagementProps> = ({ orgId }) =>
       setNewGeofence({
         name: '',
         description: '',
-        type: 'OFFICE',
+        type: 'MAIN_OFFICE',
         latitude: 0,
         longitude: 0,
         radius: 100,
@@ -112,9 +112,10 @@ const GeofencingManagement: React.FC<GeofencingManagementProps> = ({ orgId }) =>
       name: geofence.name,
       description: geofence.description || '',
       type: geofence.type,
-      latitude: geofence.latitude,
-      longitude: geofence.longitude,
+      latitude: geofence.coordinates?.latitude || 0,
+      longitude: geofence.coordinates?.longitude || 0,
       radius: geofence.radius,
+      address: geofence.coordinates?.address || geofence.address,
       isActive: geofence.isActive
     });
     setIsCreating(true);
@@ -224,10 +225,10 @@ const GeofencingManagement: React.FC<GeofencingManagementProps> = ({ orgId }) =>
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="OFFICE">Office</SelectItem>
-                    <SelectItem value="BRANCH">Branch</SelectItem>
-                    <SelectItem value="WORKSITE">Worksite</SelectItem>
-                    <SelectItem value="CLIENT_LOCATION">Client Location</SelectItem>
+                    <SelectItem value="MAIN_OFFICE">Main Office</SelectItem>
+                    <SelectItem value="BRANCH_OFFICE">Branch Office</SelectItem>
+                    <SelectItem value="CLIENT_SITE">Client Site</SelectItem>
+                    <SelectItem value="REMOTE_ZONE">Remote Zone</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -433,7 +434,7 @@ const GeofencingManagement: React.FC<GeofencingManagementProps> = ({ orgId }) =>
                   <div>
                     <span className="text-gray-600">Coordinates:</span>
                     <div className="font-mono">
-                      {geofence.latitude.toFixed(6)}, {geofence.longitude.toFixed(6)}
+                      {geofence.coordinates?.latitude?.toFixed(6)}, {geofence.coordinates?.longitude?.toFixed(6)}
                     </div>
                   </div>
                   <div>

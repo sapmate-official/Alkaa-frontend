@@ -151,14 +151,16 @@ export interface Geofence {
   id: string;
   orgId: string;
   name: string;
-  type: 'OFFICE' | 'BRANCH' | 'WAREHOUSE' | 'SITE' | 'REMOTE_LOCATION';
-  latitude: number;
-  longitude: number;
+  type: 'MAIN_OFFICE' | 'BRANCH_OFFICE' | 'CLIENT_SITE' | 'REMOTE_ZONE';
+  coordinates: {
+    latitude: number;
+    longitude: number;
+    address?: string;
+  };
   radius: number;
   address?: string;
   description?: string;
   isActive: boolean;
-  createdBy: string;
   createdAt: string;
   updatedAt: string;
 }
