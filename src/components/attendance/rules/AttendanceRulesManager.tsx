@@ -17,6 +17,7 @@ interface AttendanceRulesManagerProps {
 
 const AttendanceRulesManager: React.FC<AttendanceRulesManagerProps> = ({ orgId }) => {
   const [isCreating, setIsCreating] = useState(false);
+  const [editingRule, setEditingRule] = useState<AttendanceRule | null>(null);
   const [newRule, setNewRule] = useState<CreateRuleRequest>({
     ruleType: 'LATE_ARRIVAL',
     threshold: 0,
@@ -41,27 +42,52 @@ const AttendanceRulesManager: React.FC<AttendanceRulesManagerProps> = ({ orgId }
     
     // Check if it's the expected API response format
     if (data.success && data.data) {
+      if (Array.isArray(data.data)) {
+        console.log('Using rulesData.data (array format):', data.data);
+        return data.data;
+      }
       if (Array.isArray(data.data.rules)) {
         console.log('Using rulesData.data.rules:', data.data.rules);
         return data.data.rules;
       }
-      if (Array.isArray(data.data)) {
-        console.log('Using rulesData.data:', data.data);
-        return data.data;
-      }
       // Handle the case where rules are in a nested object format
       if (data.data.rules && typeof data.data.rules === 'object' && !Array.isArray(data.data.rules)) {
         console.log('Converting rules object to array:', data.data.rules);
-        // Convert rules object to array format
-        return Object.entries(data.data.rules).map(([ruleType, ruleData]: [string, any]) => ({
-          id: ruleData.id || `${orgId}-${ruleType}`,
-          ruleType: ruleType.toUpperCase(),
-          threshold: ruleData.threshold || 0,
-          penalty: ruleData.penalty || 0,
-          description: `${ruleType.replace('_', ' ')} rule`,
-          isActive: ruleData.isActive || false,
-          ...ruleData
-        }));
+        // Convert rules object to array format - use proper rule IDs from backend if available
+        return Object.entries(data.data.rules).map(([ruleType, ruleData]: [string, any]) => {
+          // If rule has an ID from backend, use it; otherwise generate consistent ID
+          const ruleId = ruleData.id || `rule-${ruleType.toLowerCase()}-${orgId}`;
+          
+          // Extract threshold value from complex object or use simple value
+          let thresholdValue = 0;
+          if (ruleData.thresholds && Array.isArray(ruleData.thresholds) && ruleData.thresholds.length > 0) {
+            thresholdValue = ruleData.thresholds[0].minutes || 0;
+          } else if (typeof ruleData.threshold === 'object') {
+            thresholdValue = ruleData.threshold.minutes || ruleData.threshold.value || 0;
+          } else {
+            thresholdValue = ruleData.threshold || 0;
+          }
+          
+          // Extract penalty value from complex object or use simple value
+          let penaltyValue = 0;
+          if (ruleData.penalties && typeof ruleData.penalties === 'object') {
+            penaltyValue = ruleData.penalties.unauthorized || ruleData.penalties.amount || 0;
+          } else if (typeof ruleData.penalty === 'object') {
+            penaltyValue = ruleData.penalty.amount || ruleData.penalty.value || 0;
+          } else {
+            penaltyValue = ruleData.penalty || 0;
+          }
+          
+          return {
+            id: ruleId,
+            ruleType: ruleType.toUpperCase(),
+            threshold: thresholdValue,
+            penalty: penaltyValue,
+            description: ruleData.description || `${ruleType.replace(/([A-Z])/g, ' $1').trim()} rule`,
+            isActive: ruleData.isActive || false,
+            ...ruleData
+          };
+        });
       }
     }
     
@@ -74,25 +100,37 @@ const AttendanceRulesManager: React.FC<AttendanceRulesManagerProps> = ({ orgId }
     return [];
   }, [rulesData, orgId]);
 
-  const handleCreateRule = async () => {
-    try {
-      await createRuleMutation.mutateAsync(newRule);
-      setIsCreating(false);
-      setNewRule({
-        ruleType: 'LATE_ARRIVAL',
-        threshold: 0,
-        penalty: 0,
-        description: '',
-        isActive: true
-      });
-    } catch (error) {
-      console.error('Failed to create rule:', error);
-    }
-  };
-
   const handleToggleRule = async (ruleId: string, isActive: boolean) => {
     try {
-      await toggleRuleMutation.mutateAsync({ ruleId, isActive });
+      // Check if this is a generated ID (not a real database ID)
+      if (ruleId.startsWith('rule-')) {
+        // This means the rule doesn't exist in database yet, so create it first
+        const ruleTypeFromId = ruleId.replace(`rule-`, '').replace(`-${orgId}`, '');
+        const ruleTypeMapping: Record<string, string> = {
+          'latearrival': 'LATE_ARRIVAL',
+          'earlydeparture': 'EARLY_DEPARTURE',
+          'minimumhours': 'MINIMUM_HOURS',
+          'breakviolation': 'BREAK_VIOLATION',
+          'geofenceviolation': 'GEOFENCE_VIOLATION',
+          'absenteeism': 'ABSENTEEISM'
+        };
+        
+        const actualRuleType = ruleTypeMapping[ruleTypeFromId] || ruleTypeFromId.toUpperCase();
+        
+        // Create the rule first with default values
+        const createRuleRequest: CreateRuleRequest = {
+          ruleType: actualRuleType,
+          threshold: 15, // Default threshold
+          penalty: 0, // Default penalty
+          description: `Default ${actualRuleType.replace('_', ' ').toLowerCase()} rule`,
+          isActive: isActive
+        };
+        
+        await createRuleMutation.mutateAsync(createRuleRequest);
+      } else {
+        // This is a real database ID, proceed with toggle
+        await toggleRuleMutation.mutateAsync({ ruleId, isActive });
+      }
     } catch (error) {
       console.error('Failed to toggle rule:', error);
     }
@@ -106,6 +144,65 @@ const AttendanceRulesManager: React.FC<AttendanceRulesManagerProps> = ({ orgId }
         console.error('Failed to delete rule:', error);
       }
     }
+  };
+
+  const handleEditRule = (rule: AttendanceRule) => {
+    setEditingRule(rule);
+    // Pre-populate the form with rule data
+    setNewRule({
+      ruleType: rule.ruleType,
+      threshold: typeof rule.threshold === 'object' ? (rule.threshold as any)?.minutes || 0 : rule.threshold,
+      penalty: typeof rule.penalty === 'object' ? (rule.penalty as any)?.amount || 0 : rule.penalty,
+      description: rule.description || '',
+      isActive: rule.isActive
+    });
+    setIsCreating(true); // Reuse the same form for editing
+  };
+
+  const handleSaveRule = async () => {
+    try {
+      if (editingRule) {
+        // Update existing rule
+        if (editingRule.id.startsWith('rule-')) {
+          // This is a default rule that needs to be created first
+          await createRuleMutation.mutateAsync(newRule);
+        } else {
+          // This is an existing rule in database - update it
+          await createRuleMutation.mutateAsync({
+            ...newRule,
+            // For updates, we'll use create/update endpoint
+          });
+        }
+      } else {
+        // Create new rule
+        await createRuleMutation.mutateAsync(newRule);
+      }
+      
+      // Reset form
+      setIsCreating(false);
+      setEditingRule(null);
+      setNewRule({
+        ruleType: 'LATE_ARRIVAL',
+        threshold: 0,
+        penalty: 0,
+        description: '',
+        isActive: true
+      });
+    } catch (error) {
+      console.error('Failed to save rule:', error);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsCreating(false);
+    setEditingRule(null);
+    setNewRule({
+      ruleType: 'LATE_ARRIVAL',
+      threshold: 0,
+      penalty: 0,
+      description: '',
+      isActive: true
+    });
   };
 
   const getRuleTypeLabel = (type: string) => {
@@ -158,7 +255,10 @@ const AttendanceRulesManager: React.FC<AttendanceRulesManagerProps> = ({ orgId }
           <h2 className="text-2xl font-bold">Attendance Rules</h2>
           <p className="text-gray-600">Manage progressive deduction rules and penalties</p>
         </div>
-        <Button onClick={() => setIsCreating(true)} className="flex items-center gap-2">
+        <Button onClick={() => {
+          setEditingRule(null);
+          setIsCreating(true);
+        }} className="flex items-center gap-2">
           <Plus className="h-4 w-4" />
           Create Rule
         </Button>
@@ -168,9 +268,9 @@ const AttendanceRulesManager: React.FC<AttendanceRulesManagerProps> = ({ orgId }
       {isCreating && (
         <Card>
           <CardHeader>
-            <CardTitle>Create New Attendance Rule</CardTitle>
+            <CardTitle>{editingRule ? 'Edit Attendance Rule' : 'Create New Attendance Rule'}</CardTitle>
             <CardDescription>
-              Define a new rule with conditions and progressive penalties
+              {editingRule ? 'Modify the rule conditions and penalties' : 'Define a new rule with conditions and progressive penalties'}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -180,6 +280,7 @@ const AttendanceRulesManager: React.FC<AttendanceRulesManagerProps> = ({ orgId }
                 <Select 
                   value={newRule.ruleType} 
                   onValueChange={(value) => setNewRule({...newRule, ruleType: value})}
+                  disabled={!!editingRule} // Disable when editing
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select rule type" />
@@ -237,14 +338,14 @@ const AttendanceRulesManager: React.FC<AttendanceRulesManagerProps> = ({ orgId }
             </div>
 
             <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setIsCreating(false)}>
+              <Button variant="outline" onClick={handleCancelEdit}>
                 Cancel
               </Button>
               <Button 
-                onClick={handleCreateRule}
+                onClick={handleSaveRule}
                 disabled={!newRule.description || createRuleMutation.isPending}
               >
-                {createRuleMutation.isPending ? 'Creating...' : 'Create Rule'}
+                {createRuleMutation.isPending ? 'Saving...' : (editingRule ? 'Update Rule' : 'Create Rule')}
               </Button>
             </div>
           </CardContent>
@@ -283,7 +384,7 @@ const AttendanceRulesManager: React.FC<AttendanceRulesManagerProps> = ({ orgId }
                       onCheckedChange={(checked) => handleToggleRule(rule.id, checked)}
                       disabled={toggleRuleMutation.isPending}
                     />
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" onClick={() => handleEditRule(rule)}>
                       <Edit className="h-4 w-4" />
                     </Button>
                     <Button 
@@ -302,12 +403,14 @@ const AttendanceRulesManager: React.FC<AttendanceRulesManagerProps> = ({ orgId }
                   <div className="flex items-center space-x-1">
                     <Clock className="h-4 w-4" />
                     <span>
-                      Threshold: {rule.threshold} minutes
+                      Threshold: {typeof rule.threshold === 'object' ? (rule.threshold as any)?.minutes || 0 : rule.threshold} minutes
                     </span>
                   </div>
                   <div className="flex items-center space-x-1">
                     <AlertTriangle className="h-4 w-4" />
-                    <span>Penalty: {rule.penalty}</span>
+                    <span>
+                      Penalty: {typeof rule.penalty === 'object' ? (rule.penalty as any)?.amount || 0 : rule.penalty}
+                    </span>
                   </div>
                   <div className="flex items-center space-x-1">
                     {rule.isActive ? (

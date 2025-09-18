@@ -178,6 +178,14 @@ export const AttendanceAPIV3Dictionary = {
         generateReport: (orgId: string) => 
             `${backendDomain}/api/v3/attendance/organizations/${orgId}/analytics/reports`,
     },
+
+    // Simulation endpoints
+    simulation: {
+        runSimulation: (orgId: string) => 
+            `${backendDomain}/api/v3/attendance/simulation/organizations/${orgId}/simulate`,
+        cleanupSimulation: (orgId: string) => 
+            `${backendDomain}/api/v3/attendance/simulation/organizations/${orgId}/simulation/cleanup`,
+    },
 };
 
 // Export to add to the main API dictionary

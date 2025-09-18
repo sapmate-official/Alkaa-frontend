@@ -345,6 +345,22 @@ export class AnalyticsService {
 }
 
 // =====================================================
+// SIMULATION SERVICE (FOR TESTING)
+// =====================================================
+
+export class SimulationService {
+  static async runSimulation(orgId: string, scenario?: { scenario?: string; month?: number; year?: number }): Promise<APIResponse<any>> {
+    const response = await axios.post(APIV3Dictionary.attendance.simulation.runSimulation(orgId), scenario || {});
+    return response.data;
+  }
+
+  static async cleanupSimulation(orgId: string): Promise<APIResponse<any>> {
+    const response = await axios.delete(APIV3Dictionary.attendance.simulation.cleanupSimulation(orgId));
+    return response.data;
+  }
+}
+
+// =====================================================
 // HEALTH CHECK SERVICE
 // =====================================================
 
