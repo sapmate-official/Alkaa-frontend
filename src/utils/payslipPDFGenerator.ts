@@ -379,7 +379,7 @@ export class PayslipPDFGenerator {
   }
 
   /**
-   * Generate PDF from preview element
+   * Generate PDF from preview element - Enhanced version based on demo project
    */
   private static generatePDFFromPreview(element: HTMLElement, data: PayslipData): void {
     // Check if html2canvas and jsPDF are available
@@ -389,38 +389,62 @@ export class PayslipPDFGenerator {
 
     const filename = `payslip_${data.employee.name.replace(/\s+/g, '_')}_${data.period}.pdf`;
 
-    window.html2canvas(element, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: '#ffffff'
-    }).then((canvas: any) => {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF('p', 'mm', 'a4');
-      
-      const imgData = canvas.toDataURL('image/png');
-      const imgWidth = 210; // A4 width in mm
-      const pageHeight = 295; // A4 height in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      
-      let position = 0;
-      
-      doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-      
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        doc.addPage();
+    // Enhanced options similar to the demo project
+    const opt = {
+      margin: 0.5,
+      filename: filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { 
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      },
+      jsPDF: { 
+        unit: 'in', 
+        format: 'a4', 
+        orientation: 'portrait' 
+      }
+    };
+
+    // Use html2pdf if available, otherwise fall back to jsPDF + html2canvas
+    if (window.html2pdf) {
+      window.html2pdf().set(opt).from(element).save();
+    } else {
+      // Fallback method using jsPDF and html2canvas (similar to demo project)
+      window.html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      }).then((canvas: any) => {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        
+        const imgData = canvas.toDataURL('image/png');
+        const imgWidth = 210; // A4 width in mm
+        const pageHeight = 295; // A4 height in mm
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let heightLeft = imgHeight;
+        
+        let position = 0;
+        
         doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
         heightLeft -= pageHeight;
-      }
-      
-      doc.save(filename);
-    }).catch((error: any) => {
-      console.error('Error generating PDF:', error);
-      alert('Error generating PDF. Please try again.');
-    });
+        
+        while (heightLeft >= 0) {
+          position = heightLeft - imgHeight;
+          doc.addPage();
+          doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+        }
+        
+        doc.save(filename);
+      }).catch((error: any) => {
+        console.error('Error generating PDF:', error);
+        alert('Error generating PDF. Please try again.');
+      });
+    }
   }
 
   /**
@@ -456,5 +480,6 @@ declare global {
   interface Window {
     html2canvas: any;
     jspdf: any;
+    html2pdf: any;
   }
 }

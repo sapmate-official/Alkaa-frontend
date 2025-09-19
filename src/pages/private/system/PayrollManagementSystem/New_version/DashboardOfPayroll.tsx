@@ -23,9 +23,11 @@ import { PayslipListItem } from './ui/Payslip'
 import { getStatusBadgeVariant } from './utils/Badgevariant'
 import PayslipViewer from './ui/PayslipViewer'
 import { APIDictionary } from '@/services/api/v2/APIdict'
+import { usePayslipPDF } from '@/hooks/usePayslipPDF'
 
 const DashboardOfPayroll = () => {
   const { user } = useAuth();
+  const { generatePayslipPDF, isGenerating: isPDFGenerating, error: pdfError } = usePayslipPDF();
   const [isLoading, setIsLoading] = useState(true);
   const [payslips, setPayslips] = useState<PayslipData[]>([]);
   const [selectedPayslip, setSelectedPayslip] = useState<PayslipData | null>(null);
@@ -159,62 +161,77 @@ const DashboardOfPayroll = () => {
     }).format(amount);
   };
 
-  // Function to download payslip
+  // Function to download payslip using new client-side PDF generation
   const downloadPayslip = async () => {
     if (!selectedPayslip) return;
 
     try {
-      setIsLoading(true);
+      // Use the new frontend PDF generation with preview modal
+      await generatePayslipPDF(selectedPayslip.id);
+      
+      if (pdfError) {
+        throw new Error(pdfError);
+      }
 
-      // Make authenticated request to download PDF
-      const response = await axios.get(
-        APIV3Dictionary.payroll.downloadPayslip(selectedPayslip.id),
-        { 
-          responseType: 'blob', 
-          withCredentials: true,
-          headers: {
-            'Accept': 'application/pdf'
-          },
-          params: {
-            format: 'html' // Use HTML-based PDF generation
-          }
-        }
-      );
-      
-      // Create a blob and generate download link
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      
-      // Create filename based on payslip data
-      const monthName = new Date(selectedPayslip.year, selectedPayslip.month - 1, 1)
-        .toLocaleString('default', { month: 'long' });
-      const fileName = `payslip-${user?.firstName || 'Employee'}-${user?.lastName || ''}-${monthName}-${selectedPayslip.year}.pdf`;
-      
-      // Create and trigger download
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', fileName);
-      document.body.appendChild(link);
-      link.click();
-      
-      // Clean up
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
-      // Notify user of success
       toast({
         title: 'Success',
-        description: 'Payslip downloaded successfully.',
+        description: 'Payslip PDF generation initiated. A preview will open shortly.',
       });
     } catch (error) {
-      console.error('Error downloading payslip:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to download payslip. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
+      console.error('Error generating payslip PDF:', error);
+      
+      // Fallback to legacy backend PDF generation if frontend fails
+      try {
+        setIsLoading(true);
+        
+        const response = await axios.get(
+          APIV3Dictionary.payroll.downloadPayslip(selectedPayslip.id),
+          { 
+            responseType: 'blob', 
+            withCredentials: true,
+            headers: {
+              'Accept': 'application/pdf'
+            },
+            params: {
+              format: 'html' // Use HTML-based PDF generation as fallback
+            }
+          }
+        );
+        
+        // Create a blob and generate download link
+        const blob = new Blob([response.data], { type: 'application/pdf' });
+        const url = window.URL.createObjectURL(blob);
+        
+        // Create filename based on payslip data
+        const monthName = new Date(selectedPayslip.year, selectedPayslip.month - 1, 1)
+          .toLocaleString('default', { month: 'long' });
+        const fileName = `payslip-${user?.firstName || 'Employee'}-${user?.lastName || ''}-${monthName}-${selectedPayslip.year}.pdf`;
+        
+        // Create and trigger download
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', fileName);
+        document.body.appendChild(link);
+        link.click();
+        
+        // Clean up
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        toast({
+          title: 'Success',
+          description: 'Payslip downloaded successfully (using legacy method).',
+        });
+      } catch (fallbackError) {
+        console.error('Fallback PDF generation also failed:', fallbackError);
+        toast({
+          title: 'Error',
+          description: 'Failed to generate payslip PDF. Please try again or contact support.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
