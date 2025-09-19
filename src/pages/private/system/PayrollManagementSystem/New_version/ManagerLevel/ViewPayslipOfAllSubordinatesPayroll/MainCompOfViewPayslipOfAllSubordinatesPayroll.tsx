@@ -6,6 +6,7 @@ import { APIDictionary } from '@/services/api/v2/APIdict'
 import { APIV3Dictionary } from '@/services/api/v3/Api3Dicts'
 import ButtonOfSubordinateSalaryTransaction from '../Salarytransaction/ButtonOfSubordinateSalaryTransaction'
 import ButtonOfGenerateSubordinateSalaryPage from '../GenerateSalary/ButtonOfGenerateSubordinateSalaryPage'
+import { usePayslipPDF } from '@/hooks/usePayslipPDF'
 
 import { format } from 'date-fns'
 
@@ -151,6 +152,7 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 const MainCompOfViewPayslipOfAllSubordinatesPayroll = () => {
   const { user } = useAuth()
   const { toast } = useToast()
+  const { generatePayslipPDF } = usePayslipPDF()
   
   // State management
   const [subordinates, setSubordinates] = useState<Subordinate[]>([])
@@ -358,54 +360,68 @@ const MainCompOfViewPayslipOfAllSubordinatesPayroll = () => {
     }
   }
 
-  // Download payslip as PDF
+  // Download payslip as PDF using frontend generation
   const handleDownloadPayslip = async (payslipId: string) => {
     try {
       setLoading(prev => ({ ...prev, action: true }))
       
-      const response = await axios.get(
-        APIV3Dictionary.payroll.downloadPayslip(payslipId),
-        { 
-          responseType: 'blob', 
-          withCredentials: true,
-          headers: {
-            'Accept': 'application/pdf'
-          }
-        }
-      )
-      
-      // Create a blob and generate download link
-      const blob = new Blob([response.data], { type: 'application/pdf' })
-      const url = window.URL.createObjectURL(blob)
-      
-      // Create filename based on employee and date
-      const fileName = selectedPayslip ? 
-        `payslip-${selectedPayslip.employee.firstName}-${selectedPayslip.employee.lastName}-${getMonthName(selectedPayslip.month)}-${selectedPayslip.year}.pdf` : 
-        `payslip-${payslipId}.pdf`
-      
-      // Create and trigger download
-      const link = document.createElement('a')
-      link.href = url
-      link.setAttribute('download', fileName)
-      document.body.appendChild(link)
-      link.click()
-      
-      // Clean up
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
+      // Use the new frontend PDF generation with preview modal
+      await generatePayslipPDF(payslipId);
       
       toast({
         title: "Success",
-        description: "Payslip downloaded successfully",
+        description: "Payslip PDF generation initiated. A preview will open shortly.",
         variant: "default"
       })
     } catch (error) {
-      console.error("Error downloading payslip:", error)
-      toast({
-        title: "Error",
-        description: "Failed to download payslip",
-        variant: "destructive"
-      })
+      console.error("Error generating payslip PDF:", error)
+      
+      // Fallback to backend PDF generation if frontend fails
+      try {
+        const response = await axios.get(
+          APIV3Dictionary.payroll.downloadPayslip(payslipId),
+          { 
+            responseType: 'blob', 
+            withCredentials: true,
+            headers: {
+              'Accept': 'application/pdf'
+            }
+          }
+        )
+        
+        // Create a blob and generate download link
+        const blob = new Blob([response.data], { type: 'application/pdf' })
+        const url = window.URL.createObjectURL(blob)
+        
+        // Create filename based on employee and date
+        const fileName = selectedPayslip ? 
+          `payslip-${selectedPayslip.employee.firstName}-${selectedPayslip.employee.lastName}-${getMonthName(selectedPayslip.month)}-${selectedPayslip.year}.pdf` : 
+          `payslip-${payslipId}.pdf`
+        
+        // Create and trigger download
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', fileName)
+        document.body.appendChild(link)
+        link.click()
+        
+        // Clean up
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(url)
+        
+        toast({
+          title: "Success",
+          description: "Payslip downloaded successfully (using legacy method)",
+          variant: "default"
+        })
+      } catch (fallbackError) {
+        console.error("Fallback PDF generation also failed:", fallbackError)
+        toast({
+          title: "Error",
+          description: "Failed to download payslip",
+          variant: "destructive"
+        })
+      }
     } finally {
       setLoading(prev => ({ ...prev, action: false }))
     }
