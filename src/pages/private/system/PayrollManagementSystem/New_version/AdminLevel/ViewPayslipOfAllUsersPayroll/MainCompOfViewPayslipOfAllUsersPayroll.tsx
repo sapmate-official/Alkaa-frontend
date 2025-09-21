@@ -4,6 +4,7 @@ import axios from 'axios'
 // Shadcn components
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import {
   Table,
   TableBody,
@@ -27,7 +28,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 
 // Icons
-import { Plus, Download, Trash, Users, Calendar, Clock, UserCheck, UserX, Award, TrendingUp } from 'lucide-react'
+import { Plus, Download, Trash, Users, Calendar, Clock, UserCheck, UserX, Award, TrendingUp, Search, X } from 'lucide-react'
 
 // Local components
 import ButtonOfUsersSalaryTransaction from '../Salarytransaction/ButtonOfUsersSalaryTransaction'
@@ -38,6 +39,7 @@ import { useAuth } from '@/providers/AuthContext.tsx'
 import { APIDictionary } from '@/services/api/v2/APIdict'
 import { APIV3Dictionary } from '@/services/api/v3/Api3Dicts'
 import { usePayslipPDF } from '../../../../../../../hooks/usePayslipPDF.tsx'
+import { useUsersByOrganization } from '@/hooks/queries/useUsers'
 
 // Types
 interface User {
@@ -129,45 +131,46 @@ const MainCompOfViewPayslipOfAllUsersPayroll = () => {
   const { generatePayslipPDF } = usePayslipPDF()
   
   // State management
-  const [users, setUsers] = useState<User[]>([])
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([])
+  const [searchQuery, setSearchQuery] = useState<string>('')
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [payslips, setPayslips] = useState<Payslip[]>([])
   const [preStatistics, setPreStatistics] = useState<PreStatisticsData | null>(null)
   const [selectedPayslip, setSelectedPayslip] = useState<Payslip | null>(null)
   const [statistics, setStatistics] = useState<PayslipStatistics | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
-  const [userLoading, setUserLoading] = useState<boolean>(false)
   const [payslipLoading, setPayslipLoading] = useState<boolean>(false)
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false)
   const [month, setMonth] = useState<number>(new Date().getMonth() + 1)
   const [year, setYear] = useState<number>(new Date().getFullYear())
   
+  // Fetch users using React Query
+  const {
+    data: users = [],
+    isLoading: userLoading,
+    error: userError
+  } = useUsersByOrganization(user?.orgId, !!user?.orgId)
+  
   // Permission checks
   
-  // Fetch all users from organization
+  // Filter users based on search query
   useEffect(() => {
-    const fetchUsers = async () => {
-      setUserLoading(true)
-      try {
-        // Get the organization ID from the current user
-        const orgId = user?.orgId
-        if (!orgId) return
+    if (!searchQuery.trim()) {
+      setFilteredUsers(users)
+    } else {
+      const filtered = users.filter(user => {
+        const fullName = `${user.firstName || ''} ${user.lastName || ''}`.toLowerCase()
+        const employeeId = (user.employeeId || '').toLowerCase()
+        const department = (user.department?.name || '').toLowerCase()
+        const query = searchQuery.toLowerCase()
         
-        const response = await axios.get<User[]>(`${APIDictionary.user}/org/${orgId}`,
-          {
-            withCredentials: true,
-          }
-        )
-        setUsers(response.data)
-      } catch (error) {
-        console.error('Error fetching users:', error)
-      } finally {
-        setUserLoading(false)
-      }
+        return fullName.includes(query) || 
+               employeeId.includes(query) || 
+               department.includes(query)
+      })
+      setFilteredUsers(filtered)
     }
-    
-    fetchUsers()
-  }, [user])
+  }, [users, searchQuery])
   
   // Fetch payslips for selected user
   useEffect(() => {
@@ -212,6 +215,15 @@ const MainCompOfViewPayslipOfAllUsersPayroll = () => {
     setSelectedPayslip(null)
     setStatistics(null)
     setDrawerOpen(false)
+  }
+
+  // Handle search functionality
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value)
+  }
+
+  const clearSearch = () => {
+    setSearchQuery('')
   }
   
   // Handle payslip selection and fetch statistics
@@ -369,10 +381,32 @@ const MainCompOfViewPayslipOfAllUsersPayroll = () => {
         {/* Left Panel - Fixed and Scrollable */}
         <div className="w-80 flex-shrink-0 border-r bg-background flex flex-col overflow-hidden">
           <div className="bg-primary text-primary-foreground p-4 flex-shrink-0">
-            <h3 className="flex items-center text-lg font-semibold">
+            <h3 className="flex items-center text-lg font-semibold mb-3">
               <Users className="mr-2 h-5 w-5" />
-              Employees ({users.length})
+              Employees ({filteredUsers.length}/{users.length})
             </h3>
+            
+            {/* Search Input */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-primary-foreground/70 h-4 w-4" />
+              <Input
+                type="text"
+                placeholder="Search by name, ID, or department..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                className="pl-10 pr-10 bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/70 focus:bg-primary-foreground/20 focus:border-primary-foreground/40"
+              />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearSearch}
+                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
           
           <ScrollArea className="flex-1">
@@ -382,10 +416,17 @@ const MainCompOfViewPayslipOfAllUsersPayroll = () => {
                   <Skeleton key={n} className="h-16 w-full" />
                 ))}
               </div>
+            ) : userError ? (
+              <div className="p-4 text-center text-destructive">
+                <p className="text-sm">Failed to load employees</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {userError instanceof Error ? userError.message : 'Unknown error occurred'}
+                </p>
+              </div>
             ) : (
               <div className="divide-y">
-                {users.length > 0 ? (
-                  users.map((user) => (
+                {filteredUsers.length > 0 ? (
+                  filteredUsers.map((user) => (
                     <button
                       key={user.id}
                       onClick={() => handleSelectUser(user)}
@@ -408,6 +449,19 @@ const MainCompOfViewPayslipOfAllUsersPayroll = () => {
                       </div>
                     </button>
                   ))
+                ) : searchQuery ? (
+                  <div className="p-4 text-center text-muted-foreground">
+                    <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No employees found matching "{searchQuery}"</p>
+                    <Button 
+                      variant="link" 
+                      size="sm" 
+                      onClick={clearSearch}
+                      className="mt-2 text-xs"
+                    >
+                      Clear search
+                    </Button>
+                  </div>
                 ) : (
                   <div className="p-4 text-center text-muted-foreground">
                     No employees found
