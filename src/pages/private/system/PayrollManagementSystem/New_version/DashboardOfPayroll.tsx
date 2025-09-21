@@ -27,7 +27,7 @@ import { usePayslipPDF } from '@/hooks/usePayslipPDF'
 
 const DashboardOfPayroll = () => {
   const { user } = useAuth();
-  const { generatePayslipPDF, isGenerating: isPDFGenerating, error: pdfError } = usePayslipPDF();
+  const { generatePayslipPDF, error: pdfError } = usePayslipPDF();
   const [isLoading, setIsLoading] = useState(true);
   const [payslips, setPayslips] = useState<PayslipData[]>([]);
   const [selectedPayslip, setSelectedPayslip] = useState<PayslipData | null>(null);
