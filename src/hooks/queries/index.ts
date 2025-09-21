@@ -213,3 +213,13 @@ export {
   type OrganizationType, type Department, type TeamMember, type User,
   organizationKeys
 } from './useOrganizations'
+
+// User Management
+export {
+  // User hooks
+  useUsersByOrganization,
+  // User types
+  type User as UserType,
+  // User query keys
+  userKeys
+} from './useUsers'
