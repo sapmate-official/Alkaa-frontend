@@ -164,7 +164,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 throw new Error("Token expired");
             }
 
-            const response = await axios.get(`${backendDomain}/api/v1/general/validate-token`);
+            const response = await axios.get(`${backendDomain}/api/v1/auth/validate-token`);
             
             if (response.status === 200 && response.data.user) {
                 setUser(response.data.user);
@@ -235,7 +235,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const signIn = async (email: string, password: string) => {
         try {
             const response = await axios.post(
-                `${backendDomain}/api/v1/general/login`, 
+                `${backendDomain}/api/v1/auth/login`, 
                 { email, password }
             );
             
@@ -264,7 +264,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     // New multi-tenant authentication methods
     const checkEmail = async (email: string) => {
         try {
-            const response = await axios.post(`${backendDomain}/api/v1/general/check-email`, { email });
+            const response = await axios.post(`${backendDomain}/api/v1/auth/check-email`, { email });
             
             if (response.data.singleOrganization) {
                 setAuthStep({ 
@@ -302,7 +302,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const verifyPassword = async (email: string, password: string, orgId?: string) => {
         try {
-            const response = await axios.post(`${backendDomain}/api/v1/general/verify-password`, {
+            const response = await axios.post(`${backendDomain}/api/v1/auth/verify-password`, {
                 email,
                 password,
                 orgId
@@ -331,7 +331,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const verifyOtp = async (sessionToken: string, otpCode: string) => {
         try {
-            const response = await axios.post(`${backendDomain}/api/v1/general/verify-otp`, {
+            const response = await axios.post(`${backendDomain}/api/v1/auth/verify-otp`, {
                 sessionToken,
                 otpCode
             });

@@ -1,15 +1,25 @@
 import { backendDomain } from "@/constants/Domain";
 
 export const APIDictionary = {
-    // Authentication endpoints
-    setPassword: `${backendDomain}/api/v1/general/set-password`,
-    login: `${backendDomain}/api/v1/general/login`,
-    checkEmail: `${backendDomain}/api/v1/general/check-email`,
-    verifyPassword: `${backendDomain}/api/v1/general/verify-password`,
-    verifyOtp: `${backendDomain}/api/v1/general/verify-otp`,
-    validateToken: `${backendDomain}/api/v1/general/validate-token`,
-    refreshToken: `${backendDomain}/api/v1/general/refresh-token`,
-    logout: `${backendDomain}/api/v1/general/logout`,
+    // Authentication endpoints (updated to use /api/v1/auth)
+    setPassword: `${backendDomain}/api/v1/auth/set-password`,
+    login: `${backendDomain}/api/v1/auth/login`,
+    checkEmail: `${backendDomain}/api/v1/auth/check-email`,
+    verifyPassword: `${backendDomain}/api/v1/auth/verify-password`,
+    verifyOtp: `${backendDomain}/api/v1/auth/verify-otp`,
+    validateToken: `${backendDomain}/api/v1/auth/validate-token`,
+    refreshToken: `${backendDomain}/api/v1/auth/refresh-token`,
+    logout: `${backendDomain}/api/v1/auth/logout`,
+    
+    // Advanced auth endpoints (alternative flow)
+    verifyCredentials: `${backendDomain}/api/v1/auth/verify-credentials`,
+    requestOtp: `${backendDomain}/api/v1/auth/request-otp`,
+    verifyLoginOtp: `${backendDomain}/api/v1/auth/verify-login-otp`,
+    resendOtp: `${backendDomain}/api/v1/auth/resend-otp`,
+    
+    // User preferences
+    toggle2FA: `${backendDomain}/api/v1/auth/toggle-2fa`,
+    notificationPreferences: `${backendDomain}/api/v1/auth/notification-preferences`,
     
     // Legacy endpoints
     leaveTypeList: `${backendDomain}/api/v1/leave/type`,
