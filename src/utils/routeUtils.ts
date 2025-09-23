@@ -52,6 +52,13 @@ export const routeUtils = {
   },
 
   /**
+   * Check if current route is profile settings
+   */
+  isProfileSettingsRoute: (pathname: string): boolean => {
+    return pathname === '/p/profile/settings';
+  },
+
+  /**
    * Clear browser history and navigate to login
    * This function ensures users cannot use back button to access protected routes after logout
    */

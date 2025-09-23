@@ -1,21 +1,18 @@
 import { backendDomain } from "@/constants/Domain";
 
 export const APIDictionary = {
-    // Authentication endpoints (updated to use /api/v1/auth)
-    setPassword: `${backendDomain}/api/v1/auth/set-password`,
-    login: `${backendDomain}/api/v1/auth/login`,
-    checkEmail: `${backendDomain}/api/v1/auth/check-email`,
-    verifyPassword: `${backendDomain}/api/v1/auth/verify-password`,
-    verifyOtp: `${backendDomain}/api/v1/auth/verify-otp`,
-    validateToken: `${backendDomain}/api/v1/auth/validate-token`,
-    refreshToken: `${backendDomain}/api/v1/auth/refresh-token`,
-    logout: `${backendDomain}/api/v1/auth/logout`,
-    
-    // Advanced auth endpoints (alternative flow)
+    // Enhanced Multi-tenant + 2FA authentication flow (unified - recommended)
+    discoverOrganizations: `${backendDomain}/api/v1/auth/discover-organizations`,
     verifyCredentials: `${backendDomain}/api/v1/auth/verify-credentials`,
     requestOtp: `${backendDomain}/api/v1/auth/request-otp`,
     verifyLoginOtp: `${backendDomain}/api/v1/auth/verify-login-otp`,
     resendOtp: `${backendDomain}/api/v1/auth/resend-otp`,
+    
+    // Core authentication endpoints
+    setPassword: `${backendDomain}/api/v1/auth/set-password`,
+    validateToken: `${backendDomain}/api/v1/auth/validate-token`,
+    refreshToken: `${backendDomain}/api/v1/auth/refresh-token`,
+    logout: `${backendDomain}/api/v1/auth/logout`,
     
     // User preferences
     toggle2FA: `${backendDomain}/api/v1/auth/toggle-2fa`,

@@ -2,28 +2,8 @@ import axios from 'axios'
 import { APIDictionary } from '@/services/api/v2/APIdict'
 
 export const authApi = {
-  async login(data: any): Promise<any> {
-    const response = await axios.post(APIDictionary.login, data, { withCredentials: true })
-    return response.data
-  },
-
   async logout(): Promise<void> {
     await axios.post(APIDictionary.logout, {}, { withCredentials: true })
-  },
-
-  async checkEmail(email: string): Promise<any> {
-    const response = await axios.post(APIDictionary.checkEmail, { email })
-    return response.data
-  },
-
-  async verifyPassword(data: any): Promise<any> {
-    const response = await axios.post(APIDictionary.verifyPassword, data)
-    return response.data
-  },
-
-  async verifyOtp(data: any): Promise<any> {
-    const response = await axios.post(APIDictionary.verifyOtp, data)
-    return response.data
   },
 
   async validateToken(token: string): Promise<any> {

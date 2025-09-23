@@ -21,6 +21,7 @@ const RouteDict = {
         EditBank: (id:string | null)=> id?`/p/profile/edit/bank/${id}`:"/p/profile/edit/bank",
         BankDetails: "/p/profile/bank",
         SalaryParameter: "/p/profile/salary-parameter",
+        Settings: "/p/profile/settings",
     },
 
     // Employee Management System

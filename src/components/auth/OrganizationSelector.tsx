@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Building2, ArrowLeft, ChevronRight } from 'lucide-react';
+import { Building2, ArrowLeft, ChevronRight, AlertTriangle } from 'lucide-react';
 
 interface Organization {
     orgId: string;
     orgName: string;
     userId: string;
     userStatus: string;
+    hasInactiveUser?: boolean;
 }
 
 interface OrganizationSelectorProps {
@@ -87,14 +88,24 @@ export const OrganizationSelector: React.FC<OrganizationSelectorProps> = ({
                                         <div className="p-2 bg-blue-100 rounded-full">
                                             <Building2 className="h-4 w-4 text-blue-600" />
                                         </div>
-                                        <div>
+                                        <div className="flex-1">
                                             <h3 className="font-medium text-sm">{org.orgName}</h3>
-                                            <Badge 
-                                                variant="secondary" 
-                                                className={`text-xs mt-1 ${getStatusColor(org.userStatus)}`}
-                                            >
-                                                {org.userStatus}
-                                            </Badge>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <Badge 
+                                                    variant="secondary" 
+                                                    className={`text-xs ${getStatusColor(org.userStatus)}`}
+                                                >
+                                                    {org.userStatus}
+                                                </Badge>
+                                                {org.hasInactiveUser && (
+                                                    <div className="flex items-center gap-1">
+                                                        <AlertTriangle className="h-3 w-3 text-orange-500" />
+                                                        <span className="text-xs text-orange-600">
+                                                            Password reset required
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                     <ChevronRight 
@@ -114,6 +125,17 @@ export const OrganizationSelector: React.FC<OrganizationSelectorProps> = ({
                     >
                         {isLoading ? "Proceeding..." : "Continue"}
                     </Button>
+                    
+                    {organizations.some(org => org.hasInactiveUser) && (
+                        <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                            <div className="flex items-start gap-2">
+                                <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                                <div className="text-sm text-orange-800">
+                                    <strong>Account Activation Required:</strong> Some organizations require password reset to activate your account.
+                                </div>
+                            </div>
+                        </div>
+                    )}
                     
                     <p className="text-xs text-center text-muted-foreground">
                         Select the organization you want to access
