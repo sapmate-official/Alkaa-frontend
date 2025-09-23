@@ -5,6 +5,7 @@ import { Routes, Route } from 'react-router-dom';
 const ProfileInfo = lazy(() => import('./ProfileInfo'));
 const EditProfile = lazy(() => import('./EditProfile'));
 const BankDetails = lazy(() => import('./BankDetails'));
+const ProfileSettings = lazy(() => import('./ProfileSettings'));
 
 const ProfileModule = () => {
   return (
@@ -15,6 +16,7 @@ const ProfileModule = () => {
       <Route path="edit/:id" element={<EditProfile />} />
       <Route path="edit/bank" element={<BankDetails />} />
       <Route path="edit/bank/:id" element={<BankDetails />} />
+      <Route path="settings" element={<ProfileSettings />} />
     </Routes>
   );
 };
