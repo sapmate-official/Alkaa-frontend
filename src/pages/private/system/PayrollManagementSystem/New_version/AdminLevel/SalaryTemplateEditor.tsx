@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthContext'
 import axios from 'axios'
 import { APIV3Dictionary } from '@/services/api/v3/Api3Dicts'
@@ -18,55 +18,8 @@ import {
   Calculator,
   Building2
 } from 'lucide-react'
-
-interface SalaryTemplate {
-  id: string;
-  name: string;
-  description?: string;
-  isDefault: boolean;
-  isActive: boolean;
-  rules: {
-    basicSalary: {
-      type: 'fixed' | 'percentage';
-      value: number;
-    };
-    allowances: Array<{
-      name: string;
-      type: 'fixed' | 'percentage';
-      value: number;
-      taxable: boolean;
-    }>;
-    deductions: Array<{
-      name: string;
-      type: 'fixed' | 'percentage';
-      value: number;
-      mandatory: boolean;
-    }>;
-    overtimeRules: {
-      enabled: boolean;
-      multiplier: number;
-      threshold: number;
-    };
-    taxRules: {
-      enabled: boolean;
-      brackets: Array<{
-        min: number;
-        max: number;
-        rate: number;
-      }>;
-    };
-  };
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface CalculationRule {
-  id: string;
-  name: string;
-  formula: string;
-  type: 'allowance' | 'deduction' | 'tax';
-  isActive: boolean;
-}
+import { CalculationRule, SalaryTemplate } from '../types/payroll'
+import { mockCalculationRules, mockSalaryTemplates } from '../utils/mockData'
 
 const SalaryTemplateEditor = () => {
   const { user } = useAuth();
@@ -74,54 +27,62 @@ const SalaryTemplateEditor = () => {
   const [calculationRules, setCalculationRules] = useState<CalculationRule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('templates');
+  const [usingMockData, setUsingMockData] = useState(false);
+
+  const fetchTemplateData = useCallback(async () => {
+    if (!user?.id) return;
+
+    let fallbackUsed = false;
+
+    try {
+      setIsLoading(true);
+
+      const [templatesResponse, rulesResponse] = await Promise.allSettled([
+        axios.get(APIV3Dictionary.payroll.templates.list, { withCredentials: true }),
+        axios.get(APIV3Dictionary.payroll.templates.rules, { withCredentials: true })
+      ]);
+
+      if (templatesResponse.status === 'fulfilled' && templatesResponse.value.data.success) {
+        setTemplates(templatesResponse.value.data.data || []);
+      } else {
+        console.warn('Falling back to mock salary templates:', templatesResponse);
+        setTemplates(mockSalaryTemplates);
+        fallbackUsed = true;
+      }
+
+      if (rulesResponse.status === 'fulfilled' && rulesResponse.value.data.success) {
+        setCalculationRules(rulesResponse.value.data.data || []);
+      } else {
+        console.warn('Falling back to mock calculation rules:', rulesResponse);
+        setCalculationRules(mockCalculationRules);
+        fallbackUsed = true;
+      }
+    } catch (error) {
+      console.error('Error fetching templates and rules:', error);
+      setTemplates(mockSalaryTemplates);
+      setCalculationRules(mockCalculationRules);
+      fallbackUsed = true;
+    } finally {
+      setIsLoading(false);
+
+      if (fallbackUsed && !usingMockData) {
+        toast({
+          title: 'Demo data loaded',
+          description: 'Template APIs are not ready yet. Showing local examples temporarily.'
+        });
+        setUsingMockData(true);
+      }
+
+      if (!fallbackUsed && usingMockData) {
+        setUsingMockData(false);
+      }
+    }
+  }, [user?.id, usingMockData]);
 
   // Load templates and rules
   useEffect(() => {
-    const fetchData = async () => {
-      if (!user?.id) return;
-      
-      try {
-        setIsLoading(true);
-        
-        // Fetch templates from backend
-        const templatesResponse = await axios.get(
-          APIV3Dictionary.payroll.templates.list,
-          { withCredentials: true }
-        );
-        
-        if (templatesResponse.data && templatesResponse.data.success) {
-          setTemplates(templatesResponse.data.data || []);
-        }
-
-        // Fetch calculation rules from backend
-        const rulesResponse = await axios.get(
-          APIV3Dictionary.payroll.templates.rules,
-          { withCredentials: true }
-        );
-        
-        if (rulesResponse.data && rulesResponse.data.success) {
-          setCalculationRules(rulesResponse.data.data || []);
-        }
-        
-      } catch (error) {
-        console.error('Error fetching templates and rules:', error);
-        
-        toast({
-          title: 'Error',
-          description: 'Failed to load salary templates and rules',
-          variant: 'destructive',
-        });
-        
-        // Set empty arrays on error
-        setTemplates([]);
-        setCalculationRules([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [user?.id]);
+    fetchTemplateData();
+  }, [fetchTemplateData]);
 
   if (isLoading) {
     return (

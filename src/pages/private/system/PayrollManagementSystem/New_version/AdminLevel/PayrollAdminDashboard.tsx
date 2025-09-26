@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthContext'
 import axios from 'axios'
 import { APIV3Dictionary } from '@/services/api/v3/Api3Dicts'
@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { 
   DollarSign, 
   TrendingUp, 
@@ -26,47 +27,35 @@ import {
   Users,
   FileText,
   BarChart3,
-  Download,
-  Filter
+  Download
 } from 'lucide-react'
 import { MonthAndYearSelector } from '../ui/MonthYearPicker'
+import { PayrollCycle, PayrollStatistics } from '../types/payroll'
 
-interface PayrollCycle {
-  id: string;
-  month: number;
-  year: number;
-  status: 'DRAFT' | 'IN_PROGRESS' | 'REVIEW_PENDING' | 'APPROVED' | 'CANCELLED' | 'FAILED';
-  totalEmployees: number;
-  processedCount: number;
-  failedCount: number;
-  totalAmount: number;
-  startedAt?: string;
-  completedAt?: string;
-  approvedAt?: string;
-  processor?: {
-    firstName: string;
-    lastName: string;
-  };
-  approver?: {
-    firstName: string;
-    lastName: string;
-  };
+interface PayrollDashboardResponse {
+  success: boolean
+  message?: string
+  data?: {
+    cyclesNeedingReview?: PayrollCycle[]
+    statistics?: PayrollStatistics | null
+    recentCycles?: PayrollCycle[]
+  }
 }
 
-interface PayrollStatistics {
-  year: number;
-  totalCycles: number;
-  completedCycles: number;
-  pendingCycles: number;
-  failedCycles: number;
-  totalAmountPaid: number;
-  totalEmployeesProcessed: number;
-  monthlyBreakdown: Array<{
-    month: number;
-    status: string;
-    amount: number;
-    employees: number;
-  }>;
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (axios.isAxiosError(error)) {
+    const responseData = error.response?.data as Record<string, unknown> | undefined
+    if (responseData && typeof responseData.message === 'string') {
+      return responseData.message
+    }
+    return error.message || fallback
+  }
+
+  if (error instanceof Error) {
+    return error.message || fallback
+  }
+
+  return fallback
 }
 
 const PayrollAdminDashboard = () => {
@@ -78,6 +67,7 @@ const PayrollAdminDashboard = () => {
   const [isCreatingCycle, setIsCreatingCycle] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Current date for default values
   const currentDate = new Date();
@@ -106,82 +96,64 @@ const PayrollAdminDashboard = () => {
 
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
-  // Fetch dashboard data
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setIsLoading(true);
-
-        // Fetch cycles, statistics, and review data from backend
-        const [cyclesResponse, statsResponse, reviewResponse] = await Promise.allSettled([
-          axios.get(APIV3Dictionary.payroll.cycles, { withCredentials: true }),
-          axios.get(APIV3Dictionary.payroll.statistics, { withCredentials: true }),
-          axios.get(APIV3Dictionary.payroll.cyclesReview, { withCredentials: true })
-        ]);
-
-        // Handle cycles data
-        if (cyclesResponse.status === 'fulfilled' && cyclesResponse.value.data.success) {
-          setCycles(cyclesResponse.value.data.data || []);
-        } else {
-          console.warn('Failed to fetch cycles:', cyclesResponse);
-          setCycles([]);
-        }
-
-        // Handle statistics data
-        if (statsResponse.status === 'fulfilled' && statsResponse.value.data.success) {
-          setStatistics(statsResponse.value.data.data);
-        } else {
-          console.warn('Failed to fetch statistics:', statsResponse);
-          // Set fallback data when backend is not available
-          setStatistics({
-            year: currentYear,
-            totalCycles: 0,
-            completedCycles: 0,
-            pendingCycles: 0,
-            failedCycles: 0,
-            totalAmountPaid: 0,
-            totalEmployeesProcessed: 0,
-            monthlyBreakdown: []
-          });
-        }
-
-        // Handle cycles needing review
-        if (reviewResponse.status === 'fulfilled' && reviewResponse.value.data.success) {
-          setCyclesNeedingReview(reviewResponse.value.data.data || []);
-        } else {
-          console.warn('Failed to fetch review cycles:', reviewResponse);
-          setCyclesNeedingReview([]);
-        }
-
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to fetch dashboard data. Please try again.',
-          variant: 'destructive',
-        });
-        // Set fallback data
-        setStatistics({
-          year: currentYear,
-          totalCycles: 0,
-          completedCycles: 0,
-          pendingCycles: 0,
-          failedCycles: 0,
-          totalAmountPaid: 0,
-          totalEmployeesProcessed: 0,
-          monthlyBreakdown: []
-        });
-        setCycles([]);
-        setCyclesNeedingReview([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (user?.id) {
-      fetchDashboardData();
+  const fetchDashboardData = useCallback(async () => {
+    if (!user?.id) {
+      setIsLoading(false);
+      setStatistics(null);
+      setCycles([]);
+      setCyclesNeedingReview([]);
+      setErrorMessage('You need to be logged in to view payroll dashboard data.');
+      return;
     }
-  }, [user?.id, currentYear]);
+
+    try {
+      setIsLoading(true);
+      setErrorMessage(null);
+
+      const response = await axios.get<PayrollDashboardResponse>(APIV3Dictionary.payroll.dashboard, {
+        params: { year: selectedYear },
+        withCredentials: true,
+      });
+
+      if (response.data.success) {
+        const { cyclesNeedingReview: reviewCycles = [], statistics: stats = null, recentCycles = [] } = response.data.data || {};
+
+        setCycles(Array.isArray(recentCycles) ? recentCycles : []);
+        setCyclesNeedingReview(Array.isArray(reviewCycles) ? reviewCycles : []);
+        setStatistics(stats ?? null);
+        return;
+      }
+
+      const message = response.data.message || 'Failed to load payroll dashboard data.';
+      setCycles([]);
+      setCyclesNeedingReview([]);
+      setStatistics(null);
+      setErrorMessage(message);
+      toast({
+        title: 'Unable to load payroll data',
+        description: message,
+        variant: 'destructive',
+      });
+    } catch (error) {
+      console.error('Error fetching payroll dashboard data:', error);
+      const message = getErrorMessage(error, 'An unexpected error occurred while fetching payroll dashboard data.');
+      setCycles([]);
+      setCyclesNeedingReview([]);
+      setStatistics(null);
+      setErrorMessage(message);
+      toast({
+        title: 'Unable to load payroll data',
+        description: message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [selectedYear, user?.id]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   // Create new payroll cycle
   const createPayrollCycle = async () => {
@@ -203,14 +175,14 @@ const PayrollAdminDashboard = () => {
           description: 'Payroll cycle created successfully!',
         });
 
-        // Refresh cycles list
-        window.location.reload();
+        await fetchDashboardData();
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating payroll cycle:', error);
+      const message = getErrorMessage(error, 'Failed to create payroll cycle');
       toast({
         title: 'Error',
-        description: error.response?.data?.message || 'Failed to create payroll cycle',
+        description: message,
         variant: 'destructive',
       });
     } finally {
@@ -236,14 +208,14 @@ const PayrollAdminDashboard = () => {
           description: `Generated ${result.processedCount} salaries successfully. ${result.failedCount} failed.`,
         });
 
-        // Refresh data
-        window.location.reload();
+        await fetchDashboardData();
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error starting payroll cycle:', error);
+      const message = getErrorMessage(error, 'Failed to start payroll cycle');
       toast({
         title: 'Error',
-        description: error.response?.data?.message || 'Failed to start payroll cycle',
+        description: message,
         variant: 'destructive',
       });
     } finally {
@@ -268,14 +240,14 @@ const PayrollAdminDashboard = () => {
           description: 'Payroll cycle approved successfully!',
         });
 
-        // Refresh data
-        window.location.reload();
+        await fetchDashboardData();
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error approving payroll cycle:', error);
+      const message = getErrorMessage(error, 'Failed to approve payroll cycle');
       toast({
         title: 'Error',
-        description: error.response?.data?.message || 'Failed to approve payroll cycle',
+        description: message,
         variant: 'destructive',
       });
     } finally {
@@ -339,6 +311,9 @@ const PayrollAdminDashboard = () => {
           <p className="text-muted-foreground">Complete payroll workflow management and administration</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => fetchDashboardData()} disabled={isLoading || isProcessing || isCreatingCycle}>
+            Refresh
+          </Button>
           <Button variant="outline" size="sm">
             <Download className="h-4 w-4 mr-2" />
             Export Data
@@ -349,6 +324,14 @@ const PayrollAdminDashboard = () => {
           </Button>
         </div>
       </div>
+
+      {errorMessage && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Unable to load payroll dashboard</AlertTitle>
+          <AlertDescription>{errorMessage}</AlertDescription>
+        </Alert>
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-6">
