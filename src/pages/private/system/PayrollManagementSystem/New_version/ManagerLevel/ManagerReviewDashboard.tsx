@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@/providers/AuthContext'
 import axios from 'axios'
 import { APIV3Dictionary } from '@/services/api/v3/Api3Dicts'
@@ -19,42 +19,39 @@ import {
   XCircle,
   Clock,
   AlertCircle,
-  Building2
+  Building2,
+  RefreshCw
 } from 'lucide-react'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { PayrollRecord, TeamStatistics } from '../types/payroll'
 
-interface PayrollRecord {
-  id: string;
-  employee: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    employeeId: string;
-    department: string;
-  };
-  month: number;
-  year: number;
-  basicSalary: number;
-  netSalary: number;
-  allowances: Record<string, number>;
-  deductions: Record<string, number>;
-  status: 'PENDING' | 'PROCESSED' | 'APPROVED' | 'REJECTED' | 'PAID';
-  processedAt?: string;
-  reviewedAt?: string;
-  reviewComments?: string;
-  anomalies?: Array<{
-    type: 'warning' | 'error';
-    field: string;
-    message: string;
-  }>;
+interface TeamPayrollResponse {
+  success: boolean
+  message?: string
+  data?: PayrollRecord[]
 }
 
-interface TeamStatistics {
-  totalEmployees: number;
-  pendingReviews: number;
-  approvedCount: number;
-  rejectedCount: number;
-  totalPayrollAmount: number;
-  averageSalary: number;
+interface TeamStatisticsResponse {
+  success: boolean
+  message?: string
+  data?: TeamStatistics
+}
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (axios.isAxiosError(error)) {
+    const responseData = error.response?.data as Record<string, unknown> | undefined
+    if (responseData && typeof responseData.message === 'string') {
+      return responseData.message
+    }
+
+    return error.message || fallback
+  }
+
+  if (error instanceof Error) {
+    return error.message || fallback
+  }
+
+  return fallback
 }
 
 const ManagerReviewDashboard = () => {
@@ -64,135 +61,188 @@ const ManagerReviewDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Load team payroll data
-  useEffect(() => {
-    const fetchTeamPayrollData = async () => {
-      if (!user?.id) return;
-      
-      try {
-        setIsLoading(true);
-        
-        // Fetch team payroll records
-        const teamPayrollResponse = await axios.get(
-          APIV3Dictionary.payroll.manager.teamPayroll, 
-          { withCredentials: true }
-        );
-
-        if (teamPayrollResponse.data && teamPayrollResponse.data.success) {
-          setPayrollRecords(teamPayrollResponse.data.data || []);
-        }
-
-        // Fetch team statistics
-        const teamStatsResponse = await axios.get(
-          APIV3Dictionary.payroll.manager.teamStatistics, 
-          { withCredentials: true }
-        );
-
-        if (teamStatsResponse.data && teamStatsResponse.data.success) {
-          setTeamStats(teamStatsResponse.data.data);
-        }
-        
-      } catch (error) {
-        console.error('Error fetching team payroll data:', error);
-        
-        toast({
-          title: 'Error',
-          description: 'Failed to fetch team payroll data',
-          variant: 'destructive',
-        });
-        
-        // Set empty data on error
-        setPayrollRecords([]);
-        setTeamStats({
-          totalEmployees: 0,
-          pendingReviews: 0,
-          approvedCount: 0,
-          rejectedCount: 0,
-          totalPayrollAmount: 0,
-          averageSalary: 0
-        });
-      } finally {
-        setIsLoading(false);
+  const fetchTeamPayrollData = useCallback(async ({ showLoading = true }: { showLoading?: boolean } = {}) => {
+    if (!user?.id) {
+      setPayrollRecords([])
+      setTeamStats(null)
+      setErrorMessage('You need to be logged in to view team payroll data.')
+      if (showLoading) {
+        setIsLoading(false)
       }
-    };
+      return
+    }
 
+    if (showLoading) {
+      setIsLoading(true)
+    }
+
+    try {
+      setErrorMessage(null)
+
+      const [teamPayrollResponse, teamStatsResponse] = await Promise.allSettled([
+        axios.get<TeamPayrollResponse>(APIV3Dictionary.payroll.manager.teamPayroll, { withCredentials: true }),
+        axios.get<TeamStatisticsResponse>(APIV3Dictionary.payroll.manager.teamStatistics, { withCredentials: true })
+      ])
+
+      const messages: string[] = []
+
+      if (teamPayrollResponse.status === 'fulfilled') {
+        const responseData = teamPayrollResponse.value.data
+        if (responseData?.success) {
+          const records = Array.isArray(responseData.data) ? responseData.data : []
+          setPayrollRecords(records)
+        } else {
+          setPayrollRecords([])
+          messages.push(responseData?.message || 'Failed to load team payroll records.')
+        }
+      } else {
+        setPayrollRecords([])
+        messages.push(getErrorMessage(teamPayrollResponse.reason, 'Failed to load team payroll records.'))
+      }
+
+      if (teamStatsResponse.status === 'fulfilled') {
+        const responseData = teamStatsResponse.value.data
+        if (responseData?.success) {
+          setTeamStats(responseData.data ?? null)
+        } else {
+          setTeamStats(null)
+          messages.push(responseData?.message || 'Failed to load team payroll statistics.')
+        }
+      } else {
+        setTeamStats(null)
+        messages.push(getErrorMessage(teamStatsResponse.reason, 'Failed to load team payroll statistics.'))
+      }
+
+      if (messages.length > 0) {
+        const combinedMessage = messages.join(' ')
+        setErrorMessage(combinedMessage)
+        if (showLoading) {
+          toast({
+            title: 'Unable to load manager payroll data',
+            description: combinedMessage,
+            variant: 'destructive',
+          })
+        }
+      } else {
+        setErrorMessage(null)
+      }
+    } catch (error) {
+      const message = getErrorMessage(error, 'An unexpected error occurred while fetching team payroll data.')
+      console.error('Error fetching team payroll data:', error)
+      setPayrollRecords([])
+      setTeamStats(null)
+      setErrorMessage(message)
+      toast({
+        title: 'Unable to load manager payroll data',
+        description: message,
+        variant: 'destructive',
+      })
+    } finally {
+      if (showLoading) {
+        setIsLoading(false)
+      }
+    }
+  }, [user?.id])
+
+  useEffect(() => {
     fetchTeamPayrollData();
-  }, [user?.id]);
+  }, [fetchTeamPayrollData]);
 
   // Approve payroll record
-  const approveRecord = async (recordId: string) => {
+  const approveRecord = useCallback(async (recordId: string) => {
     try {
-      setIsProcessing(true);
-      
+      setIsProcessing(true)
+
       const response = await axios.post(
         APIV3Dictionary.payroll.manager.approve(recordId),
         {},
         { withCredentials: true }
-      );
+      )
 
-      if (response.data && response.data.success) {
-        setPayrollRecords(prev => 
-          prev.map(record => 
-            record.id === recordId 
+      if (response.data?.success) {
+        setPayrollRecords(prev =>
+          prev.map(record =>
+            record.id === recordId
               ? { ...record, status: 'APPROVED', reviewedAt: new Date().toISOString() }
               : record
           )
-        );
-        
+        )
+
         toast({
           title: 'Success',
-          description: 'Payroll record approved successfully',
-        });
+          description: 'Payroll record approved successfully.',
+        })
+
+        await fetchTeamPayrollData({ showLoading: false })
+      } else {
+        const message = response.data?.message || 'Failed to approve payroll record. Please try again.'
+        toast({
+          title: 'Error',
+          description: message,
+          variant: 'destructive',
+        })
       }
     } catch (error) {
-      console.error('Error approving record:', error);
+      const message = getErrorMessage(error, 'Failed to approve payroll record. Please try again.')
+      console.error('Error approving record:', error)
       toast({
         title: 'Error',
-        description: 'Failed to approve payroll record. Please try again.',
+        description: message,
         variant: 'destructive',
-      });
+      })
     } finally {
-      setIsProcessing(false);
+      setIsProcessing(false)
     }
-  };
+  }, [fetchTeamPayrollData]);
 
   // Reject payroll record
-  const rejectRecord = async (recordId: string) => {
+  const rejectRecord = useCallback(async (recordId: string) => {
     try {
-      setIsProcessing(true);
-      
+      setIsProcessing(true)
+
       const response = await axios.post(
         APIV3Dictionary.payroll.manager.reject(recordId),
         {},
         { withCredentials: true }
-      );
+      )
 
-      if (response.data && response.data.success) {
-        setPayrollRecords(prev => 
-          prev.map(record => 
-            record.id === recordId 
+      if (response.data?.success) {
+        setPayrollRecords(prev =>
+          prev.map(record =>
+            record.id === recordId
               ? { ...record, status: 'REJECTED', reviewedAt: new Date().toISOString() }
               : record
           )
-        );
-        
+        )
+
         toast({
           title: 'Success',
-          description: 'Payroll record rejected successfully',
-        });
+          description: 'Payroll record rejected successfully.',
+        })
+
+        await fetchTeamPayrollData({ showLoading: false })
+      } else {
+        const message = response.data?.message || 'Failed to reject payroll record. Please try again.'
+        toast({
+          title: 'Error',
+          description: message,
+          variant: 'destructive',
+        })
       }
     } catch (error) {
-      console.error('Error rejecting record:', error);
+      const message = getErrorMessage(error, 'Failed to reject payroll record. Please try again.')
+      console.error('Error rejecting record:', error)
       toast({
         title: 'Error',
-        description: 'Failed to reject payroll record. Please try again.',
+        description: message,
         variant: 'destructive',
-      });
+      })
     } finally {
-      setIsProcessing(false);
+      setIsProcessing(false)
     }
-  };
+  }, [fetchTeamPayrollData]);
 
   // Format currency
   const formatCurrency = (amount: number) => {
@@ -212,6 +262,74 @@ const ManagerReviewDashboard = () => {
       case 'PROCESSED': return 'secondary';
       default: return 'outline';
     }
+  };
+
+  const pendingRecords = useMemo(
+    () => payrollRecords.filter(record => record.status === 'PENDING' || record.status === 'PROCESSED'),
+    [payrollRecords]
+  );
+
+  const approvedRecords = useMemo(
+    () => payrollRecords.filter(record => record.status === 'APPROVED' || record.status === 'PAID'),
+    [payrollRecords]
+  );
+
+  const rejectedRecords = useMemo(
+    () => payrollRecords.filter(record => record.status === 'REJECTED'),
+    [payrollRecords]
+  );
+
+  const canReviewRecord = (status: PayrollRecord['status']) => status === 'PROCESSED' || status === 'PENDING';
+
+  const renderRecordRow = (record: PayrollRecord) => {
+    const actionable = canReviewRecord(record.status);
+
+    return (
+      <div key={record.id} className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between p-4 border rounded-lg">
+        <div className="space-y-1">
+          <h4 className="font-medium">
+            {record.employee.firstName} {record.employee.lastName}
+          </h4>
+          <p className="text-sm text-muted-foreground">
+            {record.employee.employeeId} • {record.employee.department}
+          </p>
+          <p className="text-sm">
+            Net Salary: {formatCurrency(record.netSalary)}
+          </p>
+          {record.reviewedAt && (
+            <p className="text-xs text-muted-foreground">
+              Reviewed on {new Date(record.reviewedAt).toLocaleString()}
+            </p>
+          )}
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+          <Badge variant={getStatusBadgeVariant(record.status)} className="justify-center">
+            {record.status}
+          </Badge>
+          {actionable && (
+            <div className="flex gap-2">
+              <Button 
+                size="sm" 
+                onClick={() => approveRecord(record.id)}
+                disabled={isProcessing}
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Approve
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => rejectRecord(record.id)}
+                disabled={isProcessing}
+              >
+                <XCircle className="h-4 w-4 mr-2" />
+                Reject
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
 
   if (isLoading) {
@@ -249,7 +367,26 @@ const ManagerReviewDashboard = () => {
           <h1 className="text-3xl font-bold tracking-tight">Manager Review Dashboard</h1>
           <p className="text-muted-foreground">Review and approve team payroll records</p>
         </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fetchTeamPayrollData()}
+            disabled={isLoading || isProcessing}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
       </div>
+
+      {errorMessage && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Unable to load manager payroll data</AlertTitle>
+          <AlertDescription>{errorMessage}</AlertDescription>
+        </Alert>
+      )}
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -313,51 +450,13 @@ const ManagerReviewDashboard = () => {
                 <div className="text-center py-8 text-muted-foreground">
                   <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No payroll records available</p>
-                  <p className="text-sm">Manager review APIs are not yet implemented</p>
+                  <p className="text-sm">
+                    {errorMessage ?? 'No payroll submissions are available for your team right now.'}
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {payrollRecords.map((record) => (
-                    <div key={record.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="space-y-1">
-                        <h4 className="font-medium">
-                          {record.employee.firstName} {record.employee.lastName}
-                        </h4>
-                        <p className="text-sm text-muted-foreground">
-                          {record.employee.employeeId} • {record.employee.department}
-                        </p>
-                        <p className="text-sm">
-                          Net Salary: {formatCurrency(record.netSalary)}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={getStatusBadgeVariant(record.status)}>
-                          {record.status}
-                        </Badge>
-                        {record.status === 'PROCESSED' && (
-                          <div className="flex gap-2">
-                            <Button 
-                              size="sm" 
-                              onClick={() => approveRecord(record.id)}
-                              disabled={isProcessing}
-                            >
-                              <CheckCircle className="h-4 w-4 mr-2" />
-                              Approve
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => rejectRecord(record.id)}
-                              disabled={isProcessing}
-                            >
-                              <XCircle className="h-4 w-4 mr-2" />
-                              Reject
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                  {payrollRecords.map(renderRecordRow)}
                 </div>
               )}
             </CardContent>
@@ -371,11 +470,17 @@ const ManagerReviewDashboard = () => {
               <CardDescription>Payroll records awaiting your review</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No pending reviews</p>
-                <p className="text-sm">All payroll records have been processed</p>
-              </div>
+              {pendingRecords.length > 0 ? (
+                <div className="space-y-4">
+                  {pendingRecords.map(renderRecordRow)}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No pending reviews</p>
+                  <p className="text-sm">{errorMessage ?? 'All payroll records are up to date.'}</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -387,10 +492,17 @@ const ManagerReviewDashboard = () => {
               <CardDescription>Payroll records you have approved</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <CheckCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No approved records</p>
-              </div>
+              {approvedRecords.length > 0 ? (
+                <div className="space-y-4">
+                  {approvedRecords.map(renderRecordRow)}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <CheckCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No approved records</p>
+                  <p className="text-sm">{errorMessage ?? 'Approve payroll records to see them listed here.'}</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -402,10 +514,17 @@ const ManagerReviewDashboard = () => {
               <CardDescription>Payroll records you have rejected</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <XCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No rejected records</p>
-              </div>
+              {rejectedRecords.length > 0 ? (
+                <div className="space-y-4">
+                  {rejectedRecords.map(renderRecordRow)}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <XCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No rejected records</p>
+                  <p className="text-sm">{errorMessage ?? 'Rejected payroll entries will appear here when you decline them.'}</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthContext'
 import { toast } from '@/hooks/use-toast'
 import {
@@ -37,60 +37,18 @@ import {
 } from 'lucide-react'
 import { APIV3Dictionary } from '@/services/api/v3/Api3Dicts'
 import axios from 'axios'
-
-interface EmployeeProfile {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  mobileNumber?: string;
-  employeeId: string;
-  department: {
-    name: string;
-  };
-  manager?: {
-    firstName: string;
-    lastName: string;
-  };
-  hiredDate?: string;
-  dateOfBirth?: string;
-  address?: string;
-  emergencyContact?: string;
-}
-
-interface BankDetails {
-  id: string;
-  accountHolder: string;
-  accountNumber: string;
-  ifscCode: string;
-  bankName: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface PayslipPreview {
-  id: string;
-  month: number;
-  year: number;
-  basicSalary: number;
-  netSalary: number;
-  allowances: Record<string, number>;
-  deductions: Record<string, number>;
-  status: 'PENDING' | 'PROCESSED' | 'PAID';
-  processedAt?: string;
-  downloadUrl?: string;
-}
-
-interface SalaryDispute {
-  id: string;
-  salaryRecordId: string;
-  reason: string;
-  description?: string;
-  status: 'PENDING' | 'UNDER_REVIEW' | 'RESOLVED' | 'REJECTED';
-  resolutionNote?: string;
-  createdAt: string;
-  resolvedAt?: string;
-}
+import {
+  BankDetails,
+  EmployeeProfile,
+  PayslipPreview,
+  SalaryDispute
+} from '../types/payroll'
+import {
+  mockBankDetails,
+  mockDisputes,
+  mockEmployeeProfile,
+  mockPayslips
+} from '../utils/mockData'
 
 const EmployeeSelfServicePortal = () => {
   const { user } = useAuth();
@@ -104,6 +62,7 @@ const EmployeeSelfServicePortal = () => {
   const [activeTab, setActiveTab] = useState('profile');
   const [selectedPayslip, setSelectedPayslip] = useState<PayslipPreview | null>(null);
   const [isDisputeDialogOpen, setIsDisputeDialogOpen] = useState(false);
+  const [usingMockData, setUsingMockData] = useState(false);
 
   // Edit states
   const [editedProfile, setEditedProfile] = useState<Partial<EmployeeProfile>>({});
@@ -113,116 +72,164 @@ const EmployeeSelfServicePortal = () => {
     description: ''
   });
 
-  // Load employee data
-  useEffect(() => {
-    const fetchEmployeeData = async () => {
-      if (!user?.id) return;
-      
+  const fetchEmployeeData = useCallback(async () => {
+    if (!user?.id) return;
+
+    setIsLoading(true);
+    let fallbackUsed = false;
+
+    try {
+      // Profile
       try {
-        setIsLoading(true);
-        
-        // Fetch employee profile
         const profileResponse = await axios.get(
-          APIV3Dictionary.payroll.employee.profile(user.id), 
+          APIV3Dictionary.payroll.employee.profile(user.id),
           { withCredentials: true }
         );
 
         if (profileResponse.data) {
-          const profileData = profileResponse.data;
+          const profileData = profileResponse.data as EmployeeProfile;
           setProfile(profileData);
           setEditedProfile(profileData);
+        } else {
+          throw new Error('Profile response missing data');
         }
-
-        // Fetch bank details
-        try {
-          const bankResponse = await axios.get(
-            APIV3Dictionary.payroll.employee.bankDetails(user.id), 
-            { withCredentials: true }
-          );
-
-          if (bankResponse.data && bankResponse.data.length > 0) {
-            const bankData = bankResponse.data[0]; // Get first bank record
-            setBankDetails(bankData);
-            setEditedBankDetails(bankData);
-          }
-        } catch (bankError) {
-          console.warn('No bank details found for user');
-          setBankDetails(null);
-        }
-
-        // Fetch payslips - get recent payslips for current user
-        try {
-          const currentDate = new Date();
-          const currentMonth = currentDate.getMonth() + 1;
-          const currentYear = currentDate.getFullYear();
-          
-          // Get payslips for last 6 months
-          const payslipPromises = [];
-          for (let i = 0; i < 6; i++) {
-            let month = currentMonth - i;
-            let year = currentYear;
-            
-            if (month <= 0) {
-              month += 12;
-              year -= 1;
-            }
-            
-            payslipPromises.push(
-              axios.get(
-                APIV3Dictionary.payroll.getPayslip(month, year, user.id),
-                { withCredentials: true }
-              ).catch(() => null) // Continue if payslip doesn't exist
-            );
-          }
-          
-          const payslipResponses = await Promise.all(payslipPromises);
-          const payslipData = payslipResponses
-            .filter(response => response && response.data && response.data.success)
-            .map(response => {
-              if (!response) return null;
-              const data = response.data.data;
-              return {
-                id: data.id,
-                month: data.month,
-                year: data.year,
-                basicSalary: data.basicSalary,
-                netSalary: data.netSalary,
-                allowances: data.allowances || {},
-                deductions: data.deductions || {},
-                status: data.status || 'PROCESSED',
-                processedAt: data.processedAt,
-                downloadUrl: APIV3Dictionary.payroll.downloadPayslip(data.id)
-              };
-            })
-            .filter(Boolean) as PayslipPreview[];
-          
-          setPayslips(payslipData);
-        } catch (payslipError) {
-          console.warn('No payslips found');
-          setPayslips([]);
-        }
-
-        // Fetch disputes (placeholder - using empty array until backend endpoint is available)
-        setDisputes([]);
-        
-      } catch (error) {
-        console.error('Error fetching employee data:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load employee data. Please try again.',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
+      } catch (profileError) {
+        console.warn('Falling back to mock profile:', profileError);
+        setProfile(mockEmployeeProfile);
+        setEditedProfile(mockEmployeeProfile);
+        fallbackUsed = true;
       }
-    };
 
+      // Bank details
+      try {
+        const bankResponse = await axios.get(
+          APIV3Dictionary.payroll.employee.bankDetails(user.id),
+          { withCredentials: true }
+        );
+
+        const bankPayload = Array.isArray(bankResponse.data)
+          ? bankResponse.data[0]
+          : bankResponse.data?.data?.[0];
+
+        if (bankPayload) {
+          setBankDetails(bankPayload);
+          setEditedBankDetails(bankPayload);
+        } else {
+          throw new Error('Empty bank details response');
+        }
+      } catch (bankError) {
+        console.warn('Falling back to mock bank details:', bankError);
+        setBankDetails(mockBankDetails);
+        setEditedBankDetails(mockBankDetails);
+        fallbackUsed = true;
+      }
+
+      // Payslips for recent months
+      try {
+        const currentDate = new Date();
+        const currentMonth = currentDate.getMonth() + 1;
+        const currentYear = currentDate.getFullYear();
+
+        const payslipPromises = [] as Array<Promise<any>>;
+        for (let i = 0; i < 6; i++) {
+          let month = currentMonth - i;
+          let year = currentYear;
+
+          if (month <= 0) {
+            month += 12;
+            year -= 1;
+          }
+
+          payslipPromises.push(
+            axios
+              .get(APIV3Dictionary.payroll.getPayslip(month, year, user.id), {
+                withCredentials: true
+              })
+              .catch(() => null)
+          );
+        }
+
+        const payslipResponses = await Promise.all(payslipPromises);
+        const payslipData = payslipResponses
+          .filter((response) => response && response.data && response.data.success)
+          .map((response) => {
+            if (!response) return null;
+            const data = response.data.data;
+            return {
+              id: data.id,
+              month: data.month,
+              year: data.year,
+              basicSalary: data.basicSalary,
+              netSalary: data.netSalary,
+              allowances: data.allowances || {},
+              deductions: data.deductions || {},
+              status: data.status || 'PROCESSED',
+              processedAt: data.processedAt,
+              downloadUrl: APIV3Dictionary.payroll.downloadPayslip(data.id)
+            };
+          })
+          .filter(Boolean) as PayslipPreview[];
+
+        if (payslipData.length > 0) {
+          setPayslips(payslipData);
+        } else {
+          throw new Error('No payslips available');
+        }
+      } catch (payslipError) {
+        console.warn('Falling back to mock payslips:', payslipError);
+        setPayslips(mockPayslips);
+        fallbackUsed = true;
+      }
+
+      // Disputes placeholder (mock until API ready)
+      setDisputes(mockDisputes);
+      if (mockDisputes.length > 0) {
+        fallbackUsed = true;
+      }
+    } catch (error) {
+      console.error('Error fetching employee data:', error);
+      setProfile(mockEmployeeProfile);
+      setEditedProfile(mockEmployeeProfile);
+      setBankDetails(mockBankDetails);
+      setEditedBankDetails(mockBankDetails);
+      setPayslips(mockPayslips);
+      setDisputes(mockDisputes);
+      fallbackUsed = true;
+    } finally {
+      setIsLoading(false);
+
+      if (fallbackUsed && !usingMockData) {
+        toast({
+          title: 'Demo data loaded',
+          description: 'Self-service APIs are partially unavailable. Showing offline data so the portal stays usable.'
+        });
+        setUsingMockData(true);
+      }
+
+      if (!fallbackUsed && usingMockData) {
+        setUsingMockData(false);
+      }
+    }
+  }, [user?.id, usingMockData]);
+
+  // Load employee data
+  useEffect(() => {
     fetchEmployeeData();
-  }, [user?.id]);
+  }, [fetchEmployeeData]);
 
   // Save profile changes
   const saveProfile = async () => {
     if (!user?.id) return;
+
+    if (usingMockData) {
+      setProfile((prev) => ({ ...prev!, ...editedProfile } as EmployeeProfile));
+      setIsEditing(false);
+      toast({
+        title: 'Profile updated locally',
+        description: 'Changes saved in demo mode until backend endpoints are available.'
+      });
+      return;
+    }
     
     try {
       setIsSaving(true);
@@ -258,6 +265,19 @@ const EmployeeSelfServicePortal = () => {
   // Save bank details
   const saveBankDetails = async () => {
     if (!user?.id) return;
+
+    if (usingMockData) {
+      const bankData = {
+        ...mockBankDetails,
+        ...editedBankDetails
+      } as BankDetails;
+      setBankDetails(bankData);
+      toast({
+        title: 'Bank details stored locally',
+        description: 'Updates will sync once bank APIs are live.'
+      });
+      return;
+    }
     
     try {
       setIsSaving(true);
@@ -324,6 +344,26 @@ const EmployeeSelfServicePortal = () => {
       return;
     }
 
+    if (usingMockData) {
+      const newDispute: SalaryDispute = {
+        id: `mock-dispute-${Date.now()}`,
+        salaryRecordId: selectedPayslip.id,
+        reason: disputeForm.reason,
+        description: disputeForm.description,
+        status: 'PENDING',
+        createdAt: new Date().toISOString()
+      };
+      setDisputes((prev) => [newDispute, ...prev]);
+      toast({
+        title: 'Dispute recorded',
+        description: 'Dispute saved locally. It will sync when dispute APIs are available.'
+      });
+      setIsDisputeDialogOpen(false);
+      setDisputeForm({ reason: '', description: '' });
+      setSelectedPayslip(null);
+      return;
+    }
+
     try {
       setIsSaving(true);
       
@@ -367,6 +407,15 @@ const EmployeeSelfServicePortal = () => {
 
   // Download payslip
   const downloadPayslip = async (payslip: PayslipPreview) => {
+    if (usingMockData) {
+      toast({
+        title: 'Download unavailable in demo mode',
+        description: 'Connect to the payroll backend to download official payslips.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     try {
       const response = await axios.get(
         APIV3Dictionary.payroll.downloadPayslip(payslip.id),
