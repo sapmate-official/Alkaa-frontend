@@ -149,9 +149,9 @@ export interface EmployeeProfile {
   email: string;
   mobileNumber?: string;
   employeeId: string;
-  department: {
-    name: string;
-  };
+  department?: {
+    name?: string;
+  } | null;
   manager?: {
     firstName: string;
     lastName: string;

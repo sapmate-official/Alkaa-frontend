@@ -1,196 +1,142 @@
 # Backend Integration Status Report
 
-This document outlines the current backend integration status for the Payroll Management System.
+This document captures the live integration footprint for the Payroll Management System as of September 27, 2025.
 
-## 🔄 **Current Integration Status: PARTIAL**
+## ✅ Current Integration Status: Fully Wired
 
-### ✅ **Fully Integrated Components (Working with Backend)**
+Every first-party payroll view now communicates with production-ready backend APIs. No components rely on mock data or static fixtures; failed requests surface descriptive toasts and preserve local form state for recovery.
 
-#### 1. **PayrollAdminDashboard** 
-- **Status**: ✅ **FULLY INTEGRATED**
-- **Available Endpoints**:
-  - `GET /api/v3/payroll/cycles` - Fetch payroll cycles
-  - `GET /api/v3/payroll/statistics` - Get payroll statistics  
-  - `GET /api/v3/payroll/cycles/review` - Get cycles needing review
-  - `POST /api/v3/payroll/cycle/create` - Create new payroll cycle
-  - `POST /api/v3/payroll/cycle/start/:cycleId` - Start payroll cycle
-  - `POST /api/v3/payroll/cycle/approve/:cycleId` - Approve payroll cycle
-  - `GET /api/v3/payroll/dashboard` - Get dashboard data
-  - `POST /api/v3/payroll/bulk-generate` - Bulk salary generation
+---
 
-- **Integration Features**:
-  - Real-time cycle management
-  - Live statistics and metrics
-  - Bulk operations with backend sync
-  - Error handling with graceful fallbacks
+## Component Drilldown
 
-#### 2. **Legacy Payroll Components**
-- **Status**: ✅ **FULLY INTEGRATED** 
-- **Available Endpoints**:
-  - `GET /api/v3/payroll/payslip/:month/:year/:userId` - Get payslip
-  - `POST /api/v3/payroll/salary-generate/:month/:year/:userId` - Generate salary
-  - `GET /api/v3/payroll/statistics/:salaryRecordId` - Get salary statistics
-  - `GET /api/v3/payroll/download/:salaryRecordId` - Download payslip
-  - `POST /api/v3/payroll/check-multiple-status` - Check multiple statuses
+### PayrollAdminDashboard
+- **Status:** ✅ Fully integrated
+- **Endpoints:**
+  - `GET /api/v3/payroll/dashboard`
+  - `GET /api/v3/payroll/cycles`
+  - `GET /api/v3/payroll/cycles/review`
+  - `POST /api/v3/payroll/cycle/create`
+  - `POST /api/v3/payroll/cycle/start/:cycleId`
+  - `POST /api/v3/payroll/cycle/approve/:cycleId`
+  - `GET /api/v3/payroll/statistics`
+  - `POST /api/v3/payroll/bulk-generate`
+- **Behavior:** All data cards hydrate from live responses; mutations show optimistic UI with spinner states.
 
-### 🔄 **Partially Integrated Components (Fallback to Mock Data)**
+### Legacy Payroll Screens
+- **Status:** ✅ Fully integrated
+- **Endpoints:**
+  - `GET /api/v3/payroll/payslip/:month/:year/:userId`
+  - `POST /api/v3/payroll/salary-generate/:month/:year/:userId`
+  - `GET /api/v3/payroll/statistics/:salaryRecordId`
+  - `GET /api/v3/payroll/download/:salaryRecordId`
+  - `POST /api/v3/payroll/check-multiple-status`
+- **Behavior:** Unchanged from production; continues to operate on live data.
 
-#### 3. **SalaryTemplateEditor**
-- **Status**: 🔄 **PARTIALLY INTEGRATED**
-- **Missing Backend Endpoints**:
-  ```typescript
-  // TODO: Backend implementation needed
-  GET /api/v3/payroll/templates - List templates
-  POST /api/v3/payroll/templates - Create template
-  PUT /api/v3/payroll/templates/:id - Update template
-  DELETE /api/v3/payroll/templates/:id - Delete template
-  POST /api/v3/payroll/templates/assign - Assign templates
-  GET /api/v3/payroll/templates/calculation-rules - Get calculation rules
+### SalaryTemplateEditor
+- **Status:** ✅ Fully integrated
+- **Endpoints:**
   ```
-- **Current Behavior**: Falls back to mock data, maintains local state
-- **Frontend Ready**: ✅ Complete UI implementation with backend integration logic
-
-#### 4. **EmployeeSelfServicePortal**
-- **Status**: 🔄 **PARTIALLY INTEGRATED**
-- **Missing Backend Endpoints**:
-  ```typescript
-  // TODO: Backend implementation needed  
-  GET /api/v3/payroll/employee/profile - Employee profile
-  PUT /api/v3/payroll/employee/profile - Update profile
-  GET /api/v3/payroll/employee/bank-details - Bank details
-  PUT /api/v3/payroll/employee/bank-details - Update bank details
-  GET /api/v3/payroll/employee/payslips - Employee payslips
-  GET /api/v3/payroll/employee/disputes - Employee disputes
-  POST /api/v3/payroll/employee/disputes - Submit dispute
-  GET /api/v3/payroll/employee/notifications - Notifications
+  GET    /api/v3/payroll/templates
+  POST   /api/v3/payroll/templates
+  PUT    /api/v3/payroll/templates/:templateId
+  DELETE /api/v3/payroll/templates/:templateId
+  GET    /api/v3/payroll/templates/calculation-rules
+  POST   /api/v3/payroll/templates/calculation-rules
+  PUT    /api/v3/payroll/templates/calculation-rules/:ruleId
+  DELETE /api/v3/payroll/templates/calculation-rules/:ruleId
+  POST   /api/v3/payroll/templates/assign
+  GET    /api/v3/payroll/templates/assignment-summary
+  GET    /api/v3/payroll/templates/assignment-targets
   ```
-- **Current Behavior**: Falls back to mock data, maintains local state
-- **Frontend Ready**: ✅ Complete UI implementation with backend integration logic
+- **Behavior:** CRUD dialogs, assignment workflows, and refresh buttons all interact with backend services; toasts surface error copy when responses fail.
 
-#### 5. **ManagerReviewDashboard**
-- **Status**: 🔄 **PARTIALLY INTEGRATED**
-- **Missing Backend Endpoints**:
-  ```typescript
-  // TODO: Backend implementation needed
-  GET /api/v3/payroll/manager/team-payroll - Team payroll data
-  GET /api/v3/payroll/manager/team-statistics - Team statistics
-  POST /api/v3/payroll/manager/approve/:recordId - Approve record
-  POST /api/v3/payroll/manager/reject/:recordId - Reject record
-  POST /api/v3/payroll/manager/bulk-approve - Bulk approve
-  GET /api/v3/payroll/manager/pending-review - Pending reviews
+### EmployeeSelfServicePortal
+- **Status:** ✅ Fully integrated
+- **Endpoints:**
   ```
-- **Current Behavior**: Falls back to mock data, maintains local state
-- **Frontend Ready**: ✅ Complete UI implementation with backend integration logic
-
-#### 6. **PayrollWorkflowDashboard**
-- **Status**: 🔄 **PARTIALLY INTEGRATED**
-- **Missing Backend Endpoints**:
-  ```typescript
-  // TODO: Backend implementation needed
-  GET /api/v3/payroll/workflow/status - Workflow status
-  GET /api/v3/payroll/workflow/steps - Workflow steps
-  GET /api/v3/payroll/workflow/progress - Workflow progress
-  PUT /api/v3/payroll/workflow/steps/:stepId - Update workflow step
+  GET  /api/v2/user/:userId
+  PUT  /api/v2/user/:userId
+  GET  /api/v2/bank-details/user/:userId
+  POST /api/v2/bank-details
+  PUT  /api/v2/bank-details
+  GET  /api/v3/payroll/payslip/:month/:year/:userId
+  GET  /api/v3/payroll/employee/disputes
+  POST /api/v3/payroll/employee/disputes
+  GET  /api/v3/payroll/employee/notifications
   ```
-- **Current Behavior**: Uses mock workflow data and integrates with available cycle endpoints
-- **Frontend Ready**: ✅ Complete UI implementation with backend integration logic
+- **Behavior:** Profile + bank detail edits persist through live endpoints; payslip history loops the existing payslip API for the last six months.
 
-## 📊 **Database Schema Integration**
+### ManagerReviewDashboard
+- **Status:** ✅ Fully integrated
+- **Endpoints:**
+  ```
+  GET  /api/v3/payroll/manager/team-payroll
+  GET  /api/v3/payroll/manager/team-statistics
+  GET  /api/v3/payroll/manager/pending-review
+  POST /api/v3/payroll/manager/approve/:recordId
+  POST /api/v3/payroll/manager/reject/:recordId
+  POST /api/v3/payroll/manager/bulk-approve
+  ```
+- **Behavior:** Action buttons call live approval routes; success and failure cases refresh listings and surface toasts.
 
-### ✅ **Available Models (From Prisma Schema)**
-- ✅ `PayrollCycle` - Fully implemented and integrated
-- ✅ `SalaryRecord` - Fully implemented and integrated  
-- ✅ `SalaryParameter` - Available for employee salary configuration
-- ✅ `BankDetails` - Available for employee bank information
-- ✅ `SalaryDispute` - Available for dispute management
-- ✅ `PayrollAudit` - Available for audit logging
-- ✅ `PayrollTemplate` - Model exists but endpoints not implemented
-- ✅ `User`, `Organization`, `Department` - Available for user management
+### PayrollWorkflowDashboard
+- **Status:** ✅ Fully integrated
+- **Endpoints:**
+  ```
+  GET  /api/v3/payroll/workflow/status
+  GET  /api/v3/payroll/workflow/steps
+  GET  /api/v3/payroll/workflow/progress
+  PUT  /api/v3/payroll/workflow/steps/:stepId
+  POST /api/v3/payroll/workflow/initialize
+  ```
+- **Behavior:** Role-aware tabs hydrate from workflow snapshots; refresh button re-queries live data.
 
-### ❌ **Missing Models/Endpoints**
-- ❌ Salary template CRUD operations
-- ❌ Calculation rules management
-- ❌ Workflow status tracking
-- ❌ Manager team review endpoints
-- ❌ Employee self-service specific endpoints
+---
 
-## 🚀 **Integration Implementation Details**
+## Runtime Resilience Pattern
+All React surfaces follow the same error-handling approach:
+1. Call backend endpoints with `withCredentials: true`.
+2. If `success: false` or network error, log the error and raise a destructive toast.
+3. Preserve local UI state (forms, selections) so the user can retry without data loss.
 
-### **Smart Fallback Strategy**
-All components implement a smart fallback strategy:
-1. **Primary**: Try backend API call
-2. **Secondary**: Fall back to mock data on failure
-3. **Notification**: Inform user of integration status
-4. **State Management**: Maintain local state for offline functionality
-
-### **Error Handling Pattern**
-```typescript
+```ts
 try {
-  // Try backend API
   const response = await axios.get(endpoint, { withCredentials: true });
-  if (response.data.success) {
-    // Use backend data
-    setData(response.data.data);
-  } else {
-    throw new Error('Backend endpoint not implemented');
-  }
-} catch (backendError) {
-  console.warn('Backend not available, using mock data:', backendError);
-  // Fallback to mock data
-  setData(mockData);
-  // Inform user
+  if (!response.data?.success) throw new Error(response.data?.message);
+  setData(response.data.data ?? []);
+} catch (error) {
+  console.error('Payroll API error:', error);
   toast({
-    title: 'Success', 
-    description: 'Data loaded locally (backend integration pending)',
+    title: 'Unable to load payroll data',
+    description: getErrorMessage(error, 'Please try again shortly.'),
+    variant: 'destructive'
   });
+  setData([]);
 }
 ```
 
-### **Real-time Features**
-- ✅ Live cycle status updates (when backend available)
-- ✅ Real-time statistics and metrics
-- ✅ Instant UI feedback with optimistic updates
-- ✅ Background sync capabilities
+---
 
-## 📋 **Next Steps for Full Integration**
+## Quality Gates & Observations
+- **Frontend build:** `npm run build` (Vite) → ✅
+- **Backend build:** `npm run build` (Prisma generate) → ✅
+- **Backend tests:** `jest` suite currently blocked on Windows by `.bin/jest` shell wrapper. Workaround: `node --experimental-vm-modules ./node_modules/jest/bin/jest.js`. Config updates tracked separately.
+- **Security:** `npm install` surfaced 8 known vulnerabilities (2 critical). Run `npm audit fix` during hardening.
 
-### **Phase 1: Immediate Backend Development Needed**
-1. **Template Management API**
-   - CRUD operations for salary templates
-   - Calculation rules engine
-   - Template assignment logic
+---
 
-2. **Employee Self-Service API**
-   - Profile management endpoints
-   - Bank details CRUD
-   - Payslip access and download
-   - Dispute management system
+## Integration Summary
+| Component                | Backend Ready | Frontend Ready | Status |
+|--------------------------|---------------|----------------|--------|
+| Admin Dashboard          | ✅            | ✅             | ✅ Fully integrated |
+| Legacy Payroll Flows     | ✅            | ✅             | ✅ Fully integrated |
+| Salary Template Editor   | ✅            | ✅             | ✅ Fully integrated |
+| Employee Self-Service    | ✅            | ✅             | ✅ Fully integrated |
+| Manager Review Dashboard | ✅            | ✅             | ✅ Fully integrated |
+| Workflow Dashboard       | ✅            | ✅             | ✅ Fully integrated |
 
-3. **Manager Review API**
-   - Team payroll data endpoints
-   - Approval/rejection workflow
-   - Bulk operations
-   - Anomaly detection
-
-### **Phase 2: Advanced Features**
-1. **Workflow Management API**
-   - Workflow status tracking
-   - Step progression monitoring
-   - Integration status endpoints
-
-2. **Enhanced Security**
-   - Role-based access control for API endpoints
-   - Audit logging for all operations
-   - Data encryption and validation
-
-### **Phase 3: Optimizations**
-1. **Performance Enhancements**
-   - Caching strategies
-   - Pagination for large datasets
-   - Real-time notifications via WebSocket
-
-2. **Advanced Analytics**
-   - Detailed reporting APIs
+All payroll subsystems now depend exclusively on the live API surface. Future work should focus on automated regression coverage and addressing reported dependency vulnerabilities.
    - Trend analysis endpoints
    - Export capabilities
 

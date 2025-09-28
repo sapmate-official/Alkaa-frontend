@@ -37,6 +37,10 @@ export const APIV3Dictionary = {
             delete: (templateId: string) => `${backendDomain}/api/v3/payroll/templates/${templateId}`,
             assign: `${backendDomain}/api/v3/payroll/templates/assign`,
             rules: `${backendDomain}/api/v3/payroll/templates/calculation-rules`,
+            updateRule: (ruleId: string) => `${backendDomain}/api/v3/payroll/templates/calculation-rules/${ruleId}`,
+            deleteRule: (ruleId: string) => `${backendDomain}/api/v3/payroll/templates/calculation-rules/${ruleId}`,
+            assignmentSummary: `${backendDomain}/api/v3/payroll/templates/assignment-summary`,
+            assignmentTargets: `${backendDomain}/api/v3/payroll/templates/assignment-targets`,
         },
         
         // Employee self-service endpoints (Using V2 endpoints where available)
