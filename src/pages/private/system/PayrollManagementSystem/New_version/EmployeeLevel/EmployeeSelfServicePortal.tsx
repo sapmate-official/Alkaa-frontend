@@ -38,6 +38,7 @@ import {
 } from 'lucide-react'
 import { APIV3Dictionary } from '@/services/api/v3/Api3Dicts'
 import axios from 'axios'
+import { PayslipPDFGenerator, PayslipData as PayslipPdfData } from '@/utils/payslipPDFGenerator'
 import {
   BankDetails,
   EmployeeProfile,
@@ -222,7 +223,7 @@ const EmployeeSelfServicePortal = () => {
               }
 
               const data = response.data?.data;
-              if (!data) {
+              if (!data || !data.id || typeof data.month !== 'number' || typeof data.year !== 'number') {
                 return null;
               }
 
@@ -248,7 +249,10 @@ const EmployeeSelfServicePortal = () => {
 
       const payslipResults = await Promise.all(payslipPromises);
       const filteredPayslips = payslipResults.filter((payslip): payslip is PayslipPreview => payslip !== null);
-      setPayslips(filteredPayslips);
+      const sanitizedPayslips = filteredPayslips.filter(
+        (payslip) => Boolean(payslip.id) && typeof payslip.month === 'number' && typeof payslip.year === 'number'
+      );
+      setPayslips(sanitizedPayslips);
     } catch (error) {
       const message = getErrorMessage(error, 'Failed to load payslips.');
       console.error('Error fetching payslips:', error);
@@ -447,30 +451,120 @@ const EmployeeSelfServicePortal = () => {
     }
   };
 
+  const ensurePdfDependencies = useCallback(async () => {
+    if (!window.html2canvas) {
+      const html2canvasModule = await import('html2canvas');
+      window.html2canvas = html2canvasModule.default;
+    }
+
+    if (!window.jspdf) {
+      const jsPdfModule = await import('jspdf');
+      window.jspdf = jsPdfModule;
+    }
+  }, []);
+
+  const buildPayslipPdfData = useCallback((payslip: PayslipPreview): PayslipPdfData => {
+    const allowanceEntries = Object.entries(payslip.allowances ?? {});
+    const deductionEntries = Object.entries(payslip.deductions ?? {});
+
+    const allowanceTotal = allowanceEntries.reduce((sum, [, amount]) => sum + (amount ?? 0), 0);
+    const deductionArray = deductionEntries.map(([description, amount]) => ({
+      description,
+      current: amount ?? 0,
+      ytd: amount ?? 0
+    }));
+
+    const allowanceArray = allowanceEntries.map(([description, amount]) => ({
+      description,
+      current: amount ?? 0,
+      ytd: amount ?? 0
+    }));
+
+    const grossPay = payslip.basicSalary + allowanceTotal;
+    const totalDeductions = deductionArray.reduce((sum, entry) => sum + entry.current, 0);
+
+    const employeeName = `${profile?.firstName ?? ''} ${profile?.lastName ?? ''}`.trim() || user?.firstName || user?.email || 'Employee';
+    const employeeDepartment = profile?.department?.name ?? '';
+    const employeeId = profile?.employeeId ?? user?.employeeId ?? '';
+
+    return {
+      month: payslip.month,
+      year: payslip.year,
+      monthName: getMonthName(payslip.month),
+      payDate: payslip.processedAt ? new Date(payslip.processedAt).toLocaleDateString() : new Date().toLocaleDateString(),
+      period: `${getMonthName(payslip.month)} ${payslip.year}`,
+      status: payslip.status,
+      paymentMode: bankDetails ? 'Bank Transfer' : 'Not specified',
+      paymentRef: payslip.id,
+      employee: {
+        name: employeeName,
+        employeeId,
+        department: employeeDepartment,
+        email: profile?.email ?? user?.email ?? '',
+        bankDetails: bankDetails ? {
+          bankName: bankDetails.bankName,
+          accountNumber: bankDetails.accountNumber,
+          ifscCode: bankDetails.ifscCode
+        } : undefined
+      },
+      company: {
+        name: user?.organization?.name ?? 'Your Organization',
+        address: user?.organization?.address ?? '',
+        email: user?.email ?? '',
+        phone: user?.mobileNumber ?? ''
+      },
+      basicSalary: payslip.basicSalary,
+      grossPay,
+      totalDeductions,
+      netSalary: payslip.netSalary,
+      earnings: {
+        basicSalary: {
+          description: 'Basic Salary',
+          hours: 0,
+          rate: payslip.basicSalary,
+          current: payslip.basicSalary,
+          ytd: payslip.basicSalary
+        },
+        allowances: allowanceArray,
+        additionalPayments: []
+      },
+      deductions: deductionArray,
+      attendance: {
+        workingDays: 0,
+        presentDays: 0,
+        halfDays: 0,
+        absentDays: 0,
+        paidLeaveDays: 0,
+        unpaidLeaveDays: 0,
+        attendancePercentage: 0
+      },
+      ytd: {
+        grossPay,
+        totalDeductions,
+        netSalary: payslip.netSalary
+      }
+    };
+  }, [bankDetails, profile, user]);
+
   // Download payslip
   const downloadPayslip = async (payslip: PayslipPreview) => {
     try {
-      const response = await axios.get(
-        APIV3Dictionary.payroll.downloadPayslip(payslip.id),
-        { 
-          responseType: 'blob',
-          withCredentials: true 
-        }
-      );
+      if (!payslip?.id || typeof payslip.month !== 'number' || typeof payslip.year !== 'number') {
+        toast({
+          title: 'Unavailable',
+          description: 'Payslip data is incomplete. Please contact your administrator.',
+          variant: 'destructive',
+        });
+        return;
+      }
 
-      // Create blob link to download
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `payslip-${getMonthName(payslip.month)}-${payslip.year}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+      await ensurePdfDependencies();
+      const pdfData = buildPayslipPdfData(payslip);
+      PayslipPDFGenerator.showPreviewModal(pdfData);
 
       toast({
-        title: 'Success',
-        description: 'Payslip downloaded successfully',
+        title: 'Ready',
+        description: 'Preview generated. You can download the PDF from the modal.',
       });
     } catch (error) {
       console.error('Error downloading payslip:', error);
@@ -789,8 +883,8 @@ const EmployeeSelfServicePortal = () => {
                     <p>No payslips available</p>
                   </div>
                 ) : (
-                  payslips.map((payslip) => {
-                    const payslipKey = payslip.id ?? `${payslip.year}-${payslip.month}-${user?.id ?? 'self'}`;
+                  payslips.map((payslip, index) => {
+                    const payslipKey = payslip.id ?? `${payslip.year}-${payslip.month}-${user?.id ?? 'self'}-${index}`;
 
                     return (
                       <div key={payslipKey} className="flex items-center justify-between p-4 border rounded-lg">
