@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import {
   Dialog,
   DialogContent,
@@ -43,17 +44,61 @@ import {
   PayslipPreview,
   SalaryDispute
 } from '../types/payroll'
-import {
-  mockBankDetails,
-  mockDisputes,
-  mockEmployeeProfile,
-  mockPayslips
-} from '../utils/mockData'
+
+interface ApiResponse<T> {
+  success?: boolean
+  data?: T
+  message?: string
+}
+
+interface PayslipApiPayload {
+  id: string
+  month: number
+  year: number
+  basicSalary: number
+  netSalary: number
+  allowances?: Record<string, number>
+  deductions?: Record<string, number>
+  status?: string
+  processedAt?: string
+}
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (axios.isAxiosError(error)) {
+    const responseData = error.response?.data as Record<string, unknown> | undefined
+    if (responseData && typeof responseData.message === 'string') {
+      return responseData.message
+    }
+
+    return error.message || fallback
+  }
+
+  if (error instanceof Error) {
+    return error.message || fallback
+  }
+
+  return fallback
+}
+
+const extractApiData = <T,>(payload: ApiResponse<T> | T | undefined): T | null => {
+  if (!payload) {
+    return null
+  }
+
+  if (typeof payload === 'object' && payload !== null) {
+    const maybeApiResponse = payload as ApiResponse<T>
+    if (Object.prototype.hasOwnProperty.call(maybeApiResponse, 'data')) {
+      return maybeApiResponse.data ?? null
+    }
+  }
+
+  return payload as T
+}
 
 const EmployeeSelfServicePortal = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<EmployeeProfile | null>(null);
-  const [bankDetails, setBankDetails] = useState<BankDetails | null>(null); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [bankDetails, setBankDetails] = useState<BankDetails | null>(null);
   const [payslips, setPayslips] = useState<PayslipPreview[]>([]);
   const [disputes, setDisputes] = useState<SalaryDispute[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -62,7 +107,7 @@ const EmployeeSelfServicePortal = () => {
   const [activeTab, setActiveTab] = useState('profile');
   const [selectedPayslip, setSelectedPayslip] = useState<PayslipPreview | null>(null);
   const [isDisputeDialogOpen, setIsDisputeDialogOpen] = useState(false);
-  const [usingMockData, setUsingMockData] = useState(false);
+  const [loadErrors, setLoadErrors] = useState<string[]>([]);
 
   // Edit states
   const [editedProfile, setEditedProfile] = useState<Partial<EmployeeProfile>>({});
@@ -72,145 +117,164 @@ const EmployeeSelfServicePortal = () => {
     description: ''
   });
 
-  const fetchEmployeeData = useCallback(async () => {
-    if (!user?.id) return;
+  const fetchEmployeeData = useCallback(async ({ showLoading = true }: { showLoading?: boolean } = {}) => {
+    if (!user?.id) {
+      setProfile(null);
+      setEditedProfile({});
+      setBankDetails(null);
+      setEditedBankDetails({});
+      setPayslips([]);
+      setDisputes([]);
+      setLoadErrors(['You need to be logged in to view employee self-service data.']);
+      if (showLoading) {
+        setIsLoading(false);
+      }
+      return;
+    }
 
-    setIsLoading(true);
-    let fallbackUsed = false;
+    if (showLoading) {
+      setIsLoading(true);
+    }
 
+    const errors: string[] = [];
+
+    // Profile
     try {
-      // Profile
-      try {
-        const profileResponse = await axios.get(
-          APIV3Dictionary.payroll.employee.profile(user.id),
-          { withCredentials: true }
-        );
+      const profileResponse = await axios.get<ApiResponse<EmployeeProfile>>(
+        APIV3Dictionary.payroll.employee.profile(user.id),
+        { withCredentials: true }
+      );
 
-        if (profileResponse.data) {
-          const profileData = profileResponse.data as EmployeeProfile;
-          setProfile(profileData);
-          setEditedProfile(profileData);
-        } else {
-          throw new Error('Profile response missing data');
-        }
-      } catch (profileError) {
-        console.warn('Falling back to mock profile:', profileError);
-        setProfile(mockEmployeeProfile);
-        setEditedProfile(mockEmployeeProfile);
-        fallbackUsed = true;
-      }
+  const profileData = extractApiData(profileResponse.data);
+      if (profileData) {
+        setProfile(profileData);
+        setEditedProfile(profileData);
+      } else {
+        setProfile(null);
+        setEditedProfile({});
 
-      // Bank details
-      try {
-        const bankResponse = await axios.get(
-          APIV3Dictionary.payroll.employee.bankDetails(user.id),
-          { withCredentials: true }
-        );
-
-        const bankPayload = Array.isArray(bankResponse.data)
-          ? bankResponse.data[0]
-          : bankResponse.data?.data?.[0];
-
-        if (bankPayload) {
-          setBankDetails(bankPayload);
-          setEditedBankDetails(bankPayload);
-        } else {
-          throw new Error('Empty bank details response');
-        }
-      } catch (bankError) {
-        console.warn('Falling back to mock bank details:', bankError);
-        setBankDetails(mockBankDetails);
-        setEditedBankDetails(mockBankDetails);
-        fallbackUsed = true;
-      }
-
-      // Payslips for recent months
-      try {
-        const currentDate = new Date();
-        const currentMonth = currentDate.getMonth() + 1;
-        const currentYear = currentDate.getFullYear();
-
-        const payslipPromises = [] as Array<Promise<any>>;
-        for (let i = 0; i < 6; i++) {
-          let month = currentMonth - i;
-          let year = currentYear;
-
-          if (month <= 0) {
-            month += 12;
-            year -= 1;
-          }
-
-          payslipPromises.push(
-            axios
-              .get(APIV3Dictionary.payroll.getPayslip(month, year, user.id), {
-                withCredentials: true
-              })
-              .catch(() => null)
-          );
-        }
-
-        const payslipResponses = await Promise.all(payslipPromises);
-        const payslipData = payslipResponses
-          .filter((response) => response && response.data && response.data.success)
-          .map((response) => {
-            if (!response) return null;
-            const data = response.data.data;
-            return {
-              id: data.id,
-              month: data.month,
-              year: data.year,
-              basicSalary: data.basicSalary,
-              netSalary: data.netSalary,
-              allowances: data.allowances || {},
-              deductions: data.deductions || {},
-              status: data.status || 'PROCESSED',
-              processedAt: data.processedAt,
-              downloadUrl: APIV3Dictionary.payroll.downloadPayslip(data.id)
-            };
-          })
-          .filter(Boolean) as PayslipPreview[];
-
-        if (payslipData.length > 0) {
-          setPayslips(payslipData);
-        } else {
-          throw new Error('No payslips available');
-        }
-      } catch (payslipError) {
-        console.warn('Falling back to mock payslips:', payslipError);
-        setPayslips(mockPayslips);
-        fallbackUsed = true;
-      }
-
-      // Disputes placeholder (mock until API ready)
-      setDisputes(mockDisputes);
-      if (mockDisputes.length > 0) {
-        fallbackUsed = true;
+        const message =
+          profileResponse.data?.message || 'Could not load employee profile information.';
+        errors.push(message);
       }
     } catch (error) {
-      console.error('Error fetching employee data:', error);
-      setProfile(mockEmployeeProfile);
-      setEditedProfile(mockEmployeeProfile);
-      setBankDetails(mockBankDetails);
-      setEditedBankDetails(mockBankDetails);
-      setPayslips(mockPayslips);
-      setDisputes(mockDisputes);
-      fallbackUsed = true;
-    } finally {
-      setIsLoading(false);
-
-      if (fallbackUsed && !usingMockData) {
-        toast({
-          title: 'Demo data loaded',
-          description: 'Self-service APIs are partially unavailable. Showing offline data so the portal stays usable.'
-        });
-        setUsingMockData(true);
-      }
-
-      if (!fallbackUsed && usingMockData) {
-        setUsingMockData(false);
-      }
+      const message = getErrorMessage(error, 'Failed to load employee profile information.');
+      console.error('Error fetching employee profile:', error);
+      setProfile(null);
+      setEditedProfile({});
+      errors.push(message);
     }
-  }, [user?.id, usingMockData]);
+
+    // Bank details
+    try {
+      const bankResponse = await axios.get<ApiResponse<BankDetails | BankDetails[]>>(
+        APIV3Dictionary.payroll.employee.bankDetails(user.id),
+        { withCredentials: true }
+      );
+
+  const bankData = extractApiData(bankResponse.data);
+      const bankEntry = Array.isArray(bankData) ? bankData[0] : bankData;
+
+      if (bankEntry) {
+        setBankDetails(bankEntry);
+        setEditedBankDetails(bankEntry);
+      } else {
+        setBankDetails(null);
+        setEditedBankDetails({});
+
+        if (bankResponse.data?.message) {
+          errors.push(bankResponse.data.message);
+        }
+      }
+    } catch (error) {
+      const message = getErrorMessage(error, 'Failed to load bank details.');
+      console.error('Error fetching bank details:', error);
+      setBankDetails(null);
+      setEditedBankDetails({});
+      errors.push(message);
+    }
+
+    // Payslips for recent months
+    try {
+      const currentDate = new Date();
+      const currentMonth = currentDate.getMonth() + 1;
+      const currentYear = currentDate.getFullYear();
+
+      const payslipPromises: Array<Promise<PayslipPreview | null>> = [];
+
+      for (let i = 0; i < 6; i++) {
+        let month = currentMonth - i;
+        let year = currentYear;
+
+        if (month <= 0) {
+          month += 12;
+          year -= 1;
+        }
+
+        payslipPromises.push(
+          axios
+            .get<ApiResponse<PayslipApiPayload>>(APIV3Dictionary.payroll.getPayslip(month, year, user.id), {
+              withCredentials: true
+            })
+            .then((response) => {
+              if (response.data?.success === false) {
+                return null;
+              }
+
+              const data = response.data?.data;
+              if (!data) {
+                return null;
+              }
+
+              return {
+                id: data.id,
+                month: data.month,
+                year: data.year,
+                basicSalary: data.basicSalary,
+                netSalary: data.netSalary,
+                allowances: data.allowances || {},
+                deductions: data.deductions || {},
+                status: data.status || 'PROCESSED',
+                processedAt: data.processedAt,
+                downloadUrl: APIV3Dictionary.payroll.downloadPayslip(data.id)
+              } as PayslipPreview;
+            })
+            .catch((error) => {
+              console.warn('Error fetching payslip:', error);
+              return null;
+            })
+        );
+      }
+
+      const payslipResults = await Promise.all(payslipPromises);
+      const filteredPayslips = payslipResults.filter((payslip): payslip is PayslipPreview => payslip !== null);
+      setPayslips(filteredPayslips);
+    } catch (error) {
+      const message = getErrorMessage(error, 'Failed to load payslips.');
+      console.error('Error fetching payslips:', error);
+      setPayslips([]);
+      errors.push(message);
+    }
+
+    // Disputes
+    try {
+      const disputesResponse = await axios.get<ApiResponse<SalaryDispute[]>>(
+        APIV3Dictionary.payroll.employee.disputes,
+        { withCredentials: true }
+      );
+
+      const disputeData = disputesResponse.data?.data ?? disputesResponse.data;
+      setDisputes(Array.isArray(disputeData) ? disputeData : []);
+    } catch (error) {
+      const message = getErrorMessage(error, 'Failed to load salary disputes.');
+      console.error('Error fetching disputes:', error);
+      setDisputes([]);
+      errors.push(message);
+    }
+
+    setLoadErrors(errors);
+    setIsLoading(false);
+  }, [user?.id]);
 
   // Load employee data
   useEffect(() => {
@@ -221,40 +285,39 @@ const EmployeeSelfServicePortal = () => {
   const saveProfile = async () => {
     if (!user?.id) return;
 
-    if (usingMockData) {
-      setProfile((prev) => ({ ...prev!, ...editedProfile } as EmployeeProfile));
-      setIsEditing(false);
-      toast({
-        title: 'Profile updated locally',
-        description: 'Changes saved in demo mode until backend endpoints are available.'
-      });
-      return;
-    }
-    
     try {
       setIsSaving(true);
       
-      const response = await axios.put(
+      const response = await axios.put<ApiResponse<EmployeeProfile>>(
         APIV3Dictionary.payroll.employee.updateProfile(user.id),
         editedProfile,
         { withCredentials: true }
       );
 
-      if (response.data) {
-        setProfile(prev => ({ ...prev!, ...editedProfile }));
-        setIsEditing(false);
-        
+      if (response.data?.success === false) {
+        const message = response.data.message || 'Failed to update profile. Please try again.';
         toast({
-          title: 'Success',
-          description: 'Profile updated successfully',
+          title: 'Error',
+          description: message,
+          variant: 'destructive',
         });
+        return;
       }
+
+      toast({
+        title: 'Success',
+        description: 'Profile updated successfully.',
+      });
+
+      await fetchEmployeeData({ showLoading: false });
+      setIsEditing(false);
       
     } catch (error) {
+      const message = getErrorMessage(error, 'Failed to update profile. Please try again.');
       console.error('Error saving profile:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update profile. Please try again.',
+        description: message,
         variant: 'destructive',
       });
     } finally {
@@ -266,19 +329,6 @@ const EmployeeSelfServicePortal = () => {
   const saveBankDetails = async () => {
     if (!user?.id) return;
 
-    if (usingMockData) {
-      const bankData = {
-        ...mockBankDetails,
-        ...editedBankDetails
-      } as BankDetails;
-      setBankDetails(bankData);
-      toast({
-        title: 'Bank details stored locally',
-        description: 'Updates will sync once bank APIs are live.'
-      });
-      return;
-    }
-    
     try {
       setIsSaving(true);
       
@@ -290,42 +340,43 @@ const EmployeeSelfServicePortal = () => {
       let response;
       if (bankDetails?.id) {
         // Update existing bank details
-        response = await axios.put(
+        response = await axios.put<ApiResponse<BankDetails>>(
           APIV3Dictionary.payroll.employee.updateBankDetails,
           { ...bankData, id: bankDetails.id },
           { withCredentials: true }
         );
       } else {
         // Create new bank details
-        response = await axios.post(
+        response = await axios.post<ApiResponse<BankDetails>>(
           APIV3Dictionary.payroll.employee.createBankDetails,
           bankData,
           { withCredentials: true }
         );
       }
 
-      if (response.data) {
-        setBankDetails({
-          id: bankDetails?.id || response.data.id || '',
-          accountHolder: editedBankDetails.accountHolder || '',
-          accountNumber: editedBankDetails.accountNumber || '',
-          ifscCode: editedBankDetails.ifscCode || '',
-          bankName: editedBankDetails.bankName || '',
-          createdAt: bankDetails?.createdAt || new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        });
-        
+      if (response.data?.success === false) {
+        const message = response.data.message || 'Failed to update bank details. Please try again.';
         toast({
-          title: 'Success',
-          description: 'Bank details updated successfully',
+          title: 'Error',
+          description: message,
+          variant: 'destructive',
         });
+        return;
       }
+
+      toast({
+        title: 'Success',
+        description: 'Bank details updated successfully.',
+      });
+
+      await fetchEmployeeData({ showLoading: false });
       
     } catch (error) {
+      const message = getErrorMessage(error, 'Failed to update bank details. Please try again.');
       console.error('Error saving bank details:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update bank details. Please try again.',
+        description: message,
         variant: 'destructive',
       });
     } finally {
@@ -335,7 +386,10 @@ const EmployeeSelfServicePortal = () => {
 
   // Submit dispute
   const submitDispute = async () => {
-    if (!selectedPayslip || !disputeForm.reason.trim()) {
+    const reason = disputeForm.reason.trim();
+    const description = disputeForm.description.trim();
+
+    if (!selectedPayslip || !reason) {
       toast({
         title: 'Error',
         description: 'Please provide a reason for the dispute',
@@ -344,60 +398,48 @@ const EmployeeSelfServicePortal = () => {
       return;
     }
 
-    if (usingMockData) {
-      const newDispute: SalaryDispute = {
-        id: `mock-dispute-${Date.now()}`,
-        salaryRecordId: selectedPayslip.id,
-        reason: disputeForm.reason,
-        description: disputeForm.description,
-        status: 'PENDING',
-        createdAt: new Date().toISOString()
-      };
-      setDisputes((prev) => [newDispute, ...prev]);
-      toast({
-        title: 'Dispute recorded',
-        description: 'Dispute saved locally. It will sync when dispute APIs are available.'
-      });
-      setIsDisputeDialogOpen(false);
-      setDisputeForm({ reason: '', description: '' });
-      setSelectedPayslip(null);
-      return;
-    }
-
     try {
       setIsSaving(true);
       
       const disputeData = {
         salaryRecordId: selectedPayslip.id,
-        reason: disputeForm.reason,
-        description: disputeForm.description
+        reason,
+        description
       };
-      
-      const response = await axios.post(
+
+      const response = await axios.post<ApiResponse<SalaryDispute>>(
         APIV3Dictionary.payroll.employee.submitDispute,
         disputeData,
         { withCredentials: true }
       );
 
-      if (response.data) {
-        const newDispute = response.data.data || response.data;
-        setDisputes(prev => [newDispute, ...prev]);
-        
+      if (response.data?.success === false) {
+        const message = response.data.message || 'Failed to submit dispute. Please try again.';
         toast({
-          title: 'Success',
-          description: 'Dispute submitted successfully',
+          title: 'Error',
+          description: message,
+          variant: 'destructive',
         });
-        
-        setIsDisputeDialogOpen(false);
-        setDisputeForm({ reason: '', description: '' });
-        setSelectedPayslip(null);
+        return;
       }
+
+      toast({
+        title: 'Success',
+        description: 'Dispute submitted successfully.',
+      });
+
+      await fetchEmployeeData({ showLoading: false });
+
+      setIsDisputeDialogOpen(false);
+      setDisputeForm({ reason: '', description: '' });
+      setSelectedPayslip(null);
       
     } catch (error) {
+      const message = getErrorMessage(error, 'Failed to submit dispute. Please try again.');
       console.error('Error submitting dispute:', error);
       toast({
         title: 'Error',
-        description: 'Failed to submit dispute. Please try again.',
+        description: message,
         variant: 'destructive',
       });
     } finally {
@@ -407,15 +449,6 @@ const EmployeeSelfServicePortal = () => {
 
   // Download payslip
   const downloadPayslip = async (payslip: PayslipPreview) => {
-    if (usingMockData) {
-      toast({
-        title: 'Download unavailable in demo mode',
-        description: 'Connect to the payroll backend to download official payslips.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
     try {
       const response = await axios.get(
         APIV3Dictionary.payroll.downloadPayslip(payslip.id),
@@ -515,6 +548,22 @@ const EmployeeSelfServicePortal = () => {
           <p className="text-muted-foreground">Manage your profile, view payslips, and access HR services</p>
         </div>
       </div>
+
+      {loadErrors.length > 0 && (
+        <Alert variant="destructive">
+          <AlertTitle>Some information failed to load</AlertTitle>
+          <AlertDescription>
+            <ul className="list-disc list-inside space-y-1">
+              {loadErrors.map((error, index) => {
+                const message = typeof error === 'string' ? error : JSON.stringify(error);
+                return (
+                  <li key={`${message}-${index}`}>{message}</li>
+                );
+              })}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-5">
@@ -646,7 +695,7 @@ const EmployeeSelfServicePortal = () => {
                   <Label>Department</Label>
                   <div className="flex items-center gap-2">
                     <Building2 className="h-4 w-4" />
-                    <span>{profile?.department.name}</span>
+                    <span>{profile?.department?.name ?? 'Not assigned'}</span>
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -740,53 +789,57 @@ const EmployeeSelfServicePortal = () => {
                     <p>No payslips available</p>
                   </div>
                 ) : (
-                  payslips.map((payslip) => (
-                    <div key={payslip.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="space-y-1">
-                        <h4 className="font-medium">
-                          {getMonthName(payslip.month)} {payslip.year}
-                        </h4>
-                        <p className="text-sm text-muted-foreground">
-                          Net Salary: {formatCurrency(payslip.netSalary)}
-                        </p>
+                  payslips.map((payslip) => {
+                    const payslipKey = payslip.id ?? `${payslip.year}-${payslip.month}-${user?.id ?? 'self'}`;
+
+                    return (
+                      <div key={payslipKey} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="space-y-1">
+                          <h4 className="font-medium">
+                            {getMonthName(payslip.month)} {payslip.year}
+                          </h4>
+                          <p className="text-sm text-muted-foreground">
+                            Net Salary: {formatCurrency(payslip.netSalary)}
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={getStatusBadgeVariant(payslip.status)}>
+                              {payslip.status}
+                            </Badge>
+                            {payslip.processedAt && (
+                              <span className="text-xs text-muted-foreground">
+                                Processed: {new Date(payslip.processedAt).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant={getStatusBadgeVariant(payslip.status)}>
-                            {payslip.status}
-                          </Badge>
-                          {payslip.processedAt && (
-                            <span className="text-xs text-muted-foreground">
-                              Processed: {new Date(payslip.processedAt).toLocaleDateString()}
-                            </span>
-                          )}
+                          <Button size="sm" variant="outline">
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Details
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => downloadPayslip(payslip)}
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            Download
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedPayslip(payslip);
+                              setIsDisputeDialogOpen(true);
+                            }}
+                          >
+                            <AlertCircle className="h-4 w-4 mr-2" />
+                            Dispute
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button size="sm" variant="outline">
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Details
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => downloadPayslip(payslip)}
-                        >
-                          <Download className="h-4 w-4 mr-2" />
-                          Download
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setSelectedPayslip(payslip);
-                            setIsDisputeDialogOpen(true);
-                          }}
-                        >
-                          <AlertCircle className="h-4 w-4 mr-2" />
-                          Dispute
-                        </Button>
-                      </div>
-                    </div>
-                  ))
+                      );
+                  })
                 )}
               </div>
             </CardContent>
@@ -812,36 +865,40 @@ const EmployeeSelfServicePortal = () => {
                     <p className="text-sm">All your salary records are in order</p>
                   </div>
                 ) : (
-                  disputes.map((dispute) => (
-                    <div key={dispute.id} className="p-4 border rounded-lg space-y-2">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-medium">Dispute #{dispute.id}</h4>
-                        <Badge variant={getStatusBadgeVariant(dispute.status)}>
-                          {dispute.status.replace('_', ' ')}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Reason: {dispute.reason}
-                      </p>
-                      {dispute.description && (
-                        <p className="text-sm">
-                          Description: {dispute.description}
-                        </p>
-                      )}
-                      {dispute.resolutionNote && (
-                        <div className="bg-gray-50 p-3 rounded-md">
-                          <p className="text-sm font-medium">Resolution:</p>
-                          <p className="text-sm">{dispute.resolutionNote}</p>
+                  disputes.map((dispute, index) => {
+                    const disputeKey = dispute.id ?? `${dispute.salaryRecordId}-${dispute.createdAt ?? index}`;
+
+                    return (
+                      <div key={disputeKey} className="p-4 border rounded-lg space-y-2">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-medium">Dispute #{dispute.id}</h4>
+                          <Badge variant={getStatusBadgeVariant(dispute.status)}>
+                            {dispute.status.replace('_', ' ')}
+                          </Badge>
                         </div>
-                      )}
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span>Filed: {new Date(dispute.createdAt).toLocaleDateString()}</span>
-                        {dispute.resolvedAt && (
-                          <span>Resolved: {new Date(dispute.resolvedAt).toLocaleDateString()}</span>
+                        <p className="text-sm text-muted-foreground">
+                          Reason: {dispute.reason}
+                        </p>
+                        {dispute.description && (
+                          <p className="text-sm">
+                            Description: {dispute.description}
+                          </p>
                         )}
+                        {dispute.resolutionNote && (
+                          <div className="bg-gray-50 p-3 rounded-md">
+                            <p className="text-sm font-medium">Resolution:</p>
+                            <p className="text-sm">{dispute.resolutionNote}</p>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <span>Filed: {new Date(dispute.createdAt).toLocaleDateString()}</span>
+                          {dispute.resolvedAt && (
+                            <span>Resolved: {new Date(dispute.resolvedAt).toLocaleDateString()}</span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </CardContent>

@@ -31,6 +31,7 @@ import {
 } from 'lucide-react'
 import { MonthAndYearSelector } from '../ui/MonthYearPicker'
 import { PayrollCycle, PayrollStatistics } from '../types/payroll'
+import { useNavigate } from 'react-router-dom'
 
 interface PayrollDashboardResponse {
   success: boolean
@@ -60,6 +61,7 @@ const getErrorMessage = (error: unknown, fallback: string) => {
 
 const PayrollAdminDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [statistics, setStatistics] = useState<PayrollStatistics | null>(null);
   const [cycles, setCycles] = useState<PayrollCycle[]>([]);
@@ -150,6 +152,15 @@ const PayrollAdminDashboard = () => {
       setIsLoading(false);
     }
   }, [selectedYear, user?.id]);
+
+  const navigateToTemplates = (tab?: string) => {
+    const basePath = '/p/payroll/admin/templates';
+    navigate(tab ? `${basePath}?tab=${tab}` : basePath);
+  };
+
+  const navigateToEmployeePortal = () => navigate('/p/payroll/employee');
+  const navigateToBankManagement = () => navigate('/p/profile/bank');
+  const navigateToNotificationSettings = () => navigate('/p/notification/settings');
 
   useEffect(() => {
     fetchDashboardData();
@@ -526,15 +537,15 @@ const PayrollAdminDashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button className="w-full" variant="outline">
+                <Button className="w-full" variant="outline" onClick={() => navigateToTemplates()}>
                   <FileText className="h-4 w-4 mr-2" />
                   Manage Salary Templates
                 </Button>
-                <Button className="w-full" variant="outline">
+                <Button className="w-full" variant="outline" onClick={() => navigateToTemplates('rules')}>
                   <Settings className="h-4 w-4 mr-2" />
                   Configure Calculation Rules
                 </Button>
-                <Button className="w-full" variant="outline">
+                <Button className="w-full" variant="outline" onClick={() => navigateToTemplates('assignments')}>
                   <Users className="h-4 w-4 mr-2" />
                   Apply to Users/Departments
                 </Button>
@@ -552,15 +563,15 @@ const PayrollAdminDashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button className="w-full" variant="outline">
+                <Button className="w-full" variant="outline" onClick={navigateToEmployeePortal}>
                   <Users className="h-4 w-4 mr-2" />
                   Employee Self-Service Portal
                 </Button>
-                <Button className="w-full" variant="outline">
+                <Button className="w-full" variant="outline" onClick={navigateToBankManagement}>
                   <FileText className="h-4 w-4 mr-2" />
                   Bank Details Management
                 </Button>
-                <Button className="w-full" variant="outline">
+                <Button className="w-full" variant="outline" onClick={navigateToNotificationSettings}>
                   <AlertCircle className="h-4 w-4 mr-2" />
                   Notification Settings
                 </Button>
