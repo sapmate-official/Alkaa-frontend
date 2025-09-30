@@ -24,8 +24,11 @@ export const APIV3Dictionary = {
         cyclesReview: `${backendDomain}/api/v3/payroll/cycles/review`,
         statistics: `${backendDomain}/api/v3/payroll/statistics`,
         startCycle: (cycleId: string) => `${backendDomain}/api/v3/payroll/cycle/start/${cycleId}`,
+        submitCycle: (cycleId: string) => `${backendDomain}/api/v3/payroll/cycle/submit/${cycleId}`,
         approveCycle: (cycleId: string) => `${backendDomain}/api/v3/payroll/cycle/approve/${cycleId}`,
         getCycleDetails: (cycleId: string) => `${backendDomain}/api/v3/payroll/cycle/${cycleId}`,
+    getCycleProcessingStatus: (cycleId: string) => `${backendDomain}/api/v3/payroll/cycle/${cycleId}/status`,
+        deleteCycle: (cycleId: string) => `${backendDomain}/api/v3/payroll/cycle/${cycleId}`,
         bulkGenerate: `${backendDomain}/api/v3/payroll/bulk-generate`,
         dashboard: `${backendDomain}/api/v3/payroll/dashboard`,
         
@@ -81,6 +84,12 @@ export const APIV3Dictionary = {
             banking: `${backendDomain}/api/v3/payroll/integrations/banking`,
             tax: `${backendDomain}/api/v3/payroll/integrations/tax`,
             notifications: `${backendDomain}/api/v3/payroll/integrations/notifications`,
+        },
+
+        transactions: {
+            list: `${backendDomain}/api/v3/payroll/transactions`,
+            pay: `${backendDomain}/api/v3/payroll/transactions/pay`,
+            bySalaryRecord: (salaryRecordId: string) => `${backendDomain}/api/v3/payroll/transactions/${salaryRecordId}`
         },
     },
     attendance: AttendanceAPIV3Dictionary

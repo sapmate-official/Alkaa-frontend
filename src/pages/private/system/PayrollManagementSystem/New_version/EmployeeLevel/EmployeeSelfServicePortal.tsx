@@ -45,6 +45,7 @@ import {
   PayslipPreview,
   SalaryDispute
 } from '../types/payroll'
+import { useLocation, useSearchParams } from 'react-router-dom'
 
 interface ApiResponse<T> {
   success?: boolean
@@ -61,8 +62,16 @@ interface PayslipApiPayload {
   allowances?: Record<string, number>
   deductions?: Record<string, number>
   status?: string
+  paymentStatus?: 'PENDING' | 'INITIATED' | 'COMPLETED' | 'FAILED'
   processedAt?: string
 }
+
+const EMPLOYEE_PORTAL_TABS = ['profile', 'bank-details', 'payslips', 'disputes', 'notifications'] as const;
+
+const isPortalTab = (value?: string | null): value is (typeof EMPLOYEE_PORTAL_TABS)[number] => {
+  if (!value) return false;
+  return (EMPLOYEE_PORTAL_TABS as readonly string[]).includes(value);
+};
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (axios.isAxiosError(error)) {
@@ -98,6 +107,19 @@ const extractApiData = <T,>(payload: ApiResponse<T> | T | undefined): T | null =
 
 const EmployeeSelfServicePortal = () => {
   const { user } = useAuth();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const initialTabFromState = (() => {
+    const stateTab = (location.state as Record<string, unknown> | null)?.defaultTab;
+    if (typeof stateTab === 'string' && isPortalTab(stateTab)) {
+      return stateTab;
+    }
+    const queryTab = searchParams.get('tab');
+    if (isPortalTab(queryTab)) {
+      return queryTab;
+    }
+    return 'profile';
+  })();
   const [profile, setProfile] = useState<EmployeeProfile | null>(null);
   const [bankDetails, setBankDetails] = useState<BankDetails | null>(null);
   const [payslips, setPayslips] = useState<PayslipPreview[]>([]);
@@ -105,7 +127,14 @@ const EmployeeSelfServicePortal = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState('profile');
+  const [activeTab, setActiveTab] = useState<string>(initialTabFromState);
+
+  useEffect(() => {
+    if (location.state && (location.state as Record<string, unknown>).defaultTab) {
+      // Clear the default tab state after first use to avoid persistent navigation state
+      window.history.replaceState({ ...location.state, defaultTab: undefined }, document.title);
+    }
+  }, [location.state]);
   const [selectedPayslip, setSelectedPayslip] = useState<PayslipPreview | null>(null);
   const [isDisputeDialogOpen, setIsDisputeDialogOpen] = useState(false);
   const [loadErrors, setLoadErrors] = useState<string[]>([]);
@@ -236,6 +265,7 @@ const EmployeeSelfServicePortal = () => {
                 allowances: data.allowances || {},
                 deductions: data.deductions || {},
                 status: data.status || 'PROCESSED',
+                paymentStatus: data.paymentStatus || 'PENDING',
                 processedAt: data.processedAt,
                 downloadUrl: APIV3Dictionary.payroll.downloadPayslip(data.id)
               } as PayslipPreview;

@@ -47,6 +47,7 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ value, onChange, onRoleCrea
   const [currentTab, setCurrentTab] = useState('existing');
   const [isCreating, setIsCreating] = useState(false);
   const [permissionsByModule, setPermissionsByModule] = useState<Record<string, Permission[]>>({});
+  const [permissionSearchTerm, setPermissionSearchTerm] = useState('');
 
   // Role presets based on common roles
   const rolePresets = [
@@ -162,14 +163,19 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ value, onChange, onRoleCrea
   const applyPreset = (preset: typeof rolePresets[0]) => {
     setNewRoleName(preset.name);
     setNewRoleDescription(preset.description);
+    setPermissionSearchTerm('');
     
-    // Find matching permissions
+    const presetKeywords = preset.permissions.map(keyword => keyword.toLowerCase());
+
     const matchingPermissions = permissions
-      .filter(p => preset.permissions.some(presetPerm => 
-        p.name.toLowerCase().includes(presetPerm.toLowerCase()) ||
-        p.description.toLowerCase().includes(presetPerm.toLowerCase())
-      ))
-      .map(p => p.id);
+      .filter(permission => {
+        const name = permission?.name?.toLowerCase?.() ?? '';
+        const description = permission?.description?.toLowerCase?.() ?? '';
+        return presetKeywords.some(keyword =>
+          (name && name.includes(keyword)) || (description && description.includes(keyword))
+        );
+      })
+      .map(permission => permission.id);
     
     setSelectedPermissions(matchingPermissions);
     setCurrentTab('custom');
@@ -197,7 +203,15 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ value, onChange, onRoleCrea
           </SelectContent>
         </Select>
         
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <Dialog
+          open={isCreateDialogOpen}
+          onOpenChange={(open) => {
+            setIsCreateDialogOpen(open);
+            if (!open) {
+              setPermissionSearchTerm('');
+            }
+          }}
+        >
           <DialogTrigger asChild>
             <Button variant="outline" size="icon" type="button">
               <Plus className="h-4 w-4" />
@@ -291,6 +305,13 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ value, onChange, onRoleCrea
                         </Button>
                       </div>
                     </div>
+                        <Input
+                          type="search"
+                          placeholder="Search permissions by name or description"
+                          value={permissionSearchTerm}
+                          onChange={(e) => setPermissionSearchTerm(e.target.value)}
+                          className="mb-3"
+                        />
                     
                     {permissions.length === 0 ? (
                       <div className="h-[240px] border rounded-md p-4 flex items-center justify-center">
@@ -300,39 +321,62 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ value, onChange, onRoleCrea
                         </div>
                       </div>
                     ) : (
-                      <ScrollArea className="h-[240px] border rounded-md p-2">
-                        {Object.entries(permissionsByModule).map(([module, modulePermissions]) => (
-                          <div key={module} className="mb-3">
-                            <h5 className="font-medium text-sm mb-2 text-primary">{module}</h5>
-                            {modulePermissions.map((permission) => (
-                              <div key={permission.id} className="flex items-start space-x-2 py-2 px-1">
-                                <Checkbox
-                                  id={permission.id}
-                                  checked={selectedPermissions.includes(permission.id)}
-                                  onCheckedChange={(checked) => {
-                                    if (checked) {
-                                      setSelectedPermissions(prev => [...prev, permission.id]);
-                                    } else {
-                                      setSelectedPermissions(prev => prev.filter(id => id !== permission.id));
-                                    }
-                                  }}
-                                />
-                                <div className="space-y-1">
-                                  <Label
-                                    htmlFor={permission.id}
-                                    className="text-sm font-medium cursor-pointer"
-                                  >
-                                    {permission.name}
-                                  </Label>
-                                  {permission.description && (
-                                    <p className="text-xs text-muted-foreground">{permission.description}</p>
-                                  )}
+                          <ScrollArea className="h-[240px] border rounded-md p-2">
+                            {(() => {
+                              const trimmedTerm = permissionSearchTerm.trim().toLowerCase();
+                              const filteredModules = Object.entries(permissionsByModule)
+                                .map(([module, modulePermissions]) => {
+                                  const filteredPermissions = modulePermissions.filter((permission) => {
+                                    if (!trimmedTerm) return true;
+                                    const name = permission?.name?.toLowerCase?.() ?? '';
+                                    const description = permission?.description?.toLowerCase?.() ?? '';
+                                    return (name && name.includes(trimmedTerm)) || (description && description.includes(trimmedTerm));
+                                  });
+                                  return { module, permissions: filteredPermissions };
+                                })
+                                .filter(({ permissions }) => permissions.length > 0);
+
+                              if (filteredModules.length === 0) {
+                                return (
+                                  <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+                                    No permissions match "{permissionSearchTerm}"
+                                  </div>
+                                );
+                              }
+
+                              return filteredModules.map(({ module, permissions }) => (
+                                <div key={module} className="mb-3">
+                                  <h5 className="font-medium text-sm mb-2 text-primary">{module}</h5>
+                                  {permissions.map((permission) => (
+                                    <div key={permission.id} className="flex items-start space-x-2 py-2 px-1">
+                                      <Checkbox
+                                        id={permission.id}
+                                        checked={selectedPermissions.includes(permission.id)}
+                                        onCheckedChange={(checked) => {
+                                          if (checked) {
+                                            setSelectedPermissions(prev => [...prev, permission.id]);
+                                          } else {
+                                            setSelectedPermissions(prev => prev.filter(id => id !== permission.id));
+                                          }
+                                        }}
+                                      />
+                                      <div className="space-y-1">
+                                        <Label
+                                          htmlFor={permission.id}
+                                          className="text-sm font-medium cursor-pointer"
+                                        >
+                                          {permission.name}
+                                        </Label>
+                                        {permission.description && (
+                                          <p className="text-xs text-muted-foreground">{permission.description}</p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
                                 </div>
-                              </div>
-                            ))}
-                          </div>
-                        ))}
-                      </ScrollArea>
+                              ));
+                            })()}
+                          </ScrollArea>
                     )}
                   </div>
                   

@@ -32,7 +32,7 @@ interface PayrollCycle {
   id: string
   month: number
   year: number
-  status: 'DRAFT' | 'IN_PROGRESS' | 'REVIEW_PENDING' | 'APPROVED' | 'COMPLETED' | 'FAILED'
+  status: 'DRAFT' | 'IN_PROGRESS' | 'REVIEW' | 'APPROVED' | 'COMPLETED' | 'CANCELLED' | 'FAILED'
   totalEmployees: number
   processedCount: number
   failedCount: number
@@ -220,14 +220,15 @@ const PayrollDashboard = () => {
         return { color: 'secondary', icon: <FileText className="h-4 w-4" />, label: 'Draft' }
       case 'IN_PROGRESS':
         return { color: 'warning', icon: <Clock className="h-4 w-4" />, label: 'In Progress' }
-      case 'REVIEW_PENDING':
-        return { color: 'warning', icon: <AlertCircle className="h-4 w-4" />, label: 'Review Pending' }
+      case 'REVIEW':
+        return { color: 'warning', icon: <AlertCircle className="h-4 w-4" />, label: 'Review' }
       case 'APPROVED':
         return { color: 'success', icon: <CheckCircle className="h-4 w-4" />, label: 'Approved' }
       case 'COMPLETED':
         return { color: 'success', icon: <Check className="h-4 w-4" />, label: 'Completed' }
+      case 'CANCELLED':
       case 'FAILED':
-        return { color: 'destructive', icon: <XCircle className="h-4 w-4" />, label: 'Failed' }
+        return { color: 'destructive', icon: <XCircle className="h-4 w-4" />, label: 'Cancelled' }
       default:
         return { color: 'secondary', icon: <FileText className="h-4 w-4" />, label: status }
     }
