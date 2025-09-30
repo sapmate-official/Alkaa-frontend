@@ -24,7 +24,7 @@ export interface PayrollCycle {
   id: string;
   month: number;
   year: number;
-  status: 'DRAFT' | 'IN_PROGRESS' | 'REVIEW_PENDING' | 'APPROVED' | 'CANCELLED' | 'FAILED';
+  status: 'DRAFT' | 'IN_PROGRESS' | 'REVIEW' | 'APPROVED' | 'COMPLETED' | 'CANCELLED' | 'FAILED';
   totalEmployees: number;
   processedCount: number;
   failedCount: number;
@@ -32,14 +32,105 @@ export interface PayrollCycle {
   startedAt?: string;
   completedAt?: string;
   approvedAt?: string;
+  templateId?: string;
   processor?: {
-    firstName: string;
-    lastName: string;
-  };
+    firstName?: string | null;
+    lastName?: string | null;
+    email?: string | null;
+  } | null;
   approver?: {
-    firstName: string;
-    lastName: string;
-  };
+    firstName?: string | null;
+    lastName?: string | null;
+    email?: string | null;
+  } | null;
+}
+
+export interface PayrollCycleDetails extends PayrollCycle {
+  organization?: {
+    name?: string | null;
+  } | null;
+  template?: {
+    id: string;
+    name: string;
+    description?: string | null;
+  } | null;
+  processor?: {
+    firstName?: string | null;
+    lastName?: string | null;
+    email?: string | null;
+  } | null;
+  approver?: {
+    firstName?: string | null;
+    lastName?: string | null;
+    email?: string | null;
+  } | null;
+  salaryRecords: Array<{
+    id: string;
+    basicSalary: number;
+    netSalary: number;
+    status: PayrollRecord['status'];
+    paymentStatus?: PayrollRecord['paymentStatus'];
+    processedAt?: string;
+    reviewedAt?: string;
+    reviewComments?: string | null;
+    allowances?: Record<string, number> | null;
+    deductions?: Record<string, number> | null;
+    templateId?: string | null;
+    templateName?: string | null;
+    previousNetSalary?: number | null;
+    calculationDetails?: Array<{
+      type: 'earning' | 'deduction' | 'tax' | 'contribution' | 'adjustment';
+      label: string;
+      amount: number;
+      description?: string | null;
+      formula?: string | null;
+      metadata?: Record<string, unknown>;
+    }>;
+    attendanceSummary?: {
+      totalDays?: number;
+      workingDays?: number;
+      presentDays?: number;
+      halfDays?: number;
+      absentDays?: number;
+      paidLeaveDays?: number;
+      unpaidLeaveDays?: number;
+      overtimeHours?: number;
+      lateMarks?: number;
+      regularizationCount?: number;
+      rawEntries?: Array<{
+        id?: string;
+        date: string;
+        status?: string;
+        checkIn?: string | null;
+        checkOut?: string | null;
+        durationHours?: number;
+        notes?: string | null;
+        source?: string | null;
+        leaveType?: string | null;
+      }>;
+    } | null;
+    user: {
+      id?: string;
+      firstName?: string | null;
+      lastName?: string | null;
+      email?: string | null;
+      employeeId?: string | null;
+      department?: {
+        name?: string | null;
+      } | null;
+    };
+  }>;
+  auditLogs: Array<{
+    id: string;
+    action: string;
+    createdAt: string;
+    user?: {
+      firstName?: string | null;
+      lastName?: string | null;
+    } | null;
+    previousData?: unknown;
+    newData?: unknown;
+  }>;
 }
 
 export interface PayrollStatistics {
@@ -58,6 +149,20 @@ export interface PayrollStatistics {
   }>;
 }
 
+export interface PayrollCycleDeletionResult {
+  deletedCycle: PayrollCycle;
+  counts: {
+    salaryRecords: number;
+    salaryTransactionLinks: number;
+    salaryDisputes: number;
+    payrollAudits: number;
+    payrollCycleAudits: number;
+    workflowSteps: number;
+  };
+  jobCancelled: boolean;
+  deletedBy: string;
+}
+
 export interface PayrollRecord {
   id: string;
   employee: {
@@ -73,7 +178,8 @@ export interface PayrollRecord {
   netSalary: number;
   allowances: Record<string, number>;
   deductions: Record<string, number>;
-  status: 'PENDING' | 'PROCESSED' | 'APPROVED' | 'REJECTED' | 'PAID';
+  status: 'PENDING' | 'PROCESSING' | 'IN_PROGRESS' | 'PROCESSED' | 'APPROVED' | 'REJECTED' | 'FAILED' | 'PAID';
+  paymentStatus?: 'PENDING' | 'INITIATED' | 'COMPLETED' | 'FAILED';
   processedAt?: string;
   reviewedAt?: string;
   reviewComments?: string;
@@ -181,6 +287,7 @@ export interface PayslipPreview {
   allowances: Record<string, number>;
   deductions: Record<string, number>;
   status: 'PENDING' | 'PROCESSED' | 'PAID';
+  paymentStatus?: 'PENDING' | 'INITIATED' | 'COMPLETED' | 'FAILED';
   processedAt?: string;
   downloadUrl?: string;
 }
@@ -194,4 +301,55 @@ export interface SalaryDispute {
   resolutionNote?: string;
   createdAt: string;
   resolvedAt?: string;
+}
+
+export interface PayrollCycleProcessingError {
+  employeeId?: string;
+  employeeName?: string;
+  error?: string;
+}
+
+export interface PayrollCycleProgressSnapshot {
+  processedCount: number;
+  failedCount: number;
+  totalAmount: number;
+  totalEmployees: number;
+  percentComplete?: number;
+  elapsedMs?: number;
+  durationMs?: number;
+  etaMs?: number | null;
+  updatedAt?: string;
+  generatedAt?: string;
+  completedAt?: string;
+  lastEmployeeId?: string;
+  lastSalaryRecordId?: string;
+  message?: string;
+}
+
+export interface PayrollCycleProcessingStatusResponse {
+  cycle: {
+    id: string;
+    status: PayrollCycle['status'];
+    startedAt?: string | null;
+    completedAt?: string | null;
+    processedCount: number;
+    failedCount: number;
+    totalEmployees: number;
+    totalAmount: number;
+    updatedAt?: string;
+    processingSummary?: PayrollCycleProgressSnapshot | null;
+    errors?: PayrollCycleProcessingError[];
+  };
+  progress?: PayrollCycleProgressSnapshot | null;
+  job?: {
+    id: string;
+    status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+    attempts: number;
+    maxAttempts: number;
+    scheduledFor: string;
+    completedAt?: string | null;
+    error?: string | null;
+    priority: number;
+    updatedAt: string;
+  } | null;
 }

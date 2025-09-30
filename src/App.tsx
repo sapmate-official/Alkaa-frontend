@@ -32,6 +32,7 @@ const BillingModule = lazy(() => import('./pages/private/system/BillingManagemen
 const LeaveModule = lazy(() => import('./pages/private/system/LeaveManagementSystem/LeaveModule'));
 const OnboardingModule = lazy(() => import('./pages/private/system/OnboardingManagementSystem/OnboardingModule'));
 const TaskModule = lazy(() => import('./pages/private/system/TaskManagementSystem/index.tsx'));
+const OnboardingPublicForm = lazy(() => import('./components/onboarding/OnboardingForm'));
 import HolidayManagementSystem from './pages/private/system/HolidayManagementSystem/HolidayDashboard.tsx';
 import ModernRolePermissionPage from './pages/private/system/RoleManagementSystem/ModernRolePermissionPage.tsx';
 
@@ -55,6 +56,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/reset-password/:token" element={<SetPassword />} />
           <Route path="/auth/signin" element={<AuthProvider><SignIn /></AuthProvider>} />
+          <Route path="/onboarding/:token" element={<OnboardingPublicForm />} />
           
           {/* Protected Routes - Wrapped in AuthProvider */}
           <Route
