@@ -148,7 +148,7 @@ export interface UserRole {
 export interface BankDetails {
   id: string;
   userId: string;
-  accountHolder: string;
+  accountHolderName: string;
   accountNumber: string;
   ifscCode: string;
   bankName: string;

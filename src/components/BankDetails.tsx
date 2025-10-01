@@ -154,7 +154,7 @@ const BankDetails = ({ userId }: BankDetailsProps) => {
         <CardContent className="grid gap-4">
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground font-medium">Account Holder</p>
-            <p className="font-medium">{bankDetails?.accountHolder || 'Not provided'}</p>
+            <p className="font-medium">{bankDetails?.accountHolderName || 'Not provided'}</p>
           </div>
 
           <div className="space-y-1">

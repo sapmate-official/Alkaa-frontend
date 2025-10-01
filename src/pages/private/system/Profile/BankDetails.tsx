@@ -27,7 +27,7 @@ import { useBankDetailsQuery, useUpdateBankDetailsMutation } from '@/hooks/queri
 const BankDetails = () => {
   const form = useForm<IBankDetails>({
     defaultValues: {
-      accountHolder: '',
+      accountHolderName: '',
       accountNumber: '',
       ifscCode: '',
       bankName: '',
@@ -152,7 +152,7 @@ const BankDetails = () => {
                   <div className="grid gap-6 md:grid-cols-2">
                     <FormField
                       control={form.control}
-                      name="accountHolder"
+                      name="accountHolderName"
                       rules={{ required: 'Account holder name is required' }}
                       render={({ field }) => (
                         <FormItem>

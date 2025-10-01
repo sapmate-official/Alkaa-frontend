@@ -73,10 +73,10 @@ export const useBankDetailsQuery = (userId: string) => {
   return useQuery({
     queryKey: profileQueryKeys.bankDetails(userId),
     queryFn: async () => {
-      const response = await axios.get(`${APIDictionary.bank}/${userId}`, {
+      const response = await axios.get(`${APIDictionary.bank}/user/${userId}`, {
         withCredentials: true
       })
-      return response.data as IBankDetails
+      return response.data?.data || null
     },
     enabled: !!userId,
     staleTime: 5 * 60 * 1000,
@@ -143,7 +143,7 @@ export const useUpdateBankDetailsMutation = () => {
 
   return useMutation({
     mutationFn: async (data: IBankDetails) => {
-      const response = await axios.put(APIDictionary.bank, data, {
+      const response = await axios.post(APIDictionary.bank, data, {
         withCredentials: true
       })
       return response.data

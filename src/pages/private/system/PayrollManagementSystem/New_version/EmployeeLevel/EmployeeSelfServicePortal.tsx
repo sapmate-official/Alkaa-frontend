@@ -62,7 +62,7 @@ interface PayslipApiPayload {
   allowances?: Record<string, number>
   deductions?: Record<string, number>
   status?: string
-  paymentStatus?: 'PENDING' | 'INITIATED' | 'COMPLETED' | 'FAILED'
+  paymentStatus?: 'PENDING' | 'INITIATED' | 'COMPLETED' | 'FAILED' | 'NO_PAYOUT_REQUIRED'
   processedAt?: string
 }
 
@@ -202,12 +202,19 @@ const EmployeeSelfServicePortal = () => {
         { withCredentials: true }
       );
 
-  const bankData = extractApiData(bankResponse.data);
+      const bankData = extractApiData(bankResponse.data);
       const bankEntry = Array.isArray(bankData) ? bankData[0] : bankData;
 
       if (bankEntry) {
-        setBankDetails(bankEntry);
-        setEditedBankDetails(bankEntry);
+        const normalizedBankEntry: BankDetails = {
+          ...bankEntry,
+          accountHolderName: bankEntry.accountHolderName ?? bankEntry.accountHolder ?? undefined,
+          accountHolder: bankEntry.accountHolder ?? bankEntry.accountHolderName ?? undefined,
+          accountType: bankEntry.accountType ?? 'SAVINGS',
+        };
+
+        setBankDetails(normalizedBankEntry);
+        setEditedBankDetails(normalizedBankEntry);
       } else {
         setBankDetails(null);
         setEditedBankDetails({});
@@ -366,9 +373,20 @@ const EmployeeSelfServicePortal = () => {
     try {
       setIsSaving(true);
       
+      const accountHolderName = (editedBankDetails.accountHolderName ?? editedBankDetails.accountHolder ?? '').trim();
+      const bankName = (editedBankDetails.bankName ?? '').trim();
+      const accountNumber = (editedBankDetails.accountNumber ?? '').toString().trim();
+      const ifscCode = (editedBankDetails.ifscCode ?? '').trim();
+      const accountType = (editedBankDetails.accountType ?? 'SAVINGS').trim();
+
       const bankData = {
-        ...editedBankDetails,
-        userId: user.id
+        userId: user.id,
+        accountHolderName,
+        accountHolder: accountHolderName || undefined,
+        bankName,
+        accountNumber,
+        ifscCode,
+        accountType,
       };
       
       let response;
@@ -532,9 +550,9 @@ const EmployeeSelfServicePortal = () => {
         department: employeeDepartment,
         email: profile?.email ?? user?.email ?? '',
         bankDetails: bankDetails ? {
-          bankName: bankDetails.bankName,
-          accountNumber: bankDetails.accountNumber,
-          ifscCode: bankDetails.ifscCode
+          bankName: bankDetails.bankName ?? '',
+          accountNumber: bankDetails.accountNumber ?? bankDetails.maskedAccountNumber ?? '',
+          ifscCode: bankDetails.ifscCode ?? ''
         } : undefined
       },
       company: {
@@ -854,11 +872,11 @@ const EmployeeSelfServicePortal = () => {
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="accountHolder">Account Holder Name</Label>
+                  <Label htmlFor="accountHolderName">Account Holder Name</Label>
                   <Input
-                    id="accountHolder"
-                    value={editedBankDetails.accountHolder || ''}
-                    onChange={(e) => setEditedBankDetails(prev => ({ ...prev, accountHolder: e.target.value }))}
+                    id="accountHolderName"
+                    value={editedBankDetails.accountHolderName || ''}
+                    onChange={(e) => setEditedBankDetails(prev => ({ ...prev, accountHolderName: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-2">

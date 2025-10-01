@@ -20,6 +20,54 @@ export interface WorkflowStatus {
   blockedSteps: WorkflowStep[];
 }
 
+export type PayrollPayoutStatus = 'NOT_STARTED' | 'INITIATED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED';
+
+export interface PayrollPayoutProgress {
+  totalRecords: number;
+  completedRecords: number;
+  logicalRecords: number;
+  initiatedRecords: number;
+  pendingRecords: number;
+  failedRecords: number;
+  remainingRecords: number;
+  inFlightRecords: number;
+  percentComplete: number;
+  percentRemaining: number;
+  updatedAt?: string;
+  byStatus: {
+    completed: number;
+    logical: number;
+    initiated: number;
+    pending: number;
+    failed: number;
+  };
+  flags: {
+    hasRemaining: boolean;
+    canContinue: boolean;
+    isComplete: boolean;
+    isInitiated: boolean;
+    isNotStarted: boolean;
+  };
+}
+
+export interface PayrollPayoutSummary {
+  totals: Record<'PENDING' | 'INITIATED' | 'COMPLETED' | 'FAILED' | 'NO_PAYOUT_REQUIRED', number>;
+  totalRecords: number;
+  totalAmount: number;
+  sums: {
+    netSalary: number;
+    incentive: number;
+    bonus: number;
+  };
+  latestPayment?: {
+    id: string;
+    amount: number;
+    createdAt: string;
+  } | null;
+  refreshedAt: string;
+  progress?: PayrollPayoutProgress;
+}
+
 export interface PayrollCycle {
   id: string;
   month: number;
@@ -29,6 +77,11 @@ export interface PayrollCycle {
   processedCount: number;
   failedCount: number;
   totalAmount: number;
+  payoutStatus?: PayrollPayoutStatus;
+  payoutInitiatedAt?: string | null;
+  payoutCompletedAt?: string | null;
+  payoutInitiatedBy?: string | null;
+  payoutSummary?: PayrollPayoutSummary | null;
   startedAt?: string;
   completedAt?: string;
   approvedAt?: string;
@@ -69,7 +122,7 @@ export interface PayrollCycleDetails extends PayrollCycle {
     basicSalary: number;
     netSalary: number;
     status: PayrollRecord['status'];
-    paymentStatus?: PayrollRecord['paymentStatus'];
+  paymentStatus?: PayrollRecord['paymentStatus'];
     processedAt?: string;
     reviewedAt?: string;
     reviewComments?: string | null;
@@ -179,7 +232,7 @@ export interface PayrollRecord {
   allowances: Record<string, number>;
   deductions: Record<string, number>;
   status: 'PENDING' | 'PROCESSING' | 'IN_PROGRESS' | 'PROCESSED' | 'APPROVED' | 'REJECTED' | 'FAILED' | 'PAID';
-  paymentStatus?: 'PENDING' | 'INITIATED' | 'COMPLETED' | 'FAILED';
+  paymentStatus?: 'PENDING' | 'INITIATED' | 'COMPLETED' | 'FAILED' | 'NO_PAYOUT_REQUIRED';
   processedAt?: string;
   reviewedAt?: string;
   reviewComments?: string;
@@ -269,13 +322,16 @@ export interface EmployeeProfile {
 }
 
 export interface BankDetails {
-  id: string;
-  accountHolder: string;
-  accountNumber: string;
-  ifscCode: string;
-  bankName: string;
-  createdAt: string;
-  updatedAt: string;
+  id?: string;
+  accountHolder?: string;
+  accountHolderName?: string;
+  accountNumber?: string;
+  maskedAccountNumber?: string;
+  ifscCode?: string;
+  bankName?: string;
+  accountType?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface PayslipPreview {
@@ -287,7 +343,7 @@ export interface PayslipPreview {
   allowances: Record<string, number>;
   deductions: Record<string, number>;
   status: 'PENDING' | 'PROCESSED' | 'PAID';
-  paymentStatus?: 'PENDING' | 'INITIATED' | 'COMPLETED' | 'FAILED';
+  paymentStatus?: 'PENDING' | 'INITIATED' | 'COMPLETED' | 'FAILED' | 'NO_PAYOUT_REQUIRED';
   processedAt?: string;
   downloadUrl?: string;
 }
