@@ -71,7 +71,8 @@ import {
   PayrollCycleDetails,
   PayrollStatistics,
   SalaryTemplate,
-  PayrollCycleProcessingStatusResponse
+  PayrollCycleProcessingStatusResponse,
+  PayrollPayoutStatus
 } from '../types/payroll'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import RouteDict from '@/routes/RouteDict'
@@ -100,6 +101,12 @@ interface PayrollDashboardResponse {
     statistics?: PayrollStatistics | null
     recentCycles?: PayrollCycle[]
   }
+}
+
+interface ApprovedCycleSnapshot {
+  id: string
+  month?: number | null
+  year?: number | null
 }
 
 const TUTORIAL_STORAGE_KEY = 'payroll-admin-dashboard-onboarding-v1'
@@ -149,6 +156,9 @@ const PayrollAdminDashboard = () => {
   const [cyclePendingDelete, setCyclePendingDelete] = useState<PayrollCycle | null>(null);
   const [isDeletingCycle, setIsDeletingCycle] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isApprovalSuccessDialogOpen, setIsApprovalSuccessDialogOpen] = useState(false);
+  const [lastApprovedCycle, setLastApprovedCycle] = useState<ApprovedCycleSnapshot | null>(null);
+  const [lastActiveTabBeforeApproval, setLastActiveTabBeforeApproval] = useState<string | null>(null);
 
   const processingDetailsCache = useRef<Record<string, PayrollCycleDetails>>({});
   const [cycleProgressMap, setCycleProgressMap] = useState<Record<string, PayrollCycleProcessingStatusResponse>>({});
@@ -172,6 +182,104 @@ const PayrollAdminDashboard = () => {
   const [employeeSearchTerm, setEmployeeSearchTerm] = useState('');
   const [searchParams, setSearchParams] = useSearchParams();
   const deepLinkTargetRef = useRef<{ recordId?: string | null; employeeId?: string | null } | null>(null);
+
+  // Transaction mode state
+  const [isTransactionModeOpen, setIsTransactionModeOpen] = useState(false);
+  const [transactionCycleId, setTransactionCycleId] = useState<string | null>(null);
+  const [transactionEmployees, setTransactionEmployees] = useState<any[]>([]);
+  const [currentEmployeeIndex, setCurrentEmployeeIndex] = useState(0);
+  const [transactionDetails, setTransactionDetails] = useState<Record<string, string>>({});
+  const [isProcessingTransaction, setIsProcessingTransaction] = useState(false);
+  const [completedTransactions, setCompletedTransactions] = useState<Set<string>>(new Set());
+  const [transactionSessionDirty, setTransactionSessionDirty] = useState(false);
+
+  const toTitleCase = (value: string) =>
+    value
+      .toLowerCase()
+      .split(' ')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+
+  const getPaymentStatusMeta = (status?: string) => {
+    if (!status) return null;
+    switch (status) {
+      case 'COMPLETED':
+        return { label: 'Paid', className: 'bg-green-100 text-green-700 border-green-200' };
+      case 'FAILED':
+        return { label: 'Failed', className: 'bg-red-100 text-red-700 border-red-200' };
+      case 'INITIATED':
+        return { label: 'Initiated', className: 'bg-amber-100 text-amber-700 border-amber-200' };
+      case 'PENDING':
+        return { label: 'Pending', className: 'bg-slate-100 text-slate-700 border-slate-200' };
+      case 'NO_PAYOUT_REQUIRED':
+        return { label: 'Logical payout (no transfer)', className: 'bg-slate-100 text-slate-800 border-slate-300' };
+      default:
+        return { label: toTitleCase(status.replace(/_/g, ' ')), className: 'bg-slate-100 text-slate-700 border-slate-200' };
+    }
+  };
+
+  const formatPaymentStatus = (status?: string) => getPaymentStatusMeta(status)?.label ?? 'Unknown status';
+
+  const renderPaymentStatusBadge = (status?: string) => {
+    const meta = getPaymentStatusMeta(status);
+    if (!meta) return null;
+    return (
+      <Badge variant="outline" className={meta.className}>
+        {meta.label}
+      </Badge>
+    );
+  };
+
+  const getPayoutStatusMeta = (status?: string) => {
+    const normalized = (status as PayrollPayoutStatus | undefined) ?? 'NOT_STARTED';
+
+    switch (normalized) {
+      case 'COMPLETED':
+        return { label: 'Payout Complete', className: 'bg-green-100 text-green-700 border-green-200' };
+      case 'IN_PROGRESS':
+        return { label: 'Payout In Progress', className: 'bg-blue-100 text-blue-700 border-blue-200' };
+      case 'INITIATED':
+        return { label: 'Payout Initiated', className: 'bg-amber-100 text-amber-700 border-amber-200' };
+      case 'FAILED':
+        return { label: 'Payout Failed', className: 'bg-red-100 text-red-700 border-red-200' };
+      case 'NOT_STARTED':
+      default:
+        return { label: 'Not Started', className: 'bg-slate-100 text-slate-700 border-slate-200' };
+    }
+  };
+
+  const renderPayoutStatusBadge = (status?: string) => {
+    const meta = getPayoutStatusMeta(status);
+    return (
+      <Badge variant="outline" className={meta.className}>
+        {meta.label}
+      </Badge>
+    );
+  };
+
+  
+  // Bank details editing state
+  type BankDetailsFormState = {
+    accountHolderName: string;
+    bankName: string;
+    accountNumber: string;
+    ifscCode: string;
+    accountType: string;
+    maskedAccountNumber?: string;
+    accountHolder?: string;
+  };
+
+  const [isEditingBankDetails, setIsEditingBankDetails] = useState(false);
+  const [bankDetailsForm, setBankDetailsForm] = useState<BankDetailsFormState>({
+    accountHolderName: '',
+    bankName: '',
+    accountNumber: '',
+    ifscCode: '',
+    accountType: 'SAVINGS',
+    maskedAccountNumber: undefined,
+    accountHolder: undefined
+  });
+  const [isSavingBankDetails, setIsSavingBankDetails] = useState(false);
 
   // Current date for default values
   const currentDate = new Date();
@@ -1036,6 +1144,43 @@ const PayrollAdminDashboard = () => {
     }
   };
 
+  const handleApproveCycle = async (
+    cycleSnapshot: ApprovedCycleSnapshot,
+    options?: { onAfterSuccess?: () => void }
+  ) => {
+    setLastActiveTabBeforeApproval(activeTab);
+
+    const approved = await approvePayrollCycle(cycleSnapshot.id);
+
+    if (approved) {
+      setLastApprovedCycle(cycleSnapshot);
+      setIsApprovalSuccessDialogOpen(true);
+      options?.onAfterSuccess?.();
+    }
+
+    if (!approved) {
+      setLastActiveTabBeforeApproval(null);
+    }
+
+    return approved;
+  };
+
+  const handleCloseApprovalSuccessDialog = (restoreTab = true) => {
+    setIsApprovalSuccessDialogOpen(false);
+
+    if (restoreTab && lastActiveTabBeforeApproval) {
+      setActiveTab(lastActiveTabBeforeApproval);
+    }
+
+    setLastActiveTabBeforeApproval(null);
+    setLastApprovedCycle(null);
+  };
+
+  const handleNavigateToTransactionsTab = () => {
+    handleCloseApprovalSuccessDialog(false);
+    setActiveTab('transactions');
+  };
+
   // Get status badge variant
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -1097,6 +1242,28 @@ const PayrollAdminDashboard = () => {
     ? months.find((m) => m.value === selectedCycleDetails.month)?.label ?? `Month ${selectedCycleDetails.month}`
     : null;
 
+  const lastApprovedCycleLabel = useMemo(() => {
+    if (!lastApprovedCycle) {
+      return null;
+    }
+
+    const monthValue = lastApprovedCycle.month ?? null;
+    const yearValue = lastApprovedCycle.year ?? null;
+    const monthLabel = monthValue
+      ? months.find((m) => m.value === monthValue)?.label ?? null
+      : null;
+
+    if (monthLabel && yearValue) {
+      return `${monthLabel} ${yearValue}`;
+    }
+
+    if (yearValue) {
+      return `Cycle ${yearValue}`;
+    }
+
+    return null;
+  }, [lastApprovedCycle, months]);
+
   const totalSalaryRecords = Array.isArray(selectedCycleDetails?.salaryRecords)
     ? selectedCycleDetails.salaryRecords.length
     : 0;
@@ -1130,6 +1297,37 @@ const PayrollAdminDashboard = () => {
       }),
     [cycles, cycleProgressMap]
   );
+
+  const payoutCycleBuckets = useMemo(() => {
+    const eligible = cycles.filter((cycle) => ['APPROVED', 'COMPLETED'].includes(cycle.status));
+    const buckets: {
+      active: PayrollCycle[];
+      completed: PayrollCycle[];
+      failed: PayrollCycle[];
+    } = {
+      active: [],
+      completed: [],
+      failed: []
+    };
+
+    eligible.forEach((cycle) => {
+      const payoutStatus = (cycle.payoutStatus as PayrollPayoutStatus | undefined) ?? 'NOT_STARTED';
+
+      if (payoutStatus === 'COMPLETED') {
+        buckets.completed.push(cycle);
+        return;
+      }
+
+      if (payoutStatus === 'FAILED') {
+        buckets.failed.push(cycle);
+        return;
+      }
+
+      buckets.active.push(cycle);
+    });
+
+    return buckets;
+  }, [cycles]);
 
   const getProgressSnapshotForCycle = useCallback(
     (cycleId: string) => {
@@ -1643,6 +1841,396 @@ const PayrollAdminDashboard = () => {
     }
   };
 
+  // Payout handler functions
+  const handleOpenPayoutFlow = async (cycle: PayrollCycle, intent: 'initiate' | 'continue' = 'continue') => {
+    try {
+      const cycleId = cycle.id;
+      const payoutStatus = (cycle.payoutStatus as PayrollPayoutStatus | undefined) ?? 'NOT_STARTED';
+      const shouldInitiate = intent === 'initiate' || ['NOT_STARTED', 'FAILED'].includes(payoutStatus);
+      let initiatedViaApi = false;
+
+      if (shouldInitiate) {
+        const initiateResponse = await axios.post(
+          APIV3Dictionary.payroll.initiateCyclePayout(cycleId),
+          { requireBankDetails: true },
+          { withCredentials: true }
+        );
+
+        if (!initiateResponse.data?.success) {
+          throw new Error(initiateResponse.data?.message || 'Failed to initiate payouts for this cycle.');
+        }
+
+        initiatedViaApi = true;
+
+        const initiatedCount = initiateResponse.data?.data?.initiatedRecords ?? 0;
+        const updatedCount = initiateResponse.data?.data?.updatedRecords ?? 0;
+
+        toast({
+          title: 'Payout initiation ready',
+          description:
+            initiatedCount > 0
+              ? `${initiatedCount} employee${initiatedCount === 1 ? '' : 's'} queued for payout.${updatedCount > 0 ? ` ${updatedCount} record${updatedCount === 1 ? '' : 's'} moved to initiated.` : ''}`
+              : 'Salary records already marked for payout. Continue with transactions.',
+        });
+      }
+
+      const cycleResponse = await axios.get(
+        APIV3Dictionary.payroll.getCycleDetails(cycleId),
+        { withCredentials: true }
+      );
+
+      if (!cycleResponse.data?.success || !cycleResponse.data.data) {
+        throw new Error('Failed to fetch cycle details');
+      }
+
+      const cycleData = cycleResponse.data.data;
+      const salaryRecords = Array.isArray(cycleData.salaryRecords) ? cycleData.salaryRecords : [];
+
+      if (salaryRecords.length === 0) {
+        toast({
+          title: 'No employees found',
+          description: 'This cycle has no salary records to process.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      const employeeRecords = salaryRecords.filter((record: any) => record?.user);
+
+      if (employeeRecords.length === 0) {
+        toast({
+          title: 'No employee data found',
+          description: 'This cycle has no valid employee records to process.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      const employeesWithoutBank = employeeRecords.filter((record: any) => !(record.user?.bankDetails?.accountNumber));
+      if (employeesWithoutBank.length > 0) {
+        toast({
+          title: 'Bank details needed',
+          description: `${employeesWithoutBank.length} employee${employeesWithoutBank.length === 1 ? '' : 's'} need bank details. You can add them during the payout flow.`,
+        });
+      }
+
+      const completedIds = employeeRecords
+        .filter((record: any) => ['COMPLETED', 'NO_PAYOUT_REQUIRED'].includes(record.paymentStatus ?? ''))
+        .map((record: any) => record.id);
+
+      const firstOutstandingIndex = employeeRecords.findIndex(
+        (record: any) => !['COMPLETED', 'NO_PAYOUT_REQUIRED'].includes(record.paymentStatus ?? '')
+      );
+
+      setTransactionCycleId(cycleId);
+      setTransactionEmployees(employeeRecords);
+      setCurrentEmployeeIndex(firstOutstandingIndex >= 0 ? firstOutstandingIndex : 0);
+      setTransactionDetails({});
+      setCompletedTransactions(new Set(completedIds));
+      setTransactionSessionDirty((prev) => prev || initiatedViaApi);
+      setIsTransactionModeOpen(true);
+    } catch (error: any) {
+      const message = getErrorMessage(error, 'Failed to open payout workflow.');
+      toast({
+        title: intent === 'initiate' ? 'Payout initiation failed' : 'Unable to continue payout',
+        description: message,
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleViewPayoutSummary = async (cycleId: string) => {
+    try {
+      const response = await axios.get(
+        APIV3Dictionary.payroll.getCyclePayoutSummary(cycleId),
+        { withCredentials: true }
+      );
+
+      if (response.data?.success && response.data.data) {
+        // You can expand this to show a detailed modal or navigate to a dedicated page
+        const summary = response.data.data;
+        toast({
+          title: 'Payout Summary',
+          description: `Total: ${formatCurrency(summary.totalAmount)} | Employees: ${summary.employeeCount}`,
+        });
+      } else {
+        throw new Error(response.data?.message || 'Failed to fetch payout summary');
+      }
+    } catch (error: any) {
+      const message = getErrorMessage(error, 'Failed to fetch payout summary.');
+      toast({
+        title: 'Unable to load summary',
+        description: message,
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleExportPayouts = () => {
+    toast({
+      title: 'Export feature',
+      description: 'Payout export functionality will be available soon.',
+    });
+  };
+
+  const handleBulkPaymentRecord = () => {
+    toast({
+      title: 'Bulk payment feature',
+      description: 'Bulk payment recording will be available soon.',
+    });
+  };
+
+  // Transaction Mode Functions
+  const handleCloseTransactionMode = () => {
+    setIsTransactionModeOpen(false);
+    setTransactionCycleId(null);
+    setTransactionEmployees([]);
+    setCurrentEmployeeIndex(0);
+    setTransactionDetails({});
+    setCompletedTransactions(new Set());
+    if (transactionSessionDirty) {
+      fetchDashboardData();
+    }
+    setTransactionSessionDirty(false);
+  };
+
+  const handlePreviousEmployee = () => {
+    if (currentEmployeeIndex > 0) {
+      setCurrentEmployeeIndex(currentEmployeeIndex - 1);
+    }
+  };
+
+  const handleNextEmployee = () => {
+    if (currentEmployeeIndex < transactionEmployees.length - 1) {
+      setCurrentEmployeeIndex(currentEmployeeIndex + 1);
+    }
+  };
+
+  const handleSendPayment = async () => {
+    const currentEmployee = transactionEmployees[currentEmployeeIndex];
+    if (!currentEmployee || !transactionCycleId) return;
+
+    const currentTransactionRef = `${transactionCycleId}-${currentEmployee.id}`;
+    const transactionNumber = transactionDetails[currentTransactionRef]?.trim();
+    
+    if (!transactionNumber) {
+      toast({
+        title: 'Transaction number required',
+        description: 'Please enter a transaction reference number before sending the payment.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setIsProcessingTransaction(true);
+
+    try {
+      // Call API to record the transaction
+      const processedAt = transactionDetails[`${currentTransactionRef}-date`]
+        ? new Date(transactionDetails[`${currentTransactionRef}-date`]).toISOString()
+        : new Date().toISOString();
+
+      const response = await axios.post(
+        APIV3Dictionary.payroll.transactions.pay,
+        {
+          salaryRecordId: currentEmployee.id,
+          paymentReference: transactionNumber,
+          paymentMode: 'BANK_TRANSFER',
+          processedAt,
+          notes: transactionDetails[`${currentTransactionRef}-notes`] || ''
+        },
+        { withCredentials: true }
+      );
+
+      if (response.data?.success) {
+        const payments = response.data?.data?.payments ?? [];
+        const paymentResult = payments.length > 0 ? payments[0] : null;
+        const updatedSalaryRecord = paymentResult?.salaryRecord;
+        const paymentStatus = updatedSalaryRecord?.paymentStatus;
+        const transactionAmount = paymentResult?.transaction?.amount ?? null;
+        const totalEstimated =
+          (currentEmployee.netSalary ?? 0) +
+          (currentEmployee.incentive ?? 0) +
+          (currentEmployee.bonus ?? 0);
+        const isLogicalPayout = Boolean(
+          paymentResult?.logicalPayout ||
+          paymentStatus === 'NO_PAYOUT_REQUIRED' ||
+          totalEstimated <= 0
+        );
+
+        // Mark as completed
+        setCompletedTransactions((prev) => new Set([...prev, currentEmployee.id]));
+
+        if (updatedSalaryRecord) {
+          setTransactionEmployees((prev) => {
+            const updated = [...prev];
+            const existing = updated[currentEmployeeIndex];
+            if (existing) {
+              updated[currentEmployeeIndex] = {
+                ...existing,
+                status: updatedSalaryRecord.status ?? existing.status,
+                paymentStatus: updatedSalaryRecord.paymentStatus ?? existing.paymentStatus,
+                processedAt: updatedSalaryRecord.processedAt ?? existing.processedAt
+              };
+            }
+            return updated;
+          });
+        }
+
+        const employeeName = [currentEmployee.user?.firstName, currentEmployee.user?.lastName]
+          .filter(Boolean)
+          .join(' ') || currentEmployee.user?.email || 'the employee';
+
+        const amountForDisplay = transactionAmount ?? totalEstimated;
+
+        toast({
+          title: isLogicalPayout ? 'Logical payout recorded' : 'Payment sent successfully',
+          description: isLogicalPayout
+            ? `No funds were transferred for ${employeeName} because the calculated payout was ${formatCurrency(amountForDisplay ?? 0)}. The record has been marked as settled.`
+            : `Payment of ${formatCurrency(Math.max(amountForDisplay ?? 0, 0))} sent to ${employeeName}.`,
+        });
+
+        setTransactionSessionDirty(true);
+
+        // Auto-advance to next employee if available
+        setTimeout(() => {
+          if (currentEmployeeIndex < transactionEmployees.length - 1) {
+            handleNextEmployee();
+          }
+        }, 1000);
+      } else {
+        throw new Error(response.data?.message || 'Failed to record transaction');
+      }
+    } catch (error: any) {
+      const message = getErrorMessage(error, 'Failed to record payment transaction.');
+      toast({
+        title: 'Payment recording failed',
+        description: message,
+        variant: 'destructive'
+      });
+    } finally {
+      setIsProcessingTransaction(false);
+    }
+  };
+
+  const handleCompleteAllTransactions = () => {
+    toast({
+      title: 'Payout process completed',
+      description: `Successfully processed payments for ${transactionEmployees.length} employees.`,
+    });
+    setTransactionSessionDirty(true);
+    handleCloseTransactionMode();
+  };
+
+  // Bank Details Functions
+  const handleEditBankDetails = (employee: any) => {
+    const bankDetails = employee.user?.bankDetails;
+    setBankDetailsForm({
+      accountHolderName: bankDetails?.accountHolderName ?? bankDetails?.accountHolder ?? '',
+      bankName: bankDetails?.bankName ?? '',
+      accountNumber: bankDetails?.accountNumber ?? bankDetails?.maskedAccountNumber ?? '',
+      ifscCode: bankDetails?.ifscCode ?? '',
+      accountType: bankDetails?.accountType ?? 'SAVINGS',
+      maskedAccountNumber: bankDetails?.maskedAccountNumber ?? undefined,
+      accountHolder: bankDetails?.accountHolder ?? undefined
+    });
+    setIsEditingBankDetails(true);
+  };
+
+  const handleCancelBankEdit = () => {
+    setIsEditingBankDetails(false);
+    setBankDetailsForm({
+      accountHolderName: '',
+      bankName: '',
+      accountNumber: '',
+      ifscCode: '',
+      accountType: 'SAVINGS',
+      maskedAccountNumber: undefined,
+      accountHolder: undefined
+    });
+  };
+
+  const isValidBankDetails = (details?: Partial<BankDetailsFormState>) => {
+    const source = details ?? bankDetailsForm;
+
+    if (!source) {
+      return false;
+    }
+
+    const accountHolder = (source.accountHolderName ?? source.accountHolder ?? '').toString().trim();
+    const bankName = (source.bankName ?? '').toString().trim();
+    const accountNumber = (source.accountNumber ?? source.maskedAccountNumber ?? '').toString().trim();
+    const ifscCode = (source.ifscCode ?? '').toString().trim();
+
+    return Boolean(accountHolder && bankName && accountNumber && ifscCode);
+  };
+
+  const handleSaveBankDetails = async () => {
+    const currentEmployee = transactionEmployees[currentEmployeeIndex];
+    if (!currentEmployee || !isValidBankDetails()) return;
+
+    setIsSavingBankDetails(true);
+
+    try {
+      const response = await axios.post(
+        APIV3Dictionary.payroll.employee.createBankDetails,
+        {
+          userId: currentEmployee.user.id,
+          accountHolderName: bankDetailsForm.accountHolderName.trim(),
+          bankName: bankDetailsForm.bankName.trim(),
+          accountNumber: bankDetailsForm.accountNumber.trim(),
+          ifscCode: bankDetailsForm.ifscCode.trim(),
+          accountType: bankDetailsForm.accountType
+        },
+        { withCredentials: true }
+      );
+
+      if (response.data?.success) {
+        // Update the employee data in the current state
+        const updatedEmployees = [...transactionEmployees];
+        const trimmedAccountNumber = bankDetailsForm.accountNumber.trim();
+        const maskedAccountNumber = trimmedAccountNumber
+          ? `${'X'.repeat(Math.max(0, trimmedAccountNumber.length - 4))}${trimmedAccountNumber.slice(-4)}`
+          : '';
+        updatedEmployees[currentEmployeeIndex] = {
+          ...currentEmployee,
+          user: {
+            ...currentEmployee.user,
+            bankDetails: {
+              accountHolderName: bankDetailsForm.accountHolderName.trim(),
+              accountHolder: bankDetailsForm.accountHolderName.trim(),
+              bankName: bankDetailsForm.bankName.trim(),
+              accountNumber: bankDetailsForm.accountNumber.trim(),
+              ifscCode: bankDetailsForm.ifscCode.trim(),
+              accountType: bankDetailsForm.accountType,
+              maskedAccountNumber
+            }
+          }
+        };
+        setTransactionEmployees(updatedEmployees);
+
+        toast({
+          title: 'Bank details saved',
+          description: 'Bank details have been successfully updated.',
+        });
+
+        setIsEditingBankDetails(false);
+        handleCancelBankEdit();
+      } else {
+        throw new Error(response.data?.message || 'Failed to save bank details');
+      }
+    } catch (error: any) {
+      const message = getErrorMessage(error, 'Failed to save bank details.');
+      toast({
+        title: 'Save failed',
+        description: message,
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSavingBankDetails(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="w-screen px-8 py-6 space-y-6 h-screen overflow-y-auto">
@@ -1708,12 +2296,13 @@ const PayrollAdminDashboard = () => {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="setup">Setup & Config</TabsTrigger>
           <TabsTrigger value="cycle-management">Cycle Management</TabsTrigger>
           <TabsTrigger value="processing">Processing</TabsTrigger>
           <TabsTrigger value="review-approval">Review & Approval</TabsTrigger>
+          <TabsTrigger value="transactions">Transactions</TabsTrigger>
           <TabsTrigger value="reporting">Reporting</TabsTrigger>
           <TabsTrigger value="employee-portal">Employee Portal</TabsTrigger>
         </TabsList>
@@ -1831,8 +2420,10 @@ const PayrollAdminDashboard = () => {
                             )}
                           </Button>
                         )}
-                        <Button 
-                          onClick={() => approvePayrollCycle(cycle.id)}
+                        <Button
+                          onClick={() =>
+                            handleApproveCycle({ id: cycle.id, month: cycle.month, year: cycle.year })
+                          }
                           disabled={isProcessing}
                           className="ml-4"
                         >
@@ -2295,7 +2886,13 @@ const PayrollAdminDashboard = () => {
                         </Badge>
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" onClick={() => approvePayrollCycle(cycle.id)} disabled={isProcessing}>
+                        <Button
+                          size="sm"
+                          onClick={() =>
+                            handleApproveCycle({ id: cycle.id, month: cycle.month, year: cycle.year })
+                          }
+                          disabled={isProcessing}
+                        >
                           Approve
                         </Button>
                         <Button
@@ -2321,6 +2918,31 @@ const PayrollAdminDashboard = () => {
                   ))}
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Transactions Tab */}
+        <TabsContent value="transactions" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5" />
+                Ready for Payout
+              </CardTitle>
+              <CardDescription>
+                Approved payroll cycles ready for transaction initiation
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm text-muted-foreground">
+              <p>
+                We’re finishing up the payout tooling next. For now, you can approve cycles and use this
+                workspace to review amounts, plan incentives, and coordinate disbursement with finance.
+              </p>
+              <p>
+                Need to run the legacy flow? Head to the Salary Transactions page while we wire up the new
+                experience here.
+              </p>
             </CardContent>
           </Card>
         </TabsContent>
@@ -2377,6 +2999,206 @@ const PayrollAdminDashboard = () => {
                   <AlertCircle className="h-4 w-4 mr-2" />
                   Handle Corrections
                 </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Transactions Tab */}
+        <TabsContent value="transactions" className="space-y-6">
+          <div className="grid grid-cols-1 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  Payout Management
+                </CardTitle>
+                <CardDescription>
+                  Initiate and manage payroll payouts for approved cycles
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {payoutCycleBuckets.active.length === 0 ? (
+                  <div className="text-center py-8">
+                    <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No active payout workflows</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Complete and approve payroll cycles to enable payout management, or resume a cycle with pending payments.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {payoutCycleBuckets.active.map((cycle) => {
+                      const payoutStatus = (cycle.payoutStatus as PayrollPayoutStatus | undefined) ?? 'NOT_STARTED';
+                      const summary = cycle.payoutSummary;
+                      const progress = summary?.progress;
+                      const totals = summary?.totals;
+                      const fallbackTotal = typeof summary?.totalRecords === 'number'
+                        ? summary.totalRecords
+                        : cycle.processedCount ?? cycle.totalEmployees ?? 0;
+                      const totalRecords = progress?.totalRecords ?? fallbackTotal;
+                      const completedRecords = progress?.completedRecords
+                        ?? ((totals?.COMPLETED ?? 0) + (totals?.NO_PAYOUT_REQUIRED ?? 0));
+                      const logicalRecords = progress?.logicalRecords ?? (totals?.NO_PAYOUT_REQUIRED ?? 0);
+                      const remainingRecords = progress?.remainingRecords
+                        ?? Math.max(0, totalRecords - completedRecords);
+                      const percentComplete = progress?.percentComplete
+                        ?? (totalRecords > 0 ? Math.round((completedRecords / totalRecords) * 100) : 0);
+                      const actionIntent: 'initiate' | 'continue' = ['NOT_STARTED', 'FAILED'].includes(payoutStatus)
+                        ? 'initiate'
+                        : 'continue';
+                      const actionLabel = actionIntent === 'initiate' ? 'Initiate Payout' : 'Continue Payout';
+                      const monthLabel = months.find((m) => m.value === cycle.month)?.label ?? cycle.month;
+
+                      return (
+                        <div
+                          key={cycle.id}
+                          className="border rounded-lg p-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
+                        >
+                          <div className="space-y-2">
+                            <div>
+                              <h4 className="font-semibold">
+                                {monthLabel} {cycle.year}
+                              </h4>
+                              <p className="text-sm text-muted-foreground">
+                                {percentComplete}% complete • {completedRecords} of {totalRecords} settled
+                                {logicalRecords ? ` (${logicalRecords} logical)` : ''}
+                                {remainingRecords > 0 ? ` • ${remainingRecords} remaining` : ''}
+                              </p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {renderPayoutStatusBadge(payoutStatus)}
+                              <Badge variant={getStatusBadgeVariant(cycle.status)}>
+                                {cycle.status}
+                              </Badge>
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-2 md:items-end">
+                            <Button variant="outline" size="sm" onClick={() => handleViewPayoutSummary(cycle.id)}>
+                              View Summary
+                            </Button>
+                            <Button size="sm" onClick={() => handleOpenPayoutFlow(cycle, actionIntent)}>
+                              {actionLabel}
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {payoutCycleBuckets.failed.length > 0 && (
+                  <div className="space-y-4 border-t pt-4">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-red-600">
+                      <AlertCircle className="h-4 w-4" />
+                      Attention needed
+                    </div>
+                    {payoutCycleBuckets.failed.map((cycle) => {
+                      const monthLabel = months.find((m) => m.value === cycle.month)?.label ?? cycle.month;
+                      return (
+                        <div
+                          key={cycle.id}
+                          className="border border-red-200 rounded-lg p-4 bg-red-50/50 flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
+                        >
+                          <div>
+                            <p className="font-semibold">
+                              {monthLabel} {cycle.year}
+                            </p>
+                            <p className="text-sm text-red-600">
+                              Last payout attempt failed. Review discrepancies and try initiating again.
+                            </p>
+                          </div>
+                          <div className="flex flex-col gap-2 md:items-end">
+                            <div className="flex flex-wrap gap-2">
+                              {renderPayoutStatusBadge(cycle.payoutStatus)}
+                              <Badge variant={getStatusBadgeVariant(cycle.status)}>{cycle.status}</Badge>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button variant="outline" size="sm" onClick={() => handleViewPayoutSummary(cycle.id)}>
+                                View Summary
+                              </Button>
+                              <Button size="sm" variant="destructive" onClick={() => handleOpenPayoutFlow(cycle, 'initiate')}>
+                                Retry Payout
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {payoutCycleBuckets.completed.length > 0 && (
+                  <div className="space-y-4 border-t pt-4">
+                    <div className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                      Completed payouts
+                    </div>
+                    {payoutCycleBuckets.completed.map((cycle) => {
+                      const summary = cycle.payoutSummary;
+                      const progress = summary?.progress;
+                      const totalRecords = progress?.totalRecords
+                        ?? (typeof summary?.totalRecords === 'number' ? summary.totalRecords : cycle.processedCount ?? 0);
+                      const completedRecords = progress?.completedRecords ?? totalRecords;
+                      const logicalRecords = progress?.logicalRecords ?? 0;
+                      const monthLabel = months.find((m) => m.value === cycle.month)?.label ?? cycle.month;
+                      const completedAt = cycle.payoutCompletedAt
+                        ? new Date(cycle.payoutCompletedAt).toLocaleString()
+                        : 'Recently';
+
+                      return (
+                        <div
+                          key={cycle.id}
+                          className="border rounded-lg p-4 bg-green-50/60 flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
+                        >
+                          <div>
+                            <h4 className="font-semibold text-green-700">
+                              {monthLabel} {cycle.year}
+                            </h4>
+                            <p className="text-sm text-green-700">
+                              {completedRecords} of {totalRecords} settled{logicalRecords ? ` (${logicalRecords} logical)` : ''}. Payout finalized on {completedAt}.
+                            </p>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {renderPayoutStatusBadge(cycle.payoutStatus)}
+                              <Badge variant={getStatusBadgeVariant(cycle.status)}>{cycle.status}</Badge>
+                            </div>
+                          </div>
+                          <Button variant="outline" size="sm" onClick={() => handleViewPayoutSummary(cycle.id)}>
+                            View Summary
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                
+                <div className="border-t pt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Button 
+                      variant="outline" 
+                      onClick={handleExportPayouts}
+                      className="w-full"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Export Payouts
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={handleBulkPaymentRecord}
+                      className="w-full"
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      Bulk Payment Record
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setActiveTab('reporting')}
+                      className="w-full"
+                    >
+                      <BarChart3 className="h-4 w-4 mr-2" />
+                      View Reports
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -2443,6 +3265,421 @@ const PayrollAdminDashboard = () => {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Transaction Mode Dialog */}
+      <Dialog
+        open={isTransactionModeOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleCloseTransactionMode();
+          }
+        }}
+      >
+        <DialogContent className="flex max-h-[90vh] max-w-4xl flex-col">
+          <DialogHeader className="space-y-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <DialogTitle>
+                  Transaction Mode - Employee {currentEmployeeIndex + 1} of {transactionEmployees.length}
+                </DialogTitle>
+                <DialogDescription>
+                  Process individual employee payments by entering transaction details and confirming each transfer.
+                </DialogDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePreviousEmployee}
+                  disabled={currentEmployeeIndex === 0 || isProcessingTransaction}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-2" />
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleNextEmployee}
+                  disabled={currentEmployeeIndex >= transactionEmployees.length - 1 || isProcessingTransaction}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          </DialogHeader>
+          
+          {transactionEmployees.length > 0 && (
+            <div className="flex-1 overflow-y-auto space-y-6">
+              {/* Current Employee */}
+              {(() => {
+                const currentEmployee = transactionEmployees[currentEmployeeIndex];
+                if (!currentEmployee) return null;
+                
+                const isLogicalPayout = currentEmployee.paymentStatus === 'NO_PAYOUT_REQUIRED';
+                const isCompleted =
+                  completedTransactions.has(currentEmployee.id) ||
+                  currentEmployee.paymentStatus === 'COMPLETED' ||
+                  isLogicalPayout;
+                const cardAccentClasses = isLogicalPayout
+                  ? 'border-slate-300 bg-slate-50'
+                  : isCompleted
+                    ? 'border-green-200 bg-green-50'
+                    : 'border-blue-200 bg-blue-50';
+                const currentTransactionRef = `${transactionCycleId}-${currentEmployee.id}`;
+                const netSalaryValue = currentEmployee.netSalary ?? 0;
+                const netSalaryClass = netSalaryValue > 0 ? 'text-green-600' : netSalaryValue < 0 ? 'text-red-600' : 'text-slate-600';
+                
+                return (
+                  <div className="space-y-6">
+                    {/* Employee Header */}
+                    <Card className={`border-2 ${cardAccentClasses}`}>
+                      <CardHeader>
+                        <div className="flex items-center justify-between gap-4">
+                          <div>
+                            <CardTitle className="text-lg">
+                              {[currentEmployee.user?.firstName, currentEmployee.user?.lastName].filter(Boolean).join(' ') || 'Employee'}
+                            </CardTitle>
+                            <CardDescription>
+                              {currentEmployee.user?.employeeId || 'N/A'} • {currentEmployee.user?.department?.name || 'Department N/A'}
+                            </CardDescription>
+                            {isLogicalPayout && (
+                              <p className="mt-2 text-xs text-slate-600">
+                                Net amount {formatCurrency(netSalaryValue)} — recorded as a logical payout with no funds transferred.
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-right space-y-2">
+                            <p className={`text-2xl font-bold ${netSalaryClass}`}>
+                              {formatCurrency(currentEmployee.netSalary)}
+                            </p>
+                            <div className="flex items-center justify-end gap-2 flex-wrap">
+                              {renderPaymentStatusBadge(currentEmployee.paymentStatus)}
+                              {isCompleted && !currentEmployee.paymentStatus && !isLogicalPayout && (
+                                <Badge variant="default" className="bg-green-600">
+                                  ✓ Sent
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </CardHeader>
+                    </Card>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Payment Details */}
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Payment Details</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Gross Salary:</span>
+                            <span className="font-medium">{formatCurrency(currentEmployee.grossSalary || 0)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Total Deductions:</span>
+                            <span className="font-medium text-red-600">-{formatCurrency(currentEmployee.totalDeductions || 0)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Total Allowances:</span>
+                            <span className="font-medium text-green-600">+{formatCurrency(currentEmployee.totalAllowances || 0)}</span>
+                          </div>
+                          <Separator />
+                          <div className="flex justify-between font-semibold text-lg">
+                            <span>Net Salary:</span>
+                            <span className="text-green-600">{formatCurrency(currentEmployee.netSalary)}</span>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Bank Details */}
+                      <Card>
+                        <CardHeader>
+                          <div className="flex items-center justify-between">
+                            <CardTitle>Bank Details</CardTitle>
+                            {!isEditingBankDetails && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleEditBankDetails(currentEmployee)}
+                              >
+                                {currentEmployee.user?.bankDetails?.accountNumber ? 'Edit' : 'Add'} Bank Details
+                              </Button>
+                            )}
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          {isEditingBankDetails ? (
+                            // Bank Details Edit Form
+                            <div className="space-y-4">
+                              <div>
+                                <Label htmlFor="accountHolderName">Account Holder Name *</Label>
+                                <Input
+                                  id="accountHolderName"
+                                  value={bankDetailsForm.accountHolderName}
+                                  onChange={(e) => setBankDetailsForm(prev => ({
+                                    ...prev,
+                                    accountHolderName: e.target.value
+                                  }))}
+                                  placeholder="Enter account holder name"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="bankName">Bank Name *</Label>
+                                <Input
+                                  id="bankName"
+                                  value={bankDetailsForm.bankName}
+                                  onChange={(e) => setBankDetailsForm(prev => ({
+                                    ...prev,
+                                    bankName: e.target.value
+                                  }))}
+                                  placeholder="Enter bank name"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="accountNumber">Account Number *</Label>
+                                <Input
+                                  id="accountNumber"
+                                  value={bankDetailsForm.accountNumber}
+                                  onChange={(e) => setBankDetailsForm(prev => ({
+                                    ...prev,
+                                    accountNumber: e.target.value
+                                  }))}
+                                  placeholder="Enter account number"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="ifscCode">IFSC Code *</Label>
+                                <Input
+                                  id="ifscCode"
+                                  value={bankDetailsForm.ifscCode}
+                                  onChange={(e) => setBankDetailsForm(prev => ({
+                                    ...prev,
+                                    ifscCode: e.target.value.toUpperCase()
+                                  }))}
+                                  placeholder="Enter IFSC code"
+                                />
+                              </div>
+                              <div className="flex gap-2 pt-2">
+                                <Button 
+                                  onClick={handleSaveBankDetails}
+                                  disabled={isSavingBankDetails || !isValidBankDetails()}
+                                  size="sm"
+                                >
+                                  {isSavingBankDetails ? (
+                                    <>
+                                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                      Saving...
+                                    </>
+                                  ) : (
+                                    'Save Bank Details'
+                                  )}
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  onClick={handleCancelBankEdit}
+                                  disabled={isSavingBankDetails}
+                                  size="sm"
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            // Bank Details Display
+                            <>
+                              <div>
+                                <Label className="text-muted-foreground">Account Holder:</Label>
+                                <p className="font-medium">{currentEmployee.user?.bankDetails?.accountHolderName || 'Not provided'}</p>
+                              </div>
+                              <div>
+                                <Label className="text-muted-foreground">Bank Name:</Label>
+                                <p className="font-medium">{currentEmployee.user?.bankDetails?.bankName || 'Not provided'}</p>
+                              </div>
+                              <div>
+                                <Label className="text-muted-foreground">Account Number:</Label>
+                                <p className="font-medium font-mono">{currentEmployee.user?.bankDetails?.accountNumber || 'Not provided'}</p>
+                              </div>
+                              <div>
+                                <Label className="text-muted-foreground">IFSC Code:</Label>
+                                <p className="font-medium font-mono">{currentEmployee.user?.bankDetails?.ifscCode || 'Not provided'}</p>
+                              </div>
+                              {!currentEmployee.user?.bankDetails?.accountNumber && (
+                                <Alert>
+                                  <AlertCircle className="h-4 w-4" />
+                                  <AlertTitle>Bank details required</AlertTitle>
+                                  <AlertDescription>
+                                    Please add bank details to process payment for this employee.
+                                  </AlertDescription>
+                                </Alert>
+                              )}
+                            </>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {/* Transaction Input */}
+                    {!isCompleted && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Transaction Details</CardTitle>
+                          <CardDescription>
+                            {currentEmployee && !isValidBankDetails(currentEmployee.user?.bankDetails) 
+                              ? "Bank details are required before processing payment for this employee."
+                              : "Enter the transaction reference number after processing the payment in your banking system."
+                            }
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          {currentEmployee && !isValidBankDetails(currentEmployee.user?.bankDetails) ? (
+                            <Alert>
+                              <AlertCircle className="h-4 w-4" />
+                              <AlertTitle>Cannot Process Payment</AlertTitle>
+                              <AlertDescription>
+                                Complete bank details are required to process payment. Please add bank details first.
+                              </AlertDescription>
+                            </Alert>
+                          ) : (
+                            <>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <Label htmlFor="transactionNumber">Transaction Reference Number *</Label>
+                                  <Input
+                                    id="transactionNumber"
+                                    placeholder="e.g., TXN123456789"
+                                    value={transactionDetails[currentTransactionRef] || ''}
+                                    onChange={(e) => setTransactionDetails(prev => ({
+                                      ...prev,
+                                      [currentTransactionRef]: e.target.value
+                                    }))}
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="transactionDate">Transaction Date</Label>
+                                  <Input
+                                    id="transactionDate"
+                                    type="date"
+                                    value={transactionDetails[`${currentTransactionRef}-date`] || new Date().toISOString().split('T')[0]}
+                                    onChange={(e) => setTransactionDetails(prev => ({
+                                      ...prev,
+                                      [`${currentTransactionRef}-date`]: e.target.value
+                                    }))}
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <Label htmlFor="transactionNotes">Notes (Optional)</Label>
+                                <Input
+                                  id="transactionNotes"
+                                  placeholder="Additional transaction notes..."
+                                  value={transactionDetails[`${currentTransactionRef}-notes`] || ''}
+                                  onChange={(e) => setTransactionDetails(prev => ({
+                                    ...prev,
+                                    [`${currentTransactionRef}-notes`]: e.target.value
+                                  }))}
+                                />
+                              </div>
+                            </>
+                          )}
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
+          <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-t pt-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>Progress:</span>
+              <Badge variant="outline">
+                {completedTransactions.size} / {transactionEmployees.length} completed
+              </Badge>
+            </div>
+            
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleCloseTransactionMode}>
+                Exit Transaction Mode
+              </Button>
+              
+              {currentEmployeeIndex > 0 && (
+                <Button 
+                  variant="outline" 
+                  onClick={handlePreviousEmployee}
+                  disabled={isProcessingTransaction}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-2" />
+                  Previous
+                </Button>
+              )}
+              
+              {(() => {
+                const currentEmployee = transactionEmployees[currentEmployeeIndex];
+                const isCompleted =
+                  currentEmployee &&
+                  (completedTransactions.has(currentEmployee.id) ||
+                    currentEmployee.paymentStatus === 'COMPLETED' ||
+                    currentEmployee.paymentStatus === 'NO_PAYOUT_REQUIRED');
+                const currentTransactionRef = currentEmployee ? `${transactionCycleId}-${currentEmployee.id}` : '';
+                const hasTransactionNumber = transactionDetails[currentTransactionRef]?.trim();
+                
+                if (isCompleted) {
+                  // Show next button if there are more employees
+                  if (currentEmployeeIndex < transactionEmployees.length - 1) {
+                    return (
+                      <Button onClick={handleNextEmployee}>
+                        Next Employee
+                        <ChevronRight className="h-4 w-4 ml-2" />
+                      </Button>
+                    );
+                  } else {
+                    // All done
+                    return (
+                      <Button onClick={handleCompleteAllTransactions}>
+                        Complete Payout Process
+                      </Button>
+                    );
+                  }
+                } else {
+                  // Show send button
+                  const hasValidBankDetails = currentEmployee ? isValidBankDetails(currentEmployee.user?.bankDetails) : false;
+                  const estimatedPayoutAmount =
+                    (currentEmployee?.netSalary ?? 0) +
+                    (currentEmployee?.incentive ?? 0) +
+                    (currentEmployee?.bonus ?? 0);
+                  const requiresBankDetails = estimatedPayoutAmount > 0;
+                  const isDisabled =
+                    !hasTransactionNumber ||
+                    isProcessingTransaction ||
+                    (requiresBankDetails && !hasValidBankDetails);
+                  
+                  return (
+                    <Button 
+                      onClick={handleSendPayment}
+                      disabled={isDisabled}
+                    >
+                      {isProcessingTransaction ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          Send Payment
+                          <ChevronRight className="h-4 w-4 ml-2" />
+                        </>
+                      )}
+                    </Button>
+                  );
+                }
+              })()}
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Drawer
         open={isProcessingDrawerOpen}
@@ -2522,7 +3759,7 @@ const PayrollAdminDashboard = () => {
                           </p>
                           {record.paymentStatus && (
                             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                              Payment: {record.paymentStatus}
+                              Payment: {formatPaymentStatus(record.paymentStatus)}
                             </p>
                           )}
                         </button>
@@ -2610,9 +3847,7 @@ const PayrollAdminDashboard = () => {
                         <Badge variant={getStatusBadgeVariant(selectedProcessingRecord.status)}>
                           {selectedProcessingRecord.status}
                         </Badge>
-                        {selectedProcessingRecord.paymentStatus && (
-                          <Badge variant="outline">Payment {selectedProcessingRecord.paymentStatus}</Badge>
-                        )}
+                        {selectedProcessingRecord.paymentStatus && renderPaymentStatusBadge(selectedProcessingRecord.paymentStatus)}
                         <span>
                           Net salary {formatCurrency(selectedProcessingRecord.netSalary)} • Basic{' '}
                           {formatCurrency(selectedProcessingRecord.basicSalary)}
@@ -3102,7 +4337,7 @@ const PayrollAdminDashboard = () => {
                                 </Badge>
                                 {record.paymentStatus && (
                                   <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                                    Payment: {record.paymentStatus}
+                                    Payment: {formatPaymentStatus(record.paymentStatus)}
                                   </p>
                                 )}
                               </div>
@@ -3159,7 +4394,8 @@ const PayrollAdminDashboard = () => {
                   <Button
                     disabled={isProcessing}
                     onClick={async () => {
-                      const approved = await approvePayrollCycle(selectedCycleDetails.id);
+                      const { id, month, year } = selectedCycleDetails;
+                      const approved = await handleApproveCycle({ id, month, year });
                       if (approved) {
                         handleCloseReviewDetails();
                       }
@@ -3241,6 +4477,56 @@ const PayrollAdminDashboard = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={isApprovalSuccessDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleCloseApprovalSuccessDialog();
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader className="space-y-2 text-left">
+            <AlertDialogTitle>Transactions are ready</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 text-sm text-muted-foreground">
+                {lastApprovedCycleLabel && (
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {lastApprovedCycleLabel} cycle
+                  </p>
+                )}
+                <p>
+                  The payroll cycle you just approved is ready for disbursement. We’ve prepared the processed salaries in the Transactions tab so you can review payouts, add incentives, and trigger payments when finance gives the go-ahead.
+                </p>
+                <p>Here’s what you can tackle next:</p>
+                <ul className="space-y-2 list-none p-0">
+                  <li className="flex items-start gap-2">
+                    <span aria-hidden="true" className="leading-6">⚡</span>
+                    <span className="text-left">Jump to the Transactions tab to kick off payout prep</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span aria-hidden="true" className="leading-6">🧾</span>
+                    <span className="text-left">Export or share the payout summary with finance</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span aria-hidden="true" className="leading-6">🏦</span>
+                    <span className="text-left">Record payment references once disbursements clear</span>
+                  </li>
+                </ul>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => handleCloseApprovalSuccessDialog()}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleNavigateToTransactionsTab}>
+              Go to transactions
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog
         open={Boolean(cyclePendingDelete)}
