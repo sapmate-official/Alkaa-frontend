@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import {
   AlertDialog,
@@ -47,24 +47,18 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { 
-  DollarSign, 
-  TrendingUp, 
+import {
   AlertCircle,
-  CheckCircle,
-  Clock,
-  Play,
-  Calendar,
   Settings,
-  Users,
-  FileText,
-  BarChart3,
   Download,
   Loader2,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react'
-import { MonthAndYearSelector } from '../ui/MonthYearPicker'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import RouteDict from '@/routes/RouteDict'
+import { cn } from '@/lib/utils'
+
 import {
   PayrollCycle,
   PayrollCycleDeletionResult,
@@ -74,9 +68,15 @@ import {
   PayrollCycleProcessingStatusResponse,
   PayrollPayoutStatus
 } from '../types/payroll'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import RouteDict from '@/routes/RouteDict'
-import { cn } from '@/lib/utils'
+
+import OverviewTab from './components/tabs/OverviewTab'
+import SetupConfigTab from './components/tabs/SetupConfigTab'
+import CycleManagementTab from './components/tabs/CycleManagementTab'
+import ProcessingTab from './components/tabs/ProcessingTab'
+import ReviewApprovalTab from './components/tabs/ReviewApprovalTab'
+import ReportingTab from './components/tabs/ReportingTab'
+import TransactionsTab from './components/tabs/TransactionsTab'
+import EmployeePortalTab from './components/tabs/EmployeePortalTab'
 
 const MONTH_OPTIONS: { value: number; label: string }[] = [
   { value: 1, label: 'January' },
@@ -230,34 +230,6 @@ const PayrollAdminDashboard = () => {
     );
   };
 
-  const getPayoutStatusMeta = (status?: string) => {
-    const normalized = (status as PayrollPayoutStatus | undefined) ?? 'NOT_STARTED';
-
-    switch (normalized) {
-      case 'COMPLETED':
-        return { label: 'Payout Complete', className: 'bg-green-100 text-green-700 border-green-200' };
-      case 'IN_PROGRESS':
-        return { label: 'Payout In Progress', className: 'bg-blue-100 text-blue-700 border-blue-200' };
-      case 'INITIATED':
-        return { label: 'Payout Initiated', className: 'bg-amber-100 text-amber-700 border-amber-200' };
-      case 'FAILED':
-        return { label: 'Payout Failed', className: 'bg-red-100 text-red-700 border-red-200' };
-      case 'NOT_STARTED':
-      default:
-        return { label: 'Not Started', className: 'bg-slate-100 text-slate-700 border-slate-200' };
-    }
-  };
-
-  const renderPayoutStatusBadge = (status?: string) => {
-    const meta = getPayoutStatusMeta(status);
-    return (
-      <Badge variant="outline" className={meta.className}>
-        {meta.label}
-      </Badge>
-    );
-  };
-
-  
   // Bank details editing state
   type BankDetailsFormState = {
     accountHolderName: string;
@@ -539,6 +511,7 @@ const PayrollAdminDashboard = () => {
   };
   const navigateToBankManagement = () => navigate('/p/profile/bank');
   const navigateToNotificationSettings = () => navigate('/p/notification/settings');
+  const navigateToNotificationSend = () => navigate(RouteDict.Notification.Send);
 
   const handleExportData = useCallback(() => {
     if (!cycles.length) {
@@ -1197,22 +1170,6 @@ const PayrollAdminDashboard = () => {
     }
   };
 
-  // Get status icon
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'DRAFT': return <Clock className="h-4 w-4" />;
-      case 'IN_PROGRESS': return <Play className="h-4 w-4" />;
-      case 'REVIEW': return <AlertCircle className="h-4 w-4" />;
-      case 'APPROVED':
-      case 'COMPLETED':
-        return <CheckCircle className="h-4 w-4" />;
-      case 'CANCELLED':
-      case 'FAILED':
-        return <AlertCircle className="h-4 w-4" />;
-      default: return <Clock className="h-4 w-4" />;
-    }
-  };
-
   // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -1220,22 +1177,6 @@ const PayrollAdminDashboard = () => {
       currency: 'INR',
       maximumFractionDigits: 0
     }).format(amount);
-  };
-
-  const formatDuration = (milliseconds?: number | null) => {
-    if (!milliseconds || milliseconds <= 0) {
-      return null;
-    }
-
-    const totalSeconds = Math.round(milliseconds / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-
-    if (minutes > 0) {
-      return `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
-    }
-
-    return `${seconds}s`;
   };
 
   const selectedCycleMonthLabel = selectedCycleDetails
@@ -2307,963 +2248,82 @@ const PayrollAdminDashboard = () => {
           <TabsTrigger value="employee-portal">Employee Portal</TabsTrigger>
         </TabsList>
 
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
-          {/* Statistics Cards */}
-          {statistics && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Cycles</CardTitle>
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{statistics.totalCycles}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {statistics.completedCycles} completed this year
-                  </p>
-                </CardContent>
-              </Card>
+        <OverviewTab
+          statistics={statistics}
+          cycles={cycles}
+          cyclesNeedingReview={cyclesNeedingReview}
+          months={months}
+          getProgressSnapshotForCycle={getProgressSnapshotForCycle}
+          getProgressErrorForCycle={getProgressErrorForCycle}
+          canDeleteCycle={canDeleteCycle}
+          handleRequestDeleteCycle={handleRequestDeleteCycle}
+          handleApproveCycle={handleApproveCycle}
+          startPayrollCycle={startPayrollCycle}
+          isProcessing={isProcessing}
+          isDeletingCycle={isDeletingCycle}
+          cyclePendingDelete={cyclePendingDelete}
+        />
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Paid</CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{formatCurrency(statistics.totalAmountPaid)}</div>
-                  <p className="text-xs text-muted-foreground">
-                    To {statistics.totalEmployeesProcessed} employees
-                  </p>
-                </CardContent>
-              </Card>
+        <SetupConfigTab
+          onOpenTemplates={navigateToTemplates}
+          onNavigateEmployeePortal={navigateToEmployeePortal}
+          onNavigateBankManagement={navigateToBankManagement}
+          onNavigateNotificationSettings={navigateToNotificationSettings}
+        />
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
-                  <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{statistics.pendingCycles}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Cycles awaiting approval
-                  </p>
-                </CardContent>
-              </Card>
+        <CycleManagementTab
+          months={months}
+          years={years}
+          selectedMonth={selectedMonth}
+          selectedYear={selectedYear}
+          onMonthChange={setSelectedMonth}
+          onYearChange={setSelectedYear}
+          onCreateCycle={createPayrollCycle}
+          isCreatingCycle={isCreatingCycle}
+          activeProcessingJobs={activeProcessingJobs}
+          getProgressSnapshotForCycle={getProgressSnapshotForCycle}
+          getProgressErrorForCycle={getProgressErrorForCycle}
+          cycleProgressMap={cycleProgressMap}
+        />
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {statistics.totalCycles > 0 
-                      ? Math.round((statistics.completedCycles / statistics.totalCycles) * 100)
-                      : 0}%
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Successful completions
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+        <ProcessingTab
+          processingCycles={processingCycles}
+          months={months}
+          getProgressSnapshotForCycle={getProgressSnapshotForCycle}
+          getProgressErrorForCycle={getProgressErrorForCycle}
+          onOpenProcessingDrawer={handleOpenProcessingDrawer}
+          onStartPayrollCycle={startPayrollCycle}
+          isProcessing={isProcessing}
+        />
 
-          {/* Cycles Needing Review */}
-          {cyclesNeedingReview.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <AlertCircle className="h-5 w-5 text-orange-500" />
-                  Cycles Needing Review ({cyclesNeedingReview.length})
-                </CardTitle>
-                <CardDescription>
-                  These payroll cycles have been processed and are waiting for approval
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {cyclesNeedingReview.map((cycle) => (
-                    <div key={cycle.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center gap-4">
-                        <div>
-                          <h4 className="font-medium">
-                            {months.find(m => m.value === cycle.month)?.label} {cycle.year}
-                          </h4>
-                          <p className="text-sm text-muted-foreground">
-                            {cycle.processedCount} of {cycle.totalEmployees} employees processed
-                          </p>
-                        </div>
-                        <Badge variant={getStatusBadgeVariant(cycle.status)} className="flex items-center gap-1">
-                          {getStatusIcon(cycle.status)}
-                          {cycle.status.replace('_', ' ')}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg font-semibold">{formatCurrency(cycle.totalAmount)}</span>
-                        {canDeleteCycle(cycle) && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => handleRequestDeleteCycle(cycle)}
-                            disabled={isDeletingCycle && cyclePendingDelete?.id === cycle.id}
-                          >
-                            {isDeletingCycle && cyclePendingDelete?.id === cycle.id ? (
-                              <span className="flex items-center gap-1">
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                                Deleting
-                              </span>
-                            ) : (
-                              'Delete'
-                            )}
-                          </Button>
-                        )}
-                        <Button
-                          onClick={() =>
-                            handleApproveCycle({ id: cycle.id, month: cycle.month, year: cycle.year })
-                          }
-                          disabled={isProcessing}
-                          className="ml-4"
-                        >
-                          Approve
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+        <ReviewApprovalTab
+          cyclesNeedingReview={cyclesNeedingReview}
+          months={months}
+          onApproveCycle={handleApproveCycle}
+          onOpenReviewDetails={handleOpenReviewDetails}
+          isProcessing={isProcessing}
+          reviewLoadingCycleId={reviewLoadingCycleId}
+        />
 
-          {/* Recent Cycles */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Payroll Cycles</CardTitle>
-              <CardDescription>
-                Overview of recent payroll processing activities
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {cycles.length === 0 ? (
-                  <p className="text-center py-8 text-muted-foreground">
-                    No payroll cycles found. Create one to get started.
-                  </p>
-                ) : (
-                  cycles.map((cycle) => {
-                    const monthLabel = months.find((m) => m.value === cycle.month)?.label ?? `Month ${cycle.month}`;
-                    const progressSnapshot = getProgressSnapshotForCycle(cycle.id);
-                    const progressPercent = progressSnapshot?.percentComplete ?? (
-                      cycle.totalEmployees > 0
-                        ? Math.round((cycle.processedCount / cycle.totalEmployees) * 100)
-                        : 0
-                    );
-                    const etaLabel = formatDuration(progressSnapshot?.etaMs ?? null);
-                    const statusMessage = progressSnapshot?.message;
-                    const progressError = getProgressErrorForCycle(cycle.id);
-                    const processedCount = progressSnapshot?.processedCount ?? cycle.processedCount;
-                    const totalEmployees = progressSnapshot?.totalEmployees ?? cycle.totalEmployees;
-                    const failedCount = progressSnapshot?.failedCount ?? cycle.failedCount;
+        <TransactionsTab
+          payoutBuckets={payoutCycleBuckets}
+          months={months}
+          onOpenPayoutFlow={handleOpenPayoutFlow}
+          onViewSummary={handleViewPayoutSummary}
+          onExportPayouts={handleExportPayouts}
+          onBulkPaymentRecord={handleBulkPaymentRecord}
+          onNavigateReporting={() => setActiveTab('reporting')}
+        />
 
-                    return (
-                      <div key={cycle.id} className="flex flex-col gap-3 rounded-lg border p-4 md:flex-row md:items-center md:justify-between">
-                        <div className="flex w-full flex-col gap-3">
-                          <div className="flex flex-wrap items-center gap-4">
-                            <div>
-                              <h4 className="font-medium">
-                                {monthLabel} {cycle.year}
-                              </h4>
-                              <p className="text-sm text-muted-foreground">
-                                {processedCount} of {totalEmployees} employees
-                                {failedCount > 0 && ` • ${failedCount} failed`}
-                              </p>
-                              {statusMessage && (
-                                <p className="text-xs text-muted-foreground">{statusMessage}</p>
-                              )}
-                              {progressError && (
-                                <p className="text-xs text-destructive">{progressError}</p>
-                              )}
-                            </div>
-                            <Badge variant={getStatusBadgeVariant(cycle.status)} className="flex items-center gap-1">
-                              {getStatusIcon(cycle.status)}
-                              {cycle.status.replace('_', ' ')}
-                            </Badge>
-                          </div>
-                          {cycle.status === 'IN_PROGRESS' && (
-                            <div className="w-full max-w-md">
-                              <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
-                                <span>Progress</span>
-                                <span>{Math.min(progressPercent, 100)}%</span>
-                              </div>
-                              <div className="h-2 overflow-hidden rounded-full bg-gray-200">
-                                <div
-                                  className="h-2 rounded-full bg-blue-500 transition-all duration-300"
-                                  style={{ width: `${Math.min(progressPercent, 100)}%` }}
-                                ></div>
-                              </div>
-                              <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
-                                {etaLabel ? <span>ETA {etaLabel}</span> : <span>&nbsp;</span>}
-                                <span>
-                                  {processedCount}/{totalEmployees}
-                                </span>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <p className="font-semibold">{formatCurrency(cycle.totalAmount)}</p>
-                            {cycle.completedAt && (
-                              <p className="text-xs text-muted-foreground">
-                                {new Date(cycle.completedAt).toLocaleDateString()}
-                              </p>
-                            )}
-                          </div>
-                          {canDeleteCycle(cycle) && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => handleRequestDeleteCycle(cycle)}
-                              disabled={isDeletingCycle && cyclePendingDelete?.id === cycle.id}
-                            >
-                              {isDeletingCycle && cyclePendingDelete?.id === cycle.id ? (
-                                <span className="flex items-center gap-1">
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                  Deleting
-                                </span>
-                              ) : (
-                                'Delete'
-                              )}
-                            </Button>
-                          )}
-                          {cycle.status === 'DRAFT' && (
-                            <Button
-                              onClick={() => startPayrollCycle(cycle.id)}
-                              disabled={isProcessing}
-                              size="sm"
-                            >
-                              Start
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        <ReportingTab onNavigate={handleReportNavigation} />
 
-        {/* Setup & Configuration Tab */}
-        <TabsContent value="setup" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5" />
-                  Salary Templates & Structures
-                </CardTitle>
-                <CardDescription>
-                  Define and configure salary calculation rules and templates
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Button className="w-full" variant="outline" onClick={() => navigateToTemplates()}>
-                  <FileText className="h-4 w-4 mr-2" />
-                  Manage Salary Templates
-                </Button>
-                <Button className="w-full" variant="outline" onClick={() => navigateToTemplates('rules')}>
-                  <Settings className="h-4 w-4 mr-2" />
-                  Configure Calculation Rules
-                </Button>
-                <Button className="w-full" variant="outline" onClick={() => navigateToTemplates('assignments')}>
-                  <Users className="h-4 w-4 mr-2" />
-                  Apply to Users/Departments
-                </Button>
-              </CardContent>
-            </Card>
+        {/* Transactions tab content consolidated in TransactionsTab component */}
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Employee Management
-                </CardTitle>
-                <CardDescription>
-                  Manage employee information and bank details
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Button className="w-full" variant="outline" onClick={navigateToEmployeePortal}>
-                  <Users className="h-4 w-4 mr-2" />
-                  Employee Self-Service Portal
-                </Button>
-                <Button className="w-full" variant="outline" onClick={navigateToBankManagement}>
-                  <FileText className="h-4 w-4 mr-2" />
-                  Bank Details Management
-                </Button>
-                <Button className="w-full" variant="outline" onClick={navigateToNotificationSettings}>
-                  <AlertCircle className="h-4 w-4 mr-2" />
-                  Notification Settings
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        {/* Cycle Management Tab */}
-        <TabsContent value="cycle-management" className="space-y-6">
-          {/* Create New Cycle */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Create New Payroll Cycle</CardTitle>
-              <CardDescription>
-                Start a new monthly payroll cycle for bulk salary generation
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <MonthAndYearSelector 
-                months={months} 
-                years={years} 
-                selectedMonth={selectedMonth} 
-                selectedYear={selectedYear} 
-                setSelectedMonth={setSelectedMonth} 
-                setSelectedYear={setSelectedYear} 
-              />
-              <Button 
-                onClick={createPayrollCycle}
-                disabled={isCreatingCycle}
-                className="w-full"
-              >
-                {isCreatingCycle ? 'Creating...' : 'Create Payroll Cycle'}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Cycle Processing Queue */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Processing Queue
-              </CardTitle>
-              <CardDescription>
-                Background job queue for payroll calculations
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {activeProcessingJobs.length ? (
-                <div className="space-y-3">
-                  {activeProcessingJobs.map((cycle) => {
-                    const monthLabel = months.find((m) => m.value === cycle.month)?.label ?? `Month ${cycle.month}`;
-                    const progressSnapshot = getProgressSnapshotForCycle(cycle.id);
-                    const progressPercent =
-                      progressSnapshot?.percentComplete ??
-                      (cycle.totalEmployees > 0
-                        ? Math.round((cycle.processedCount / cycle.totalEmployees) * 100)
-                        : 0);
-                    const processedCount = progressSnapshot?.processedCount ?? cycle.processedCount;
-                    const totalEmployees = progressSnapshot?.totalEmployees ?? cycle.totalEmployees;
-                    const jobStatus = cycleProgressMap[cycle.id]?.job?.status ?? 'PENDING';
-                    const etaLabel = formatDuration(progressSnapshot?.etaMs ?? null);
-                    const statusMessage = progressSnapshot?.message;
-                    const progressError = getProgressErrorForCycle(cycle.id);
-                    const jobUpdatedAt = cycleProgressMap[cycle.id]?.job?.updatedAt ?? null;
-
-                    return (
-                      <div key={cycle.id} className="rounded-lg border p-4">
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <div>
-                            <h4 className="font-medium">
-                              {monthLabel} {cycle.year}
-                            </h4>
-                            <p className="text-xs text-muted-foreground capitalize">
-                              Job status: {jobStatus.toLowerCase()}
-                              {jobUpdatedAt && ` • updated ${new Date(jobUpdatedAt).toLocaleTimeString()}`}
-                            </p>
-                            {statusMessage && (
-                              <p className="text-xs text-muted-foreground">{statusMessage}</p>
-                            )}
-                            {progressError && (
-                              <p className="text-xs text-destructive">{progressError}</p>
-                            )}
-                          </div>
-                          <Badge variant="outline" className="capitalize">
-                            {jobStatus.toLowerCase()}
-                          </Badge>
-                        </div>
-                        <div className="mt-3">
-                          <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
-                            <span>Progress</span>
-                            <span>{Math.min(progressPercent, 100)}%</span>
-                          </div>
-                          <div className="h-2 overflow-hidden rounded-full bg-gray-200">
-                            <div
-                              className="h-2 rounded-full bg-blue-500 transition-all duration-300"
-                              style={{ width: `${Math.min(progressPercent, 100)}%` }}
-                            ></div>
-                          </div>
-                          <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
-                            {etaLabel ? <span>ETA {etaLabel}</span> : <span>&nbsp;</span>}
-                            <span>
-                              {processedCount}/{totalEmployees}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No active processing jobs</p>
-                  <p className="text-sm">Jobs will appear here when payroll calculations are running</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Processing Tab */}
-        <TabsContent value="processing" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Play className="h-5 w-5" />
-                Processing Workspace
-              </CardTitle>
-              <CardDescription>
-                Inspect salary breakdowns, adjust templates, and validate attendance before moving a cycle to review.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                Choose a cycle below to open the employee-by-employee processing panel. From there you can drill into salary
-                components, compare templates, and capture attendance corrections prior to approval.
-              </p>
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>What you can manage here</AlertTitle>
-                <AlertDescription>
-                  <ul className="ml-5 list-disc space-y-1 text-xs leading-relaxed text-muted-foreground">
-                    <li>Review salary breakdowns with allowances, deductions, and adjustments for each employee.</li>
-                    <li>Preview attendance timelines to spot missing punches or leave discrepancies.</li>
-                    <li>Queue up template changes or regeneration requests before handing off for approval.</li>
-                  </ul>
-                </AlertDescription>
-              </Alert>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Cycles ready for processing</CardTitle>
-              <CardDescription>
-                Draft and in-progress cycles that still need validation before review and approval.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {processingCycles.length ? (
-                <div className="space-y-3">
-                  {processingCycles.map((cycle) => {
-                    const monthLabel = months.find((m) => m.value === cycle.month)?.label ?? `Month ${cycle.month}`;
-                    const progressSnapshot = getProgressSnapshotForCycle(cycle.id);
-                    const progressPercent =
-                      progressSnapshot?.percentComplete ??
-                      (cycle.totalEmployees > 0
-                        ? Math.round((cycle.processedCount / cycle.totalEmployees) * 100)
-                        : 0);
-                    const processedCount = progressSnapshot?.processedCount ?? cycle.processedCount;
-                    const totalEmployees = progressSnapshot?.totalEmployees ?? cycle.totalEmployees;
-                    const failedCount = progressSnapshot?.failedCount ?? cycle.failedCount;
-                    const etaLabel = formatDuration(progressSnapshot?.etaMs ?? null);
-                    const statusMessage = progressSnapshot?.message;
-                    const progressError = getProgressErrorForCycle(cycle.id);
-
-                    return (
-                      <div
-                        key={cycle.id}
-                        className="flex flex-col gap-3 rounded-lg border p-4 md:flex-row md:items-center md:justify-between"
-                      >
-                        <div className="space-y-2">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h4 className="text-base font-semibold">
-                              {monthLabel} {cycle.year}
-                            </h4>
-                            <Badge variant={getStatusBadgeVariant(cycle.status)}>
-                              {cycle.status.replace('_', ' ')}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            {processedCount} of {totalEmployees} employees processed
-                            {failedCount > 0 ? ` • ${failedCount} failed` : ''}
-                          </p>
-                          {statusMessage && (
-                            <p className="text-xs text-muted-foreground">{statusMessage}</p>
-                          )}
-                          {progressError && (
-                            <p className="text-xs text-destructive">{progressError}</p>
-                          )}
-                          <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-                            <span>Total amount {formatCurrency(cycle.totalAmount)}</span>
-                            <span>Progress {Math.min(progressPercent, 100)}%</span>
-                            {etaLabel && <span>ETA {etaLabel}</span>}
-                          </div>
-                          <div className="h-2 w-full max-w-sm overflow-hidden rounded-full bg-gray-200">
-                            <div
-                              className="h-2 rounded-full bg-blue-500 transition-all duration-300"
-                              style={{ width: `${Math.min(progressPercent, 100)}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-stretch gap-2 md:items-end">
-                          <Button variant="outline" size="sm" onClick={() => handleOpenProcessingDrawer(cycle)}>
-                            Open processing workspace
-                          </Button>
-                          {cycle.status === 'DRAFT' && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => startPayrollCycle(cycle.id)}
-                              disabled={isProcessing}
-                            >
-                              Start cycle
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="py-10 text-center text-muted-foreground">
-                  All caught up! Begin a new cycle or resume an in-progress run to continue processing salaries.
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Review & Approval Tab */}
-        <TabsContent value="review-approval" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5" />
-                Bulk Review & Approval
-              </CardTitle>
-              <CardDescription>
-                Review and approve payroll calculations with comments
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {cyclesNeedingReview.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <CheckCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No cycles pending review</p>
-                  <p className="text-sm">Cycles will appear here when they need approval</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {cyclesNeedingReview.map((cycle) => (
-                    <div key={cycle.id} className="p-4 border rounded-lg">
-                      <div className="flex justify-between items-start mb-4">
-                        <div>
-                          <h4 className="font-medium">
-                            {months.find(m => m.value === cycle.month)?.label} {cycle.year}
-                          </h4>
-                          <p className="text-sm text-muted-foreground">
-                            {cycle.processedCount} employees processed
-                          </p>
-                        </div>
-                        <Badge variant={getStatusBadgeVariant(cycle.status)}>
-                          {cycle.status.replace('_', ' ')}
-                        </Badge>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() =>
-                            handleApproveCycle({ id: cycle.id, month: cycle.month, year: cycle.year })
-                          }
-                          disabled={isProcessing}
-                        >
-                          Approve
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleOpenReviewDetails(cycle.id)}
-                          disabled={reviewLoadingCycleId === cycle.id}
-                        >
-                          {reviewLoadingCycleId === cycle.id ? (
-                            <span className="flex items-center gap-1">
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                              Loading
-                            </span>
-                          ) : (
-                            'Review Details'
-                          )}
-                        </Button>
-                        <Button size="sm" variant="destructive" disabled={isProcessing}>
-                          Reject
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Transactions Tab */}
-        <TabsContent value="transactions" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5" />
-                Ready for Payout
-              </CardTitle>
-              <CardDescription>
-                Approved payroll cycles ready for transaction initiation
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm text-muted-foreground">
-              <p>
-                We’re finishing up the payout tooling next. For now, you can approve cycles and use this
-                workspace to review amounts, plan incentives, and coordinate disbursement with finance.
-              </p>
-              <p>
-                Need to run the legacy flow? Head to the Salary Transactions page while we wire up the new
-                experience here.
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Reporting Tab */}
-        <TabsContent value="reporting" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5" />
-                  Analytics & Reports
-                </CardTitle>
-                <CardDescription>
-                  Generate compliance reports and analytics
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Button className="w-full" variant="outline" onClick={() => handleReportNavigation('tax')}>
-                  <FileText className="h-4 w-4 mr-2" />
-                  Tax Summaries
-                </Button>
-                <Button className="w-full" variant="outline" onClick={() => handleReportNavigation('analytics')}>
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  Payroll Analytics
-                </Button>
-                <Button className="w-full" variant="outline" onClick={() => handleReportNavigation('export')}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Data
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Audit & Compliance
-                </CardTitle>
-                <CardDescription>
-                  Audit trails and compliance reports
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Button className="w-full" variant="outline" onClick={() => handleReportNavigation('audit')}>
-                  <FileText className="h-4 w-4 mr-2" />
-                  Audit Trail Review
-                </Button>
-                <Button className="w-full" variant="outline" onClick={() => handleReportNavigation('compliance')}>
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Compliance Reports
-                </Button>
-                <Button className="w-full" variant="outline" onClick={() => handleReportNavigation('corrections')}>
-                  <AlertCircle className="h-4 w-4 mr-2" />
-                  Handle Corrections
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        {/* Transactions Tab */}
-        <TabsContent value="transactions" className="space-y-6">
-          <div className="grid grid-cols-1 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5" />
-                  Payout Management
-                </CardTitle>
-                <CardDescription>
-                  Initiate and manage payroll payouts for approved cycles
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {payoutCycleBuckets.active.length === 0 ? (
-                  <div className="text-center py-8">
-                    <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No active payout workflows</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Complete and approve payroll cycles to enable payout management, or resume a cycle with pending payments.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {payoutCycleBuckets.active.map((cycle) => {
-                      const payoutStatus = (cycle.payoutStatus as PayrollPayoutStatus | undefined) ?? 'NOT_STARTED';
-                      const summary = cycle.payoutSummary;
-                      const progress = summary?.progress;
-                      const totals = summary?.totals;
-                      const fallbackTotal = typeof summary?.totalRecords === 'number'
-                        ? summary.totalRecords
-                        : cycle.processedCount ?? cycle.totalEmployees ?? 0;
-                      const totalRecords = progress?.totalRecords ?? fallbackTotal;
-                      const completedRecords = progress?.completedRecords
-                        ?? ((totals?.COMPLETED ?? 0) + (totals?.NO_PAYOUT_REQUIRED ?? 0));
-                      const logicalRecords = progress?.logicalRecords ?? (totals?.NO_PAYOUT_REQUIRED ?? 0);
-                      const remainingRecords = progress?.remainingRecords
-                        ?? Math.max(0, totalRecords - completedRecords);
-                      const percentComplete = progress?.percentComplete
-                        ?? (totalRecords > 0 ? Math.round((completedRecords / totalRecords) * 100) : 0);
-                      const actionIntent: 'initiate' | 'continue' = ['NOT_STARTED', 'FAILED'].includes(payoutStatus)
-                        ? 'initiate'
-                        : 'continue';
-                      const actionLabel = actionIntent === 'initiate' ? 'Initiate Payout' : 'Continue Payout';
-                      const monthLabel = months.find((m) => m.value === cycle.month)?.label ?? cycle.month;
-
-                      return (
-                        <div
-                          key={cycle.id}
-                          className="border rounded-lg p-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
-                        >
-                          <div className="space-y-2">
-                            <div>
-                              <h4 className="font-semibold">
-                                {monthLabel} {cycle.year}
-                              </h4>
-                              <p className="text-sm text-muted-foreground">
-                                {percentComplete}% complete • {completedRecords} of {totalRecords} settled
-                                {logicalRecords ? ` (${logicalRecords} logical)` : ''}
-                                {remainingRecords > 0 ? ` • ${remainingRecords} remaining` : ''}
-                              </p>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              {renderPayoutStatusBadge(payoutStatus)}
-                              <Badge variant={getStatusBadgeVariant(cycle.status)}>
-                                {cycle.status}
-                              </Badge>
-                            </div>
-                          </div>
-                          <div className="flex flex-col gap-2 md:items-end">
-                            <Button variant="outline" size="sm" onClick={() => handleViewPayoutSummary(cycle.id)}>
-                              View Summary
-                            </Button>
-                            <Button size="sm" onClick={() => handleOpenPayoutFlow(cycle, actionIntent)}>
-                              {actionLabel}
-                            </Button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {payoutCycleBuckets.failed.length > 0 && (
-                  <div className="space-y-4 border-t pt-4">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-red-600">
-                      <AlertCircle className="h-4 w-4" />
-                      Attention needed
-                    </div>
-                    {payoutCycleBuckets.failed.map((cycle) => {
-                      const monthLabel = months.find((m) => m.value === cycle.month)?.label ?? cycle.month;
-                      return (
-                        <div
-                          key={cycle.id}
-                          className="border border-red-200 rounded-lg p-4 bg-red-50/50 flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
-                        >
-                          <div>
-                            <p className="font-semibold">
-                              {monthLabel} {cycle.year}
-                            </p>
-                            <p className="text-sm text-red-600">
-                              Last payout attempt failed. Review discrepancies and try initiating again.
-                            </p>
-                          </div>
-                          <div className="flex flex-col gap-2 md:items-end">
-                            <div className="flex flex-wrap gap-2">
-                              {renderPayoutStatusBadge(cycle.payoutStatus)}
-                              <Badge variant={getStatusBadgeVariant(cycle.status)}>{cycle.status}</Badge>
-                            </div>
-                            <div className="flex gap-2">
-                              <Button variant="outline" size="sm" onClick={() => handleViewPayoutSummary(cycle.id)}>
-                                View Summary
-                              </Button>
-                              <Button size="sm" variant="destructive" onClick={() => handleOpenPayoutFlow(cycle, 'initiate')}>
-                                Retry Payout
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {payoutCycleBuckets.completed.length > 0 && (
-                  <div className="space-y-4 border-t pt-4">
-                    <div className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                      Completed payouts
-                    </div>
-                    {payoutCycleBuckets.completed.map((cycle) => {
-                      const summary = cycle.payoutSummary;
-                      const progress = summary?.progress;
-                      const totalRecords = progress?.totalRecords
-                        ?? (typeof summary?.totalRecords === 'number' ? summary.totalRecords : cycle.processedCount ?? 0);
-                      const completedRecords = progress?.completedRecords ?? totalRecords;
-                      const logicalRecords = progress?.logicalRecords ?? 0;
-                      const monthLabel = months.find((m) => m.value === cycle.month)?.label ?? cycle.month;
-                      const completedAt = cycle.payoutCompletedAt
-                        ? new Date(cycle.payoutCompletedAt).toLocaleString()
-                        : 'Recently';
-
-                      return (
-                        <div
-                          key={cycle.id}
-                          className="border rounded-lg p-4 bg-green-50/60 flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
-                        >
-                          <div>
-                            <h4 className="font-semibold text-green-700">
-                              {monthLabel} {cycle.year}
-                            </h4>
-                            <p className="text-sm text-green-700">
-                              {completedRecords} of {totalRecords} settled{logicalRecords ? ` (${logicalRecords} logical)` : ''}. Payout finalized on {completedAt}.
-                            </p>
-                            <div className="mt-2 flex flex-wrap gap-2">
-                              {renderPayoutStatusBadge(cycle.payoutStatus)}
-                              <Badge variant={getStatusBadgeVariant(cycle.status)}>{cycle.status}</Badge>
-                            </div>
-                          </div>
-                          <Button variant="outline" size="sm" onClick={() => handleViewPayoutSummary(cycle.id)}>
-                            View Summary
-                          </Button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-                
-                <div className="border-t pt-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Button 
-                      variant="outline" 
-                      onClick={handleExportPayouts}
-                      className="w-full"
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Export Payouts
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      onClick={handleBulkPaymentRecord}
-                      className="w-full"
-                    >
-                      <FileText className="h-4 w-4 mr-2" />
-                      Bulk Payment Record
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setActiveTab('reporting')}
-                      className="w-full"
-                    >
-                      <BarChart3 className="h-4 w-4 mr-2" />
-                      View Reports
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        {/* Employee Portal Tab */}
-        <TabsContent value="employee-portal" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Employee Access
-                </CardTitle>
-                <CardDescription>
-                  Employee self-service features
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Button className="w-full" variant="outline" onClick={() => handleEmployeePortalShortcut('payslips')}>
-                  <FileText className="h-4 w-4 mr-2" />
-                  Historical Payslips
-                </Button>
-                <Button
-                  className="w-full"
-                  variant="outline"
-                  onClick={() => handleEmployeePortalShortcut('payslips', { action: 'download' })}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download/Print Options
-                </Button>
-                <Button className="w-full" variant="outline" onClick={() => handleEmployeePortalShortcut('disputes')}>
-                  <AlertCircle className="h-4 w-4 mr-2" />
-                  Dispute Filing
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <AlertCircle className="h-5 w-5" />
-                  Notifications
-                </CardTitle>
-                <CardDescription>
-                  Employee notification management
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Button className="w-full" variant="outline" onClick={() => navigate(RouteDict.Notification.Send)}>
-                  <Users className="h-4 w-4 mr-2" />
-                  Send Notifications
-                </Button>
-                <Button className="w-full" variant="outline" onClick={() => handleEmployeePortalShortcut('profile')}>
-                  <FileText className="h-4 w-4 mr-2" />
-                  Preview Portal
-                </Button>
-                <Button className="w-full" variant="outline" onClick={() => navigate(RouteDict.Notification.Settings)}>
-                  <Settings className="h-4 w-4 mr-2" />
-                  Portal Settings
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
+        <EmployeePortalTab
+          onPortalShortcut={handleEmployeePortalShortcut}
+          onNavigateSendNotification={navigateToNotificationSend}
+          onNavigatePortalSettings={navigateToNotificationSettings}
+        />
       </Tabs>
 
       {/* Transaction Mode Dialog */}
