@@ -22,6 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { 
   User,
   CreditCard,
@@ -34,7 +35,8 @@ import {
   Save,
   Building2,
   Calendar,
-  History
+  History,
+  Loader2
 } from 'lucide-react'
 import { APIV3Dictionary } from '@/services/api/v3/Api3Dicts'
 import axios from 'axios'
@@ -46,6 +48,7 @@ import {
   SalaryDispute
 } from '../types/payroll'
 import { useLocation, useSearchParams } from 'react-router-dom'
+import PayslipDetailedView, { PayslipStatistics } from '../AdminLevel/ViewPayslipOfAllUsersPayroll/PayslipDetailedView'
 
 interface ApiResponse<T> {
   success?: boolean
@@ -137,6 +140,11 @@ const EmployeeSelfServicePortal = () => {
   }, [location.state]);
   const [selectedPayslip, setSelectedPayslip] = useState<PayslipPreview | null>(null);
   const [isDisputeDialogOpen, setIsDisputeDialogOpen] = useState(false);
+  const [payslipDetailsTarget, setPayslipDetailsTarget] = useState<PayslipPreview | null>(null);
+  const [isPayslipDetailsOpen, setIsPayslipDetailsOpen] = useState(false);
+  const [payslipStatistics, setPayslipStatistics] = useState<PayslipStatistics | null>(null);
+  const [isPayslipDetailsLoading, setIsPayslipDetailsLoading] = useState(false);
+  const [payslipDetailsError, setPayslipDetailsError] = useState<string | null>(null);
   const [loadErrors, setLoadErrors] = useState<string[]>([]);
 
   // Edit states
@@ -510,6 +518,56 @@ const EmployeeSelfServicePortal = () => {
       window.jspdf = jsPdfModule;
     }
   }, []);
+
+  const handleViewPayslipDetails = async (payslip: PayslipPreview) => {
+    if (!payslip?.id) {
+      toast({
+        title: 'Unavailable',
+        description: 'Payslip identifier is missing. Please contact your administrator.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (payslipDetailsTarget?.id === payslip.id && payslipStatistics && !payslipDetailsError) {
+      setIsPayslipDetailsOpen(true);
+      return;
+    }
+
+    setPayslipDetailsTarget(payslip);
+    setPayslipDetailsError(null);
+    setPayslipStatistics(null);
+    setIsPayslipDetailsOpen(true);
+    setIsPayslipDetailsLoading(true);
+
+    try {
+      const response = await axios.get<ApiResponse<PayslipStatistics>>(
+        APIV3Dictionary.payroll.getStatistics(payslip.id),
+        { withCredentials: true }
+      );
+
+      if (response.data?.success === false) {
+        throw new Error(response.data.message || 'Unable to load payslip statistics.');
+      }
+
+      const statistics = extractApiData(response.data);
+      if (!statistics) {
+        throw new Error('Payslip statistics are not available at the moment.');
+      }
+
+      setPayslipStatistics(statistics);
+    } catch (error) {
+      const message = getErrorMessage(error, 'Failed to load payslip details.');
+      setPayslipDetailsError(message);
+      toast({
+        title: 'Unable to load payslip details',
+        description: message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsPayslipDetailsLoading(false);
+    }
+  };
 
   const buildPayslipPdfData = useCallback((payslip: PayslipPreview): PayslipPdfData => {
     const allowanceEntries = Object.entries(payslip.allowances ?? {});
@@ -933,6 +991,7 @@ const EmployeeSelfServicePortal = () => {
                 ) : (
                   payslips.map((payslip, index) => {
                     const payslipKey = payslip.id ?? `${payslip.year}-${payslip.month}-${user?.id ?? 'self'}-${index}`;
+                    const isDetailsLoading = isPayslipDetailsLoading && payslipDetailsTarget?.id === payslip.id;
 
                     return (
                       <div key={payslipKey} className="flex items-center justify-between p-4 border rounded-lg">
@@ -955,9 +1014,18 @@ const EmployeeSelfServicePortal = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Button size="sm" variant="outline">
-                            <Eye className="h-4 w-4 mr-2" />
-                            View Details
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={isDetailsLoading}
+                            onClick={() => handleViewPayslipDetails(payslip)}
+                          >
+                            {isDetailsLoading ? (
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                              <Eye className="h-4 w-4 mr-2" />
+                            )}
+                            {isDetailsLoading ? 'Loading...' : 'View Details'}
                           </Button>
                           <Button
                             size="sm"
@@ -1067,6 +1135,57 @@ const EmployeeSelfServicePortal = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Dialog
+        open={isPayslipDetailsOpen}
+        onOpenChange={(open) => {
+          setIsPayslipDetailsOpen(open);
+          if (!open) {
+            setPayslipStatistics(null);
+            setPayslipDetailsError(null);
+            setPayslipDetailsTarget(null);
+            setIsPayslipDetailsLoading(false);
+          }
+        }}
+      >
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>
+              {payslipDetailsTarget
+                ? `${getMonthName(payslipDetailsTarget.month)} ${payslipDetailsTarget.year} Payslip`
+                : 'Payslip Details'}
+            </DialogTitle>
+            <DialogDescription>
+              Review the complete salary calculation with attendance, rule compliance, and penalty insights.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto pt-4">
+            {isPayslipDetailsLoading ? (
+              <div className="flex min-h-[50vh] items-center justify-center text-muted-foreground">
+                <Loader2 className="h-6 w-6 animate-spin" />
+                <span className="ml-2 text-sm">Fetching payslip details…</span>
+              </div>
+            ) : payslipDetailsError ? (
+              <Alert variant="destructive">
+                <AlertTitle>Unable to load payslip</AlertTitle>
+                <AlertDescription>{payslipDetailsError}</AlertDescription>
+              </Alert>
+            ) : payslipStatistics && payslipDetailsTarget ? (
+              <ScrollArea className="h-full pr-3">
+                <PayslipDetailedView
+                  statistics={payslipStatistics}
+                  payslip={payslipDetailsTarget}
+                />
+              </ScrollArea>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Select a payslip to view detailed salary and attendance information.
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Dispute Dialog */}
       <Dialog open={isDisputeDialogOpen} onOpenChange={setIsDisputeDialogOpen}>

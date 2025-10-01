@@ -71,6 +71,11 @@ export const usePayslipPDF = (): UsePayslipPDFReturn => {
 
       // Transform the backend response to match our PayslipData interface
       const statistics = response.data.data;
+      const effectiveWorkingDays = statistics.attendanceAnalysis.workingDays || 0;
+      const basicRate = effectiveWorkingDays > 0
+        ? statistics.salaryBreakdown.basicSalary / effectiveWorkingDays
+        : statistics.salaryBreakdown.basicSalary;
+
       const transformedData: PayslipData = {
         // Basic Information
         month: statistics.basicInfo.month,
@@ -114,8 +119,8 @@ export const usePayslipPDF = (): UsePayslipPDFReturn => {
         earnings: {
           basicSalary: {
             description: 'Basic Salary',
-            hours: statistics.attendanceAnalysis.workingDays,
-            rate: statistics.salaryBreakdown.basicSalary / statistics.attendanceAnalysis.workingDays,
+            hours: effectiveWorkingDays,
+            rate: basicRate,
             current: statistics.salaryBreakdown.basicSalary,
             ytd: statistics.salaryBreakdown.basicSalary * statistics.basicInfo.month
           },
@@ -162,6 +167,10 @@ export const usePayslipPDF = (): UsePayslipPDFReturn => {
           unpaidLeaveDays: statistics.attendanceAnalysis.unpaidLeaveDays,
           attendancePercentage: statistics.attendanceAnalysis.attendancePercentage
         },
+        attendanceDetails: statistics.attendanceDetails,
+        salaryContext: statistics.salaryContext,
+        ruleContext: statistics.ruleContext,
+        penaltyContext: statistics.penaltyContext,
 
         // YTD Information
         ytd: {
