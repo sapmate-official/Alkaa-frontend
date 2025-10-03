@@ -3,13 +3,6 @@ import { useAuth } from '@/providers/AuthContext'
 import axios from 'axios'
 import { APIV3Dictionary } from '@/services/api/v3/Api3Dicts'
 import { toast } from '@/hooks/use-toast'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -25,17 +18,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from '@/components/ui/alert-dialog'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Separator } from '@/components/ui/separator'
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle
-} from '@/components/ui/drawer'
 import {
   Dialog,
   DialogContent,
@@ -44,20 +26,14 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import {
   AlertCircle,
   Settings,
   Download,
-  Loader2,
-  ChevronLeft,
-  ChevronRight
+  Loader2
 } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import RouteDict from '@/routes/RouteDict'
-import { cn } from '@/lib/utils'
 
 import {
   PayrollCycle,
@@ -77,6 +53,9 @@ import ReviewApprovalTab from './components/tabs/ReviewApprovalTab'
 import ReportingTab from './components/tabs/ReportingTab'
 import TransactionsTab from './components/tabs/TransactionsTab'
 import EmployeePortalTab from './components/tabs/EmployeePortalTab'
+import TransactionModeDialog, { BankDetailsFormState } from './components/TransactionModeDialog'
+import ProcessingDrawer from './components/ProcessingDrawer'
+import TemplateDialog from './components/TemplateDialog'
 
 const MONTH_OPTIONS: { value: number; label: string }[] = [
   { value: 1, label: 'January' },
@@ -228,17 +207,6 @@ const PayrollAdminDashboard = () => {
         {meta.label}
       </Badge>
     );
-  };
-
-  // Bank details editing state
-  type BankDetailsFormState = {
-    accountHolderName: string;
-    bankName: string;
-    accountNumber: string;
-    ifscCode: string;
-    accountType: string;
-    maskedAccountNumber?: string;
-    accountHolder?: string;
   };
 
   const [isEditingBankDetails, setIsEditingBankDetails] = useState(false);
@@ -509,7 +477,7 @@ const PayrollAdminDashboard = () => {
   const navigateToEmployeePortal = () => {
     navigate(`${RouteDict.Payroll.Base}/employee`, { state: { defaultTab: 'profile' } });
   };
-  const navigateToBankManagement = () => navigate('/p/profile/bank');
+  const navigateToBankManagement = () => navigate(RouteDict.Profile.BankDetails);
   const navigateToNotificationSettings = () => navigate('/p/notification/settings');
   const navigateToNotificationSend = () => navigate(RouteDict.Notification.Send);
 
@@ -1427,6 +1395,27 @@ const PayrollAdminDashboard = () => {
   const processingAttendanceSummary = selectedProcessingRecord?.attendanceSummary ?? null;
   const currentTemplateIdForRecord = selectedProcessingRecord?.templateId ?? null;
 
+  const selectedEmployeeName = useMemo(() => {
+    if (!selectedProcessingRecord?.user) {
+      return 'this employee';
+    }
+
+    const name = [selectedProcessingRecord.user.firstName, selectedProcessingRecord.user.lastName]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+
+    if (name) {
+      return name;
+    }
+
+    return (
+      selectedProcessingRecord.user.email ||
+      selectedProcessingRecord.user.employeeId ||
+      'this employee'
+    );
+  }, [selectedProcessingRecord]);
+
   useEffect(() => {
     if (isTemplateDialogOpen) {
       setTemplateSelection(currentTemplateIdForRecord);
@@ -2091,7 +2080,7 @@ const PayrollAdminDashboard = () => {
     });
   };
 
-  const isValidBankDetails = (details?: Partial<BankDetailsFormState>) => {
+  const isValidBankDetails = (details?: Partial<BankDetailsFormState> | null) => {
     const source = details ?? bankDetailsForm;
 
     if (!source) {
@@ -2326,929 +2315,88 @@ const PayrollAdminDashboard = () => {
         />
       </Tabs>
 
-      {/* Transaction Mode Dialog */}
-      <Dialog
+      <TransactionModeDialog
         open={isTransactionModeOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            handleCloseTransactionMode();
-          }
-        }}
-      >
-        <DialogContent className="flex max-h-[90vh] max-w-4xl flex-col">
-          <DialogHeader className="space-y-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <DialogTitle>
-                  Transaction Mode - Employee {currentEmployeeIndex + 1} of {transactionEmployees.length}
-                </DialogTitle>
-                <DialogDescription>
-                  Process individual employee payments by entering transaction details and confirming each transfer.
-                </DialogDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handlePreviousEmployee}
-                  disabled={currentEmployeeIndex === 0 || isProcessingTransaction}
-                >
-                  <ChevronLeft className="h-4 w-4 mr-2" />
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleNextEmployee}
-                  disabled={currentEmployeeIndex >= transactionEmployees.length - 1 || isProcessingTransaction}
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4 ml-2" />
-                </Button>
-              </div>
-            </div>
-          </DialogHeader>
-          
-          {transactionEmployees.length > 0 && (
-            <div className="flex-1 overflow-y-auto space-y-6">
-              {/* Current Employee */}
-              {(() => {
-                const currentEmployee = transactionEmployees[currentEmployeeIndex];
-                if (!currentEmployee) return null;
-                
-                const isLogicalPayout = currentEmployee.paymentStatus === 'NO_PAYOUT_REQUIRED';
-                const isCompleted =
-                  completedTransactions.has(currentEmployee.id) ||
-                  currentEmployee.paymentStatus === 'COMPLETED' ||
-                  isLogicalPayout;
-                const cardAccentClasses = isLogicalPayout
-                  ? 'border-slate-300 bg-slate-50'
-                  : isCompleted
-                    ? 'border-green-200 bg-green-50'
-                    : 'border-blue-200 bg-blue-50';
-                const currentTransactionRef = `${transactionCycleId}-${currentEmployee.id}`;
-                const netSalaryValue = currentEmployee.netSalary ?? 0;
-                const netSalaryClass = netSalaryValue > 0 ? 'text-green-600' : netSalaryValue < 0 ? 'text-red-600' : 'text-slate-600';
-                
-                return (
-                  <div className="space-y-6">
-                    {/* Employee Header */}
-                    <Card className={`border-2 ${cardAccentClasses}`}>
-                      <CardHeader>
-                        <div className="flex items-center justify-between gap-4">
-                          <div>
-                            <CardTitle className="text-lg">
-                              {[currentEmployee.user?.firstName, currentEmployee.user?.lastName].filter(Boolean).join(' ') || 'Employee'}
-                            </CardTitle>
-                            <CardDescription>
-                              {currentEmployee.user?.employeeId || 'N/A'} • {currentEmployee.user?.department?.name || 'Department N/A'}
-                            </CardDescription>
-                            {isLogicalPayout && (
-                              <p className="mt-2 text-xs text-slate-600">
-                                Net amount {formatCurrency(netSalaryValue)} — recorded as a logical payout with no funds transferred.
-                              </p>
-                            )}
-                          </div>
-                          <div className="text-right space-y-2">
-                            <p className={`text-2xl font-bold ${netSalaryClass}`}>
-                              {formatCurrency(currentEmployee.netSalary)}
-                            </p>
-                            <div className="flex items-center justify-end gap-2 flex-wrap">
-                              {renderPaymentStatusBadge(currentEmployee.paymentStatus)}
-                              {isCompleted && !currentEmployee.paymentStatus && !isLogicalPayout && (
-                                <Badge variant="default" className="bg-green-600">
-                                  ✓ Sent
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </CardHeader>
-                    </Card>
+        onClose={handleCloseTransactionMode}
+        employees={transactionEmployees}
+        currentEmployeeIndex={currentEmployeeIndex}
+        onPreviousEmployee={handlePreviousEmployee}
+        onNextEmployee={handleNextEmployee}
+        onSendPayment={handleSendPayment}
+        onCompleteAll={handleCompleteAllTransactions}
+        isProcessingTransaction={isProcessingTransaction}
+        transactionDetails={transactionDetails}
+        setTransactionDetails={setTransactionDetails}
+        transactionCycleId={transactionCycleId}
+        formatCurrency={formatCurrency}
+        renderPaymentStatusBadge={renderPaymentStatusBadge}
+        completedTransactions={completedTransactions}
+        isEditingBankDetails={isEditingBankDetails}
+        bankDetailsForm={bankDetailsForm}
+        setBankDetailsForm={setBankDetailsForm}
+        onEditBankDetails={handleEditBankDetails}
+        onSaveBankDetails={handleSaveBankDetails}
+        onCancelBankEdit={handleCancelBankEdit}
+        isSavingBankDetails={isSavingBankDetails}
+        isValidBankDetails={isValidBankDetails}
+      />
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Payment Details */}
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Payment Details</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Gross Salary:</span>
-                            <span className="font-medium">{formatCurrency(currentEmployee.grossSalary || 0)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Total Deductions:</span>
-                            <span className="font-medium text-red-600">-{formatCurrency(currentEmployee.totalDeductions || 0)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Total Allowances:</span>
-                            <span className="font-medium text-green-600">+{formatCurrency(currentEmployee.totalAllowances || 0)}</span>
-                          </div>
-                          <Separator />
-                          <div className="flex justify-between font-semibold text-lg">
-                            <span>Net Salary:</span>
-                            <span className="text-green-600">{formatCurrency(currentEmployee.netSalary)}</span>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      {/* Bank Details */}
-                      <Card>
-                        <CardHeader>
-                          <div className="flex items-center justify-between">
-                            <CardTitle>Bank Details</CardTitle>
-                            {!isEditingBankDetails && (
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => handleEditBankDetails(currentEmployee)}
-                              >
-                                {currentEmployee.user?.bankDetails?.accountNumber ? 'Edit' : 'Add'} Bank Details
-                              </Button>
-                            )}
-                          </div>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                          {isEditingBankDetails ? (
-                            // Bank Details Edit Form
-                            <div className="space-y-4">
-                              <div>
-                                <Label htmlFor="accountHolderName">Account Holder Name *</Label>
-                                <Input
-                                  id="accountHolderName"
-                                  value={bankDetailsForm.accountHolderName}
-                                  onChange={(e) => setBankDetailsForm(prev => ({
-                                    ...prev,
-                                    accountHolderName: e.target.value
-                                  }))}
-                                  placeholder="Enter account holder name"
-                                />
-                              </div>
-                              <div>
-                                <Label htmlFor="bankName">Bank Name *</Label>
-                                <Input
-                                  id="bankName"
-                                  value={bankDetailsForm.bankName}
-                                  onChange={(e) => setBankDetailsForm(prev => ({
-                                    ...prev,
-                                    bankName: e.target.value
-                                  }))}
-                                  placeholder="Enter bank name"
-                                />
-                              </div>
-                              <div>
-                                <Label htmlFor="accountNumber">Account Number *</Label>
-                                <Input
-                                  id="accountNumber"
-                                  value={bankDetailsForm.accountNumber}
-                                  onChange={(e) => setBankDetailsForm(prev => ({
-                                    ...prev,
-                                    accountNumber: e.target.value
-                                  }))}
-                                  placeholder="Enter account number"
-                                />
-                              </div>
-                              <div>
-                                <Label htmlFor="ifscCode">IFSC Code *</Label>
-                                <Input
-                                  id="ifscCode"
-                                  value={bankDetailsForm.ifscCode}
-                                  onChange={(e) => setBankDetailsForm(prev => ({
-                                    ...prev,
-                                    ifscCode: e.target.value.toUpperCase()
-                                  }))}
-                                  placeholder="Enter IFSC code"
-                                />
-                              </div>
-                              <div className="flex gap-2 pt-2">
-                                <Button 
-                                  onClick={handleSaveBankDetails}
-                                  disabled={isSavingBankDetails || !isValidBankDetails()}
-                                  size="sm"
-                                >
-                                  {isSavingBankDetails ? (
-                                    <>
-                                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                      Saving...
-                                    </>
-                                  ) : (
-                                    'Save Bank Details'
-                                  )}
-                                </Button>
-                                <Button 
-                                  variant="outline" 
-                                  onClick={handleCancelBankEdit}
-                                  disabled={isSavingBankDetails}
-                                  size="sm"
-                                >
-                                  Cancel
-                                </Button>
-                              </div>
-                            </div>
-                          ) : (
-                            // Bank Details Display
-                            <>
-                              <div>
-                                <Label className="text-muted-foreground">Account Holder:</Label>
-                                <p className="font-medium">{currentEmployee.user?.bankDetails?.accountHolderName || 'Not provided'}</p>
-                              </div>
-                              <div>
-                                <Label className="text-muted-foreground">Bank Name:</Label>
-                                <p className="font-medium">{currentEmployee.user?.bankDetails?.bankName || 'Not provided'}</p>
-                              </div>
-                              <div>
-                                <Label className="text-muted-foreground">Account Number:</Label>
-                                <p className="font-medium font-mono">{currentEmployee.user?.bankDetails?.accountNumber || 'Not provided'}</p>
-                              </div>
-                              <div>
-                                <Label className="text-muted-foreground">IFSC Code:</Label>
-                                <p className="font-medium font-mono">{currentEmployee.user?.bankDetails?.ifscCode || 'Not provided'}</p>
-                              </div>
-                              {!currentEmployee.user?.bankDetails?.accountNumber && (
-                                <Alert>
-                                  <AlertCircle className="h-4 w-4" />
-                                  <AlertTitle>Bank details required</AlertTitle>
-                                  <AlertDescription>
-                                    Please add bank details to process payment for this employee.
-                                  </AlertDescription>
-                                </Alert>
-                              )}
-                            </>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    {/* Transaction Input */}
-                    {!isCompleted && (
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Transaction Details</CardTitle>
-                          <CardDescription>
-                            {currentEmployee && !isValidBankDetails(currentEmployee.user?.bankDetails) 
-                              ? "Bank details are required before processing payment for this employee."
-                              : "Enter the transaction reference number after processing the payment in your banking system."
-                            }
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          {currentEmployee && !isValidBankDetails(currentEmployee.user?.bankDetails) ? (
-                            <Alert>
-                              <AlertCircle className="h-4 w-4" />
-                              <AlertTitle>Cannot Process Payment</AlertTitle>
-                              <AlertDescription>
-                                Complete bank details are required to process payment. Please add bank details first.
-                              </AlertDescription>
-                            </Alert>
-                          ) : (
-                            <>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                  <Label htmlFor="transactionNumber">Transaction Reference Number *</Label>
-                                  <Input
-                                    id="transactionNumber"
-                                    placeholder="e.g., TXN123456789"
-                                    value={transactionDetails[currentTransactionRef] || ''}
-                                    onChange={(e) => setTransactionDetails(prev => ({
-                                      ...prev,
-                                      [currentTransactionRef]: e.target.value
-                                    }))}
-                                  />
-                                </div>
-                                <div>
-                                  <Label htmlFor="transactionDate">Transaction Date</Label>
-                                  <Input
-                                    id="transactionDate"
-                                    type="date"
-                                    value={transactionDetails[`${currentTransactionRef}-date`] || new Date().toISOString().split('T')[0]}
-                                    onChange={(e) => setTransactionDetails(prev => ({
-                                      ...prev,
-                                      [`${currentTransactionRef}-date`]: e.target.value
-                                    }))}
-                                  />
-                                </div>
-                              </div>
-                              <div>
-                                <Label htmlFor="transactionNotes">Notes (Optional)</Label>
-                                <Input
-                                  id="transactionNotes"
-                                  placeholder="Additional transaction notes..."
-                                  value={transactionDetails[`${currentTransactionRef}-notes`] || ''}
-                                  onChange={(e) => setTransactionDetails(prev => ({
-                                    ...prev,
-                                    [`${currentTransactionRef}-notes`]: e.target.value
-                                  }))}
-                                />
-                              </div>
-                            </>
-                          )}
-                        </CardContent>
-                      </Card>
-                    )}
-                  </div>
-                );
-              })()}
-            </div>
-          )}
-
-          <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-t pt-4">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>Progress:</span>
-              <Badge variant="outline">
-                {completedTransactions.size} / {transactionEmployees.length} completed
-              </Badge>
-            </div>
-            
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handleCloseTransactionMode}>
-                Exit Transaction Mode
-              </Button>
-              
-              {currentEmployeeIndex > 0 && (
-                <Button 
-                  variant="outline" 
-                  onClick={handlePreviousEmployee}
-                  disabled={isProcessingTransaction}
-                >
-                  <ChevronLeft className="h-4 w-4 mr-2" />
-                  Previous
-                </Button>
-              )}
-              
-              {(() => {
-                const currentEmployee = transactionEmployees[currentEmployeeIndex];
-                const isCompleted =
-                  currentEmployee &&
-                  (completedTransactions.has(currentEmployee.id) ||
-                    currentEmployee.paymentStatus === 'COMPLETED' ||
-                    currentEmployee.paymentStatus === 'NO_PAYOUT_REQUIRED');
-                const currentTransactionRef = currentEmployee ? `${transactionCycleId}-${currentEmployee.id}` : '';
-                const hasTransactionNumber = transactionDetails[currentTransactionRef]?.trim();
-                
-                if (isCompleted) {
-                  // Show next button if there are more employees
-                  if (currentEmployeeIndex < transactionEmployees.length - 1) {
-                    return (
-                      <Button onClick={handleNextEmployee}>
-                        Next Employee
-                        <ChevronRight className="h-4 w-4 ml-2" />
-                      </Button>
-                    );
-                  } else {
-                    // All done
-                    return (
-                      <Button onClick={handleCompleteAllTransactions}>
-                        Complete Payout Process
-                      </Button>
-                    );
-                  }
-                } else {
-                  // Show send button
-                  const hasValidBankDetails = currentEmployee ? isValidBankDetails(currentEmployee.user?.bankDetails) : false;
-                  const estimatedPayoutAmount =
-                    (currentEmployee?.netSalary ?? 0) +
-                    (currentEmployee?.incentive ?? 0) +
-                    (currentEmployee?.bonus ?? 0);
-                  const requiresBankDetails = estimatedPayoutAmount > 0;
-                  const isDisabled =
-                    !hasTransactionNumber ||
-                    isProcessingTransaction ||
-                    (requiresBankDetails && !hasValidBankDetails);
-                  
-                  return (
-                    <Button 
-                      onClick={handleSendPayment}
-                      disabled={isDisabled}
-                    >
-                      {isProcessingTransaction ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Processing...
-                        </>
-                      ) : (
-                        <>
-                          Send Payment
-                          <ChevronRight className="h-4 w-4 ml-2" />
-                        </>
-                      )}
-                    </Button>
-                  );
-                }
-              })()}
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Drawer
+      <ProcessingDrawer
         open={isProcessingDrawerOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            handleCloseProcessingDrawer();
+        onClose={handleCloseProcessingDrawer}
+        selectedCycleLabel={selectedProcessingCycleMonthLabel}
+        selectedCycleYear={selectedProcessingCycleYear}
+        selectedCycle={selectedProcessingCycle}
+        formatCurrency={formatCurrency}
+        getStatusBadgeVariant={getStatusBadgeVariant}
+        employeeSearchTerm={employeeSearchTerm}
+        onEmployeeSearchTermChange={(value) => setEmployeeSearchTerm(value)}
+        filteredRecords={filteredProcessingRecords}
+        processingRecords={processingSalaryRecords}
+        selectedRecord={selectedProcessingRecord}
+        onSelectRecord={selectProcessingRecord}
+        renderPaymentStatusBadge={renderPaymentStatusBadge}
+        formatPaymentStatus={formatPaymentStatus}
+        isLoading={isProcessingDrawerLoading}
+        error={processingDrawerError}
+        onRetry={() => {
+          if (selectedProcessingCycle) {
+            handleOpenProcessingDrawer(selectedProcessingCycle)
           }
         }}
-      >
-        <DrawerContent className="flex h-[90vh] max-h-[90vh] flex-col">
-          <DrawerHeader className="gap-1">
-            <DrawerTitle>
-              {selectedProcessingCycleMonthLabel && selectedProcessingCycleYear
-                ? `Processing ${selectedProcessingCycleMonthLabel} ${selectedProcessingCycleYear}`
-                : 'Cycle processing workspace'}
-            </DrawerTitle>
-            <DrawerDescription>
-              Navigate through each employee to validate salary breakdowns, attendance inputs, and template assignments before approval.
-            </DrawerDescription>
-            {selectedProcessingCycle && (
-              <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                <Badge variant={getStatusBadgeVariant(selectedProcessingCycle.status)}>
-                  {selectedProcessingCycle.status.replace('_', ' ')}
-                </Badge>
-                <span>
-                  {selectedProcessingCycle.processedCount} / {selectedProcessingCycle.totalEmployees} processed
-                </span>
-                {typeof selectedProcessingCycle.totalAmount === 'number' && (
-                  <span>Total {formatCurrency(selectedProcessingCycle.totalAmount)}</span>
-                )}
-              </div>
-            )}
-          </DrawerHeader>
+        processingDetails={processingCycleDetails}
+        allowanceEntries={processingAllowanceEntries}
+        deductionEntries={processingDeductionEntries}
+        calculationDetails={processingCalculationDetails}
+        attendanceSummary={processingAttendanceSummary}
+        cycleSummary={processingCycleSummary}
+        onNavigateRecord={handleNavigateProcessingRecord}
+        canNavigatePrev={canNavigateProcessingPrev}
+        canNavigateNext={canNavigateProcessingNext}
+        onSubmitCycleForReview={handleSubmitCycleForReview}
+        canSubmitCycleForReview={canSubmitCycleForReview}
+        isSubmittingForReview={isSubmittingForReview}
+        onOpenTemplateDialog={handleOpenTemplateDialog}
+        onRecalculateSalary={handleRecalculateSalary}
+        isRecalculatingSalary={isRecalculatingSalary}
+      />
 
-          <div className="flex flex-1 flex-col overflow-hidden md:flex-row">
-            <div className="border-b md:w-72 md:border-b-0 md:border-r">
-              <div className="px-3 pb-2 space-y-2">
-                <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Employees
-                </div>
-                <Input
-                  value={employeeSearchTerm}
-                  onChange={(event) => setEmployeeSearchTerm(event.target.value)}
-                  placeholder="Search by name or ID"
-                  className="h-8"
-                  aria-label="Search employees"
-                />
-              </div>
-              <ScrollArea className="h-48 md:h-full">
-                <div className="space-y-2 px-3 pb-6">
-                  {filteredProcessingRecords.length ? (
-                    filteredProcessingRecords.map((record) => {
-                      const fullName = [record.user?.firstName, record.user?.lastName]
-                        .filter(Boolean)
-                        .join(' ') || 'Employee';
-                      const employeeId = record.user?.employeeId || 'ID unavailable';
-                      const isActive = selectedProcessingRecord?.id === record.id;
-
-                      return (
-                        <button
-                          key={record.id}
-                          type="button"
-                          onClick={() => selectProcessingRecord(record.id)}
-                          className={cn(
-                            'w-full rounded-md border p-3 text-left transition-colors',
-                            isActive
-                              ? 'border-primary bg-primary/5 shadow-sm'
-                              : 'border-border bg-muted/40 hover:bg-muted'
-                          )}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium">{fullName}</span>
-                            <Badge variant={getStatusBadgeVariant(record.status)}>{record.status}</Badge>
-                          </div>
-                          <p className="mt-2 text-xs text-muted-foreground">
-                            {employeeId} • Net {formatCurrency(record.netSalary)}
-                          </p>
-                          {record.paymentStatus && (
-                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                              Payment: {formatPaymentStatus(record.paymentStatus)}
-                            </p>
-                          )}
-                        </button>
-                      );
-                    })
-                  ) : (
-                    <div className="py-10 text-center text-xs text-muted-foreground">
-                      {processingSalaryRecords.length
-                        ? 'No employees match your search.'
-                        : 'No salary records generated yet for this cycle.'}
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-3 pb-6">
-              {isProcessingDrawerLoading ? (
-                <div className="flex h-full items-center justify-center gap-2 text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Loading cycle details…
-                </div>
-              ) : processingDrawerError ? (
-                <div className="space-y-4">
-                  <Alert variant="destructive">
-                    <AlertTitle>Unable to load processing data</AlertTitle>
-                    <AlertDescription>{processingDrawerError}</AlertDescription>
-                  </Alert>
-                  <div>
-                    <Button
-                      size="sm"
-                      onClick={() => selectedProcessingCycle && handleOpenProcessingDrawer(selectedProcessingCycle)}
-                    >
-                      Retry fetch
-                    </Button>
-                  </div>
-                </div>
-              ) : selectedProcessingRecord ? (
-                <div className="space-y-4">
-                  {isRecalculatingSalary && (
-                    <Alert>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <AlertTitle>Recalculating salary…</AlertTitle>
-                      <AlertDescription>
-                        We’re regenerating this employee’s payroll data using the latest template and attendance inputs.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                        <div>
-                          <CardTitle className="text-lg font-semibold">
-                            {[selectedProcessingRecord.user?.firstName, selectedProcessingRecord.user?.lastName]
-                              .filter(Boolean)
-                              .join(' ') || 'Employee overview'}
-                          </CardTitle>
-                          <CardDescription>
-                            {selectedProcessingRecord.user?.employeeId || 'Employee ID unavailable'} •
-                            {' '}
-                            {(selectedProcessingRecord.user?.department?.name &&
-                              selectedProcessingRecord.user.department.name) || 'Department N/A'}
-                          </CardDescription>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleNavigateProcessingRecord('previous')}
-                            disabled={!canNavigateProcessingPrev}
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleNavigateProcessingRecord('next')}
-                            disabled={!canNavigateProcessingNext}
-                          >
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                        <Badge variant={getStatusBadgeVariant(selectedProcessingRecord.status)}>
-                          {selectedProcessingRecord.status}
-                        </Badge>
-                        {selectedProcessingRecord.paymentStatus && renderPaymentStatusBadge(selectedProcessingRecord.paymentStatus)}
-                        <span>
-                          Net salary {formatCurrency(selectedProcessingRecord.netSalary)} • Basic{' '}
-                          {formatCurrency(selectedProcessingRecord.basicSalary)}
-                        </span>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <div className="rounded-lg border p-4">
-                          <p className="text-xs text-muted-foreground">Template</p>
-                          <p className="mt-1 font-semibold">
-                            {selectedProcessingRecord.templateName || selectedProcessingRecord.templateId ||
-                              processingCycleDetails?.template?.name ||
-                              'Template not assigned'}
-                          </p>
-                          {processingCycleDetails?.template?.description && (
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              {processingCycleDetails.template.description}
-                            </p>
-                          )}
-                        </div>
-                        <div className="rounded-lg border p-4">
-                          <p className="text-xs text-muted-foreground">Processing timeline</p>
-                          <p className="mt-1 text-sm">
-                            Calculated on{' '}
-                            {selectedProcessingRecord.processedAt
-                              ? new Date(selectedProcessingRecord.processedAt).toLocaleString()
-                              : 'Not processed yet'}
-                          </p>
-                          {selectedProcessingRecord.reviewedAt && (
-                            <p className="text-xs text-muted-foreground">
-                              Reviewed on {new Date(selectedProcessingRecord.reviewedAt).toLocaleString()}
-                            </p>
-                          )}
-                          {selectedProcessingRecord.reviewComments && (
-                            <p className="mt-1 text-xs italic text-muted-foreground">
-                              “{selectedProcessingRecord.reviewComments}”
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle>Salary breakdown</CardTitle>
-                      <CardDescription>
-                        Detailed earnings and deductions for the selected employee in this cycle.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      <div className="grid gap-6 md:grid-cols-2">
-                        <div>
-                          <h4 className="text-sm font-semibold">Allowances</h4>
-                          <Separator className="my-2" />
-                          {processingAllowanceEntries.length ? (
-                            <div className="space-y-2">
-                              {processingAllowanceEntries.map((entry) => (
-                                <div key={entry.key} className="flex items-center justify-between text-sm">
-                                  <span className="text-muted-foreground">{entry.key}</span>
-                                  <span className="font-medium">{formatCurrency(entry.amount)}</span>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-sm text-muted-foreground">No allowances applied.</p>
-                          )}
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-semibold">Deductions</h4>
-                          <Separator className="my-2" />
-                          {processingDeductionEntries.length ? (
-                            <div className="space-y-2">
-                              {processingDeductionEntries.map((entry) => (
-                                <div key={entry.key} className="flex items-center justify-between text-sm">
-                                  <span className="text-muted-foreground">{entry.key}</span>
-                                  <span className="font-medium">{formatCurrency(entry.amount)}</span>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-sm text-muted-foreground">No deductions recorded.</p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div>
-                        <h4 className="text-sm font-semibold">Calculation details</h4>
-                        <Separator className="my-2" />
-                        {processingCalculationDetails.length ? (
-                          <div className="space-y-3 text-sm">
-                            {processingCalculationDetails.map((item, index) => (
-                              <div key={`${item.label}-${index}`} className="rounded-md border p-3">
-                                <div className="flex items-center justify-between">
-                                  <span className="font-medium">{item.label}</span>
-                                  <span className={cn('font-semibold', item.amount < 0 && 'text-destructive')}>
-                                    {formatCurrency(item.amount)}
-                                  </span>
-                                </div>
-                                {item.description && (
-                                  <p className="mt-1 text-xs text-muted-foreground">{item.description}</p>
-                                )}
-                                {item.formula && (
-                                  <p className="mt-1 text-[10px] font-mono text-muted-foreground">
-                                    {item.formula}
-                                  </p>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-muted-foreground">
-                            Detailed calculation traces will appear here once available from the engine.
-                          </p>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle>Attendance review</CardTitle>
-                      <CardDescription>
-                        Verify check-in/out data and leave contributions impacting this salary.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {processingAttendanceSummary ? (
-                        <div className="grid gap-4 md:grid-cols-3">
-                          <div className="rounded-lg border p-3">
-                            <p className="text-xs text-muted-foreground">Working days</p>
-                            <p className="text-lg font-semibold">
-                              {processingAttendanceSummary.workingDays ?? processingAttendanceSummary.totalDays ?? 0}
-                            </p>
-                          </div>
-                          <div className="rounded-lg border p-3">
-                            <p className="text-xs text-muted-foreground">Presence mix</p>
-                            <p className="text-sm font-medium">
-                              Present {processingAttendanceSummary.presentDays ?? 0} • Absent {processingAttendanceSummary.absentDays ?? 0}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Paid leave {processingAttendanceSummary.paidLeaveDays ?? 0} • Unpaid leave {processingAttendanceSummary.unpaidLeaveDays ?? 0}
-                            </p>
-                          </div>
-                          <div className="rounded-lg border p-3">
-                            <p className="text-xs text-muted-foreground">Overtime & Exceptions</p>
-                            <p className="text-sm font-medium">
-                              Overtime {processingAttendanceSummary.overtimeHours ?? 0}h • Late marks {processingAttendanceSummary.lateMarks ?? 0}
-                            </p>
-                          </div>
-                        </div>
-                      ) : (
-                        <Alert>
-                          <AlertTitle>Attendance integration coming soon</AlertTitle>
-                          <AlertDescription>
-                            Raw attendance records are not yet linked. This section will surface check-ins, leaves, and manual adjustments once the integration lands.
-                          </AlertDescription>
-                        </Alert>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle>Next actions</CardTitle>
-                      <CardDescription>
-                        Use these quick actions to finalise salaries before sending the cycle for review. Additional adjustment tooling is on the way.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-2 text-sm text-muted-foreground">
-                      <p>
-                        • Use <span className="font-medium">Change template</span> to reassign the employee to a different salary structure instantly.
-                      </p>
-                      <p>
-                        • Kick off a clean recalculation with <span className="font-medium">Recalculate salary</span> to pull in the latest template and attendance data.
-                      </p>
-                      <p>
-                        • Manual attendance corrections will arrive soon and auto-trigger regeneration with full audit logging.
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
-              ) : (
-                <div className="flex h-full items-center justify-center text-muted-foreground">
-                  Select a salary record from the list to view its breakdown.
-                </div>
-              )}
-            </div>
-          </div>
-
-          <DrawerFooter className="flex flex-col gap-2 border-t py-3 md:flex-row md:items-center md:justify-between">
-            <p
-              className={cn(
-                'text-xs text-muted-foreground',
-                (processingCycleSummary.pending > 0 || processingCycleSummary.failed > 0) && 'text-destructive'
-              )}
-            >
-              {processingCycleSummary.total
-                ? `${processingCycleSummary.pending} pending • ${processingCycleSummary.approved} ready • ${processingCycleSummary.failed} require attention`
-                : 'No salary records generated yet for this cycle.'}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <DrawerClose asChild>
-                <Button variant="outline" size="sm">
-                  Close
-                </Button>
-              </DrawerClose>
-              <Button
-                size="sm"
-                onClick={handleSubmitCycleForReview}
-                disabled={
-                  !canSubmitCycleForReview ||
-                  isProcessingDrawerLoading ||
-                  isRecalculatingSalary ||
-                  isSubmittingForReview
-                }
-              >
-                {isSubmittingForReview && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Submit for review
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleOpenTemplateDialog}
-                disabled={!selectedProcessingRecord || isProcessingDrawerLoading || isRecalculatingSalary || isSubmittingForReview}
-              >
-                Change template
-              </Button>
-              <Button
-                size="sm"
-                onClick={handleRecalculateSalary}
-                disabled={!selectedProcessingRecord || isProcessingDrawerLoading || isRecalculatingSalary || isSubmittingForReview}
-              >
-                {isRecalculatingSalary && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Recalculate salary
-              </Button>
-            </div>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
-
-      <Dialog
+      <TemplateDialog
         open={isTemplateDialogOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            handleCloseTemplateDialog();
-          } else if (!isTemplateDialogOpen) {
-            handleOpenTemplateDialog();
-          }
-        }}
-      >
-        <DialogContent className="flex max-h-[85vh] flex-col gap-4 sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle>Change salary template</DialogTitle>
-            <DialogDescription>
-              Select a template to re-run calculations for{' '}
-              {[selectedProcessingRecord?.user?.firstName, selectedProcessingRecord?.user?.lastName]
-                .filter(Boolean)
-                .join(' ') || 'this employee'}.
-            </DialogDescription>
-          </DialogHeader>
-
-          {templateDialogError && (
-            <Alert variant="destructive">
-              <AlertTitle>Unable to load templates</AlertTitle>
-              <AlertDescription>{templateDialogError}</AlertDescription>
-            </Alert>
-          )}
-
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <Label htmlFor="template-search">Search templates</Label>
-              <Input
-                id="template-search"
-                placeholder="Search by name or description"
-                value={templateSearchTerm}
-                onChange={(event) => setTemplateSearchTerm(event.target.value)}
-              />
-            </div>
-
-            <div className="rounded-md border">
-              {templatesLoading ? (
-                <div className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Fetching templates…
-                </div>
-              ) : filteredTemplates.length ? (
-                <ScrollArea className="h-64">
-                  <RadioGroup
-                    value={templateSelection ?? ''}
-                    onValueChange={(value) => setTemplateSelection(value)}
-                    className="divide-y"
-                  >
-                    {filteredTemplates.map((template) => (
-                      <div key={template.id} className="flex items-start gap-3 p-3">
-                        <RadioGroupItem value={template.id} id={`template-${template.id}`} />
-                        <div className="flex-1 space-y-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Label htmlFor={`template-${template.id}`} className="text-sm font-semibold">
-                              {template.name}
-                            </Label>
-                            {template.isDefault && <Badge variant="secondary">Default</Badge>}
-                            {!template.isActive && <Badge variant="destructive">Inactive</Badge>}
-                          </div>
-                          {template.description && (
-                            <p className="text-xs text-muted-foreground">{template.description}</p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </RadioGroup>
-                </ScrollArea>
-              ) : (
-                <div className="py-10 text-center text-sm text-muted-foreground">
-                  {templateDialogError
-                    ? 'Templates could not be loaded. Please retry.'
-                    : 'No templates found. Create one in the Salary Template workspace.'}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <Button variant="outline" onClick={handleCloseTemplateDialog} disabled={isApplyingTemplate}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleApplyTemplateToRecord}
-              disabled={
-                !templateSelection ||
-                templateSelection === currentTemplateIdForRecord ||
-                isApplyingTemplate
-              }
-            >
-              {isApplyingTemplate && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Apply template
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onOpen={handleOpenTemplateDialog}
+        onClose={handleCloseTemplateDialog}
+        templateDialogError={templateDialogError}
+        templateSearchTerm={templateSearchTerm}
+        onTemplateSearchTermChange={setTemplateSearchTerm}
+        filteredTemplates={filteredTemplates}
+        templatesLoading={templatesLoading}
+        templateSelection={templateSelection}
+        onTemplateSelectionChange={setTemplateSelection}
+        onApplyTemplate={handleApplyTemplateToRecord}
+        isApplyingTemplate={isApplyingTemplate}
+        currentTemplateIdForRecord={currentTemplateIdForRecord}
+        selectedEmployeeName={selectedEmployeeName}
+      />
 
       <Dialog
         open={isReviewDialogOpen}
