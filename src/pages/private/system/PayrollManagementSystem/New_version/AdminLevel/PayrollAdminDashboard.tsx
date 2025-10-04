@@ -52,6 +52,7 @@ import ProcessingTab from './components/tabs/ProcessingTab'
 import ReviewApprovalTab from './components/tabs/ReviewApprovalTab'
 import ReportingTab from './components/tabs/ReportingTab'
 import TransactionsTab from './components/tabs/TransactionsTab'
+import AuditTrailTab from './components/tabs/AuditTrailTab'
 import EmployeePortalTab from './components/tabs/EmployeePortalTab'
 import TransactionModeDialog, { BankDetailsFormState } from './components/TransactionModeDialog'
 import ProcessingDrawer from './components/ProcessingDrawer'
@@ -71,6 +72,15 @@ const MONTH_OPTIONS: { value: number; label: string }[] = [
   { value: 11, label: 'November' },
   { value: 12, label: 'December' }
 ]
+
+const AUDIT_CYCLE_PAGE_LIMIT = 10
+
+interface PaginationState {
+  page: number
+  totalPages: number
+  total: number
+  limit: number
+}
 
 interface PayrollDashboardResponse {
   success: boolean
@@ -220,6 +230,21 @@ const PayrollAdminDashboard = () => {
     accountHolder: undefined
   });
   const [isSavingBankDetails, setIsSavingBankDetails] = useState(false);
+
+  const [auditCycles, setAuditCycles] = useState<PayrollCycle[]>([]);
+  const [auditPagination, setAuditPagination] = useState<PaginationState>({
+    page: 1,
+    totalPages: 1,
+    total: 0,
+    limit: AUDIT_CYCLE_PAGE_LIMIT
+  });
+  const [isAuditCyclesLoading, setIsAuditCyclesLoading] = useState(false);
+  const [auditCyclesError, setAuditCyclesError] = useState<string | null>(null);
+  const [auditSelectedCycleId, setAuditSelectedCycleId] = useState<string | null>(null);
+  const [auditCycleDetails, setAuditCycleDetails] = useState<PayrollCycleDetails | null>(null);
+  const [isAuditDetailsLoading, setIsAuditDetailsLoading] = useState(false);
+  const [auditDetailsError, setAuditDetailsError] = useState<string | null>(null);
+  const auditInitRef = useRef(false);
 
   // Current date for default values
   const currentDate = new Date();
@@ -379,6 +404,213 @@ const PayrollAdminDashboard = () => {
       setIsLoading(false);
     }
   }, [selectedYear, user?.id]);
+
+  const handleAuditCycleSelect = useCallback(
+    (cycleId: string | null) => {
+      setAuditSelectedCycleId(cycleId);
+
+      if (!cycleId) {
+        setAuditCycleDetails(null);
+        setAuditDetailsError(null);
+        setIsAuditDetailsLoading(false);
+        return;
+      }
+
+      const cachedDetails = processingDetailsCache.current[cycleId];
+      if (cachedDetails) {
+        setAuditCycleDetails(cachedDetails);
+        setAuditDetailsError(null);
+        setIsAuditDetailsLoading(false);
+      } else {
+        setAuditCycleDetails(null);
+      }
+    },
+    []
+  );
+
+  const fetchAuditCycles = useCallback(
+    async (page = 1) => {
+      if (!user?.id) {
+        setAuditCycles([]);
+        setAuditCyclesError('You need to be logged in to view payroll audit data.');
+        return;
+      }
+
+      setAuditPagination((prev) => ({ ...prev, page }));
+      setIsAuditCyclesLoading(true);
+      setAuditCyclesError(null);
+
+      try {
+        const response = await axios.get<{
+          success: boolean
+          data?: PayrollCycle[]
+          pagination?: {
+            page?: number
+            pages?: number
+            total?: number
+            limit?: number
+          }
+          message?: string
+        }>(APIV3Dictionary.payroll.cycles, {
+          params: {
+            page,
+            limit: AUDIT_CYCLE_PAGE_LIMIT
+          },
+          withCredentials: true
+        });
+
+        if (response.data?.success) {
+          const cyclesList = Array.isArray(response.data.data) ? response.data.data : [];
+          const pagination = response.data.pagination ?? {};
+
+          setAuditCycles(cyclesList);
+          setAuditPagination({
+            page: pagination.page ?? page,
+            totalPages:
+              pagination.pages ??
+              Math.max(
+                1,
+                pagination.total
+                  ? Math.ceil(pagination.total / (pagination.limit ?? AUDIT_CYCLE_PAGE_LIMIT))
+                  : Math.ceil(Math.max(cyclesList.length, 1) / AUDIT_CYCLE_PAGE_LIMIT)
+              ),
+            total: pagination.total ?? cyclesList.length,
+            limit: pagination.limit ?? AUDIT_CYCLE_PAGE_LIMIT
+          });
+
+          if (!cyclesList.length) {
+            handleAuditCycleSelect(null);
+            return;
+          }
+
+          if (!auditSelectedCycleId || !cyclesList.some((cycle) => cycle.id === auditSelectedCycleId)) {
+            handleAuditCycleSelect(cyclesList[0].id);
+          }
+        } else {
+          const message = response.data?.message || 'Failed to fetch payroll cycles for audit.';
+          setAuditCycles([]);
+          setAuditCyclesError(message);
+          handleAuditCycleSelect(null);
+        }
+      } catch (error) {
+        const message = getErrorMessage(error, 'Failed to fetch payroll cycles for audit.');
+        setAuditCycles([]);
+        setAuditCyclesError(message);
+        handleAuditCycleSelect(null);
+      } finally {
+        setIsAuditCyclesLoading(false);
+      }
+    },
+    [auditSelectedCycleId, handleAuditCycleSelect, user?.id]
+  );
+
+  const loadCycleDetails = useCallback(async (cycleId: string): Promise<PayrollCycleDetails> => {
+    try {
+      const response = await axios.get(APIV3Dictionary.payroll.getCycleDetails(cycleId), {
+        withCredentials: true
+      });
+
+      if (response.data?.success) {
+        const rawData = response.data.data as PayrollCycleDetails | undefined;
+
+        if (!rawData) {
+          throw new Error('Cycle details were not found in the response.');
+        }
+
+        return {
+          ...rawData,
+          salaryRecords: Array.isArray(rawData.salaryRecords) ? rawData.salaryRecords : [],
+          auditLogs: Array.isArray(rawData.auditLogs) ? rawData.auditLogs : []
+        };
+      }
+
+      const message = (response.data?.message as string) || 'Failed to fetch payroll cycle details.';
+      throw new Error(message);
+    } catch (error) {
+      throw new Error(getErrorMessage(error, 'Failed to fetch payroll cycle details.'));
+    }
+  }, []);
+
+  const loadAuditDetails = useCallback(
+    async (cycleId: string, options: { force?: boolean; showToast?: boolean } = {}) => {
+      const { force = false, showToast = false } = options;
+
+      if (!cycleId) {
+        return null;
+      }
+
+      if (!force) {
+        const cachedDetails = processingDetailsCache.current[cycleId];
+        if (cachedDetails) {
+          setAuditCycleDetails(cachedDetails);
+          setAuditDetailsError(null);
+          setIsAuditDetailsLoading(false);
+          return cachedDetails;
+        }
+      }
+
+      setIsAuditDetailsLoading(true);
+      setAuditDetailsError(null);
+
+      try {
+        const details = await loadCycleDetails(cycleId);
+        processingDetailsCache.current[cycleId] = details;
+        setAuditCycleDetails(details);
+        return details;
+      } catch (error) {
+        const message = getErrorMessage(error, 'Failed to fetch payroll audit trail.');
+        setAuditDetailsError(message);
+        if (showToast) {
+          toast({
+            title: 'Unable to load audit data',
+            description: message,
+            variant: 'destructive'
+          });
+        }
+        throw error;
+      } finally {
+        setIsAuditDetailsLoading(false);
+      }
+    },
+    [loadCycleDetails]
+  );
+
+  const refreshAuditCycleDetails = useCallback(async () => {
+    if (!auditSelectedCycleId) {
+      return;
+    }
+
+    await loadAuditDetails(auditSelectedCycleId, { force: true, showToast: true });
+  }, [auditSelectedCycleId, loadAuditDetails]);
+
+  useEffect(() => {
+    if (activeTab !== 'audit-trail') {
+      return;
+    }
+
+    if (auditInitRef.current) {
+      return;
+    }
+
+    auditInitRef.current = true;
+    fetchAuditCycles(1);
+  }, [activeTab, fetchAuditCycles]);
+
+  useEffect(() => {
+    if (activeTab !== 'audit-trail') {
+      return;
+    }
+
+    if (!auditSelectedCycleId) {
+      setAuditCycleDetails(null);
+      setAuditDetailsError(null);
+      return;
+    }
+
+    loadAuditDetails(auditSelectedCycleId).catch(() => {
+      // handled inside loader
+    });
+  }, [activeTab, auditSelectedCycleId, loadAuditDetails]);
 
   const stopProgressPolling = useCallback((cycleId: string) => {
     const existingTimer = progressPollersRef.current[cycleId];
@@ -561,11 +793,13 @@ const PayrollAdminDashboard = () => {
         break;
       }
       case 'audit': {
+        setActiveTab('audit-trail');
         setReportInfo({
           title: 'Audit trail review',
-          description: 'Head to the system activity logs to review every change captured during payroll processing.',
-          actionLabel: 'View activity logs',
-          onAction: () => navigate(RouteDict.System.ActivityLogs)
+          description:
+            'The Audit Trail tab now surfaces every payroll cycle change with filtering, actors, and before/after snapshots.',
+          actionLabel: 'Open audit tab',
+          onAction: () => setActiveTab('audit-trail')
         });
         break;
       }
@@ -704,33 +938,6 @@ const PayrollAdminDashboard = () => {
     setReviewDialogError(null);
     setReviewDialogCycleId(null);
   };
-
-  const loadCycleDetails = useCallback(async (cycleId: string): Promise<PayrollCycleDetails> => {
-    try {
-      const response = await axios.get(APIV3Dictionary.payroll.getCycleDetails(cycleId), {
-        withCredentials: true
-      });
-
-      if (response.data?.success) {
-        const rawData = response.data.data as PayrollCycleDetails | undefined;
-
-        if (!rawData) {
-          throw new Error('Cycle details were not found in the response.');
-        }
-
-        return {
-          ...rawData,
-          salaryRecords: Array.isArray(rawData.salaryRecords) ? rawData.salaryRecords : [],
-          auditLogs: Array.isArray(rawData.auditLogs) ? rawData.auditLogs : []
-        };
-      }
-
-      const message = (response.data?.message as string) || 'Failed to fetch payroll cycle details.';
-      throw new Error(message);
-    } catch (error) {
-      throw new Error(getErrorMessage(error, 'Failed to fetch payroll cycle details.'));
-    }
-  }, []);
 
   const handleOpenReviewDetails = async (cycleId: string) => {
     setIsReviewDialogOpen(true);
@@ -2226,7 +2433,7 @@ const PayrollAdminDashboard = () => {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-8">
+        <TabsList className="grid w-full grid-cols-9">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="setup">Setup & Config</TabsTrigger>
           <TabsTrigger value="cycle-management">Cycle Management</TabsTrigger>
@@ -2234,6 +2441,7 @@ const PayrollAdminDashboard = () => {
           <TabsTrigger value="review-approval">Review & Approval</TabsTrigger>
           <TabsTrigger value="transactions">Transactions</TabsTrigger>
           <TabsTrigger value="reporting">Reporting</TabsTrigger>
+          <TabsTrigger value="audit-trail">Audit Trail</TabsTrigger>
           <TabsTrigger value="employee-portal">Employee Portal</TabsTrigger>
         </TabsList>
 
@@ -2305,6 +2513,21 @@ const PayrollAdminDashboard = () => {
         />
 
         <ReportingTab onNavigate={handleReportNavigation} />
+
+        <AuditTrailTab
+          cycles={auditCycles}
+          pagination={auditPagination}
+          isLoadingCycles={isAuditCyclesLoading}
+          cyclesError={auditCyclesError}
+          onPageChange={fetchAuditCycles}
+          onReloadCycles={() => fetchAuditCycles(auditPagination.page)}
+          selectedCycleId={auditSelectedCycleId}
+          onSelectCycle={(cycleId) => handleAuditCycleSelect(cycleId)}
+          cycleDetails={auditCycleDetails}
+          isLoadingDetails={isAuditDetailsLoading}
+          detailsError={auditDetailsError}
+          onRefreshCycle={refreshAuditCycleDetails}
+        />
 
         {/* Transactions tab content consolidated in TransactionsTab component */}
 
