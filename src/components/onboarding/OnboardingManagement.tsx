@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -40,23 +40,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/providers/AuthContext';
 import { APIDictionary } from '@/services/api/v2/APIdict';
+import { APIV3Dictionary } from '@/services/api/v3/Api3Dicts';
 import axios from 'axios';
-import { 
-  OnboardingCandidate, 
-  OnboardingStatus, 
+import {
+  OnboardingCandidate,
+  OnboardingStatus,
   Department,
-  User 
+  User
 } from '@/types/general';
-
-// Interface for manager dropdown options
-interface ManagerOption extends Pick<User, 'id' | 'firstName' | 'lastName' | 'email' | 'status'> {
-  department?: {
-    id: string;
-    name: string;
-  };
-}
 import CandidateReview from './CandidateReview';
 import EditCandidateDialog from './EditCandidateDialog';
+import RoleSelector from './RoleSelector';
 import {
   UserPlus,
   Send,
@@ -76,10 +70,30 @@ import {
   Trash2,
   FileSearch,
   Settings,
-  Edit3
+  Edit3,
+  FileSpreadsheet,
+  RefreshCw,
+  Loader
 } from 'lucide-react';
 
 // Import the new comprehensive review dialog
+
+// Interface for manager dropdown options
+interface ManagerOption extends Pick<User, 'id' | 'firstName' | 'lastName' | 'email' | 'status'> {
+  department?: {
+    id: string;
+    name: string;
+  };
+}
+
+type SalaryTemplateSummary = {
+  id: string;
+  name: string;
+  description?: string | null;
+  isDefault?: boolean | null;
+};
+
+const MANUAL_TEMPLATE_OPTION = '__manual__';
 
 const candidateSchema = z.object({
   firstName: z.string().min(2, 'First name is required'),
@@ -91,8 +105,6 @@ const candidateSchema = z.object({
   managerId: z.string().optional(),
   hiredDate: z.string().optional(),
 });
-
-import RoleSelector from './RoleSelector';
 
 const OnboardingManagement = () => {
   const { user } = useAuth();
@@ -113,6 +125,24 @@ const OnboardingManagement = () => {
   const [statusFilter, setStatusFilter] = useState<OnboardingStatus | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [rejectionReason, setRejectionReason] = useState('');
+  const [salaryTemplates, setSalaryTemplates] = useState<SalaryTemplateSummary[]>([]);
+  const [salaryTemplatesLoading, setSalaryTemplatesLoading] = useState(false);
+  const [salaryTemplateError, setSalaryTemplateError] = useState<string | null>(null);
+  const [hasUserChosenTemplate, setHasUserChosenTemplate] = useState(false);
+  const hasUserChosenTemplateRef = useRef(hasUserChosenTemplate);
+
+  type CompletionData = {
+    departmentId: string;
+    roleId: string;
+    managerId: string;
+    monthlySalary: number;
+    annualPackage: number;
+    salaryTemplateId?: string;
+  };
+
+  useEffect(() => {
+    hasUserChosenTemplateRef.current = hasUserChosenTemplate;
+  }, [hasUserChosenTemplate]);
 
   // Form
   const form = useForm({
@@ -144,13 +174,6 @@ const OnboardingManagement = () => {
     }
   };
 
-  // Fetch data
-  useEffect(() => {
-    console.log('OnboardingManagement useEffect - User:', user);
-    fetchCandidates();
-    fetchDepartments();
-    fetchManagers();
-  }, [user?.orgId]); // Add dependency on orgId
 
   const fetchCandidates = async () => {
     try {
@@ -216,6 +239,73 @@ const OnboardingManagement = () => {
       }
     }
   };
+
+  const fetchSalaryTemplates = useCallback(async () => {
+    if (!user?.orgId) {
+      return;
+    }
+
+    setSalaryTemplatesLoading(true);
+    setSalaryTemplateError(null);
+
+    try {
+      const response = await axios.get(APIV3Dictionary.payroll.templates.list, {
+        withCredentials: true
+      });
+
+      const payload = response.data as {
+        success?: boolean;
+        data?: SalaryTemplateSummary[];
+        message?: string;
+      };
+
+      if (payload?.success === false) {
+        setSalaryTemplates([]);
+        setSalaryTemplateError(payload.message || 'Failed to load salary templates');
+        return;
+      }
+
+      if (Array.isArray(payload?.data)) {
+        setSalaryTemplates(payload.data);
+
+        if (!hasUserChosenTemplateRef.current) {
+          const defaultTemplate = payload.data.find(template => template.isDefault);
+          const fallbackTemplate = defaultTemplate || payload.data[0];
+
+          if (fallbackTemplate) {
+            setCompletionData(prev => {
+              if (prev.salaryTemplateId) {
+                return prev;
+              }
+
+              return {
+                ...prev,
+                salaryTemplateId: fallbackTemplate.id
+              };
+            });
+            setHasUserChosenTemplate(true);
+            hasUserChosenTemplateRef.current = true;
+          }
+        }
+      } else {
+        setSalaryTemplates([]);
+      }
+    } catch (error) {
+      console.error('Failed to load salary templates:', error);
+      setSalaryTemplateError('Failed to load salary templates');
+      setSalaryTemplates([]);
+    } finally {
+      setSalaryTemplatesLoading(false);
+    }
+  }, [user?.orgId]);
+
+  useEffect(() => {
+    console.log('OnboardingManagement useEffect - User:', user);
+    fetchCandidates();
+    fetchDepartments();
+    fetchManagers();
+    fetchSalaryTemplates();
+  }, [user?.orgId, fetchSalaryTemplates]);
 
   // Create candidate
   const onSubmit = async (data: z.infer<typeof candidateSchema>) => {
@@ -353,12 +443,13 @@ const OnboardingManagement = () => {
 
   // Complete onboarding
   const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
-  const [completionData, setCompletionData] = useState({
+  const [completionData, setCompletionData] = useState<CompletionData>({
     departmentId: '',
     roleId: '',
     managerId: '',
     monthlySalary: 0,
-    annualPackage: 0
+    annualPackage: 0,
+    salaryTemplateId: undefined
   });
 
   const fetchRoles = async () => {
@@ -384,10 +475,16 @@ const OnboardingManagement = () => {
       roleId: '',
       managerId: candidate.managerId || '',
       monthlySalary: candidate.monthlySalary || (candidate.annualPackage ? candidate.annualPackage / 12 : 0),
-      annualPackage: candidate.annualPackage || (candidate.monthlySalary ? candidate.monthlySalary * 12 : 0)
+      annualPackage: candidate.annualPackage || (candidate.monthlySalary ? candidate.monthlySalary * 12 : 0),
+      salaryTemplateId: candidate.salaryTemplateId || undefined
     });
 
+  const candidateTemplateSelected = Boolean(candidate.salaryTemplateId);
+  setHasUserChosenTemplate(candidateTemplateSelected);
+  hasUserChosenTemplateRef.current = candidateTemplateSelected;
+
     await fetchRoles();
+    await fetchSalaryTemplates();
     setSelectedCandidate(candidate);
     setIsCompleteDialogOpen(true);
   };
@@ -404,9 +501,13 @@ const OnboardingManagement = () => {
 
     try {
       setLoading(true);
+      const payload = { ...completionData } as CompletionData;
+      if (!payload.salaryTemplateId) {
+        delete payload.salaryTemplateId;
+      }
       const response = await axios.post(
         `${APIDictionary.onboarding}/${selectedCandidate?.id}/complete`,
-        completionData,
+        payload,
         { withCredentials: true }
       );
 
@@ -416,6 +517,8 @@ const OnboardingManagement = () => {
           description: 'Onboarding completed. Employee account created.',
         });
         setIsCompleteDialogOpen(false);
+        setHasUserChosenTemplate(false);
+        hasUserChosenTemplateRef.current = false;
         fetchCandidates();
       }
     } catch (error) {
@@ -1182,6 +1285,64 @@ const OnboardingManagement = () => {
                 onRoleCreated={fetchRoles}
               />
 
+              {/* Salary Template */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Salary Template
+                </label>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                  <Select
+                    value={completionData.salaryTemplateId ?? MANUAL_TEMPLATE_OPTION}
+                    onValueChange={(value) => {
+                      setHasUserChosenTemplate(true);
+                      hasUserChosenTemplateRef.current = true;
+                      setCompletionData(prev => ({
+                        ...prev,
+                        salaryTemplateId: value === MANUAL_TEMPLATE_OPTION ? undefined : value
+                      }));
+                    }}
+                    disabled={salaryTemplatesLoading && salaryTemplates.length === 0}
+                  >
+                    <SelectTrigger className="w-full sm:w-64">
+                      <SelectValue placeholder="Select salary template" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={MANUAL_TEMPLATE_OPTION}>Manual configuration</SelectItem>
+                      {salaryTemplates.map((template) => (
+                        <SelectItem key={template.id} value={template.id}>
+                          {template.name}{template.isDefault ? ' (Default)' : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={fetchSalaryTemplates}
+                    disabled={salaryTemplatesLoading}
+                  >
+                    {salaryTemplatesLoading ? (
+                      <Loader className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Templates auto-apply allowances and deductions. Leave on manual configuration to manage parameters later.
+                </p>
+                {salaryTemplateError && (
+                  <p className="text-xs text-destructive">{salaryTemplateError}</p>
+                )}
+                {salaryTemplates.length === 0 && !salaryTemplatesLoading && (
+                  <p className="text-xs text-muted-foreground">
+                    No salary templates available yet. Configure them from the payroll workspace to enable automatic structures.
+                  </p>
+                )}
+              </div>
+
               {/* Monthly Salary */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Monthly Salary (Optional)</label>
@@ -1195,13 +1356,22 @@ const OnboardingManagement = () => {
                 <p className="text-xs text-muted-foreground">
                   Will be auto-calculated from annual package if not provided
                 </p>
+                {completionData.salaryTemplateId && (
+                  <p className="text-xs text-muted-foreground">
+                    The selected template will apply allowances and deductions based on this monthly amount.
+                  </p>
+                )}
               </div>
 
               <div className="flex justify-end gap-2 pt-4">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setIsCompleteDialogOpen(false)}
+                  onClick={() => {
+                    setIsCompleteDialogOpen(false);
+                    setHasUserChosenTemplate(false);
+                    hasUserChosenTemplateRef.current = false;
+                  }}
                   disabled={loading}
                 >
                   Cancel

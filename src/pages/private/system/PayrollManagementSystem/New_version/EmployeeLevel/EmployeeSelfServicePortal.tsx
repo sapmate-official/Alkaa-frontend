@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@/providers/AuthContext'
 import { toast } from '@/hooks/use-toast'
 import {
@@ -49,6 +49,7 @@ import {
 } from '../types/payroll'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import PayslipDetailedView, { PayslipStatistics } from '../AdminLevel/ViewPayslipOfAllUsersPayroll/PayslipDetailedView'
+import { useProfileQuery } from '@/hooks/queries/useProfile'
 
 interface ApiResponse<T> {
   success?: boolean
@@ -108,6 +109,79 @@ const extractApiData = <T,>(payload: ApiResponse<T> | T | undefined): T | null =
   return payload as T
 }
 
+const normalizeProfileData = (rawData: unknown): EmployeeProfile | null => {
+  if (!rawData || typeof rawData !== 'object') {
+    return null
+  }
+
+  const candidate = (rawData as Record<string, unknown> | null)?.user ?? rawData
+  if (!candidate || typeof candidate !== 'object') {
+    return null
+  }
+
+  const candidateRecord = candidate as Record<string, any>
+  const managerSource = candidateRecord.manager
+  const normalizedManager = managerSource && typeof managerSource === 'object'
+    ? {
+        firstName: managerSource.firstName ?? '',
+        lastName: managerSource.lastName ?? ''
+      }
+    : undefined
+
+  const departmentSourceRaw = candidateRecord.department
+    ?? (Array.isArray(candidateRecord.Department) ? candidateRecord.Department[0] : candidateRecord.Department)
+    ?? null
+
+  const normalizedDepartment = departmentSourceRaw && typeof departmentSourceRaw === 'object'
+    ? departmentSourceRaw
+    : departmentSourceRaw
+    ? { name: String(departmentSourceRaw) }
+    : null
+
+  return {
+    id: String(candidateRecord.id ?? ''),
+    firstName: candidateRecord.firstName ?? '',
+    lastName: candidateRecord.lastName ?? '',
+    email: candidateRecord.email ?? '',
+    mobileNumber: candidateRecord.mobileNumber ?? '',
+    employeeId: candidateRecord.employeeId ?? '',
+    department: normalizedDepartment ?? null,
+    manager: normalizedManager,
+    hiredDate:
+      candidateRecord.hiredDate
+      ?? candidateRecord.hiringDate
+      ?? candidateRecord.joiningDate
+      ?? candidateRecord.dateOfJoining
+      ?? undefined,
+    dateOfBirth: candidateRecord.dateOfBirth ?? candidateRecord.dob ?? undefined,
+    address: candidateRecord.address ?? '',
+    emergencyContact: candidateRecord.emergencyContact ?? '',
+  }
+}
+
+const buildProfileUpdatePayload = (
+  profile: Partial<EmployeeProfile>,
+  email: string,
+  orgId: string
+) => {
+  const sanitize = (value?: string | null) => (value ?? '').trim()
+  const payload: Record<string, unknown> = {
+    email: email.trim(),
+    orgId: orgId.trim(),
+    firstName: sanitize(profile.firstName),
+    lastName: sanitize(profile.lastName),
+    mobileNumber: sanitize(profile.mobileNumber),
+    address: sanitize(profile.address),
+    emergencyContact: sanitize(profile.emergencyContact),
+  }
+
+  if (profile.dateOfBirth && profile.dateOfBirth.trim()) {
+    payload.dateOfBirth = profile.dateOfBirth
+  }
+
+  return payload
+}
+
 const EmployeeSelfServicePortal = () => {
   const { user } = useAuth();
   const location = useLocation();
@@ -155,6 +229,16 @@ const EmployeeSelfServicePortal = () => {
     description: ''
   });
 
+  const userId = user?.id ?? '';
+  const {
+    data: profileQueryData,
+    isLoading: isProfileLoading,
+    error: profileQueryError,
+    refetch: refetchProfile,
+  } = useProfileQuery(userId);
+  const normalizedProfile = useMemo(() => normalizeProfileData(profileQueryData), [profileQueryData]);
+  const [profileLoadError, setProfileLoadError] = useState<string | null>(null);
+
   const fetchEmployeeData = useCallback(async ({ showLoading = true }: { showLoading?: boolean } = {}) => {
     if (!user?.id) {
       setProfile(null);
@@ -175,33 +259,6 @@ const EmployeeSelfServicePortal = () => {
     }
 
     const errors: string[] = [];
-
-    // Profile
-    try {
-      const profileResponse = await axios.get<ApiResponse<EmployeeProfile>>(
-        APIV3Dictionary.payroll.employee.profile(user.id),
-        { withCredentials: true }
-      );
-
-  const profileData = extractApiData(profileResponse.data);
-      if (profileData) {
-        setProfile(profileData);
-        setEditedProfile(profileData);
-      } else {
-        setProfile(null);
-        setEditedProfile({});
-
-        const message =
-          profileResponse.data?.message || 'Could not load employee profile information.';
-        errors.push(message);
-      }
-    } catch (error) {
-      const message = getErrorMessage(error, 'Failed to load employee profile information.');
-      console.error('Error fetching employee profile:', error);
-      setProfile(null);
-      setEditedProfile({});
-      errors.push(message);
-    }
 
     // Bank details
     try {
@@ -325,6 +382,63 @@ const EmployeeSelfServicePortal = () => {
     setIsLoading(false);
   }, [user?.id]);
 
+  useEffect(() => {
+    if (!user?.id) {
+      setProfile(null);
+      if (!isEditing) {
+        setEditedProfile({});
+      }
+      return;
+    }
+
+    if (profileQueryError) {
+      setProfile(null);
+      if (!isEditing) {
+        setEditedProfile({});
+      }
+      return;
+    }
+
+    if (normalizedProfile) {
+      setProfile(normalizedProfile);
+      if (!isEditing) {
+        setEditedProfile(normalizedProfile);
+      }
+    } else if (!isProfileLoading) {
+      setProfile(null);
+      if (!isEditing) {
+        setEditedProfile({});
+      }
+    }
+  }, [user?.id, normalizedProfile, isEditing, isProfileLoading, profileQueryError]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setProfileLoadError(null);
+      return;
+    }
+
+    if (profileQueryError) {
+      const message = getErrorMessage(profileQueryError, 'Failed to load employee profile information.');
+      setProfileLoadError(message);
+      return;
+    }
+
+    if (!isProfileLoading && !normalizedProfile) {
+      setProfileLoadError('Could not load employee profile information.');
+    } else {
+      setProfileLoadError(null);
+    }
+  }, [profileQueryError, user?.id, isProfileLoading, normalizedProfile]);
+
+  const combinedLoadErrors = useMemo(() => {
+    const errors = [...loadErrors];
+    if (profileLoadError && !errors.includes(profileLoadError)) {
+      errors.unshift(profileLoadError);
+    }
+    return errors;
+  }, [loadErrors, profileLoadError]);
+
   // Load employee data
   useEffect(() => {
     fetchEmployeeData();
@@ -336,10 +450,36 @@ const EmployeeSelfServicePortal = () => {
 
     try {
       setIsSaving(true);
+      const email = (
+        profile?.email
+        ?? (profileQueryData as Record<string, any> | undefined)?.user?.email
+        ?? (profileQueryData as Record<string, any> | undefined)?.email
+        ?? user?.email
+        ?? ''
+      ).trim()
+      const orgId = (
+        user?.orgId
+        ?? (user?.organization as Record<string, any> | undefined)?.id
+        ?? (profileQueryData as Record<string, any> | undefined)?.user?.orgId
+        ?? (profileQueryData as Record<string, any> | undefined)?.orgId
+        ?? ''
+      ).trim()
+
+      if (!email || !orgId) {
+        toast({
+          title: 'Missing data',
+          description: 'Email or organization information is unavailable. Please contact your administrator.',
+          variant: 'destructive',
+        })
+        setIsSaving(false)
+        return
+      }
+
+      const profileUpdatePayload = buildProfileUpdatePayload(editedProfile, email, orgId)
       
       const response = await axios.put<ApiResponse<EmployeeProfile>>(
         APIV3Dictionary.payroll.employee.updateProfile(user.id),
-        editedProfile,
+        profileUpdatePayload,
         { withCredentials: true }
       );
 
@@ -357,8 +497,11 @@ const EmployeeSelfServicePortal = () => {
         title: 'Success',
         description: 'Profile updated successfully.',
       });
-
       await fetchEmployeeData({ showLoading: false });
+      const refetchResult = await refetchProfile();
+      if (refetchResult.error) {
+        console.error('Error refreshing profile data:', refetchResult.error);
+      }
       setIsEditing(false);
       
     } catch (error) {
@@ -713,7 +856,7 @@ const EmployeeSelfServicePortal = () => {
     return months[month - 1];
   };
 
-  if (isLoading) {
+  if (isLoading || isProfileLoading) {
     return (
       <div className="w-full h-screen overflow-y-auto px-8 py-6 space-y-6">
         <div className="h-8 bg-gray-200 rounded animate-pulse"></div>
@@ -749,12 +892,12 @@ const EmployeeSelfServicePortal = () => {
         </div>
       </div>
 
-      {loadErrors.length > 0 && (
+      {combinedLoadErrors.length > 0 && (
         <Alert variant="destructive">
           <AlertTitle>Some information failed to load</AlertTitle>
           <AlertDescription>
             <ul className="list-disc list-inside space-y-1">
-              {loadErrors.map((error, index) => {
+              {combinedLoadErrors.map((error, index) => {
                 const message = typeof error === 'string' ? error : JSON.stringify(error);
                 return (
                   <li key={`${message}-${index}`}>{message}</li>
@@ -828,16 +971,6 @@ const EmployeeSelfServicePortal = () => {
                     id="lastName"
                     value={editedProfile.lastName || ''}
                     onChange={(e) => setEditedProfile(prev => ({ ...prev, lastName: e.target.value }))}
-                    disabled={!isEditing}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={editedProfile.email || ''}
-                    onChange={(e) => setEditedProfile(prev => ({ ...prev, email: e.target.value }))}
                     disabled={!isEditing}
                   />
                 </div>

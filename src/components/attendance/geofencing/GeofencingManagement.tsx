@@ -7,7 +7,7 @@ import { Switch } from '../../ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Badge } from '../../ui/badge';
 import { Alert, AlertDescription } from '../../ui/alert';
-import { MapPin, Plus, Edit, Trash2, CheckCircle, Clock, Navigation, AlertTriangle } from 'lucide-react';
+import { MapPin, Plus, Edit, Trash2, CheckCircle, Clock, Navigation, AlertTriangle, MinusCircle } from 'lucide-react';
 import { 
   useGeofences, 
   useCreateGeofence, 
@@ -16,7 +16,145 @@ import {
   useValidateLocation,
   useLocationPermission
 } from '../../../hooks/useAttendance';
-import { Geofence, CreateGeofenceRequest, ValidateLocationRequest } from '../../../types/attendance';
+import { Geofence, CreateGeofenceRequest, ValidateLocationRequest, GeofencePoint, GeofenceShape } from '../../../types/attendance';
+
+const normalizePoints = (points?: Array<GeofencePoint | [number, number]>): GeofencePoint[] => {
+  if (!points) {
+    return [];
+  }
+
+  return points
+    .map((point) => {
+      if (Array.isArray(point) && point.length >= 2) {
+        const [lat, lng] = point;
+        const latitude = Number(lat);
+        const longitude = Number(lng);
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+          return null;
+        }
+        return { latitude, longitude };
+      }
+
+      if (point && typeof point === 'object' && !Array.isArray(point)) {
+        const latitude = Number(point.latitude);
+        const longitude = Number(point.longitude);
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+          return null;
+        }
+        return { latitude, longitude };
+      }
+
+      return null;
+    })
+    .filter((point): point is GeofencePoint => Boolean(point));
+};
+
+const clonePoints = (points: GeofencePoint[]): GeofencePoint[] => points.map((point) => ({ ...point }));
+
+const MIN_POLYGON_POINTS = 3;
+
+const DEFAULT_POLYGON_POINTS: GeofencePoint[] = [
+  { latitude: 0, longitude: 0 },
+  { latitude: 0, longitude: 0 },
+  { latitude: 0, longitude: 0 }
+];
+
+const createDefaultGeofence = (): CreateGeofenceRequest => ({
+  name: '',
+  description: '',
+  type: 'MAIN_OFFICE',
+  shape: 'POLYGON',
+  coordinates: {
+    shape: 'POLYGON',
+    points: clonePoints(DEFAULT_POLYGON_POINTS),
+    address: ''
+  },
+  allowedDeviation: 50,
+  strictMode: false,
+  isActive: true
+});
+
+const isValidLatitude = (value: number) => Number.isFinite(value) && value >= -90 && value <= 90;
+const isValidLongitude = (value: number) => Number.isFinite(value) && value >= -180 && value <= 180;
+
+const prepareGeofencePayload = (geofence: CreateGeofenceRequest): CreateGeofenceRequest => {
+  if (geofence.shape === 'CIRCLE') {
+    const center = geofence.coordinates.center ?? { latitude: 0, longitude: 0 };
+
+    return {
+      ...geofence,
+      coordinates: {
+        ...geofence.coordinates,
+        shape: 'CIRCLE',
+        center,
+        points: undefined
+      },
+      radius: geofence.radius ?? 100,
+      allowedDeviation: geofence.allowedDeviation ?? 0
+    };
+  }
+
+  const points = normalizePoints(geofence.coordinates.points);
+
+  return {
+    ...geofence,
+    radius: null,
+    coordinates: {
+      ...geofence.coordinates,
+      shape: 'POLYGON',
+      center: undefined,
+      points
+    },
+    allowedDeviation: geofence.allowedDeviation ?? 0
+  };
+};
+
+const validateGeofenceInput = (geofence: CreateGeofenceRequest): boolean => {
+  if (!geofence.name.trim()) {
+    alert('Geofence name is required');
+    return false;
+  }
+
+  if (!geofence.type) {
+    alert('Geofence type is required');
+    return false;
+  }
+
+  if (geofence.allowedDeviation !== undefined && geofence.allowedDeviation < 0) {
+    alert('Allowed deviation cannot be negative');
+    return false;
+  }
+
+  if (geofence.shape === 'CIRCLE') {
+    const center = geofence.coordinates.center ?? { latitude: 0, longitude: 0 };
+    if (!isValidLatitude(center.latitude) || !isValidLongitude(center.longitude)) {
+      alert('Valid latitude and longitude are required for circle center');
+      return false;
+    }
+
+    if (!geofence.radius || geofence.radius <= 0) {
+      alert('Radius must be greater than zero');
+      return false;
+    }
+
+    return true;
+  }
+
+  const points = normalizePoints(geofence.coordinates.points);
+
+  if (points.length < 3) {
+    alert('Polygon geofence requires at least 3 vertices');
+    return false;
+  }
+
+  const invalidPoint = points.find((point) => !isValidLatitude(point.latitude) || !isValidLongitude(point.longitude));
+  if (invalidPoint) {
+    alert('All polygon vertices must have valid coordinates');
+    return false;
+  }
+
+  return true;
+};
 
 interface GeofencingManagementProps {
   orgId: string;
@@ -26,15 +164,7 @@ const GeofencingManagement: React.FC<GeofencingManagementProps> = ({ orgId }) =>
   const [isCreating, setIsCreating] = useState(false);
   const [editingGeofence, setEditingGeofence] = useState<Geofence | null>(null);
   const [testLocation, setTestLocation] = useState({ latitude: '', longitude: '' });
-  const [newGeofence, setNewGeofence] = useState<CreateGeofenceRequest>({
-    name: '',
-    description: '',
-    type: 'MAIN_OFFICE',
-    latitude: 0,
-    longitude: 0,
-    radius: 100,
-    isActive: true
-  });
+  const [newGeofence, setNewGeofence] = useState<CreateGeofenceRequest>(createDefaultGeofence());
 
   const { data: geofencesData, isLoading, error } = useGeofences(orgId);
   const createGeofenceMutation = useCreateGeofence(orgId);
@@ -66,17 +196,15 @@ const GeofencingManagement: React.FC<GeofencingManagementProps> = ({ orgId }) =>
 
   const handleCreateGeofence = async () => {
     try {
-      await createGeofenceMutation.mutateAsync(newGeofence);
+      const payload = prepareGeofencePayload(newGeofence);
+      if (!validateGeofenceInput(payload)) {
+        return;
+      }
+
+      await createGeofenceMutation.mutateAsync(payload);
       setIsCreating(false);
-      setNewGeofence({
-        name: '',
-        description: '',
-        type: 'MAIN_OFFICE',
-        latitude: 0,
-        longitude: 0,
-        radius: 100,
-        isActive: true
-      });
+      setEditingGeofence(null);
+      setNewGeofence(createDefaultGeofence());
     } catch (error) {
       console.error('Failed to create geofence:', error);
     }
@@ -86,11 +214,18 @@ const GeofencingManagement: React.FC<GeofencingManagementProps> = ({ orgId }) =>
     if (!editingGeofence) return;
     
     try {
+      const payload = prepareGeofencePayload(newGeofence);
+      if (!validateGeofenceInput(payload)) {
+        return;
+      }
+
       await updateGeofenceMutation.mutateAsync({
         geofenceId: editingGeofence.id,
-        updates: newGeofence
+        updates: payload
       });
       setEditingGeofence(null);
+      setIsCreating(false);
+      setNewGeofence(createDefaultGeofence());
     } catch (error) {
       console.error('Failed to update geofence:', error);
     }
@@ -108,17 +243,70 @@ const GeofencingManagement: React.FC<GeofencingManagementProps> = ({ orgId }) =>
 
   const handleEditGeofence = (geofence: Geofence) => {
     setEditingGeofence(geofence);
+    const shape: GeofenceShape = geofence.shape || (geofence.radius ? 'CIRCLE' : 'POLYGON');
+    const normalizedPoints = normalizePoints(geofence.coordinates?.points);
+    const center = geofence.coordinates?.center
+      ? {
+          latitude: Number(geofence.coordinates.center.latitude),
+          longitude: Number(geofence.coordinates.center.longitude)
+        }
+      : undefined;
+
     setNewGeofence({
       name: geofence.name,
       description: geofence.description || '',
       type: geofence.type,
-      latitude: geofence.coordinates?.latitude || 0,
-      longitude: geofence.coordinates?.longitude || 0,
-      radius: geofence.radius,
-      address: geofence.coordinates?.address || geofence.address,
+      shape,
+      coordinates: {
+        shape,
+        center,
+        points: shape === 'POLYGON'
+          ? (normalizedPoints.length ? clonePoints(normalizedPoints) : clonePoints(DEFAULT_POLYGON_POINTS))
+          : undefined,
+        address: geofence.coordinates?.address ?? ''
+      },
+      radius: shape === 'CIRCLE' ? (geofence.radius ?? undefined) : undefined,
+      allowedDeviation: geofence.allowedDeviation ?? 0,
+      strictMode: geofence.strictMode ?? false,
       isActive: geofence.isActive
     });
     setIsCreating(true);
+  };
+
+  const handleShapeChange = (value: GeofenceShape) => {
+    setNewGeofence((prev) => {
+      if (value === prev.shape) {
+        return prev;
+      }
+
+      if (value === 'CIRCLE') {
+        const currentCenter = prev.coordinates.center ?? { latitude: 0, longitude: 0 };
+        return {
+          ...prev,
+          shape: 'CIRCLE',
+          coordinates: {
+            shape: 'CIRCLE',
+            center: currentCenter,
+            address: prev.coordinates.address ?? ''
+          },
+          radius: prev.radius ?? 100
+        };
+      }
+
+      const points = normalizePoints(prev.coordinates.points);
+      const safePoints = points.length >= MIN_POLYGON_POINTS ? points : clonePoints(DEFAULT_POLYGON_POINTS);
+
+      return {
+        ...prev,
+        shape: 'POLYGON',
+        coordinates: {
+          shape: 'POLYGON',
+          points: clonePoints(safePoints),
+          address: prev.coordinates.address ?? ''
+        },
+        radius: null
+      };
+    });
   };
 
   const handleUseCurrentLocation = async () => {
@@ -129,15 +317,158 @@ const GeofencingManagement: React.FC<GeofencingManagementProps> = ({ orgId }) =>
 
     try {
       const position = await getCurrentLocation();
-      setNewGeofence({
-        ...newGeofence,
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude
+      const { latitude: currentLat, longitude: currentLng } = position.coords;
+
+      setNewGeofence((prev) => {
+        if (prev.shape === 'CIRCLE') {
+          return {
+            ...prev,
+            coordinates: {
+              ...prev.coordinates,
+              shape: 'CIRCLE',
+              center: {
+                latitude: currentLat,
+                longitude: currentLng
+              },
+              points: undefined
+            }
+          };
+        }
+
+        const points = normalizePoints(prev.coordinates.points);
+        if (points.length === 0) {
+          const defaults = [
+            { latitude: currentLat, longitude: currentLng },
+            { latitude: currentLat, longitude: currentLng },
+            { latitude: currentLat, longitude: currentLng }
+          ];
+
+          return {
+            ...prev,
+            coordinates: {
+              ...prev.coordinates,
+              shape: 'POLYGON',
+              points: defaults
+            }
+          };
+        }
+
+        const updatedPoints = [...points];
+        updatedPoints[updatedPoints.length - 1] = {
+          latitude: currentLat,
+          longitude: currentLng
+        };
+
+        return {
+          ...prev,
+          coordinates: {
+            ...prev.coordinates,
+            shape: 'POLYGON',
+            points: updatedPoints
+          }
+        };
       });
     } catch (error) {
       console.error('Failed to get current location:', error);
       alert('Failed to get current location');
     }
+  };
+
+  const updateCircleCenter = (key: 'latitude' | 'longitude', rawValue: number) => {
+    const value = Number.isFinite(rawValue) ? rawValue : 0;
+
+    setNewGeofence((prev) => {
+      const existingCenter = prev.coordinates.center ?? { latitude: 0, longitude: 0 };
+      const nextCenter = {
+        ...existingCenter,
+        [key]: value
+      };
+
+      return {
+        ...prev,
+        radius: prev.radius ?? 100,
+        coordinates: {
+          ...prev.coordinates,
+          shape: 'CIRCLE',
+          center: nextCenter,
+          points: undefined
+        }
+      };
+    });
+  };
+
+  const updatePolygonPoint = (index: number, key: 'latitude' | 'longitude', rawValue: number) => {
+    const value = Number.isFinite(rawValue) ? rawValue : 0;
+
+    setNewGeofence((prev) => {
+      const points = normalizePoints(prev.coordinates.points);
+      const safePoints = points.length ? points : clonePoints(DEFAULT_POLYGON_POINTS);
+      const nextPoints = safePoints.map((entry) => ({ ...entry }));
+      const targetPoint = nextPoints[index] ?? { latitude: 0, longitude: 0 };
+
+      nextPoints[index] = {
+        ...targetPoint,
+        [key]: value
+      };
+
+      return {
+        ...prev,
+        radius: null,
+        coordinates: {
+          ...prev.coordinates,
+          shape: 'POLYGON',
+          points: nextPoints
+        }
+      };
+    });
+  };
+
+  const addPolygonPoint = () => {
+    setNewGeofence((prev) => {
+      const points = normalizePoints(prev.coordinates.points);
+      const safePoints = points.length ? points : clonePoints(DEFAULT_POLYGON_POINTS);
+      const lastPoint = safePoints[safePoints.length - 1] ?? { latitude: 0, longitude: 0 };
+      const nextPoints = safePoints.map((entry) => ({ ...entry }));
+
+      return {
+        ...prev,
+        radius: null,
+        coordinates: {
+          ...prev.coordinates,
+          shape: 'POLYGON',
+          points: [
+            ...nextPoints,
+            {
+              latitude: lastPoint.latitude,
+              longitude: lastPoint.longitude
+            }
+          ]
+        }
+      };
+    });
+  };
+
+  const removePolygonPoint = (index: number) => {
+    setNewGeofence((prev) => {
+      const points = normalizePoints(prev.coordinates.points);
+      if (points.length <= MIN_POLYGON_POINTS) {
+        return prev;
+      }
+
+      const nextPoints = points
+        .filter((_, idx) => idx !== index)
+        .map((entry) => ({ ...entry }));
+
+      return {
+        ...prev,
+        radius: null,
+        coordinates: {
+          ...prev.coordinates,
+          shape: 'POLYGON',
+          points: nextPoints
+        }
+      };
+    });
   };
 
   const handleTestLocation = async () => {
@@ -164,13 +495,18 @@ const GeofencingManagement: React.FC<GeofencingManagementProps> = ({ orgId }) =>
 
   const getTypeColor = (type: string) => {
     const colors: Record<string, string> = {
-      'OFFICE': 'bg-blue-100 text-blue-800',
-      'BRANCH': 'bg-green-100 text-green-800',
-      'WORKSITE': 'bg-purple-100 text-purple-800',
-      'CLIENT_LOCATION': 'bg-orange-100 text-orange-800'
+      'MAIN_OFFICE': 'bg-blue-100 text-blue-800',
+      'BRANCH_OFFICE': 'bg-green-100 text-green-800',
+      'CLIENT_SITE': 'bg-orange-100 text-orange-800',
+      'REMOTE_ZONE': 'bg-purple-100 text-purple-800'
     };
     return colors[type] || 'bg-gray-100 text-gray-800';
   };
+
+  const polygonPoints = normalizePoints(newGeofence.coordinates.points);
+  const circleCenter = newGeofence.coordinates.center ?? { latitude: 0, longitude: 0 };
+  const allowedDeviationValue = typeof newGeofence.allowedDeviation === 'number' ? newGeofence.allowedDeviation : 0;
+  const addressValue = newGeofence.coordinates.address ?? '';
 
   if (isLoading) {
     return (
@@ -211,15 +547,15 @@ const GeofencingManagement: React.FC<GeofencingManagementProps> = ({ orgId }) =>
                 <Input
                   id="name"
                   value={newGeofence.name}
-                  onChange={(e) => setNewGeofence({...newGeofence, name: e.target.value})}
+                  onChange={(e) => setNewGeofence({ ...newGeofence, name: e.target.value })}
                   placeholder="Enter geofence name"
                 />
               </div>
               <div>
                 <Label htmlFor="type">Type</Label>
-                <Select 
-                  value={newGeofence.type} 
-                  onValueChange={(value) => setNewGeofence({...newGeofence, type: value})}
+                <Select
+                  value={newGeofence.type}
+                  onValueChange={(value) => setNewGeofence({ ...newGeofence, type: value })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
@@ -234,60 +570,169 @@ const GeofencingManagement: React.FC<GeofencingManagementProps> = ({ orgId }) =>
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="shape">Shape</Label>
+                <Select
+                  value={newGeofence.shape}
+                  onValueChange={(value) => handleShapeChange(value as GeofenceShape)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select shape" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="POLYGON">Polygon</SelectItem>
+                    <SelectItem value="CIRCLE">Circle</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="allowedDeviation">Allowed Deviation (meters)</Label>
+                <Input
+                  id="allowedDeviation"
+                  type="number"
+                  min={0}
+                  value={allowedDeviationValue}
+                  onChange={(e) => {
+                    const parsed = parseFloat(e.target.value);
+                    setNewGeofence((prev) => ({
+                      ...prev,
+                      allowedDeviation: Number.isFinite(parsed) ? Math.max(0, parsed) : 0
+                    }));
+                  }}
+                />
+              </div>
+            </div>
+
             <div>
               <Label htmlFor="description">Description</Label>
               <Input
                 id="description"
                 value={newGeofence.description}
-                onChange={(e) => setNewGeofence({...newGeofence, description: e.target.value})}
+                onChange={(e) => setNewGeofence({ ...newGeofence, description: e.target.value })}
                 placeholder="Optional description"
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="latitude">Latitude</Label>
-                <Input
-                  id="latitude"
-                  type="number"
-                  step="any"
-                  value={newGeofence.latitude}
-                  onChange={(e) => setNewGeofence({
-                    ...newGeofence,
-                    latitude: parseFloat(e.target.value) || 0
-                  })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="longitude">Longitude</Label>
-                <Input
-                  id="longitude"
-                  type="number"
-                  step="any"
-                  value={newGeofence.longitude}
-                  onChange={(e) => setNewGeofence({
-                    ...newGeofence,
-                    longitude: parseFloat(e.target.value) || 0
-                  })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="radius">Radius (meters)</Label>
-                <Input
-                  id="radius"
-                  type="number"
-                  value={newGeofence.radius}
-                  onChange={(e) => setNewGeofence({
-                    ...newGeofence,
-                    radius: parseInt(e.target.value) || 100
-                  })}
-                />
-              </div>
+            <div>
+              <Label htmlFor="address">Reference Address</Label>
+              <Input
+                id="address"
+                value={addressValue}
+                onChange={(e) => setNewGeofence((prev) => ({
+                  ...prev,
+                  coordinates: {
+                    ...prev.coordinates,
+                    address: e.target.value
+                  }
+                }))}
+                placeholder="Optional address or landmark"
+              />
             </div>
 
+            {newGeofence.shape === 'CIRCLE' ? (
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="center-lat">Center Latitude</Label>
+                  <Input
+                    id="center-lat"
+                    type="number"
+                    step="any"
+                    value={circleCenter.latitude}
+                    onChange={(e) => updateCircleCenter('latitude', parseFloat(e.target.value) || 0)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="center-lng">Center Longitude</Label>
+                  <Input
+                    id="center-lng"
+                    type="number"
+                    step="any"
+                    value={circleCenter.longitude}
+                    onChange={(e) => updateCircleCenter('longitude', parseFloat(e.target.value) || 0)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="radius">Radius (meters)</Label>
+                  <Input
+                    id="radius"
+                    type="number"
+                    min={1}
+                    value={newGeofence.radius ?? 100}
+                    onChange={(e) => {
+                      const parsed = parseFloat(e.target.value);
+                      const nextRadius = Number.isFinite(parsed) ? Math.max(1, parsed) : 100;
+                      setNewGeofence((prev) => ({
+                        ...prev,
+                        radius: nextRadius,
+                        coordinates: {
+                          ...prev.coordinates,
+                          shape: 'CIRCLE'
+                        }
+                      }));
+                    }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>Polygon Vertices</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addPolygonPoint}
+                    className="flex items-center gap-2"
+                  >
+                    <Plus className="h-3 w-3" />
+                    Add Point
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {polygonPoints.map((point, index) => (
+                    <div key={`${point.latitude}-${point.longitude}-${index}`} className="grid grid-cols-3 gap-2">
+                      <div>
+                        <Label className="text-xs text-gray-500">Latitude #{index + 1}</Label>
+                        <Input
+                          type="number"
+                          step="any"
+                          value={point.latitude}
+                          onChange={(e) => updatePolygonPoint(index, 'latitude', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-gray-500">Longitude #{index + 1}</Label>
+                        <Input
+                          type="number"
+                          step="any"
+                          value={point.longitude}
+                          onChange={(e) => updatePolygonPoint(index, 'longitude', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="flex items-end justify-end">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removePolygonPoint(index)}
+                          disabled={polygonPoints.length <= MIN_POLYGON_POINTS}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <MinusCircle className="h-4 w-4" />
+                          <span className="sr-only">Remove point</span>
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center justify-between">
-              <Button 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={handleUseCurrentLocation}
                 disabled={!hasPermission}
                 className="flex items-center gap-2"
@@ -295,26 +740,44 @@ const GeofencingManagement: React.FC<GeofencingManagementProps> = ({ orgId }) =>
                 <Navigation className="h-4 w-4" />
                 Use Current Location
               </Button>
-              <div className="flex items-center space-x-2">
-                <Switch 
-                  checked={newGeofence.isActive}
-                  onCheckedChange={(checked) => setNewGeofence({...newGeofence, isActive: checked})}
-                />
-                <Label>Active</Label>
+              <div className="flex items-center space-x-6">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    checked={newGeofence.strictMode ?? false}
+                    onCheckedChange={(checked) => setNewGeofence((prev) => ({
+                      ...prev,
+                      strictMode: checked
+                    }))}
+                  />
+                  <Label>Strict Mode</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    checked={newGeofence.isActive ?? true}
+                    onCheckedChange={(checked) => setNewGeofence((prev) => ({
+                      ...prev,
+                      isActive: checked
+                    }))}
+                  />
+                  <Label>Active</Label>
+                </div>
               </div>
             </div>
 
             <div className="flex justify-end space-x-2">
-              <Button 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => {
                   setIsCreating(false);
                   setEditingGeofence(null);
+                  setNewGeofence(createDefaultGeofence());
                 }}
               >
                 Cancel
               </Button>
-              <Button 
+              <Button
+                type="button"
                 onClick={editingGeofence ? handleUpdateGeofence : handleCreateGeofence}
                 disabled={!newGeofence.name || createGeofenceMutation.isPending || updateGeofenceMutation.isPending}
               >
@@ -395,8 +858,11 @@ const GeofencingManagement: React.FC<GeofencingManagementProps> = ({ orgId }) =>
             </CardContent>
           </Card>
         ) : (
-          geofences.map((geofence: Geofence) => (
-            <Card key={geofence.id}>
+          geofences.map((geofence: Geofence) => {
+            const polygonVertices = normalizePoints(geofence.coordinates?.points);
+
+            return (
+              <Card key={geofence.id}>
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-3">
@@ -432,14 +898,29 @@ const GeofencingManagement: React.FC<GeofencingManagementProps> = ({ orgId }) =>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-gray-600">Coordinates:</span>
-                    <div className="font-mono">
-                      {geofence.coordinates?.latitude?.toFixed(6)}, {geofence.coordinates?.longitude?.toFixed(6)}
-                    </div>
+                    <span className="text-gray-600">Geometry:</span>
+                    {geofence.shape === 'CIRCLE' ? (
+                      <div className="font-mono">
+                        Center {geofence.coordinates?.center?.latitude?.toFixed(6)}, {geofence.coordinates?.center?.longitude?.toFixed(6)}
+                        <br />
+                        Radius {geofence.radius ?? geofence.geometry?.effectiveRadius ?? 'N/A'} m
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        <div>Vertices: {polygonVertices.length}</div>
+                        <div className="font-mono max-h-24 overflow-auto text-xs bg-gray-50 p-2 rounded">
+                          {polygonVertices.map((point, idx) => (
+                            <div key={`${geofence.id}-point-${idx}`}>
+                              #{idx + 1}: {point.latitude.toFixed(6)}, {point.longitude.toFixed(6)}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div>
-                    <span className="text-gray-600">Radius:</span>
-                    <div>{geofence.radius} meters</div>
+                    <span className="text-gray-600">Allowed Deviation:</span>
+                    <div>{geofence.allowedDeviation ?? 0} meters</div>
                   </div>
                   <div>
                     <span className="text-gray-600">Status:</span>
@@ -463,8 +944,9 @@ const GeofencingManagement: React.FC<GeofencingManagementProps> = ({ orgId }) =>
                   </div>
                 </div>
               </CardContent>
-            </Card>
-          ))
+              </Card>
+            );
+          })
         )}
       </div>
     </div>

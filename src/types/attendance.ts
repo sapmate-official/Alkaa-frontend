@@ -147,22 +147,47 @@ export interface BreakAnalytics {
 // GEOFENCING INTERFACES
 // =====================================================
 
+export type GeofenceShape = 'CIRCLE' | 'POLYGON';
+
+export interface GeofencePoint {
+  latitude: number;
+  longitude: number;
+}
+
+export interface GeofenceCoordinates {
+  shape: GeofenceShape;
+  center?: GeofencePoint;
+  points?: Array<GeofencePoint | [number, number]>;
+  radius?: number | null;
+  allowedDeviation?: number;
+  address?: string | null;
+  metadata?: Record<string, any> | null;
+}
+
+export interface GeofenceGeometry {
+  shape: GeofenceShape;
+  center?: GeofencePoint;
+  radius: number | null;
+  allowedDeviation: number;
+  effectiveRadius: number | null;
+  points?: Array<[number, number]>;
+}
+
 export interface Geofence {
   id: string;
   orgId: string;
   name: string;
   type: 'MAIN_OFFICE' | 'BRANCH_OFFICE' | 'CLIENT_SITE' | 'REMOTE_ZONE';
-  coordinates: {
-    latitude: number;
-    longitude: number;
-    address?: string;
-  };
-  radius: number;
-  address?: string;
+  shape: GeofenceShape;
+  coordinates: GeofenceCoordinates;
+  radius: number | null;
+  allowedDeviation: number;
+  strictMode?: boolean;
   description?: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  geometry?: GeofenceGeometry;
 }
 
 export interface LocationValidationLog {
@@ -189,10 +214,11 @@ export interface LocationValidationLog {
 export interface CreateGeofenceRequest {
   name: string;
   type: string;
-  latitude: number;
-  longitude: number;
-  radius?: number;
-  address?: string;
+  shape: GeofenceShape;
+  coordinates: GeofenceCoordinates;
+  radius?: number | null;
+  allowedDeviation?: number;
+  strictMode?: boolean;
   description?: string;
   isActive?: boolean;
 }

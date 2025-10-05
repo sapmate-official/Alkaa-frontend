@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -24,25 +24,27 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/providers/AuthContext';
 import { APIDictionary } from '@/services/api/v2/APIdict';
+import { APIV3Dictionary } from '@/services/api/v3/Api3Dicts';
 import axios from 'axios';
 import { Department, User } from '@/types/general';
 import RoleAssignment from './RoleAssignment';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Loader, 
-  Sparkles, 
-  User as UserIcon, 
-  Mail, 
-  Phone, 
-  Calendar, 
-  MapPin, 
-  CreditCard, 
-  Building, 
-  DollarSign, 
-  Percent, 
-  BriefcaseBusiness, 
-  ShieldCheck, 
+import {
+  Loader,
+  RefreshCw,
+  Sparkles,
+  User as UserIcon,
+  Mail,
+  Phone,
+  Calendar,
+  MapPin,
+  CreditCard,
+  Building,
+  DollarSign,
+  Percent,
+  BriefcaseBusiness,
+  ShieldCheck,
   BadgeCheck,
   Users,
   FileSpreadsheet,
@@ -51,6 +53,15 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { debounce } from 'lodash';
+
+const MANUAL_TEMPLATE_OPTION = '__manual__';
+
+type SalaryTemplateSummary = {
+  id: string;
+  name: string;
+  description?: string | null;
+  isDefault?: boolean | null;
+};
 
 const basicDetailsSchema = z.object({
   firstName: z.string().min(2, 'First name is required'),
@@ -76,6 +87,7 @@ const bankDetailsSchema = z.object({
 const salaryDetailsSchema = z.object({
   annualPackage: z.number().min(0, 'Annual package must be positive'),
   monthlySalary: z.number().min(0, 'Monthly salary must be positive'),
+  salaryTemplateId: z.string().optional(),
   hraPercentage: z.number().min(0).max(100),
   daPercentage: z.number().min(0).max(100),
   taPercentage: z.number().min(0).max(100),
@@ -104,12 +116,46 @@ const steps = [
   'Role Assignment',
 ] as const;
 
+type EmployeeFormValues = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  mobileNumber: string;
+  emergencyContact: string;
+  dateOfBirth: string;
+  address: string;
+  adharNumber: string;
+  panNumber: string;
+  employeeId: string;
+  hiredDate: string;
+  accountHolder: string;
+  accountNumber: string;
+  ifscCode: string;
+  bankName: string;
+  annualPackage: number;
+  monthlySalary: number;
+  salaryTemplateId?: string;
+  hraPercentage: number;
+  daPercentage: number;
+  taPercentage: number;
+  pfPercentage: number;
+  taxPercentage: number;
+  insuranceFixed: number;
+  departmentId: string;
+  roleIds: string[];
+  managerId: string;
+};
+
 const CreateEmployeeNew = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const { toast } = useToast();
   const { user } = useAuth();
   const [departments, setDepartments] = useState<Department[]>([]);
   const [employees, setEmployees] = useState<User[]>([]);
+  const [salaryTemplates, setSalaryTemplates] = useState<SalaryTemplateSummary[]>([]);
+  const [salaryTemplatesLoading, setSalaryTemplatesLoading] = useState(false);
+  const [salaryTemplateError, setSalaryTemplateError] = useState<string | null>(null);
+  const hasAppliedDefaultTemplateRef = useRef(false);
   const [useHeadAsManager, setUseHeadAsManager] = useState(false);
   const [employeeIdExists, setEmployeeIdExists] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -127,9 +173,9 @@ const CreateEmployeeNew = () => {
     } catch (error) {
       console.error(error);
       toast({
-        title: "Error",
-        description: "Failed to fetch departments",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to fetch departments',
+        variant: 'destructive',
       });
     }
   };
@@ -144,21 +190,15 @@ const CreateEmployeeNew = () => {
     } catch (error) {
       console.error(error);
       toast({
-        title: "Error",
-        description: "Failed to fetch employees",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to fetch employees',
+        variant: 'destructive',
       });
     }
   };
 
-  useEffect(() => {
-    fetchDepartments();
-    fetchEmployees();
-    fetchEmployeeId();
-  }, [user?.orgId]);
-
-  const form = useForm({
-    resolver: zodResolver(formSchemas[currentStep]),
+  const form = useForm<EmployeeFormValues>({
+    resolver: zodResolver(formSchemas[currentStep] as unknown as z.ZodType<EmployeeFormValues>),
     defaultValues: {
       // Basic Details
       firstName: '',
@@ -182,6 +222,7 @@ const CreateEmployeeNew = () => {
       // Salary Details
       annualPackage: 0,
       monthlySalary: 0,
+      salaryTemplateId: undefined,
       hraPercentage: 0,
       daPercentage: 0,
       taPercentage: 0,
@@ -192,9 +233,64 @@ const CreateEmployeeNew = () => {
       // Role Assignment
       departmentId: '',
       roleIds: [],
-      managerId: user?.id.toString()
+      managerId: user?.id?.toString() || '',
     }
   });
+
+  const fetchSalaryTemplates = useCallback(async () => {
+    if (!user?.orgId) {
+      return;
+    }
+
+    setSalaryTemplatesLoading(true);
+    setSalaryTemplateError(null);
+
+    try {
+      const response = await axios.get(APIV3Dictionary.payroll.templates.list, {
+        withCredentials: true
+      });
+
+      const payload = response.data as {
+        success?: boolean;
+        data?: SalaryTemplateSummary[];
+        message?: string;
+      };
+
+      if (payload?.success === false) {
+        setSalaryTemplates([]);
+        setSalaryTemplateError(payload.message || 'Failed to load salary templates');
+        return;
+      }
+
+      if (Array.isArray(payload?.data)) {
+        setSalaryTemplates(payload.data);
+
+        const currentValue = form.getValues('salaryTemplateId');
+        if (!currentValue && !hasAppliedDefaultTemplateRef.current) {
+          const defaultTemplate = payload.data.find(template => template.isDefault);
+          if (defaultTemplate) {
+            form.setValue('salaryTemplateId', defaultTemplate.id);
+            hasAppliedDefaultTemplateRef.current = true;
+          }
+        }
+      } else {
+        setSalaryTemplates([]);
+      }
+    } catch (error) {
+      console.error('Failed to load salary templates:', error);
+      setSalaryTemplateError('Failed to load salary templates');
+      setSalaryTemplates([]);
+    } finally {
+      setSalaryTemplatesLoading(false);
+    }
+  }, [user?.orgId, form]);
+
+  useEffect(() => {
+    fetchDepartments();
+    fetchEmployees();
+    fetchEmployeeId();
+    fetchSalaryTemplates();
+  }, [user?.orgId, fetchSalaryTemplates]);
 
   const fetchEmployeeId = async () => {
     try {
@@ -761,112 +857,52 @@ const CreateEmployeeNew = () => {
     </div>
   );
 
-  const renderSalaryDetailsStep = () => (
-    <div className="space-y-6">
-      <div className="bg-muted/50 p-4 rounded-lg mb-6">
-        <h3 className="text-md font-medium mb-2 flex items-center gap-2">
-          <DollarSign className="h-4 w-4" />
-          Salary Structure
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          Define the employee's compensation structure including allowances and deductions.
-        </p>
-      </div>
+  const renderSalaryDetailsStep = () => {
+    const selectedTemplateId = form.watch('salaryTemplateId');
+    const selectValue = selectedTemplateId ?? MANUAL_TEMPLATE_OPTION;
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField
-          control={form.control}
-          name="annualPackage"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
-                Annual Package
-              </FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  placeholder="0"
-                  {...field}
-                  onChange={e => {
-                    const value = parseFloat(e.target.value);
-                    field.onChange(value);
-                    // Calculate and update monthly salary
-                    if (!isNaN(value)) {
-                      const monthly = parseFloat((value / 12).toFixed(2));
-                      form.setValue('monthlySalary', monthly);
-                    }
-                  }}
-                  className="text-right"
-                />
-              </FormControl>
-              <div className="flex items-center mt-1 text-xs text-muted-foreground">
-                <Calculator className="h-3 w-3 mr-1" />
-                <span>Annual = Monthly × 12</span>
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    return (
+      <div className="space-y-6">
+        <div className="bg-muted/50 p-4 rounded-lg mb-6">
+          <h3 className="text-md font-medium mb-2 flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />
+            Salary Structure
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Define the core compensation and optionally apply a preconfigured salary template.
+          </p>
+        </div>
 
-        <FormField
-          control={form.control}
-          name="monthlySalary"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
-                Monthly Salary
-              </FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  placeholder="0"
-                  {...field}
-                  onChange={e => {
-                    const value = parseFloat(e.target.value);
-                    field.onChange(value);
-                    // Calculate and update annual package
-                    if (!isNaN(value)) {
-                      const annual = parseFloat((value * 12).toFixed(2));
-                      form.setValue('annualPackage', annual);
-                    }
-                  }}
-                  className="text-right"
-                />
-              </FormControl>
-              <div className="flex items-center mt-1 text-xs text-muted-foreground">
-                <Calculator className="h-3 w-3 mr-1" />
-                <span>Monthly = Annual ÷ 12</span>
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-
-      <div className="border-t border-b border-muted py-4 my-6">
-        <h4 className="text-sm font-medium mb-4">Allowances (% of monthly salary)</h4>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="hraPercentage"
+            name="annualPackage"
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="flex items-center gap-2">
-                  <Percent className="h-4 w-4" />
-                  HRA Percentage
+                  <DollarSign className="h-4 w-4" />
+                  Annual Package
                 </FormLabel>
                 <FormControl>
                   <Input
                     type="number"
-                    min="0"
-                    max="100"
+                    placeholder="0"
                     {...field}
-                    onChange={e => field.onChange(parseFloat(e.target.value))}
+                    onChange={e => {
+                      const value = parseFloat(e.target.value);
+                      field.onChange(value);
+                      if (!isNaN(value)) {
+                        const monthly = parseFloat((value / 12).toFixed(2));
+                        form.setValue('monthlySalary', monthly);
+                      }
+                    }}
                     className="text-right"
                   />
                 </FormControl>
+                <div className="flex items-center mt-1 text-xs text-muted-foreground">
+                  <Calculator className="h-3 w-3 mr-1" />
+                  <span>Annual = Monthly × 12</span>
+                </div>
                 <FormMessage />
               </FormItem>
             )}
@@ -874,131 +910,266 @@ const CreateEmployeeNew = () => {
 
           <FormField
             control={form.control}
-            name="daPercentage"
+            name="monthlySalary"
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="flex items-center gap-2">
-                  <Percent className="h-4 w-4" />
-                  DA Percentage
+                  <DollarSign className="h-4 w-4" />
+                  Monthly Salary
                 </FormLabel>
                 <FormControl>
                   <Input
                     type="number"
-                    min="0"
-                    max="100"
+                    placeholder="0"
                     {...field}
-                    onChange={e => field.onChange(parseFloat(e.target.value))}
+                    onChange={e => {
+                      const value = parseFloat(e.target.value);
+                      field.onChange(value);
+                      if (!isNaN(value)) {
+                        const annual = parseFloat((value * 12).toFixed(2));
+                        form.setValue('annualPackage', annual);
+                      }
+                    }}
                     className="text-right"
                   />
                 </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="taPercentage"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center gap-2">
-                  <Percent className="h-4 w-4" />
-                  TA Percentage
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="100"
-                    {...field}
-                    onChange={e => field.onChange(parseFloat(e.target.value))}
-                    className="text-right"
-                  />
-                </FormControl>
+                <div className="flex items-center mt-1 text-xs text-muted-foreground">
+                  <Calculator className="h-3 w-3 mr-1" />
+                  <span>Monthly = Annual ÷ 12</span>
+                </div>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
+
+        <FormField
+          control={form.control}
+          name="salaryTemplateId"
+          render={({ field }) => {
+            const handleChange = (value: string) => {
+              field.onChange(value === MANUAL_TEMPLATE_OPTION ? undefined : value);
+            };
+
+            return (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Salary Template
+                </FormLabel>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                  <Select
+                    onValueChange={handleChange}
+                    value={selectValue}
+                    disabled={salaryTemplatesLoading && salaryTemplates.length === 0}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full sm:w-72">
+                        <SelectValue placeholder="Select salary template" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value={MANUAL_TEMPLATE_OPTION}>Manual configuration</SelectItem>
+                      {salaryTemplates.map((template) => (
+                        <SelectItem key={template.id} value={template.id}>
+                          {template.name}{template.isDefault ? ' (Default)' : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => fetchSalaryTemplates()}
+                    disabled={salaryTemplatesLoading}
+                  >
+                    {salaryTemplatesLoading ? (
+                      <Loader className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                <FormDescription>
+                  Choose a template to auto-apply allowances and deductions, or stay on manual configuration.
+                </FormDescription>
+                {salaryTemplateError && (
+                  <p className="text-sm text-destructive">{salaryTemplateError}</p>
+                )}
+                {salaryTemplates.length === 0 && !salaryTemplatesLoading && (
+                  <p className="text-xs text-muted-foreground">
+                    No salary templates found. Configure them in the payroll workspace to enable automatic structures.
+                  </p>
+                )}
+              </FormItem>
+            );
+          }}
+        />
+
+        {selectedTemplateId ? (
+          <div className="rounded-md border border-dashed border-muted/60 bg-muted/20 p-4 text-sm text-muted-foreground">
+            Allowances and deductions will be managed by the selected template. You can review or update the template from the payroll admin workspace.
+          </div>
+        ) : (
+          <>
+            <div className="border-t border-b border-muted py-4 my-6">
+              <h4 className="text-sm font-medium mb-4">Allowances (% of monthly salary)</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="hraPercentage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <Percent className="h-4 w-4" />
+                        HRA Percentage
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          {...field}
+                          onChange={e => field.onChange(parseFloat(e.target.value))}
+                          className="text-right"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="daPercentage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <Percent className="h-4 w-4" />
+                        DA Percentage
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          {...field}
+                          onChange={e => field.onChange(parseFloat(e.target.value))}
+                          className="text-right"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="taPercentage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <Percent className="h-4 w-4" />
+                        TA Percentage
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          {...field}
+                          onChange={e => field.onChange(parseFloat(e.target.value))}
+                          className="text-right"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            <div className="border-b border-muted pb-6">
+              <h4 className="text-sm font-medium mb-4">Deductions</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="pfPercentage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <Percent className="h-4 w-4" />
+                        PF Percentage
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          {...field}
+                          onChange={e => field.onChange(parseFloat(e.target.value))}
+                          className="text-right"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="taxPercentage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <Percent className="h-4 w-4" />
+                        Tax Percentage
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          {...field}
+                          onChange={e => field.onChange(parseFloat(e.target.value))}
+                          className="text-right"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="insuranceFixed"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <ShieldCheck className="h-4 w-4" />
+                        Insurance (Fixed)
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          {...field}
+                          onChange={e => field.onChange(parseFloat(e.target.value))}
+                          className="text-right"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+          </>
+        )}
       </div>
-
-      <div className="border-b border-muted pb-6">
-        <h4 className="text-sm font-medium mb-4">Deductions</h4>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          <FormField
-            control={form.control}
-            name="pfPercentage"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center gap-2">
-                  <Percent className="h-4 w-4" />
-                  PF Percentage
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="100"
-                    {...field}
-                    onChange={e => field.onChange(parseFloat(e.target.value))}
-                    className="text-right"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="taxPercentage"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center gap-2">
-                  <Percent className="h-4 w-4" />
-                  Tax Percentage
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="100"
-                    {...field}
-                    onChange={e => field.onChange(parseFloat(e.target.value))}
-                    className="text-right"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="insuranceFixed"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4" />
-                  Insurance (Fixed)
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min="0"
-                    {...field}
-                    onChange={e => field.onChange(parseFloat(e.target.value))}
-                    className="text-right"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-      </div>
-    </div>
-  );
+    );
+  };
 
   const renderRoleAssignmentStep = () => (
     <div className="space-y-6">
@@ -1063,7 +1234,7 @@ const CreateEmployeeNew = () => {
                   form.setValue("managerId", selectedDept.headId);
                 }
               } else {
-                form.setValue("managerId", user?.id);
+                form.setValue("managerId", user?.id?.toString() || '');
               }
             }}
             className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
