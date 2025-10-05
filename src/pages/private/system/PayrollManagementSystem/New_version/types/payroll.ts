@@ -351,12 +351,42 @@ export interface PayslipPreview {
 export interface SalaryDispute {
   id: string;
   salaryRecordId: string;
+  userId?: string;
   reason: string;
   description?: string;
   status: 'PENDING' | 'UNDER_REVIEW' | 'RESOLVED' | 'REJECTED';
   resolutionNote?: string;
   createdAt: string;
+  updatedAt?: string;
   resolvedAt?: string;
+  resolvedBy?: string | null;
+  salaryRecord?: {
+    id: string;
+    month: number;
+    year: number;
+    netSalary: number;
+    status: PayrollRecord['status'] | string;
+    processedAt?: string | null;
+    cycleId?: string | null;
+  } | null;
+  cycle?: {
+    id: string;
+    month: number;
+    year: number;
+    status: PayrollCycle['status'] | string;
+  } | null;
+  employee?: {
+    id?: string | null;
+    employeeId?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+    department?: string | null;
+    manager?: {
+      id?: string | null;
+      firstName?: string | null;
+      lastName?: string | null;
+    } | null;
+  } | null;
 }
 
 export interface PayrollCycleProcessingError {

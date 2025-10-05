@@ -54,6 +54,7 @@ import ReportingTab from './components/tabs/ReportingTab'
 import TransactionsTab from './components/tabs/TransactionsTab'
 import AuditTrailTab from './components/tabs/AuditTrailTab'
 import EmployeePortalTab from './components/tabs/EmployeePortalTab'
+import DisputeManagementTab from './components/tabs/DisputeManagementTab'
 import TransactionModeDialog, { BankDetailsFormState } from './components/TransactionModeDialog'
 import ProcessingDrawer from './components/ProcessingDrawer'
 import TemplateDialog from './components/TemplateDialog'
@@ -159,6 +160,7 @@ const PayrollAdminDashboard = () => {
   const [processingDrawerError, setProcessingDrawerError] = useState<string | null>(null);
   const [isProcessingDrawerLoading, setIsProcessingDrawerLoading] = useState(false);
   const [selectedProcessingRecordId, setSelectedProcessingRecordId] = useState<string | null>(null);
+  const suppressProcessingDeepLinkRef = useRef(false);
   const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
   const [availableTemplates, setAvailableTemplates] = useState<SalaryTemplate[]>([]);
   const [templatesLoading, setTemplatesLoading] = useState(false);
@@ -773,10 +775,10 @@ const PayrollAdminDashboard = () => {
   const handleReportNavigation = (target: 'tax' | 'analytics' | 'export' | 'audit' | 'compliance' | 'corrections') => {
     switch (target) {
       case 'tax': {
-        navigate(`${RouteDict.Payroll.SalaryTransaction}?view=tax`);
+        navigate(RouteDict.Payroll.Admin.TaxSummaries);
         toast({
           title: 'Opening tax summaries',
-          description: 'Filtering salary transactions for tax reconciliation insights.'
+          description: 'Loading organization-wide tax summary analytics.'
         });
         break;
       }
@@ -927,6 +929,11 @@ const PayrollAdminDashboard = () => {
   }, [cyclePendingDelete, fetchDashboardData, selectedProcessingCycle?.id]);
 
   const handleEmployeePortalShortcut = (tab: string, extraState?: Record<string, unknown>) => {
+    if (tab === 'payslips' && (!extraState || extraState.action !== 'download')) {
+      navigate(RouteDict.Payroll.Admin.PayslipHistory);
+      return;
+    }
+
     navigate(`${RouteDict.Payroll.Base}/employee`, { state: { defaultTab: tab, ...extraState } });
   };
 
@@ -995,6 +1002,7 @@ const PayrollAdminDashboard = () => {
   );
 
   const handleOpenProcessingDrawer = useCallback(async (cycle: PayrollCycle) => {
+    suppressProcessingDeepLinkRef.current = false;
     setIsProcessingDrawerOpen(true);
     setSelectedProcessingCycle(cycle);
     setProcessingDrawerError(null);
@@ -1037,25 +1045,24 @@ const PayrollAdminDashboard = () => {
   }, [loadCycleDetails, selectProcessingRecord, setSearchParams]);
 
   const handleCloseProcessingDrawer = useCallback(() => {
+    suppressProcessingDeepLinkRef.current = true;
+    const clearedParams = new URLSearchParams(searchParams);
+    clearedParams.delete('stage');
+    clearedParams.delete('cycleId');
+    clearedParams.delete('recordId');
+    clearedParams.delete('employeeId');
+    setSearchParams(clearedParams, { replace: true });
+
     setIsProcessingDrawerOpen(false);
     setProcessingDrawerError(null);
     setIsProcessingDrawerLoading(false);
     setProcessingCycleDetails((prev) => prev); // retain data for cache reuse
-    selectProcessingRecord(null);
+    setSelectedProcessingRecordId(null);
     setSelectedProcessingCycle(null);
     setEmployeeSearchTerm('');
     setIsSubmittingForReview(false);
     deepLinkTargetRef.current = null;
-
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      next.delete('stage');
-      next.delete('cycleId');
-      next.delete('recordId');
-      next.delete('employeeId');
-      return next;
-    });
-  }, [selectProcessingRecord, setSearchParams]);
+  }, [searchParams, setSearchParams]);
 
   const refreshProcessingDetails = useCallback(
     async (cycleId: string, preferredRecordId?: string) => {
@@ -1084,6 +1091,71 @@ const PayrollAdminDashboard = () => {
       }
     },
     [loadCycleDetails, selectProcessingRecord]
+  );
+
+  const handleInspectDisputeRecord = useCallback(
+    async ({ cycleId, salaryRecordId, employeeId }: { cycleId?: string | null; salaryRecordId: string; employeeId?: string | null }) => {
+      if (!cycleId) {
+        toast({
+          title: 'Cycle not linked yet',
+          description: 'This dispute is not associated with a payroll cycle. Generate or sync the salary record before reviewing processing steps.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      deepLinkTargetRef.current = {
+        recordId: salaryRecordId,
+        employeeId: employeeId ?? null
+      };
+
+      setActiveTab('processing');
+
+      const existingCycle = cycles.find((cycle) => cycle.id === cycleId);
+
+      if (existingCycle) {
+        await handleOpenProcessingDrawer(existingCycle);
+        return;
+      }
+
+      try {
+        const cycleDetails = await loadCycleDetails(cycleId);
+        processingDetailsCache.current[cycleId] = cycleDetails;
+
+        const fallbackCycle: PayrollCycle = {
+          id: cycleDetails.id,
+          month: cycleDetails.month,
+          year: cycleDetails.year,
+          status: cycleDetails.status,
+          totalEmployees: cycleDetails.totalEmployees,
+          processedCount: cycleDetails.processedCount,
+          failedCount: cycleDetails.failedCount,
+          totalAmount: cycleDetails.totalAmount,
+          payoutStatus: cycleDetails.payoutStatus,
+          payoutInitiatedAt: cycleDetails.payoutInitiatedAt ?? undefined,
+          payoutCompletedAt: cycleDetails.payoutCompletedAt ?? undefined,
+          payoutInitiatedBy: cycleDetails.payoutInitiatedBy ?? undefined,
+          payoutSummary: cycleDetails.payoutSummary ?? undefined,
+          startedAt: cycleDetails.startedAt ?? undefined,
+          completedAt: cycleDetails.completedAt ?? undefined,
+          approvedAt: cycleDetails.approvedAt ?? undefined,
+          templateId: cycleDetails.templateId ?? undefined,
+          processor: cycleDetails.processor ?? undefined,
+          approver: cycleDetails.approver ?? undefined,
+        };
+
+        await handleOpenProcessingDrawer(fallbackCycle);
+      } catch (error) {
+        deepLinkTargetRef.current = null;
+        const message = getErrorMessage(error, 'Unable to open salary record from the dispute.');
+        toast({
+          title: 'Unable to open salary record',
+          description: message,
+          variant: 'destructive'
+        });
+      }
+    },
+    [cycles, handleOpenProcessingDrawer, loadCycleDetails, setActiveTab, toast]
   );
 
   useEffect(() => {
@@ -1119,6 +1191,13 @@ const PayrollAdminDashboard = () => {
     const cycleIdParam = params.get('cycleId');
 
     if (stage !== 'processing' || !cycleIdParam) {
+      if (suppressProcessingDeepLinkRef.current) {
+        suppressProcessingDeepLinkRef.current = false;
+      }
+      return;
+    }
+
+    if (suppressProcessingDeepLinkRef.current) {
       return;
     }
 
@@ -2433,12 +2512,13 @@ const PayrollAdminDashboard = () => {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-9">
+        <TabsList className="grid w-full grid-cols-10">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="setup">Setup & Config</TabsTrigger>
           <TabsTrigger value="cycle-management">Cycle Management</TabsTrigger>
           <TabsTrigger value="processing">Processing</TabsTrigger>
           <TabsTrigger value="review-approval">Review & Approval</TabsTrigger>
+          <TabsTrigger value="disputes">Disputes</TabsTrigger>
           <TabsTrigger value="transactions">Transactions</TabsTrigger>
           <TabsTrigger value="reporting">Reporting</TabsTrigger>
           <TabsTrigger value="audit-trail">Audit Trail</TabsTrigger>
@@ -2500,6 +2580,12 @@ const PayrollAdminDashboard = () => {
           onOpenReviewDetails={handleOpenReviewDetails}
           isProcessing={isProcessing}
           reviewLoadingCycleId={reviewLoadingCycleId}
+        />
+
+        <DisputeManagementTab
+          activeTab={activeTab}
+          months={months}
+          onInspectDisputeRecord={handleInspectDisputeRecord}
         />
 
         <TransactionsTab

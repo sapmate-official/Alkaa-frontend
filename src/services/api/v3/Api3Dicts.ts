@@ -6,8 +6,12 @@ export const APIV3Dictionary = {
     permission: `${backendDomain}/api/v3/permission`,
     payroll: {
         // Basic payroll operations
-        getPayslip: (month: string | number, year: string | number, userId: string = 'undefined') => 
-            `${backendDomain}/api/v3/payroll/payslip/${month}/${year}/${userId}`,
+        getPayslip: (month: string | number, year: string | number, userId?: string) => {
+            // Backend route always expects a userId segment; pass literal 'undefined' when we
+            // intentionally target the current session user to keep the path shape consistent.
+            const targetId = typeof userId === 'string' && userId.trim() ? userId : 'undefined'
+            return `${backendDomain}/api/v3/payroll/payslip/${month}/${year}/${targetId}`
+        },
         getStatistics: (salaryRecordId: string) => 
             `${backendDomain}/api/v3/payroll/statistics/${salaryRecordId}`,
         generateSalary: (month: string | number, year: string | number, userId: string = 'undefined') => 
@@ -59,6 +63,21 @@ export const APIV3Dictionary = {
             disputes: `${backendDomain}/api/v3/payroll/employee/disputes`,
             submitDispute: `${backendDomain}/api/v3/payroll/employee/disputes`,
             notifications: `${backendDomain}/api/v3/payroll/employee/notifications`,
+        },
+        admin: {
+            payslipHistory: `${backendDomain}/api/v3/payroll/admin/payslip-history`,
+            taxSummaries: `${backendDomain}/api/v3/payroll/admin/tax-summaries`,
+        },
+
+        disputes: {
+            admin: {
+                list: `${backendDomain}/api/v3/payroll/admin/disputes`,
+                update: (disputeId: string) => `${backendDomain}/api/v3/payroll/admin/disputes/${disputeId}`,
+            },
+            manager: {
+                list: `${backendDomain}/api/v3/payroll/manager/disputes`,
+                update: (disputeId: string) => `${backendDomain}/api/v3/payroll/manager/disputes/${disputeId}`,
+            },
         },
         
         // Manager review endpoints (IMPLEMENTED)

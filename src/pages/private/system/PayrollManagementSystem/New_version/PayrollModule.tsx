@@ -8,6 +8,8 @@ const PayrollAdminDashboard = lazy(() => import('./AdminLevel/PayrollAdminDashbo
 const SalaryTemplateEditor = lazy(() => import('./AdminLevel/SalaryTemplateEditor'));
 const EmployeeSelfServicePortal = lazy(() => import('./EmployeeLevel/EmployeeSelfServicePortal'));
 const ManagerReviewDashboard = lazy(() => import('./ManagerLevel/ManagerReviewDashboard'));
+const OrganizationPayslipHistory = lazy(() => import('./AdminLevel/EmployeePortal/OrganizationPayslipHistory'));
+const OrganizationTaxSummaries = lazy(() => import('./AdminLevel/Reporting/OrganizationTaxSummaries'));
 
 // Legacy components
 const MainCompOfViewPayslipOfAllSubordinatesPayroll = lazy(() => import('./ManagerLevel/ViewPayslipOfAllSubordinatesPayroll/MainCompOfViewPayslipOfAllSubordinatesPayroll'));
@@ -40,6 +42,8 @@ const PayrollModule = () => {
       {/* Role-based Dashboards */}
       <Route path="admin" element={<PayrollAdminDashboard />} />
       <Route path="admin/templates" element={<SalaryTemplateEditor />} />
+    <Route path="admin/payslip-history" element={<OrganizationPayslipHistory />} />
+    <Route path="admin/tax-summaries" element={<OrganizationTaxSummaries />} />
       <Route path="manager" element={<ManagerReviewDashboard />} />
       <Route path="employee" element={<EmployeeSelfServicePortal />} />
       

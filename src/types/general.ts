@@ -636,6 +636,7 @@ export interface OnboardingCandidate {
   hiredDate?: string;
   annualPackage?: number;
   monthlySalary?: number;
+  salaryTemplateId?: string;
   departmentId?: string;
   managerId?: string;
   status: OnboardingStatus;

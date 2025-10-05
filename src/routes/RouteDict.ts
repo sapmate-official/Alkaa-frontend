@@ -94,6 +94,8 @@ const RouteDict = {
             Transaction: "/p/payroll/admin-transaction",
             Payslip: "/p/payroll/admin-payslip",
             Generate: "/p/payroll/admin/generate",
+            PayslipHistory: "/p/payroll/admin/payslip-history",
+            TaxSummaries: "/p/payroll/admin/tax-summaries",
         },
         Manager:{
             Transaction: "/p/payroll/subordinate-transaction",
