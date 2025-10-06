@@ -53,6 +53,7 @@ const RouteDict = {
         History: "/p/attendance/history",
         PastDays: "/p/attendance/pastdays",
         Verification: "/p/attendance/verification",
+        Activity: "/p/attendance/activity",
         AdminVerification: "/p/attendance/admin-verification",
     },
 

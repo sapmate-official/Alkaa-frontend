@@ -6,7 +6,6 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card'
-import { TabsContent } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -307,7 +306,7 @@ const AuditTrailTab = ({
   const disableNext = isLoadingCycles || pagination.page >= pagination.totalPages
 
   return (
-    <TabsContent value="audit-trail" className="space-y-6">
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -609,7 +608,7 @@ const AuditTrailTab = ({
           )}
         </CardContent>
       </Card>
-    </TabsContent>
+    </div>
   )
 }
 

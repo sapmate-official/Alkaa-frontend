@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '@/providers/AuthContext'
 import axios from 'axios'
 import { APIV3Dictionary } from '@/services/api/v3/Api3Dicts'
@@ -6,8 +6,14 @@ import { toast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,8 +36,21 @@ import {
   AlertCircle,
   Settings,
   Download,
-  Loader2
+  Loader2,
+  Flag,
+  CalendarPlus,
+  ClipboardList,
+  ShieldCheck,
+  Wallet,
+  Circle,
+  CircleDot,
+  CheckCircle2,
+  ArrowRight,
+  BarChart3,
+  History,
+  Users
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import RouteDict from '@/routes/RouteDict'
 
@@ -40,6 +59,7 @@ import {
   PayrollCycleDeletionResult,
   PayrollCycleDetails,
   PayrollStatistics,
+  PayrollSalaryStatistics,
   SalaryTemplate,
   PayrollCycleProcessingStatusResponse,
   PayrollPayoutStatus
@@ -101,6 +121,86 @@ interface ApprovedCycleSnapshot {
 
 const TUTORIAL_STORAGE_KEY = 'payroll-admin-dashboard-onboarding-v1'
 
+const PRIMARY_FLOW_ORDER = [
+  'overview',
+  'setup',
+  'cycle-management',
+  'processing',
+  'review-approval',
+  'transactions'
+] as const
+
+type PrimaryFlowStepId = (typeof PRIMARY_FLOW_ORDER)[number]
+
+type FlowStepMeta = {
+  title: string
+  description: string
+  icon: ReactNode
+}
+
+const PRIMARY_FLOW_META: Record<PrimaryFlowStepId, FlowStepMeta> = {
+  overview: {
+    title: 'Payroll health overview',
+    description: 'Key metrics and at-a-glance indicators for your latest payroll runs.',
+    icon: <Flag className="h-4 w-4" />
+  },
+  setup: {
+    title: 'Configure payroll foundations',
+    description: 'Templates, calculation rules, and organization-wide defaults.',
+    icon: <Settings className="h-4 w-4" />
+  },
+  'cycle-management': {
+    title: 'Create or resume a payroll cycle',
+    description: 'Select the month and assemble the employee cohort for processing.',
+    icon: <CalendarPlus className="h-4 w-4" />
+  },
+  processing: {
+    title: 'Process salaries & validate data',
+    description: 'Drill into employee payouts, attendance, and adjustments.',
+    icon: <ClipboardList className="h-4 w-4" />
+  },
+  'review-approval': {
+    title: 'Review and approve',
+    description: 'Finalize calculations and hand off for approval to finance/leadership.',
+    icon: <ShieldCheck className="h-4 w-4" />
+  },
+  transactions: {
+    title: 'Payouts & transactions',
+    description: 'Initiate bank transfers and confirm disbursement completion.',
+    icon: <Wallet className="h-4 w-4" />
+  }
+}
+
+const SUPPLEMENTARY_SECTIONS = [
+  {
+    id: 'reporting',
+    title: 'Reporting & analytics',
+    description: 'Generate exports, compliance packs, and payroll analytics.',
+    icon: <BarChart3 className="h-4 w-4" />
+  },
+  {
+    id: 'audit-trail',
+    title: 'Audit trail',
+    description: 'Trace every payroll change with actor context and before/after data.',
+    icon: <History className="h-4 w-4" />
+  },
+  {
+    id: 'disputes',
+    title: 'Dispute resolution',
+    description: 'Monitor and resolve employee challenges on payroll outcomes.',
+    icon: <AlertCircle className="h-4 w-4" />
+  },
+  {
+    id: 'employee-portal',
+    title: 'Employee portal',
+    description: 'Manage employee-facing communications and self-service access.',
+    icon: <Users className="h-4 w-4" />
+  }
+] as const
+
+const isPrimaryStep = (value: string): value is PrimaryFlowStepId =>
+  (PRIMARY_FLOW_ORDER as readonly string[]).includes(value)
+
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (axios.isAxiosError(error)) {
     const responseData = error.response?.data as Record<string, unknown> | undefined
@@ -160,6 +260,11 @@ const PayrollAdminDashboard = () => {
   const [processingDrawerError, setProcessingDrawerError] = useState<string | null>(null);
   const [isProcessingDrawerLoading, setIsProcessingDrawerLoading] = useState(false);
   const [selectedProcessingRecordId, setSelectedProcessingRecordId] = useState<string | null>(null);
+  const processingRecordStatisticsCache = useRef<Record<string, PayrollSalaryStatistics>>({});
+  const [processingRecordStatistics, setProcessingRecordStatistics] = useState<PayrollSalaryStatistics | null>(null);
+  const [isProcessingRecordStatisticsLoading, setIsProcessingRecordStatisticsLoading] = useState(false);
+  const [processingRecordStatisticsError, setProcessingRecordStatisticsError] = useState<string | null>(null);
+  const [processingRecordStatisticsVersion, setProcessingRecordStatisticsVersion] = useState(0);
   const suppressProcessingDeepLinkRef = useRef(false);
   const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
   const [availableTemplates, setAvailableTemplates] = useState<SalaryTemplate[]>([]);
@@ -769,7 +874,7 @@ const PayrollAdminDashboard = () => {
   }, [cycles, months, selectedYear]);
 
   const handleOpenSettings = () => {
-    navigate(`${RouteDict.System.Settings}?module=payroll`);
+    navigate(RouteDict.Organization.Settings);
   };
 
   const handleReportNavigation = (target: 'tax' | 'analytics' | 'export' | 'audit' | 'compliance' | 'corrections') => {
@@ -1061,8 +1166,24 @@ const PayrollAdminDashboard = () => {
     setSelectedProcessingCycle(null);
     setEmployeeSearchTerm('');
     setIsSubmittingForReview(false);
+    setProcessingRecordStatistics(null);
+    setProcessingRecordStatisticsError(null);
+    setIsProcessingRecordStatisticsLoading(false);
     deepLinkTargetRef.current = null;
   }, [searchParams, setSearchParams]);
+
+  const invalidateProcessingRecordStatistics = useCallback(
+    (recordId: string | null | undefined) => {
+      if (!recordId) {
+        return;
+      }
+      delete processingRecordStatisticsCache.current[recordId];
+      if (recordId === selectedProcessingRecordId) {
+        setProcessingRecordStatisticsVersion((prev) => prev + 1);
+      }
+    },
+    [selectedProcessingRecordId]
+  );
 
   const refreshProcessingDetails = useCallback(
     async (cycleId: string, preferredRecordId?: string) => {
@@ -1080,6 +1201,7 @@ const PayrollAdminDashboard = () => {
           refreshedDetails.salaryRecords[0] ||
           null;
 
+        invalidateProcessingRecordStatistics(nextRecord?.id ?? null);
         selectProcessingRecord(nextRecord?.id ?? null);
         return refreshedDetails;
       } catch (error) {
@@ -1090,7 +1212,7 @@ const PayrollAdminDashboard = () => {
         setIsProcessingDrawerLoading(false);
       }
     },
-    [loadCycleDetails, selectProcessingRecord]
+    [invalidateProcessingRecordStatistics, loadCycleDetails, selectProcessingRecord]
   );
 
   const handleInspectDisputeRecord = useCallback(
@@ -1596,6 +1718,74 @@ const PayrollAdminDashboard = () => {
     return processingSalaryRecords[0];
   }, [processingSalaryRecords, selectedProcessingRecordId]);
 
+  useEffect(() => {
+    if (!selectedProcessingRecordId) {
+      setProcessingRecordStatistics(null);
+      setProcessingRecordStatisticsError(null);
+      setIsProcessingRecordStatisticsLoading(false);
+      return;
+    }
+
+    const cached = processingRecordStatisticsCache.current[selectedProcessingRecordId];
+    if (cached) {
+      setProcessingRecordStatistics(cached);
+      setProcessingRecordStatisticsError(null);
+      setIsProcessingRecordStatisticsLoading(false);
+      return;
+    }
+
+    let isCancelled = false;
+
+    setIsProcessingRecordStatisticsLoading(true);
+    setProcessingRecordStatisticsError(null);
+    setProcessingRecordStatistics(null);
+
+    axios
+      .get(APIV3Dictionary.payroll.getStatistics(selectedProcessingRecordId), {
+        withCredentials: true
+      })
+      .then((response) => {
+        if (isCancelled) {
+          return;
+        }
+
+        const payload = response.data as {
+          success?: boolean;
+          data?: PayrollSalaryStatistics | null;
+          message?: string;
+        };
+
+        if (payload?.success === false) {
+          throw new Error(payload.message || 'Failed to fetch payroll statistics.');
+        }
+
+        if (!payload?.data) {
+          throw new Error(payload?.message || 'Payroll statistics were not provided.');
+        }
+
+        processingRecordStatisticsCache.current[selectedProcessingRecordId] = payload.data;
+        setProcessingRecordStatistics(payload.data);
+        setProcessingRecordStatisticsError(null);
+      })
+      .catch((error) => {
+        if (isCancelled) {
+          return;
+        }
+        const message = getErrorMessage(error, 'Failed to load attendance details.');
+        setProcessingRecordStatisticsError(message);
+        setProcessingRecordStatistics(null);
+      })
+      .finally(() => {
+        if (!isCancelled) {
+          setIsProcessingRecordStatisticsLoading(false);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [selectedProcessingRecordId, processingRecordStatisticsVersion]);
+
   const selectedProcessingRecordIndex = useMemo(() => {
     if (!selectedProcessingRecord) {
       return -1;
@@ -1631,6 +1821,14 @@ const PayrollAdminDashboard = () => {
       { total: 0, pending: 0, approved: 0, failed: 0 }
     );
   }, [processingSalaryRecords]);
+
+  const handleReloadProcessingRecordStatistics = useCallback(() => {
+    if (!selectedProcessingRecordId) {
+      return;
+    }
+    delete processingRecordStatisticsCache.current[selectedProcessingRecordId];
+    setProcessingRecordStatisticsVersion((prev) => prev + 1);
+  }, [selectedProcessingRecordId]);
 
   const canSubmitCycleForReview = useMemo(() => {
     if (!selectedProcessingCycle) {
@@ -1817,6 +2015,10 @@ const PayrollAdminDashboard = () => {
         description: 'Payroll engine will regenerate this employee using the selected template.'
       });
 
+      if (selectedProcessingRecord?.id) {
+        invalidateProcessingRecordStatistics(selectedProcessingRecord.id);
+      }
+
       setIsTemplateDialogOpen(false);
 
       try {
@@ -1905,6 +2107,10 @@ const PayrollAdminDashboard = () => {
         title: 'Salary recalculated',
         description: recalculationMessage
       });
+
+      if (selectedProcessingRecord?.id) {
+        invalidateProcessingRecordStatistics(selectedProcessingRecord.id);
+      }
 
       if (targetCycleId) {
         try {
@@ -2447,6 +2653,54 @@ const PayrollAdminDashboard = () => {
     }
   };
 
+  const currentPrimaryIndex = PRIMARY_FLOW_ORDER.findIndex((step) => step === activeTab)
+  const flowSteps = useMemo(() => {
+    const resolvedIndex = currentPrimaryIndex === -1 ? 0 : currentPrimaryIndex
+
+    return PRIMARY_FLOW_ORDER.map((stepId, index) => {
+      const meta = PRIMARY_FLOW_META[stepId]
+      const status = index < resolvedIndex ? 'complete' : index === resolvedIndex ? 'current' : 'upcoming'
+
+      return {
+        id: stepId,
+        ...meta,
+        status
+      }
+    })
+  }, [activeTab, currentPrimaryIndex])
+
+  const goToStep = useCallback((stepId: string) => {
+    setActiveTab(stepId)
+  }, [])
+
+  const goToNextStep = useCallback(() => {
+    if (currentPrimaryIndex === -1) {
+      setActiveTab(PRIMARY_FLOW_ORDER[0])
+      return
+    }
+    const nextStep = PRIMARY_FLOW_ORDER[currentPrimaryIndex + 1]
+    if (nextStep) {
+      setActiveTab(nextStep)
+    }
+  }, [currentPrimaryIndex])
+
+  const goToPreviousStep = useCallback(() => {
+    if (currentPrimaryIndex === -1) {
+      return
+    }
+    const previousStep = PRIMARY_FLOW_ORDER[currentPrimaryIndex - 1]
+    if (previousStep) {
+      setActiveTab(previousStep)
+    }
+  }, [currentPrimaryIndex])
+
+  const nextPrimaryStepId = currentPrimaryIndex !== -1 ? PRIMARY_FLOW_ORDER[currentPrimaryIndex + 1] ?? null : PRIMARY_FLOW_ORDER[1] ?? null
+  const previousPrimaryStepId = currentPrimaryIndex > 0 ? PRIMARY_FLOW_ORDER[currentPrimaryIndex - 1] : null
+  const isActiveTabInPrimaryFlow = isPrimaryStep(activeTab)
+  const activeStepMeta = isActiveTabInPrimaryFlow ? PRIMARY_FLOW_META[activeTab] : null
+  const nextStepMeta = nextPrimaryStepId ? PRIMARY_FLOW_META[nextPrimaryStepId] : null
+  const previousStepMeta = previousPrimaryStepId ? PRIMARY_FLOW_META[previousPrimaryStepId] : null
+
   if (isLoading) {
     return (
       <div className="w-screen px-8 py-6 space-y-6 h-screen overflow-y-auto">
@@ -2511,118 +2765,238 @@ const PayrollAdminDashboard = () => {
         </Alert>
       )}
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-10">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="setup">Setup & Config</TabsTrigger>
-          <TabsTrigger value="cycle-management">Cycle Management</TabsTrigger>
-          <TabsTrigger value="processing">Processing</TabsTrigger>
-          <TabsTrigger value="review-approval">Review & Approval</TabsTrigger>
-          <TabsTrigger value="disputes">Disputes</TabsTrigger>
-          <TabsTrigger value="transactions">Transactions</TabsTrigger>
-          <TabsTrigger value="reporting">Reporting</TabsTrigger>
-          <TabsTrigger value="audit-trail">Audit Trail</TabsTrigger>
-          <TabsTrigger value="employee-portal">Employee Portal</TabsTrigger>
-        </TabsList>
+      <div className="grid gap-6 lg:grid-cols-[300px,1fr]">
+        <aside className="space-y-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold">Payroll run flow</CardTitle>
+              <CardDescription>Work through each stage from setup to payouts.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <ol className="space-y-2">
+                {flowSteps.map((step, index) => {
+                  const isActive = step.id === activeTab
+                  const statusIcon =
+                    step.status === 'complete' ? (
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                    ) : step.status === 'current' ? (
+                      <CircleDot className="h-4 w-4 text-primary" />
+                    ) : (
+                      <Circle className="h-4 w-4 text-muted-foreground" />
+                    )
 
-        <OverviewTab
-          statistics={statistics}
-          cycles={cycles}
-          cyclesNeedingReview={cyclesNeedingReview}
-          months={months}
-          getProgressSnapshotForCycle={getProgressSnapshotForCycle}
-          getProgressErrorForCycle={getProgressErrorForCycle}
-          canDeleteCycle={canDeleteCycle}
-          handleRequestDeleteCycle={handleRequestDeleteCycle}
-          handleApproveCycle={handleApproveCycle}
-          startPayrollCycle={startPayrollCycle}
-          isProcessing={isProcessing}
-          isDeletingCycle={isDeletingCycle}
-          cyclePendingDelete={cyclePendingDelete}
-        />
+                  return (
+                    <li key={step.id}>
+                      <button
+                        type="button"
+                        onClick={() => goToStep(step.id)}
+                        className={cn(
+                          'flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition focus:outline-none focus:ring-2 focus:ring-primary/40',
+                          isActive ? 'border-primary bg-primary/5 shadow-sm' : 'border-border/60 hover:border-primary/40'
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            'flex h-9 w-9 items-center justify-center rounded-full border text-primary',
+                            isActive ? 'border-primary bg-primary/10' : 'border-muted-foreground/30 bg-muted/30'
+                          )}
+                        >
+                          <span className="sr-only">Step {index + 1}</span>
+                          {step.icon}
+                        </span>
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-foreground">{step.title}</span>
+                            {statusIcon}
+                          </div>
+                          <p className="text-xs text-muted-foreground">{step.description}</p>
+                        </div>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ol>
+            </CardContent>
+          </Card>
 
-        <SetupConfigTab
-          onOpenTemplates={navigateToTemplates}
-          onNavigateEmployeePortal={navigateToEmployeePortal}
-          onNavigateBankManagement={navigateToBankManagement}
-          onNavigateNotificationSettings={navigateToNotificationSettings}
-        />
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold">Post-cycle modules</CardTitle>
+              <CardDescription>Jump into supporting payroll workspaces.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {SUPPLEMENTARY_SECTIONS.map((section) => {
+                const isActive = activeTab === section.id
+                return (
+                  <button
+                    key={section.id}
+                    type="button"
+                    onClick={() => goToStep(section.id)}
+                    className={cn(
+                      'flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition focus:outline-none focus:ring-2 focus:ring-primary/40',
+                      isActive ? 'border-primary bg-primary/5 shadow-sm' : 'border-border/60 hover:border-primary/40'
+                    )}
+                  >
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full border border-muted-foreground/30 bg-muted/30 text-muted-foreground">
+                      {section.icon}
+                    </span>
+                    <div className="flex-1 text-left">
+                      <p className="text-sm font-semibold text-foreground">{section.title}</p>
+                      <p className="text-xs text-muted-foreground">{section.description}</p>
+                    </div>
+                  </button>
+                )
+              })}
+            </CardContent>
+          </Card>
+        </aside>
 
-        <CycleManagementTab
-          months={months}
-          years={years}
-          selectedMonth={selectedMonth}
-          selectedYear={selectedYear}
-          onMonthChange={setSelectedMonth}
-          onYearChange={setSelectedYear}
-          onCreateCycle={createPayrollCycle}
-          isCreatingCycle={isCreatingCycle}
-          activeProcessingJobs={activeProcessingJobs}
-          getProgressSnapshotForCycle={getProgressSnapshotForCycle}
-          getProgressErrorForCycle={getProgressErrorForCycle}
-          cycleProgressMap={cycleProgressMap}
-        />
+        <div className="space-y-6">
+          {activeTab === 'overview' && (
+            <OverviewTab
+              statistics={statistics}
+              cycles={cycles}
+              cyclesNeedingReview={cyclesNeedingReview}
+              months={months}
+              getProgressSnapshotForCycle={getProgressSnapshotForCycle}
+              getProgressErrorForCycle={getProgressErrorForCycle}
+              canDeleteCycle={canDeleteCycle}
+              handleRequestDeleteCycle={handleRequestDeleteCycle}
+              handleApproveCycle={handleApproveCycle}
+              startPayrollCycle={startPayrollCycle}
+              isProcessing={isProcessing}
+              isDeletingCycle={isDeletingCycle}
+              cyclePendingDelete={cyclePendingDelete}
+            />
+          )}
 
-        <ProcessingTab
-          processingCycles={processingCycles}
-          months={months}
-          getProgressSnapshotForCycle={getProgressSnapshotForCycle}
-          getProgressErrorForCycle={getProgressErrorForCycle}
-          onOpenProcessingDrawer={handleOpenProcessingDrawer}
-          onStartPayrollCycle={startPayrollCycle}
-          isProcessing={isProcessing}
-        />
+          {activeTab === 'setup' && (
+            <SetupConfigTab
+              onOpenTemplates={navigateToTemplates}
+              onNavigateEmployeePortal={navigateToEmployeePortal}
+              onNavigateBankManagement={navigateToBankManagement}
+              onNavigateNotificationSettings={navigateToNotificationSettings}
+            />
+          )}
 
-        <ReviewApprovalTab
-          cyclesNeedingReview={cyclesNeedingReview}
-          months={months}
-          onApproveCycle={handleApproveCycle}
-          onOpenReviewDetails={handleOpenReviewDetails}
-          isProcessing={isProcessing}
-          reviewLoadingCycleId={reviewLoadingCycleId}
-        />
+          {activeTab === 'cycle-management' && (
+            <CycleManagementTab
+              months={months}
+              years={years}
+              selectedMonth={selectedMonth}
+              selectedYear={selectedYear}
+              onMonthChange={setSelectedMonth}
+              onYearChange={setSelectedYear}
+              onCreateCycle={createPayrollCycle}
+              isCreatingCycle={isCreatingCycle}
+              activeProcessingJobs={activeProcessingJobs}
+              getProgressSnapshotForCycle={getProgressSnapshotForCycle}
+              getProgressErrorForCycle={getProgressErrorForCycle}
+              cycleProgressMap={cycleProgressMap}
+            />
+          )}
 
-        <DisputeManagementTab
-          activeTab={activeTab}
-          months={months}
-          onInspectDisputeRecord={handleInspectDisputeRecord}
-        />
+          {activeTab === 'processing' && (
+            <ProcessingTab
+              processingCycles={processingCycles}
+              months={months}
+              getProgressSnapshotForCycle={getProgressSnapshotForCycle}
+              getProgressErrorForCycle={getProgressErrorForCycle}
+              onOpenProcessingDrawer={handleOpenProcessingDrawer}
+              onStartPayrollCycle={startPayrollCycle}
+              isProcessing={isProcessing}
+            />
+          )}
 
-        <TransactionsTab
-          payoutBuckets={payoutCycleBuckets}
-          months={months}
-          onOpenPayoutFlow={handleOpenPayoutFlow}
-          onViewSummary={handleViewPayoutSummary}
-          onExportPayouts={handleExportPayouts}
-          onBulkPaymentRecord={handleBulkPaymentRecord}
-          onNavigateReporting={() => setActiveTab('reporting')}
-        />
+          {activeTab === 'review-approval' && (
+            <ReviewApprovalTab
+              cyclesNeedingReview={cyclesNeedingReview}
+              months={months}
+              onApproveCycle={handleApproveCycle}
+              onOpenReviewDetails={handleOpenReviewDetails}
+              isProcessing={isProcessing}
+              reviewLoadingCycleId={reviewLoadingCycleId}
+            />
+          )}
 
-        <ReportingTab onNavigate={handleReportNavigation} />
+          {activeTab === 'transactions' && (
+            <TransactionsTab
+              payoutBuckets={payoutCycleBuckets}
+              months={months}
+              onOpenPayoutFlow={handleOpenPayoutFlow}
+              onViewSummary={handleViewPayoutSummary}
+              onExportPayouts={handleExportPayouts}
+              onBulkPaymentRecord={handleBulkPaymentRecord}
+              onNavigateReporting={() => setActiveTab('reporting')}
+            />
+          )}
 
-        <AuditTrailTab
-          cycles={auditCycles}
-          pagination={auditPagination}
-          isLoadingCycles={isAuditCyclesLoading}
-          cyclesError={auditCyclesError}
-          onPageChange={fetchAuditCycles}
-          onReloadCycles={() => fetchAuditCycles(auditPagination.page)}
-          selectedCycleId={auditSelectedCycleId}
-          onSelectCycle={(cycleId) => handleAuditCycleSelect(cycleId)}
-          cycleDetails={auditCycleDetails}
-          isLoadingDetails={isAuditDetailsLoading}
-          detailsError={auditDetailsError}
-          onRefreshCycle={refreshAuditCycleDetails}
-        />
+          {activeTab === 'reporting' && <ReportingTab onNavigate={handleReportNavigation} />}
 
-        {/* Transactions tab content consolidated in TransactionsTab component */}
+          {activeTab === 'audit-trail' && (
+            <AuditTrailTab
+              cycles={auditCycles}
+              pagination={auditPagination}
+              isLoadingCycles={isAuditCyclesLoading}
+              cyclesError={auditCyclesError}
+              onPageChange={fetchAuditCycles}
+              onReloadCycles={() => fetchAuditCycles(auditPagination.page)}
+              selectedCycleId={auditSelectedCycleId}
+              onSelectCycle={(cycleId) => handleAuditCycleSelect(cycleId)}
+              cycleDetails={auditCycleDetails}
+              isLoadingDetails={isAuditDetailsLoading}
+              detailsError={auditDetailsError}
+              onRefreshCycle={refreshAuditCycleDetails}
+            />
+          )}
 
-        <EmployeePortalTab
-          onPortalShortcut={handleEmployeePortalShortcut}
-          onNavigateSendNotification={navigateToNotificationSend}
-          onNavigatePortalSettings={navigateToNotificationSettings}
-        />
-      </Tabs>
+          {activeTab === 'disputes' && (
+            <DisputeManagementTab
+              activeTab={activeTab}
+              months={months}
+              onInspectDisputeRecord={handleInspectDisputeRecord}
+            />
+          )}
+
+          {activeTab === 'employee-portal' && (
+            <EmployeePortalTab
+              onPortalShortcut={handleEmployeePortalShortcut}
+              onNavigateSendNotification={navigateToNotificationSend}
+              onNavigatePortalSettings={navigateToNotificationSettings}
+            />
+          )}
+
+          {isActiveTabInPrimaryFlow && activeStepMeta && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/40 px-4 py-3">
+              <div className="max-w-2xl space-y-1">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Step {currentPrimaryIndex === -1 ? 1 : currentPrimaryIndex + 1} of {PRIMARY_FLOW_ORDER.length}
+                </p>
+                <p className="text-sm font-medium text-foreground">{activeStepMeta.title}</p>
+                <p className="text-xs text-muted-foreground">{activeStepMeta.description}</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {previousStepMeta && (
+                  <Button variant="ghost" size="sm" onClick={goToPreviousStep}>
+                    Back to {previousStepMeta.title}
+                  </Button>
+                )}
+                {nextStepMeta ? (
+                  <Button size="sm" onClick={goToNextStep}>
+                    Continue to {nextStepMeta.title}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button size="sm" variant="secondary" onClick={() => goToStep('reporting')}>
+                    Review reporting
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
       <TransactionModeDialog
         open={isTransactionModeOpen}
@@ -2677,7 +3051,11 @@ const PayrollAdminDashboard = () => {
         allowanceEntries={processingAllowanceEntries}
         deductionEntries={processingDeductionEntries}
         calculationDetails={processingCalculationDetails}
-        attendanceSummary={processingAttendanceSummary}
+    attendanceSummary={processingAttendanceSummary}
+    statistics={processingRecordStatistics}
+    isStatisticsLoading={isProcessingRecordStatisticsLoading}
+    statisticsError={processingRecordStatisticsError}
+    onReloadStatistics={handleReloadProcessingRecordStatistics}
         cycleSummary={processingCycleSummary}
         onNavigateRecord={handleNavigateProcessingRecord}
         canNavigatePrev={canNavigateProcessingPrev}

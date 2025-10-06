@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
-import { TabsContent } from '@/components/ui/tabs'
 import {
   Card,
   CardContent,
@@ -354,7 +353,7 @@ const DisputeManagementTab = ({ activeTab, months, onInspectDisputeRecord }: Dis
   }
 
   return (
-    <TabsContent value="disputes" className="space-y-6">
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -714,7 +713,7 @@ const DisputeManagementTab = ({ activeTab, months, onInspectDisputeRecord }: Dis
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </TabsContent>
+    </div>
   )
 }
 

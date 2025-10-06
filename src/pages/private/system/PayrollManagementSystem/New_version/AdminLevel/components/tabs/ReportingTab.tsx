@@ -6,7 +6,6 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card'
-import { TabsContent } from '@/components/ui/tabs'
 import { BarChart3, FileText, CheckCircle, AlertCircle, Download } from 'lucide-react'
 
 type ReportingTarget = 'tax' | 'analytics' | 'export' | 'audit' | 'compliance' | 'corrections'
@@ -16,7 +15,7 @@ type ReportingTabProps = {
 }
 
 const ReportingTab = ({ onNavigate }: ReportingTabProps) => (
-  <TabsContent value="reporting" className="space-y-6">
+  <div className="space-y-6">
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <Card>
         <CardHeader>
@@ -70,7 +69,7 @@ const ReportingTab = ({ onNavigate }: ReportingTabProps) => (
         </CardContent>
       </Card>
     </div>
-  </TabsContent>
+  </div>
 )
 
 export default ReportingTab

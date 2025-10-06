@@ -69,5 +69,13 @@ export const attendanceApi = {
       withCredentials: true
     })
     return data
+  },
+
+  async getAttendanceActivity(orgId: string, params?: { limit?: number }): Promise<any> {
+    const { data } = await axios.get(APIDictionary.attendanceActivity(orgId), {
+      params,
+      withCredentials: true
+    })
+    return data
   }
 }

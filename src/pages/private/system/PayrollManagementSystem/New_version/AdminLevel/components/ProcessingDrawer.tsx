@@ -23,7 +23,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
-import type { PayrollCycle, PayrollCycleDetails } from '../../types/payroll'
+import type { PayrollCycle, PayrollCycleDetails, PayrollSalaryStatistics } from '../../types/payroll'
 
 type ProcessingRecord = PayrollCycleDetails['salaryRecords'][number]
 type CalculationDetail = NonNullable<ProcessingRecord['calculationDetails']>[number]
@@ -52,6 +52,10 @@ type ProcessingDrawerProps = {
   deductionEntries: Array<{ key: string; amount: number }>
   calculationDetails: CalculationDetail[]
   attendanceSummary: ProcessingRecord['attendanceSummary']
+  statistics: PayrollSalaryStatistics | null
+  isStatisticsLoading: boolean
+  statisticsError: string | null
+  onReloadStatistics: () => void
   cycleSummary: { total: number; pending: number; approved: number; failed: number }
   onNavigateRecord: (direction: 'previous' | 'next') => void
   canNavigatePrev: boolean
@@ -88,6 +92,10 @@ const ProcessingDrawer: React.FC<ProcessingDrawerProps> = ({
   deductionEntries,
   calculationDetails,
   attendanceSummary,
+  statistics,
+  isStatisticsLoading,
+  statisticsError,
+  onReloadStatistics,
   cycleSummary,
   onNavigateRecord,
   canNavigatePrev,
@@ -99,6 +107,146 @@ const ProcessingDrawer: React.FC<ProcessingDrawerProps> = ({
   onRecalculateSalary,
   isRecalculatingSalary
 }) => {
+  const attendanceAnalysis = statistics?.attendanceAnalysis
+  const attendanceDetails = statistics?.attendanceDetails
+  const summaryByStatus = attendanceAnalysis?.summaryByStatus ?? attendanceDetails?.summaryByStatus ?? null
+  const totals = attendanceAnalysis?.totals ?? attendanceDetails?.totals
+
+  const workingDays = attendanceAnalysis?.workingDays ?? attendanceSummary?.workingDays ?? attendanceSummary?.totalDays ?? 0
+  const totalDaysInMonth = attendanceAnalysis?.totalDaysInMonth ?? attendanceSummary?.totalDays ?? workingDays
+  const presentDays = attendanceAnalysis?.presentDays ?? attendanceSummary?.presentDays ?? 0
+  const absentDays = attendanceAnalysis?.absentDays ?? attendanceSummary?.absentDays ?? Math.max(0, workingDays - presentDays)
+  const halfDays = attendanceAnalysis?.halfDays ?? attendanceSummary?.halfDays ?? 0
+  const paidLeaveDays = attendanceAnalysis?.paidLeaveDays ?? attendanceSummary?.paidLeaveDays ?? 0
+  const unpaidLeaveDays = attendanceAnalysis?.unpaidLeaveDays ?? attendanceSummary?.unpaidLeaveDays ?? 0
+  const attendancePercentage = attendanceAnalysis?.attendancePercentage ?? null
+  const overtimeHours = attendanceSummary?.overtimeHours ?? null
+  const lateMarks = attendanceSummary?.lateMarks ?? null
+  const hoursWorked = totals?.hoursWorked ?? null
+  const breakMinutes = totals?.breakMinutes ?? null
+  const attendanceEntriesCount = totals?.attendanceEntries ?? null
+  const geofenceViolationCount = totals?.geofenceViolationCount ?? null
+  const calendarEntries = attendanceDetails?.calendar ?? []
+
+  const toTitleCase = (value: string) =>
+    value
+      .toLowerCase()
+      .split(' ')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+
+  const formatStatusMeta = (status?: string) => {
+    const normalized = status?.toUpperCase() ?? 'NO_RECORD'
+    switch (normalized) {
+      case 'PRESENT':
+        return { label: 'Present', className: 'bg-emerald-100 text-emerald-700 border-emerald-200' }
+      case 'ABSENT':
+        return { label: 'Absent', className: 'bg-red-100 text-red-700 border-red-200' }
+      case 'HALF_DAY':
+        return { label: 'Half day', className: 'bg-amber-100 text-amber-700 border-amber-200' }
+      case 'PAID_LEAVE':
+        return { label: 'Paid leave', className: 'bg-sky-100 text-sky-700 border-sky-200' }
+      case 'UNPAID_LEAVE':
+        return { label: 'Unpaid leave', className: 'bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200' }
+      case 'HOLIDAY':
+        return { label: 'Holiday', className: 'bg-purple-100 text-purple-700 border-purple-200' }
+      case 'WEEKEND':
+        return { label: 'Weekend', className: 'bg-slate-100 text-slate-700 border-slate-300' }
+      default:
+        return {
+          label: toTitleCase(normalized.replace(/_/g, ' ')),
+          className: 'bg-slate-100 text-slate-700 border-slate-300'
+        }
+    }
+  }
+
+  const formatDateLabel = (iso: string) => {
+    const parsed = new Date(iso)
+    if (Number.isNaN(parsed.getTime())) {
+      return '—'
+    }
+    return parsed.toLocaleDateString(undefined, {
+      day: '2-digit',
+      month: 'short'
+    })
+  }
+
+  const formatTimeLabel = (iso?: string | null) => {
+    if (!iso) {
+      return '—'
+    }
+    const parsed = new Date(iso)
+    if (Number.isNaN(parsed.getTime())) {
+      return '—'
+    }
+    return parsed.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  const formatHoursLabel = (hoursValue?: number | null) => {
+    if (hoursValue === null || hoursValue === undefined) {
+      return '—'
+    }
+    if (hoursValue === 0) {
+      return '0h'
+    }
+    return `${hoursValue.toFixed(2)}h`
+  }
+
+  const formatMinutesLabel = (minutesValue?: number | null) => {
+    if (minutesValue === null || minutesValue === undefined) {
+      return '—'
+    }
+    const rounded = Math.round(minutesValue)
+    if (rounded <= 0) {
+      return '0m'
+    }
+    const hours = Math.floor(rounded / 60)
+    const minutes = rounded % 60
+    if (hours && minutes) {
+      return `${hours}h ${minutes}m`
+    }
+    if (hours) {
+      return `${hours}h`
+    }
+    return `${minutes}m`
+  }
+
+  const buildDailyNote = (entry: (typeof calendarEntries)[number]) => {
+    const notes: string[] = []
+    if (entry.holiday) {
+      const holidayName = (entry.holiday as { name?: unknown })?.name
+      notes.push(
+        `Holiday${typeof holidayName === 'string' && holidayName.trim() ? `: ${holidayName}` : ''}`
+      )
+    }
+
+    if (Array.isArray(entry.leave) && entry.leave.length > 0) {
+      notes.push('Leave recorded')
+    }
+
+    if (entry.isWeekend && (entry.attendanceStatus === 'NO_RECORD' || !entry.attendanceStatus)) {
+      notes.push('Weekend')
+    }
+
+    const recordCount = Array.isArray(entry.records) ? entry.records.length : 0
+    if (recordCount > 1) {
+      notes.push(`${recordCount} punches`)
+    }
+
+    if (Array.isArray(entry.records)) {
+      const notedRecord = entry.records.find(
+        (record) => typeof record?.notes === 'string' && record.notes.trim().length > 0
+      ) as { notes?: string } | undefined
+      if (notedRecord?.notes) {
+        notes.push(notedRecord.notes.trim())
+      }
+    }
+
+    return notes.join(' • ')
+  }
   return (
     <Drawer
       open={open}
@@ -385,30 +533,187 @@ const ProcessingDrawer: React.FC<ProcessingDrawerProps> = ({
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {attendanceSummary ? (
-                      <div className="grid gap-4 md:grid-cols-3">
-                        <div className="rounded-lg border p-3">
-                          <p className="text-xs text-muted-foreground">Working days</p>
-                          <p className="text-lg font-semibold">
-                            {attendanceSummary.workingDays ?? attendanceSummary.totalDays ?? 0}
-                          </p>
-                        </div>
-                        <div className="rounded-lg border p-3">
-                          <p className="text-xs text-muted-foreground">Presence mix</p>
-                          <p className="text-sm font-medium">
-                            Present {attendanceSummary.presentDays ?? 0} • Absent {attendanceSummary.absentDays ?? 0}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Paid leave {attendanceSummary.paidLeaveDays ?? 0} • Unpaid leave {attendanceSummary.unpaidLeaveDays ?? 0}
-                          </p>
-                        </div>
-                        <div className="rounded-lg border p-3">
-                          <p className="text-xs text-muted-foreground">Overtime & Exceptions</p>
-                          <p className="text-sm font-medium">
-                            Overtime {attendanceSummary.overtimeHours ?? 0}h • Late marks {attendanceSummary.lateMarks ?? 0}
-                          </p>
-                        </div>
+                    {isStatisticsLoading && !statistics ? (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Loading attendance metrics…
                       </div>
+                    ) : statisticsError && !statistics ? (
+                      <div className="space-y-3">
+                        <Alert variant="destructive">
+                          <AlertTitle>Unable to load attendance details</AlertTitle>
+                          <AlertDescription>{statisticsError}</AlertDescription>
+                        </Alert>
+                        <Button size="sm" onClick={onReloadStatistics}>
+                          Retry fetch
+                        </Button>
+                      </div>
+                    ) : statistics || attendanceSummary ? (
+                      <>
+                        <div className="grid gap-4 md:grid-cols-3">
+                          <div className="rounded-lg border p-3">
+                            <p className="text-xs text-muted-foreground">Working days</p>
+                            <p className="text-lg font-semibold">{workingDays}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Total days {totalDaysInMonth}
+                            </p>
+                            {attendancePercentage !== null && (
+                              <p className="text-xs text-emerald-700">{attendancePercentage.toFixed(1)}% attendance</p>
+                            )}
+                          </div>
+                          <div className="rounded-lg border p-3">
+                            <p className="text-xs text-muted-foreground">Presence mix</p>
+                            <p className="text-sm font-medium">
+                              Present {presentDays} • Absent {absentDays} • Half {halfDays}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Paid leave {paidLeaveDays} • Unpaid leave {unpaidLeaveDays}
+                            </p>
+                          </div>
+                          <div className="rounded-lg border p-3">
+                            <p className="text-xs text-muted-foreground">Exceptions</p>
+                            <p className="text-sm font-medium">
+                              Overtime {formatHoursLabel(overtimeHours ?? 0)} • Late marks {lateMarks ?? 0}
+                            </p>
+                            {attendanceEntriesCount !== null && (
+                              <p className="text-xs text-muted-foreground">{attendanceEntriesCount} attendance entries</p>
+                            )}
+                          </div>
+                        </div>
+
+                        {summaryByStatus && Object.keys(summaryByStatus).length > 0 && (
+                          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                            {Object.entries(summaryByStatus).map(([status, count]) => {
+                              const meta = formatStatusMeta(status)
+                              return (
+                                <span
+                                  key={status}
+                                  className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px]"
+                                >
+                                  <span className="font-medium text-foreground">{meta.label}</span>
+                                  <span>({count})</span>
+                                </span>
+                              )
+                            })}
+                          </div>
+                        )}
+
+                        {(hoursWorked !== null || breakMinutes !== null || geofenceViolationCount !== null) && (
+                          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+                            {hoursWorked !== null && (
+                              <div className="rounded-lg border p-3">
+                                <p className="text-xs text-muted-foreground">Hours logged</p>
+                                <p className="text-sm font-semibold">{formatHoursLabel(hoursWorked)}</p>
+                              </div>
+                            )}
+                            {breakMinutes !== null && (
+                              <div className="rounded-lg border p-3">
+                                <p className="text-xs text-muted-foreground">Break duration</p>
+                                <p className="text-sm font-semibold">{formatMinutesLabel(breakMinutes)}</p>
+                              </div>
+                            )}
+                            {attendanceEntriesCount !== null && (
+                              <div className="rounded-lg border p-3">
+                                <p className="text-xs text-muted-foreground">Attendance entries</p>
+                                <p className="text-sm font-semibold">{attendanceEntriesCount}</p>
+                              </div>
+                            )}
+                            {geofenceViolationCount !== null && (
+                              <div className="rounded-lg border p-3">
+                                <p className="text-xs text-muted-foreground">Geofence violations</p>
+                                <p className="text-sm font-semibold">{geofenceViolationCount}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="rounded-lg border">
+                          <div className="flex flex-col gap-2 border-b px-3 py-2 md:flex-row md:items-center md:justify-between">
+                            <div>
+                              <p className="text-sm font-semibold">Daily breakdown</p>
+                              {statistics ? (
+                                <p className="text-xs text-muted-foreground">
+                                  {calendarEntries.length} of {totalDaysInMonth} days captured
+                                </p>
+                              ) : (
+                                <p className="text-xs text-muted-foreground">
+                                  Attendance breakdown loads automatically once synced.
+                                </p>
+                              )}
+                            </div>
+                            {statistics && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={onReloadStatistics}
+                                disabled={isStatisticsLoading}
+                              >
+                                {isStatisticsLoading && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+                                Refresh
+                              </Button>
+                            )}
+                          </div>
+                          {calendarEntries.length ? (
+                            <ScrollArea className="max-h-64">
+                              <table className="w-full min-w-[540px] text-sm">
+                                <thead className="bg-muted/50">
+                                  <tr className="text-left text-xs text-muted-foreground">
+                                    <th className="px-3 py-2 font-medium">Date</th>
+                                    <th className="px-3 py-2 font-medium">Status</th>
+                                    <th className="px-3 py-2 font-medium">Check-in • out</th>
+                                    <th className="px-3 py-2 font-medium">Hours</th>
+                                    <th className="px-3 py-2 font-medium">Notes</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {calendarEntries.map((entry) => {
+                                    const records = Array.isArray(entry.records) ? entry.records : []
+                                    const totalDuration = records.reduce((sum, record) => sum + (record?.durationHours ?? 0), 0)
+                                    const primaryRecord = records[0]
+                                    const statusMeta = formatStatusMeta(entry.attendanceStatus)
+                                    const note = buildDailyNote(entry)
+
+                                    return (
+                                      <tr
+                                        key={entry.date ?? entry.day}
+                                        className={cn(
+                                          'border-b last:border-b-0 text-xs',
+                                          entry.isWeekend && 'bg-muted/30'
+                                        )}
+                                      >
+                                        <td className="px-3 py-2 font-medium text-foreground">
+                                          <div className="flex flex-col">
+                                            <span>{entry.date ? formatDateLabel(entry.date) : `Day ${entry.day}`}</span>
+                                            <span className="text-[10px] text-muted-foreground">Day {entry.day}</span>
+                                          </div>
+                                        </td>
+                                        <td className="px-3 py-2">
+                                          <Badge variant="outline" className={cn('text-xs font-medium', statusMeta.className)}>
+                                            {statusMeta.label}
+                                          </Badge>
+                                        </td>
+                                        <td className="px-3 py-2 text-muted-foreground">
+                                          {`${formatTimeLabel((primaryRecord as { checkInTime?: string | null })?.checkInTime)} • ${formatTimeLabel((primaryRecord as { checkOutTime?: string | null })?.checkOutTime)}`}
+                                        </td>
+                                        <td className="px-3 py-2 font-medium text-foreground">
+                                          {formatHoursLabel(totalDuration)}
+                                        </td>
+                                        <td className="px-3 py-2 text-muted-foreground">
+                                          {note || '—'}
+                                        </td>
+                                      </tr>
+                                    )
+                                  })}
+                                </tbody>
+                              </table>
+                            </ScrollArea>
+                          ) : (
+                            <div className="px-3 py-6 text-sm text-muted-foreground">
+                              Attendance records for this period have not been synchronised yet.
+                            </div>
+                          )}
+                        </div>
+                      </>
                     ) : (
                       <Alert>
                         <AlertTitle>Attendance integration coming soon</AlertTitle>
