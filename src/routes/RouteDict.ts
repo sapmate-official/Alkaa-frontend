@@ -92,6 +92,8 @@ const RouteDict = {
         ViewOwn: "/p/payroll/view-own",
         NewVersion: "/p/payroll/new-version",
         Admin:{
+            Base: "/p/payroll/admin",
+            Pipeline: "/p/payroll/admin/pipeline",
             Transaction: "/p/payroll/admin-transaction",
             Payslip: "/p/payroll/admin-payslip",
             Generate: "/p/payroll/admin/generate",

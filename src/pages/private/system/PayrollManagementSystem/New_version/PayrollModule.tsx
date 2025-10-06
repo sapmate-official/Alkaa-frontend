@@ -5,6 +5,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 const DashboardOfPayroll = lazy(() => import('./DashboardOfPayroll'));
 const PayrollWorkflowDashboard = lazy(() => import('./PayrollWorkflowDashboard'));
 const PayrollAdminDashboard = lazy(() => import('./AdminLevel/PayrollAdminDashboard'));
+const PayrollPipelinePage = lazy(() => import('./AdminLevel/PayrollPipelinePage'));
 const SalaryTemplateEditor = lazy(() => import('./AdminLevel/SalaryTemplateEditor'));
 const EmployeeSelfServicePortal = lazy(() => import('./EmployeeLevel/EmployeeSelfServicePortal'));
 const ManagerReviewDashboard = lazy(() => import('./ManagerLevel/ManagerReviewDashboard'));
@@ -41,9 +42,10 @@ const PayrollModule = () => {
       
       {/* Role-based Dashboards */}
       <Route path="admin" element={<PayrollAdminDashboard />} />
+      <Route path="admin/pipeline" element={<PayrollPipelinePage />} />
       <Route path="admin/templates" element={<SalaryTemplateEditor />} />
-    <Route path="admin/payslip-history" element={<OrganizationPayslipHistory />} />
-    <Route path="admin/tax-summaries" element={<OrganizationTaxSummaries />} />
+      <Route path="admin/payslip-history" element={<OrganizationPayslipHistory />} />
+      <Route path="admin/tax-summaries" element={<OrganizationTaxSummaries />} />
       <Route path="manager" element={<ManagerReviewDashboard />} />
       <Route path="employee" element={<EmployeeSelfServicePortal />} />
       
