@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/providers/AuthContext'
 import { toast } from '@/hooks/use-toast'
 import { APIV3Dictionary } from '@/services/api/v3/Api3Dicts'
+import RouteDict from '@/routes/RouteDict'
 import axios from 'axios'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
@@ -24,7 +26,8 @@ import {
   AlertTriangle,
   FileText,
   Calendar,
-  DollarSign
+  DollarSign,
+  PlayCircle
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -60,10 +63,15 @@ const getErrorMessage = (error: unknown, fallback: string) => {
 
 const PayrollWorkflowDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('workflow-overview');
   const [workflowStatus, setWorkflowStatus] = useState<WorkflowStatus | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  const handleOpenPipeline = () => {
+    navigate(RouteDict.Payroll.Admin.Pipeline)
+  }
 
   // Determine user role for appropriate interface
   const getUserRole = () => {
@@ -269,6 +277,10 @@ const PayrollWorkflowDashboard = () => {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button onClick={handleOpenPipeline}>
+            <PlayCircle className="h-4 w-4 mr-2" />
+            Open Pipeline
+          </Button>
           <Button variant="outline" size="sm" onClick={fetchWorkflowStatus} disabled={isLoading}>
             Refresh
           </Button>

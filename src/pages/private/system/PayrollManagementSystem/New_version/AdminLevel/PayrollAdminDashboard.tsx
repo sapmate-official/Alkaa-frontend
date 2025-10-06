@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '@/providers/AuthContext'
 import axios from 'axios'
 import { APIV3Dictionary } from '@/services/api/v3/Api3Dicts'
@@ -37,15 +37,10 @@ import {
   Settings,
   Download,
   Loader2,
-  Flag,
   CalendarPlus,
   ClipboardList,
   ShieldCheck,
   Wallet,
-  Circle,
-  CircleDot,
-  CheckCircle2,
-  ArrowRight,
   BarChart3,
   History,
   Users
@@ -66,15 +61,12 @@ import {
 } from '../types/payroll'
 
 import OverviewTab from './components/tabs/OverviewTab'
-import SetupConfigTab from './components/tabs/SetupConfigTab'
 import CycleManagementTab from './components/tabs/CycleManagementTab'
 import ProcessingTab from './components/tabs/ProcessingTab'
 import ReviewApprovalTab from './components/tabs/ReviewApprovalTab'
 import ReportingTab from './components/tabs/ReportingTab'
 import TransactionsTab from './components/tabs/TransactionsTab'
-import AuditTrailTab from './components/tabs/AuditTrailTab'
-import EmployeePortalTab from './components/tabs/EmployeePortalTab'
-import DisputeManagementTab from './components/tabs/DisputeManagementTab'
+import WorkflowTab from './components/tabs/WorkflowTab'
 import TransactionModeDialog, { BankDetailsFormState } from './components/TransactionModeDialog'
 import ProcessingDrawer from './components/ProcessingDrawer'
 import TemplateDialog from './components/TemplateDialog'
@@ -94,15 +86,6 @@ const MONTH_OPTIONS: { value: number; label: string }[] = [
   { value: 12, label: 'December' }
 ]
 
-const AUDIT_CYCLE_PAGE_LIMIT = 10
-
-interface PaginationState {
-  page: number
-  totalPages: number
-  total: number
-  limit: number
-}
-
 interface PayrollDashboardResponse {
   success: boolean
   message?: string
@@ -119,87 +102,18 @@ interface ApprovedCycleSnapshot {
   year?: number | null
 }
 
-const TUTORIAL_STORAGE_KEY = 'payroll-admin-dashboard-onboarding-v1'
+// Simplified tab configuration - removed workflow complexity
+const TAB_CONFIG = {
+  overview: { label: 'Overview', icon: <BarChart3 className="h-4 w-4" /> },
+  'cycle-management': { label: 'Cycles', icon: <CalendarPlus className="h-4 w-4" /> },
+  processing: { label: 'Processing', icon: <ClipboardList className="h-4 w-4" /> },
+  'review-approval': { label: 'Review', icon: <ShieldCheck className="h-4 w-4" /> },
+  workflow: { label: 'Workflow', icon: <History className="h-4 w-4" /> },
+  transactions: { label: 'Transactions', icon: <Wallet className="h-4 w-4" /> },
+  settings: { label: 'Settings', icon: <Settings className="h-4 w-4" /> }
+} as const
 
-const PRIMARY_FLOW_ORDER = [
-  'overview',
-  'setup',
-  'cycle-management',
-  'processing',
-  'review-approval',
-  'transactions'
-] as const
-
-type PrimaryFlowStepId = (typeof PRIMARY_FLOW_ORDER)[number]
-
-type FlowStepMeta = {
-  title: string
-  description: string
-  icon: ReactNode
-}
-
-const PRIMARY_FLOW_META: Record<PrimaryFlowStepId, FlowStepMeta> = {
-  overview: {
-    title: 'Payroll health overview',
-    description: 'Key metrics and at-a-glance indicators for your latest payroll runs.',
-    icon: <Flag className="h-4 w-4" />
-  },
-  setup: {
-    title: 'Configure payroll foundations',
-    description: 'Templates, calculation rules, and organization-wide defaults.',
-    icon: <Settings className="h-4 w-4" />
-  },
-  'cycle-management': {
-    title: 'Create or resume a payroll cycle',
-    description: 'Select the month and assemble the employee cohort for processing.',
-    icon: <CalendarPlus className="h-4 w-4" />
-  },
-  processing: {
-    title: 'Process salaries & validate data',
-    description: 'Drill into employee payouts, attendance, and adjustments.',
-    icon: <ClipboardList className="h-4 w-4" />
-  },
-  'review-approval': {
-    title: 'Review and approve',
-    description: 'Finalize calculations and hand off for approval to finance/leadership.',
-    icon: <ShieldCheck className="h-4 w-4" />
-  },
-  transactions: {
-    title: 'Payouts & transactions',
-    description: 'Initiate bank transfers and confirm disbursement completion.',
-    icon: <Wallet className="h-4 w-4" />
-  }
-}
-
-const SUPPLEMENTARY_SECTIONS = [
-  {
-    id: 'reporting',
-    title: 'Reporting & analytics',
-    description: 'Generate exports, compliance packs, and payroll analytics.',
-    icon: <BarChart3 className="h-4 w-4" />
-  },
-  {
-    id: 'audit-trail',
-    title: 'Audit trail',
-    description: 'Trace every payroll change with actor context and before/after data.',
-    icon: <History className="h-4 w-4" />
-  },
-  {
-    id: 'disputes',
-    title: 'Dispute resolution',
-    description: 'Monitor and resolve employee challenges on payroll outcomes.',
-    icon: <AlertCircle className="h-4 w-4" />
-  },
-  {
-    id: 'employee-portal',
-    title: 'Employee portal',
-    description: 'Manage employee-facing communications and self-service access.',
-    icon: <Users className="h-4 w-4" />
-  }
-] as const
-
-const isPrimaryStep = (value: string): value is PrimaryFlowStepId =>
-  (PRIMARY_FLOW_ORDER as readonly string[]).includes(value)
+type TabId = keyof typeof TAB_CONFIG
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (axios.isAxiosError(error)) {
@@ -226,11 +140,8 @@ const PayrollAdminDashboard = () => {
   const [cyclesNeedingReview, setCyclesNeedingReview] = useState<PayrollCycle[]>([]);
   const [isCreatingCycle, setIsCreatingCycle] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isTutorialOpen, setIsTutorialOpen] = useState(false);
-  const [tutorialStep, setTutorialStep] = useState(0);
-  const [hasSeenTutorial, setHasSeenTutorial] = useState(false);
   const [reportInfo, setReportInfo] = useState<{
     title: string
     description: string
@@ -338,21 +249,6 @@ const PayrollAdminDashboard = () => {
   });
   const [isSavingBankDetails, setIsSavingBankDetails] = useState(false);
 
-  const [auditCycles, setAuditCycles] = useState<PayrollCycle[]>([]);
-  const [auditPagination, setAuditPagination] = useState<PaginationState>({
-    page: 1,
-    totalPages: 1,
-    total: 0,
-    limit: AUDIT_CYCLE_PAGE_LIMIT
-  });
-  const [isAuditCyclesLoading, setIsAuditCyclesLoading] = useState(false);
-  const [auditCyclesError, setAuditCyclesError] = useState<string | null>(null);
-  const [auditSelectedCycleId, setAuditSelectedCycleId] = useState<string | null>(null);
-  const [auditCycleDetails, setAuditCycleDetails] = useState<PayrollCycleDetails | null>(null);
-  const [isAuditDetailsLoading, setIsAuditDetailsLoading] = useState(false);
-  const [auditDetailsError, setAuditDetailsError] = useState<string | null>(null);
-  const auditInitRef = useRef(false);
-
   // Current date for default values
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth() + 1;
@@ -370,92 +266,6 @@ const PayrollAdminDashboard = () => {
   const pendingDeleteLabel = cyclePendingDelete
     ? `${months.find((m) => m.value === cyclePendingDelete.month)?.label ?? cyclePendingDelete.month} ${cyclePendingDelete.year}`
     : null;
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const hasSeen = window.localStorage.getItem(TUTORIAL_STORAGE_KEY);
-    if (!hasSeen) {
-      setIsTutorialOpen(true);
-    } else {
-      setHasSeenTutorial(true);
-    }
-  }, []);
-
-  const tutorialSteps = useMemo(
-    () => [
-      {
-        title: 'Track payroll health at a glance',
-        description:
-          'Start on the Overview tab to monitor KPIs, pending reviews, and the most recent payroll cycles. Use the Refresh button whenever you process new data.',
-        actionTab: 'overview',
-        ctaLabel: 'Show overview'
-      },
-      {
-        title: 'Create and launch cycles',
-        description:
-          'Use Cycle Management to pick a month, create a payroll cycle, and kick off bulk processing when you are ready. Draft cycles stay here until you start them.',
-        actionTab: 'cycle-management',
-        ctaLabel: 'Open cycle management'
-      },
-      {
-        title: 'Review before approval',
-        description:
-          'After processing, cycles move into Review & Approval. Approvers can inspect totals, leave comments, and approve or reject from this workspace.',
-        actionTab: 'review-approval',
-        ctaLabel: 'Go to review'
-      },
-      {
-        title: 'Report and export insights',
-        description:
-          'Generate analytics, exports, and compliance artifacts from the Reporting tab. Export Data creates a CSV of recent cycles you can share with finance.',
-        actionTab: 'reporting',
-        ctaLabel: 'View reporting tools'
-      },
-      {
-        title: 'Empower employees',
-        description:
-          'Use the Employee Portal shortcuts to jump into the self-service experience, download payslips, and manage disputes on behalf of staff.',
-        actionTab: 'employee-portal',
-        ctaLabel: 'Open employee portal'
-      }
-    ],
-    []
-  );
-
-  const activeTutorialStep = tutorialSteps[tutorialStep];
-
-  const markTutorialAsSeen = () => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(TUTORIAL_STORAGE_KEY, 'true');
-    }
-    setHasSeenTutorial(true);
-  };
-
-  const closeTutorial = (persist = true) => {
-    if (persist) {
-      markTutorialAsSeen();
-    }
-    setIsTutorialOpen(false);
-  };
-
-  const startTutorial = (step = 0) => {
-    setTutorialStep(step);
-    setIsTutorialOpen(true);
-  };
-
-  const handleTutorialAdvance = (direction: 'next' | 'back') => {
-    if (direction === 'back') {
-      setTutorialStep((prev) => Math.max(0, prev - 1));
-      return;
-    }
-
-    setTutorialStep((prev) => Math.min(tutorialSteps.length - 1, prev + 1));
-  };
-
-  const handleTutorialCta = () => {
-    if (!activeTutorialStep?.actionTab) return;
-    setActiveTab(activeTutorialStep.actionTab);
-  };
 
   const fetchDashboardData = useCallback(async () => {
     if (!user?.id) {
@@ -512,105 +322,6 @@ const PayrollAdminDashboard = () => {
     }
   }, [selectedYear, user?.id]);
 
-  const handleAuditCycleSelect = useCallback(
-    (cycleId: string | null) => {
-      setAuditSelectedCycleId(cycleId);
-
-      if (!cycleId) {
-        setAuditCycleDetails(null);
-        setAuditDetailsError(null);
-        setIsAuditDetailsLoading(false);
-        return;
-      }
-
-      const cachedDetails = processingDetailsCache.current[cycleId];
-      if (cachedDetails) {
-        setAuditCycleDetails(cachedDetails);
-        setAuditDetailsError(null);
-        setIsAuditDetailsLoading(false);
-      } else {
-        setAuditCycleDetails(null);
-      }
-    },
-    []
-  );
-
-  const fetchAuditCycles = useCallback(
-    async (page = 1) => {
-      if (!user?.id) {
-        setAuditCycles([]);
-        setAuditCyclesError('You need to be logged in to view payroll audit data.');
-        return;
-      }
-
-      setAuditPagination((prev) => ({ ...prev, page }));
-      setIsAuditCyclesLoading(true);
-      setAuditCyclesError(null);
-
-      try {
-        const response = await axios.get<{
-          success: boolean
-          data?: PayrollCycle[]
-          pagination?: {
-            page?: number
-            pages?: number
-            total?: number
-            limit?: number
-          }
-          message?: string
-        }>(APIV3Dictionary.payroll.cycles, {
-          params: {
-            page,
-            limit: AUDIT_CYCLE_PAGE_LIMIT
-          },
-          withCredentials: true
-        });
-
-        if (response.data?.success) {
-          const cyclesList = Array.isArray(response.data.data) ? response.data.data : [];
-          const pagination = response.data.pagination ?? {};
-
-          setAuditCycles(cyclesList);
-          setAuditPagination({
-            page: pagination.page ?? page,
-            totalPages:
-              pagination.pages ??
-              Math.max(
-                1,
-                pagination.total
-                  ? Math.ceil(pagination.total / (pagination.limit ?? AUDIT_CYCLE_PAGE_LIMIT))
-                  : Math.ceil(Math.max(cyclesList.length, 1) / AUDIT_CYCLE_PAGE_LIMIT)
-              ),
-            total: pagination.total ?? cyclesList.length,
-            limit: pagination.limit ?? AUDIT_CYCLE_PAGE_LIMIT
-          });
-
-          if (!cyclesList.length) {
-            handleAuditCycleSelect(null);
-            return;
-          }
-
-          if (!auditSelectedCycleId || !cyclesList.some((cycle) => cycle.id === auditSelectedCycleId)) {
-            handleAuditCycleSelect(cyclesList[0].id);
-          }
-        } else {
-          const message = response.data?.message || 'Failed to fetch payroll cycles for audit.';
-          setAuditCycles([]);
-          setAuditCyclesError(message);
-          handleAuditCycleSelect(null);
-        }
-      } catch (error) {
-        const message = getErrorMessage(error, 'Failed to fetch payroll cycles for audit.');
-        setAuditCycles([]);
-        setAuditCyclesError(message);
-        handleAuditCycleSelect(null);
-      } finally {
-        setIsAuditCyclesLoading(false);
-      }
-    },
-    [auditSelectedCycleId, handleAuditCycleSelect, user?.id]
-  );
-
   const loadCycleDetails = useCallback(async (cycleId: string): Promise<PayrollCycleDetails> => {
     try {
       const response = await axios.get(APIV3Dictionary.payroll.getCycleDetails(cycleId), {
@@ -637,87 +348,6 @@ const PayrollAdminDashboard = () => {
       throw new Error(getErrorMessage(error, 'Failed to fetch payroll cycle details.'));
     }
   }, []);
-
-  const loadAuditDetails = useCallback(
-    async (cycleId: string, options: { force?: boolean; showToast?: boolean } = {}) => {
-      const { force = false, showToast = false } = options;
-
-      if (!cycleId) {
-        return null;
-      }
-
-      if (!force) {
-        const cachedDetails = processingDetailsCache.current[cycleId];
-        if (cachedDetails) {
-          setAuditCycleDetails(cachedDetails);
-          setAuditDetailsError(null);
-          setIsAuditDetailsLoading(false);
-          return cachedDetails;
-        }
-      }
-
-      setIsAuditDetailsLoading(true);
-      setAuditDetailsError(null);
-
-      try {
-        const details = await loadCycleDetails(cycleId);
-        processingDetailsCache.current[cycleId] = details;
-        setAuditCycleDetails(details);
-        return details;
-      } catch (error) {
-        const message = getErrorMessage(error, 'Failed to fetch payroll audit trail.');
-        setAuditDetailsError(message);
-        if (showToast) {
-          toast({
-            title: 'Unable to load audit data',
-            description: message,
-            variant: 'destructive'
-          });
-        }
-        throw error;
-      } finally {
-        setIsAuditDetailsLoading(false);
-      }
-    },
-    [loadCycleDetails]
-  );
-
-  const refreshAuditCycleDetails = useCallback(async () => {
-    if (!auditSelectedCycleId) {
-      return;
-    }
-
-    await loadAuditDetails(auditSelectedCycleId, { force: true, showToast: true });
-  }, [auditSelectedCycleId, loadAuditDetails]);
-
-  useEffect(() => {
-    if (activeTab !== 'audit-trail') {
-      return;
-    }
-
-    if (auditInitRef.current) {
-      return;
-    }
-
-    auditInitRef.current = true;
-    fetchAuditCycles(1);
-  }, [activeTab, fetchAuditCycles]);
-
-  useEffect(() => {
-    if (activeTab !== 'audit-trail') {
-      return;
-    }
-
-    if (!auditSelectedCycleId) {
-      setAuditCycleDetails(null);
-      setAuditDetailsError(null);
-      return;
-    }
-
-    loadAuditDetails(auditSelectedCycleId).catch(() => {
-      // handled inside loader
-    });
-  }, [activeTab, auditSelectedCycleId, loadAuditDetails]);
 
   const stopProgressPolling = useCallback((cycleId: string) => {
     const existingTimer = progressPollersRef.current[cycleId];
@@ -818,7 +448,6 @@ const PayrollAdminDashboard = () => {
   };
   const navigateToBankManagement = () => navigate(RouteDict.Profile.BankDetails);
   const navigateToNotificationSettings = () => navigate('/p/notification/settings');
-  const navigateToNotificationSend = () => navigate(RouteDict.Notification.Send);
 
   const handleExportData = useCallback(() => {
     if (!cycles.length) {
@@ -888,11 +517,11 @@ const PayrollAdminDashboard = () => {
         break;
       }
       case 'analytics': {
-        navigate(`${RouteDict.Payroll.Base}/workflow`, { state: { highlight: 'reporting' } });
         toast({
           title: 'Payroll analytics',
-          description: 'The workflow dashboard highlights reporting metrics for deeper analysis.'
+          description: 'Review detailed metrics from the overview tab.'
         });
+        setActiveTab('overview');
         break;
       }
       case 'export': {
@@ -900,30 +529,25 @@ const PayrollAdminDashboard = () => {
         break;
       }
       case 'audit': {
-        setActiveTab('audit-trail');
-        setReportInfo({
-          title: 'Audit trail review',
-          description:
-            'The Audit Trail tab now surfaces every payroll cycle change with filtering, actors, and before/after snapshots.',
-          actionLabel: 'Open audit tab',
-          onAction: () => setActiveTab('audit-trail')
+        toast({
+          title: 'Audit information',
+          description: 'Audit logs are available in cycle details and processing views.'
         });
         break;
       }
       case 'compliance': {
-        navigate(`${RouteDict.Payroll.Base}/workflow`, { state: { highlight: 'review' } });
         toast({
           title: 'Compliance checklist',
-          description: 'Review cycle approvals and exported summaries before filing compliance reports.'
+          description: 'Review cycle approvals from the Review tab before filing compliance reports.'
         });
+        setActiveTab('review-approval');
         break;
       }
       case 'corrections': {
-        setReportInfo({
+        navigate(RouteDict.Payroll.SalaryTransaction);
+        toast({
           title: 'Handle corrections',
-          description: 'Use salary transactions to rerun calculations or raise disputes for any employees needing corrections.',
-          actionLabel: 'Open transactions',
-          onAction: () => navigate(RouteDict.Payroll.SalaryTransaction)
+          description: 'Use salary transactions to rerun calculations or raise disputes.'
         });
         break;
       }
@@ -1277,7 +901,7 @@ const PayrollAdminDashboard = () => {
         });
       }
     },
-    [cycles, handleOpenProcessingDrawer, loadCycleDetails, setActiveTab, toast]
+    [cycles, handleOpenProcessingDrawer, loadCycleDetails]
   );
 
   useEffect(() => {
@@ -1518,7 +1142,10 @@ const PayrollAdminDashboard = () => {
     setIsApprovalSuccessDialogOpen(false);
 
     if (restoreTab && lastActiveTabBeforeApproval) {
-      setActiveTab(lastActiveTabBeforeApproval);
+      const validTabs: TabId[] = ['overview', 'cycle-management', 'processing', 'review-approval', 'transactions', 'settings'];
+      if (validTabs.includes(lastActiveTabBeforeApproval as TabId)) {
+        setActiveTab(lastActiveTabBeforeApproval as TabId);
+      }
     }
 
     setLastActiveTabBeforeApproval(null);
@@ -2653,53 +2280,7 @@ const PayrollAdminDashboard = () => {
     }
   };
 
-  const currentPrimaryIndex = PRIMARY_FLOW_ORDER.findIndex((step) => step === activeTab)
-  const flowSteps = useMemo(() => {
-    const resolvedIndex = currentPrimaryIndex === -1 ? 0 : currentPrimaryIndex
-
-    return PRIMARY_FLOW_ORDER.map((stepId, index) => {
-      const meta = PRIMARY_FLOW_META[stepId]
-      const status = index < resolvedIndex ? 'complete' : index === resolvedIndex ? 'current' : 'upcoming'
-
-      return {
-        id: stepId,
-        ...meta,
-        status
-      }
-    })
-  }, [activeTab, currentPrimaryIndex])
-
-  const goToStep = useCallback((stepId: string) => {
-    setActiveTab(stepId)
-  }, [])
-
-  const goToNextStep = useCallback(() => {
-    if (currentPrimaryIndex === -1) {
-      setActiveTab(PRIMARY_FLOW_ORDER[0])
-      return
-    }
-    const nextStep = PRIMARY_FLOW_ORDER[currentPrimaryIndex + 1]
-    if (nextStep) {
-      setActiveTab(nextStep)
-    }
-  }, [currentPrimaryIndex])
-
-  const goToPreviousStep = useCallback(() => {
-    if (currentPrimaryIndex === -1) {
-      return
-    }
-    const previousStep = PRIMARY_FLOW_ORDER[currentPrimaryIndex - 1]
-    if (previousStep) {
-      setActiveTab(previousStep)
-    }
-  }, [currentPrimaryIndex])
-
-  const nextPrimaryStepId = currentPrimaryIndex !== -1 ? PRIMARY_FLOW_ORDER[currentPrimaryIndex + 1] ?? null : PRIMARY_FLOW_ORDER[1] ?? null
-  const previousPrimaryStepId = currentPrimaryIndex > 0 ? PRIMARY_FLOW_ORDER[currentPrimaryIndex - 1] : null
-  const isActiveTabInPrimaryFlow = isPrimaryStep(activeTab)
-  const activeStepMeta = isActiveTabInPrimaryFlow ? PRIMARY_FLOW_META[activeTab] : null
-  const nextStepMeta = nextPrimaryStepId ? PRIMARY_FLOW_META[nextPrimaryStepId] : null
-  const previousStepMeta = previousPrimaryStepId ? PRIMARY_FLOW_META[previousPrimaryStepId] : null
+  // const currentPrimaryIndex = -1; // Removed flow step logic (kept for backward compatibility)
 
   if (isLoading) {
     return (
@@ -2719,8 +2300,8 @@ const PayrollAdminDashboard = () => {
     <div className="w-screen px-8 py-6 space-y-6 h-screen overflow-y-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Payroll Management System</h1>
-          <p className="text-muted-foreground">Complete payroll workflow management and administration</p>
+          <h1 className="text-3xl font-bold tracking-tight">Payroll Management</h1>
+          <p className="text-muted-foreground">Complete payroll administration and processing</p>
         </div>
         <div className="flex flex-wrap gap-2 justify-end">
           <Button
@@ -2740,20 +2321,6 @@ const PayrollAdminDashboard = () => {
             <Download className="h-4 w-4 mr-2" />
             Export Data
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleOpenSettings}
-          >
-            <Settings className="h-4 w-4 mr-2" />
-            Settings
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => startTutorial(activeTab === 'overview' ? 0 : tutorialStep)}
-          >
-            {hasSeenTutorial ? 'Replay Guided Tour' : 'Launch Guided Tour'}
-          </Button>
         </div>
       </div>
 
@@ -2765,237 +2332,215 @@ const PayrollAdminDashboard = () => {
         </Alert>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[300px,1fr]">
-        <aside className="space-y-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold">Payroll run flow</CardTitle>
-              <CardDescription>Work through each stage from setup to payouts.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <ol className="space-y-2">
-                {flowSteps.map((step, index) => {
-                  const isActive = step.id === activeTab
-                  const statusIcon =
-                    step.status === 'complete' ? (
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                    ) : step.status === 'current' ? (
-                      <CircleDot className="h-4 w-4 text-primary" />
-                    ) : (
-                      <Circle className="h-4 w-4 text-muted-foreground" />
-                    )
+      {/* Horizontal Tabs Navigation */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-2 border-b overflow-x-auto">
+            {(Object.keys(TAB_CONFIG) as TabId[]).map((tabId) => {
+              const config = TAB_CONFIG[tabId];
+              const isActive = activeTab === tabId;
+              return (
+                <button
+                  key={tabId}
+                  onClick={() => setActiveTab(tabId)}
+                  className={cn(
+                    'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
+                    isActive
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted'
+                  )}
+                >
+                  {config.icon}
+                  <span>{config.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
-                  return (
-                    <li key={step.id}>
-                      <button
-                        type="button"
-                        onClick={() => goToStep(step.id)}
-                        className={cn(
-                          'flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition focus:outline-none focus:ring-2 focus:ring-primary/40',
-                          isActive ? 'border-primary bg-primary/5 shadow-sm' : 'border-border/60 hover:border-primary/40'
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            'flex h-9 w-9 items-center justify-center rounded-full border text-primary',
-                            isActive ? 'border-primary bg-primary/10' : 'border-muted-foreground/30 bg-muted/30'
-                          )}
-                        >
-                          <span className="sr-only">Step {index + 1}</span>
-                          {step.icon}
-                        </span>
-                        <div className="flex-1 space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-foreground">{step.title}</span>
-                            {statusIcon}
-                          </div>
-                          <p className="text-xs text-muted-foreground">{step.description}</p>
-                        </div>
-                      </button>
-                    </li>
-                  )
-                })}
-              </ol>
-            </CardContent>
-          </Card>
+      {/* Tab Content */}
+      <div className="space-y-6">
+        {activeTab === 'overview' && (
+          <OverviewTab
+            statistics={statistics}
+            cycles={cycles}
+            cyclesNeedingReview={cyclesNeedingReview}
+            months={months}
+            getProgressSnapshotForCycle={getProgressSnapshotForCycle}
+            getProgressErrorForCycle={getProgressErrorForCycle}
+            canDeleteCycle={canDeleteCycle}
+            handleRequestDeleteCycle={handleRequestDeleteCycle}
+            handleApproveCycle={handleApproveCycle}
+            startPayrollCycle={startPayrollCycle}
+            isProcessing={isProcessing}
+            isDeletingCycle={isDeletingCycle}
+            cyclePendingDelete={cyclePendingDelete}
+          />
+        )}
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold">Post-cycle modules</CardTitle>
-              <CardDescription>Jump into supporting payroll workspaces.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {SUPPLEMENTARY_SECTIONS.map((section) => {
-                const isActive = activeTab === section.id
-                return (
-                  <button
-                    key={section.id}
-                    type="button"
-                    onClick={() => goToStep(section.id)}
-                    className={cn(
-                      'flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition focus:outline-none focus:ring-2 focus:ring-primary/40',
-                      isActive ? 'border-primary bg-primary/5 shadow-sm' : 'border-border/60 hover:border-primary/40'
-                    )}
-                  >
-                    <span className="flex h-9 w-9 items-center justify-center rounded-full border border-muted-foreground/30 bg-muted/30 text-muted-foreground">
-                      {section.icon}
-                    </span>
-                    <div className="flex-1 text-left">
-                      <p className="text-sm font-semibold text-foreground">{section.title}</p>
-                      <p className="text-xs text-muted-foreground">{section.description}</p>
-                    </div>
-                  </button>
-                )
-              })}
-            </CardContent>
-          </Card>
-        </aside>
+        {activeTab === 'cycle-management' && (
+          <CycleManagementTab
+            months={months}
+            years={years}
+            selectedMonth={selectedMonth}
+            selectedYear={selectedYear}
+            onMonthChange={setSelectedMonth}
+            onYearChange={setSelectedYear}
+            onCreateCycle={createPayrollCycle}
+            isCreatingCycle={isCreatingCycle}
+            activeProcessingJobs={activeProcessingJobs}
+            getProgressSnapshotForCycle={getProgressSnapshotForCycle}
+            getProgressErrorForCycle={getProgressErrorForCycle}
+            cycleProgressMap={cycleProgressMap}
+          />
+        )}
 
-        <div className="space-y-6">
-          {activeTab === 'overview' && (
-            <OverviewTab
-              statistics={statistics}
-              cycles={cycles}
-              cyclesNeedingReview={cyclesNeedingReview}
-              months={months}
-              getProgressSnapshotForCycle={getProgressSnapshotForCycle}
-              getProgressErrorForCycle={getProgressErrorForCycle}
-              canDeleteCycle={canDeleteCycle}
-              handleRequestDeleteCycle={handleRequestDeleteCycle}
-              handleApproveCycle={handleApproveCycle}
-              startPayrollCycle={startPayrollCycle}
-              isProcessing={isProcessing}
-              isDeletingCycle={isDeletingCycle}
-              cyclePendingDelete={cyclePendingDelete}
-            />
-          )}
+        {activeTab === 'processing' && (
+          <ProcessingTab
+            processingCycles={processingCycles}
+            months={months}
+            getProgressSnapshotForCycle={getProgressSnapshotForCycle}
+            getProgressErrorForCycle={getProgressErrorForCycle}
+            onOpenProcessingDrawer={handleOpenProcessingDrawer}
+            onStartPayrollCycle={startPayrollCycle}
+            isProcessing={isProcessing}
+          />
+        )}
 
-          {activeTab === 'setup' && (
-            <SetupConfigTab
-              onOpenTemplates={navigateToTemplates}
-              onNavigateEmployeePortal={navigateToEmployeePortal}
-              onNavigateBankManagement={navigateToBankManagement}
-              onNavigateNotificationSettings={navigateToNotificationSettings}
-            />
-          )}
+        {activeTab === 'review-approval' && (
+          <ReviewApprovalTab
+            cyclesNeedingReview={cyclesNeedingReview}
+            months={months}
+            onApproveCycle={handleApproveCycle}
+            onOpenReviewDetails={handleOpenReviewDetails}
+            isProcessing={isProcessing}
+            reviewLoadingCycleId={reviewLoadingCycleId}
+          />
+        )}
 
-          {activeTab === 'cycle-management' && (
-            <CycleManagementTab
-              months={months}
-              years={years}
-              selectedMonth={selectedMonth}
-              selectedYear={selectedYear}
-              onMonthChange={setSelectedMonth}
-              onYearChange={setSelectedYear}
-              onCreateCycle={createPayrollCycle}
-              isCreatingCycle={isCreatingCycle}
-              activeProcessingJobs={activeProcessingJobs}
-              getProgressSnapshotForCycle={getProgressSnapshotForCycle}
-              getProgressErrorForCycle={getProgressErrorForCycle}
-              cycleProgressMap={cycleProgressMap}
-            />
-          )}
+        {activeTab === 'workflow' && (
+          <WorkflowTab
+            selectedMonth={selectedMonth}
+            selectedYear={selectedYear}
+          />
+        )}
 
-          {activeTab === 'processing' && (
-            <ProcessingTab
-              processingCycles={processingCycles}
-              months={months}
-              getProgressSnapshotForCycle={getProgressSnapshotForCycle}
-              getProgressErrorForCycle={getProgressErrorForCycle}
-              onOpenProcessingDrawer={handleOpenProcessingDrawer}
-              onStartPayrollCycle={startPayrollCycle}
-              isProcessing={isProcessing}
-            />
-          )}
+        {activeTab === 'transactions' && (
+          <TransactionsTab
+            payoutBuckets={payoutCycleBuckets}
+            months={months}
+            onOpenPayoutFlow={handleOpenPayoutFlow}
+            onViewSummary={handleViewPayoutSummary}
+            onExportPayouts={handleExportPayouts}
+            onBulkPaymentRecord={handleBulkPaymentRecord}
+            onNavigateReporting={() => toast({
+              title: 'Reporting',
+              description: 'View reports from the Overview tab or export data above.'
+            })}
+          />
+        )}
 
-          {activeTab === 'review-approval' && (
-            <ReviewApprovalTab
-              cyclesNeedingReview={cyclesNeedingReview}
-              months={months}
-              onApproveCycle={handleApproveCycle}
-              onOpenReviewDetails={handleOpenReviewDetails}
-              isProcessing={isProcessing}
-              reviewLoadingCycleId={reviewLoadingCycleId}
-            />
-          )}
+        {activeTab === 'settings' && (
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Payroll Configuration</CardTitle>
+                <CardDescription>
+                  Manage templates, employee settings, and system configuration
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => navigateToTemplates()}>
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Settings className="h-5 w-5" />
+                        Salary Templates
+                      </CardTitle>
+                      <CardDescription>
+                        Configure salary structures and calculation rules
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
 
-          {activeTab === 'transactions' && (
-            <TransactionsTab
-              payoutBuckets={payoutCycleBuckets}
-              months={months}
-              onOpenPayoutFlow={handleOpenPayoutFlow}
-              onViewSummary={handleViewPayoutSummary}
-              onExportPayouts={handleExportPayouts}
-              onBulkPaymentRecord={handleBulkPaymentRecord}
-              onNavigateReporting={() => setActiveTab('reporting')}
-            />
-          )}
+                  <Card className="cursor-pointer hover:border-primary transition-colors" onClick={navigateToEmployeePortal}>
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Users className="h-5 w-5" />
+                        Employee Portal
+                      </CardTitle>
+                      <CardDescription>
+                        Manage employee self-service and payslip access
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
 
-          {activeTab === 'reporting' && <ReportingTab onNavigate={handleReportNavigation} />}
+                  <Card className="cursor-pointer hover:border-primary transition-colors" onClick={navigateToBankManagement}>
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Wallet className="h-5 w-5" />
+                        Bank Management
+                      </CardTitle>
+                      <CardDescription>
+                        Configure employee bank account details
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
 
-          {activeTab === 'audit-trail' && (
-            <AuditTrailTab
-              cycles={auditCycles}
-              pagination={auditPagination}
-              isLoadingCycles={isAuditCyclesLoading}
-              cyclesError={auditCyclesError}
-              onPageChange={fetchAuditCycles}
-              onReloadCycles={() => fetchAuditCycles(auditPagination.page)}
-              selectedCycleId={auditSelectedCycleId}
-              onSelectCycle={(cycleId) => handleAuditCycleSelect(cycleId)}
-              cycleDetails={auditCycleDetails}
-              isLoadingDetails={isAuditDetailsLoading}
-              detailsError={auditDetailsError}
-              onRefreshCycle={refreshAuditCycleDetails}
-            />
-          )}
+                  <Card className="cursor-pointer hover:border-primary transition-colors" onClick={navigateToNotificationSettings}>
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <AlertCircle className="h-5 w-5" />
+                        Notifications
+                      </CardTitle>
+                      <CardDescription>
+                        Configure payroll notification settings
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
 
-          {activeTab === 'disputes' && (
-            <DisputeManagementTab
-              activeTab={activeTab}
-              months={months}
-              onInspectDisputeRecord={handleInspectDisputeRecord}
-            />
-          )}
+                  <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => handleReportNavigation('audit')}>
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <History className="h-5 w-5" />
+                        Audit & Reports
+                      </CardTitle>
+                      <CardDescription>
+                        View audit trails and compliance reports
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
 
-          {activeTab === 'employee-portal' && (
-            <EmployeePortalTab
-              onPortalShortcut={handleEmployeePortalShortcut}
-              onNavigateSendNotification={navigateToNotificationSend}
-              onNavigatePortalSettings={navigateToNotificationSettings}
-            />
-          )}
+                  <Card className="cursor-pointer hover:border-primary transition-colors" onClick={handleOpenSettings}>
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Settings className="h-5 w-5" />
+                        Organization Settings
+                      </CardTitle>
+                      <CardDescription>
+                        General organization and system settings
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
+                </div>
+              </CardContent>
+            </Card>
 
-          {isActiveTabInPrimaryFlow && activeStepMeta && (
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/40 px-4 py-3">
-              <div className="max-w-2xl space-y-1">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Step {currentPrimaryIndex === -1 ? 1 : currentPrimaryIndex + 1} of {PRIMARY_FLOW_ORDER.length}
-                </p>
-                <p className="text-sm font-medium text-foreground">{activeStepMeta.title}</p>
-                <p className="text-xs text-muted-foreground">{activeStepMeta.description}</p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                {previousStepMeta && (
-                  <Button variant="ghost" size="sm" onClick={goToPreviousStep}>
-                    Back to {previousStepMeta.title}
-                  </Button>
-                )}
-                {nextStepMeta ? (
-                  <Button size="sm" onClick={goToNextStep}>
-                    Continue to {nextStepMeta.title}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                ) : (
-                  <Button size="sm" variant="secondary" onClick={() => goToStep('reporting')}>
-                    Review reporting
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
+            {/* Reporting Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Reports & Analytics</CardTitle>
+                <CardDescription>
+                  Generate reports and export payroll data
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ReportingTab onNavigate={handleReportNavigation} />
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
 
       <TransactionModeDialog
@@ -3302,74 +2847,6 @@ const PayrollAdminDashboard = () => {
               </div>
             </DialogFooter>
           )}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={isTutorialOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            closeTutorial();
-          } else {
-            setIsTutorialOpen(true);
-          }
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Payroll admin guided tour</DialogTitle>
-            <DialogDescription>
-              Step {tutorialStep + 1} of {tutorialSteps.length}
-            </DialogDescription>
-          </DialogHeader>
-          {activeTutorialStep && (
-            <div className="space-y-4">
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                {activeTutorialStep.description}
-              </p>
-              {activeTutorialStep.actionTab && (
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Quick tip</AlertTitle>
-                  <AlertDescription>
-                    Jump to the {activeTutorialStep.actionTab.replace('-', ' ')} tab to see this area in action.
-                  </AlertDescription>
-                </Alert>
-              )}
-            </div>
-          )}
-          <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" onClick={() => closeTutorial()}>
-                Skip tour
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => handleTutorialAdvance('back')}
-                disabled={tutorialStep === 0}
-              >
-                Back
-              </Button>
-            </div>
-            <div className="flex items-center gap-2">
-              {activeTutorialStep?.actionTab && (
-                <Button variant="outline" onClick={handleTutorialCta}>
-                  {activeTutorialStep.ctaLabel ?? 'Go to section'}
-                </Button>
-              )}
-              <Button
-                onClick={() => {
-                  if (tutorialStep === tutorialSteps.length - 1) {
-                    closeTutorial();
-                  } else {
-                    handleTutorialAdvance('next');
-                  }
-                }}
-              >
-                {tutorialStep === tutorialSteps.length - 1 ? 'Finish' : 'Next'}
-              </Button>
-            </div>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
