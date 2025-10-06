@@ -100,23 +100,7 @@ export const usePayslipPDF = (): UsePayslipPDFReturn => {
 
       // Transform the backend response to match our PayslipData interface
       const statistics = response.data.data;
-      const effectiveWorkingDays = statistics.attendanceAnalysis.workingDays || 0;
-      const basicRate = effectiveWorkingDays > 0
-        ? statistics.salaryBreakdown.basicSalary / effectiveWorkingDays
-        : statistics.salaryBreakdown.basicSalary;
-
-      const transformedData: PayslipData = {
-        // Basic Information
-        month: statistics.basicInfo.month,
-        year: statistics.basicInfo.year,
-        monthName: statistics.basicInfo.monthName,
-        payDate: statistics.basicInfo.processedAt 
-          ? new Date(statistics.basicInfo.processedAt).toLocaleDateString('en-GB')
-          : new Date().toLocaleDateString('en-GB'),
-        period: `M${statistics.basicInfo.month.toString().padStart(2, '0')}${statistics.basicInfo.year}`,
-        status: statistics.basicInfo.status,
-        paymentMode: statistics.basicInfo.paymentInfo.mode || 'MANUAL',
-        paymentRef: statistics.basicInfo.paymentInfo.reference,
+      return transformStatisticsToPayslipData(statistics);
 
     } catch (error) {
       console.error('Error fetching payslip data:', error);
@@ -130,6 +114,10 @@ export const usePayslipPDF = (): UsePayslipPDFReturn => {
   const transformStatisticsToPayslipData = (statistics: PayrollStatistics): PayslipData => {
     const month = statistics.basicInfo.month;
     const year = statistics.basicInfo.year;
+    const effectiveWorkingDays = statistics.attendanceAnalysis.totalDays || 160;
+    const basicRate = effectiveWorkingDays > 0
+      ? statistics.salaryBreakdown.basicSalary / effectiveWorkingDays
+      : statistics.salaryBreakdown.basicSalary;
     
     return {
       // Basic Information
@@ -153,33 +141,13 @@ export const usePayslipPDF = (): UsePayslipPDFReturn => {
         bankDetails: undefined // This might need to be added to the backend response
       },
 
-        // Earnings Breakdown
-        earnings: {
-          basicSalary: {
-            description: 'Basic Salary',
-            hours: effectiveWorkingDays,
-            rate: basicRate,
-            current: statistics.salaryBreakdown.basicSalary,
-            ytd: statistics.salaryBreakdown.basicSalary * statistics.basicInfo.month
-          },
-          allowances: Object.entries(statistics.salaryBreakdown.allowanceDetails).map(([key, value]) => ({
-            description: key.toUpperCase(),
-            current: value as number,
-            ytd: (value as number) * statistics.basicInfo.month
-          })),
-          additionalPayments: [
-            ...(statistics.salaryBreakdown.additionalPayments.incentive > 0 ? [{
-              description: 'Incentive',
-              current: statistics.salaryBreakdown.additionalPayments.incentive,
-              ytd: statistics.salaryBreakdown.additionalPayments.incentive * statistics.basicInfo.month
-            }] : []),
-            ...(statistics.salaryBreakdown.additionalPayments.bonus > 0 ? [{
-              description: 'Bonus',
-              current: statistics.salaryBreakdown.additionalPayments.bonus,
-              ytd: statistics.salaryBreakdown.additionalPayments.bonus * statistics.basicInfo.month
-            }] : [])
-          ]
-        },
+      // Company Information (placeholder)
+      company: {
+        name: 'Company Name',
+        address: 'Company Address',
+        email: 'company@example.com',
+        phone: '+1234567890'
+      },
 
       // Financial Information
       basicSalary: statistics.salaryBreakdown.basicSalary,
@@ -191,15 +159,29 @@ export const usePayslipPDF = (): UsePayslipPDFReturn => {
       earnings: {
         basicSalary: {
           description: 'Basic Salary',
-          hours: 160, // Default working hours
-          rate: statistics.salaryBreakdown.basicSalary / 160,
+          hours: effectiveWorkingDays,
+          rate: basicRate,
           current: statistics.salaryBreakdown.basicSalary,
           ytd: statistics.salaryBreakdown.basicSalary * month
         },
-        attendanceDetails: statistics.attendanceDetails,
-        salaryContext: statistics.salaryContext,
-        ruleContext: statistics.ruleContext,
-        penaltyContext: statistics.penaltyContext,
+        allowances: statistics.salaryBreakdown.totalAllowances > 0 ? [{
+          description: 'Allowances',
+          current: statistics.salaryBreakdown.totalAllowances,
+          ytd: statistics.salaryBreakdown.totalAllowances * month
+        }] : [],
+        additionalPayments: [
+          ...(statistics.salaryBreakdown.additionalPayments.incentive > 0 ? [{
+            description: 'Incentive',
+            current: statistics.salaryBreakdown.additionalPayments.incentive,
+            ytd: statistics.salaryBreakdown.additionalPayments.incentive * month
+          }] : []),
+          ...(statistics.salaryBreakdown.additionalPayments.bonus > 0 ? [{
+            description: 'Bonus',
+            current: statistics.salaryBreakdown.additionalPayments.bonus,
+            ytd: statistics.salaryBreakdown.additionalPayments.bonus * month
+          }] : [])
+        ]
+      },
 
       // Deductions
       deductions: [
@@ -208,11 +190,11 @@ export const usePayslipPDF = (): UsePayslipPDFReturn => {
           current: deduction.amount,
           ytd: deduction.amount * month
         })),
-        {
+        ...(statistics.salaryBreakdown.taxAmount > 0 ? [{
           description: 'Tax',
           current: statistics.salaryBreakdown.taxAmount,
           ytd: statistics.salaryBreakdown.taxAmount * month
-        }
+        }] : [])
       ],
 
       // Attendance
@@ -223,7 +205,9 @@ export const usePayslipPDF = (): UsePayslipPDFReturn => {
         absentDays: statistics.attendanceAnalysis.absentDays,
         paidLeaveDays: statistics.attendanceAnalysis.leaveDays,
         unpaidLeaveDays: 0, // This might need to be added to backend
-        attendancePercentage: (statistics.attendanceAnalysis.presentDays / statistics.attendanceAnalysis.totalDays) * 100
+        attendancePercentage: statistics.attendanceAnalysis.totalDays > 0 
+          ? (statistics.attendanceAnalysis.presentDays / statistics.attendanceAnalysis.totalDays) * 100 
+          : 0
       },
 
       // YTD Information

@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { CheckCircle, AlertCircle, Play, Loader2, XCircle } from 'lucide-react'
+import { CheckCircle, AlertCircle, Play, Loader2 } from 'lucide-react'
 
 const ProcessingStep = ({ cycleData, onDataChange, onNext }: StepProps) => {
   const [isProcessing, setIsProcessing] = useState(false)

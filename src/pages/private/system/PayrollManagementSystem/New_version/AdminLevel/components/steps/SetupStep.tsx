@@ -3,7 +3,7 @@ import { StepProps } from '../../PayrollPipelinePage'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { Settings, FileText, Users, AlertCircle, CheckCircle, X } from 'lucide-react'
+import { Settings, FileText, Users, AlertCircle, CheckCircle } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 
 const SetupStep = ({ cycleData, onDataChange, onNext }: StepProps) => {

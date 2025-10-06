@@ -657,15 +657,6 @@ const PayrollAdminDashboard = () => {
     }
   }, [cyclePendingDelete, fetchDashboardData, selectedProcessingCycle?.id]);
 
-  const handleEmployeePortalShortcut = (tab: string, extraState?: Record<string, unknown>) => {
-    if (tab === 'payslips' && (!extraState || extraState.action !== 'download')) {
-      navigate(RouteDict.Payroll.Admin.PayslipHistory);
-      return;
-    }
-
-    navigate(`${RouteDict.Payroll.Base}/employee`, { state: { defaultTab: tab, ...extraState } });
-  };
-
   const handleCloseReportInfo = () => setReportInfo(null);
 
   const handleCloseReviewDetails = () => {
@@ -837,71 +828,6 @@ const PayrollAdminDashboard = () => {
       }
     },
     [invalidateProcessingRecordStatistics, loadCycleDetails, selectProcessingRecord]
-  );
-
-  const handleInspectDisputeRecord = useCallback(
-    async ({ cycleId, salaryRecordId, employeeId }: { cycleId?: string | null; salaryRecordId: string; employeeId?: string | null }) => {
-      if (!cycleId) {
-        toast({
-          title: 'Cycle not linked yet',
-          description: 'This dispute is not associated with a payroll cycle. Generate or sync the salary record before reviewing processing steps.',
-          variant: 'destructive'
-        });
-        return;
-      }
-
-      deepLinkTargetRef.current = {
-        recordId: salaryRecordId,
-        employeeId: employeeId ?? null
-      };
-
-      setActiveTab('processing');
-
-      const existingCycle = cycles.find((cycle) => cycle.id === cycleId);
-
-      if (existingCycle) {
-        await handleOpenProcessingDrawer(existingCycle);
-        return;
-      }
-
-      try {
-        const cycleDetails = await loadCycleDetails(cycleId);
-        processingDetailsCache.current[cycleId] = cycleDetails;
-
-        const fallbackCycle: PayrollCycle = {
-          id: cycleDetails.id,
-          month: cycleDetails.month,
-          year: cycleDetails.year,
-          status: cycleDetails.status,
-          totalEmployees: cycleDetails.totalEmployees,
-          processedCount: cycleDetails.processedCount,
-          failedCount: cycleDetails.failedCount,
-          totalAmount: cycleDetails.totalAmount,
-          payoutStatus: cycleDetails.payoutStatus,
-          payoutInitiatedAt: cycleDetails.payoutInitiatedAt ?? undefined,
-          payoutCompletedAt: cycleDetails.payoutCompletedAt ?? undefined,
-          payoutInitiatedBy: cycleDetails.payoutInitiatedBy ?? undefined,
-          payoutSummary: cycleDetails.payoutSummary ?? undefined,
-          startedAt: cycleDetails.startedAt ?? undefined,
-          completedAt: cycleDetails.completedAt ?? undefined,
-          approvedAt: cycleDetails.approvedAt ?? undefined,
-          templateId: cycleDetails.templateId ?? undefined,
-          processor: cycleDetails.processor ?? undefined,
-          approver: cycleDetails.approver ?? undefined,
-        };
-
-        await handleOpenProcessingDrawer(fallbackCycle);
-      } catch (error) {
-        deepLinkTargetRef.current = null;
-        const message = getErrorMessage(error, 'Unable to open salary record from the dispute.');
-        toast({
-          title: 'Unable to open salary record',
-          description: message,
-          variant: 'destructive'
-        });
-      }
-    },
-    [cycles, handleOpenProcessingDrawer, loadCycleDetails]
   );
 
   useEffect(() => {

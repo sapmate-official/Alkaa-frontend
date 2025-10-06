@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import { CheckCircle2, XCircle, Clock, ArrowRight, Loader2, Circle } from 'lucide-react'
+import { CheckCircle2, XCircle, ArrowRight, Loader2, Circle } from 'lucide-react'
 import { PipelineStepDefinition, StepStatus } from '../PayrollPipelinePage'
 
 interface PipelineVisualizationProps {
