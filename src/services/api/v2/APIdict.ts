@@ -100,6 +100,26 @@ export const APIDictionary = {
     relationshipWithUser: (targetUserId: string) => `${backendDomain}/api/v2/relationship/user/${targetUserId}`,
     relationshipOrganization: `${backendDomain}/api/v2/relationship/organization`,
 
+    shift: {
+        templates: {
+            list: (orgId: string) => `${backendDomain}/api/v2/shift/templates/org/${orgId}`,
+            create: `${backendDomain}/api/v2/shift/templates`,
+            update: (id: string) => `${backendDomain}/api/v2/shift/templates/${id}`,
+            remove: (id: string) => `${backendDomain}/api/v2/shift/templates/${id}`
+        },
+        rules: {
+            list: (orgId: string) => `${backendDomain}/api/v2/shift/rules/org/${orgId}`,
+            createBreak: `${backendDomain}/api/v2/shift/rules/break`,
+            createAttendance: `${backendDomain}/api/v2/shift/rules/attendance`,
+            createOvertime: `${backendDomain}/api/v2/shift/rules/overtime`
+        },
+        employee: {
+            current: (userId: string) => `${backendDomain}/api/v2/shift/employee/${userId}`,
+            assign: (userId: string) => `${backendDomain}/api/v2/shift/employee/${userId}`,
+            updateAssignment: (assignmentId: string) => `${backendDomain}/api/v2/shift/employee/assignment/${assignmentId}`
+        }
+    },
+
     // Additional Leave Management Endpoints
     leave_request_user: (userId: string) => `${backendDomain}/api/v2/leave-request/user/${userId}`,
     leave_request_manager: (userId: string) => `${backendDomain}/api/v2/leave-request/manager/${userId}`,

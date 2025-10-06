@@ -17,6 +17,7 @@ import AttendanceRulesManager from '@/components/attendance/rules/AttendanceRule
 import GeofencingManagement from '@/components/attendance/geofencing/GeofencingManagement'
 import AttendanceSimulation from '@/components/attendance/simulation/AttendanceSimulation'
 import { cn } from '@/lib/utils'
+import ShiftManagement from './components/ShiftManagement'
 
 const OrganizationSettings = () => {
     const { user } = useAuth()
@@ -326,6 +327,21 @@ const OrganizationSettings = () => {
                                                 </div>
                                             ))}
                                         </div>
+                                    </CardContent>
+                                </Card>
+
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2">
+                                            <Clock className="h-5 w-5" />
+                                            Shift Management
+                                        </CardTitle>
+                                        <CardDescription>
+                                            Create and maintain reusable shift templates for onboarding and employee management.
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-6">
+                                        <ShiftManagement orgId={orgId} canManage={hasManagePermission} showHeader={false} />
                                     </CardContent>
                                 </Card>
                                 

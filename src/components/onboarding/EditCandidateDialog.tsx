@@ -40,9 +40,12 @@ import {
   CreditCard,
   Building2,
   FileText,
-  DollarSign
+  DollarSign,
+  Layers,
+  CalendarClock
 } from 'lucide-react';
 import { useCandidate, useDepartments, useUpdateCandidate } from '@/hooks/queries/useOnboarding';
+import { useShiftTemplates } from '@/hooks/queries/useShiftManagement';
 
 const editCandidateSchema = z.object({
   // Basic Information
@@ -55,6 +58,8 @@ const editCandidateSchema = z.object({
   departmentId: z.string().transform(val => val === '' ? 'none' : val).optional(),
   annualPackage: z.number().min(0, 'Annual package must be positive').optional(),
   hiredDate: z.string().optional(),
+  shiftTemplateId: z.string().optional(),
+  shiftEffectiveDate: z.string().optional(),
   
   // Personal Information (from form data)
   emergencyContact: z.string().optional(),
@@ -68,7 +73,17 @@ const editCandidateSchema = z.object({
   bankIFSC: z.string().optional(),
   bankName: z.string().optional(),
   accountHolderName: z.string().optional(),
+}).refine((data) => {
+  if (data.shiftTemplateId) {
+    return !!data.shiftEffectiveDate
+  }
+  return true
+}, {
+  message: 'Select an effective date for the assigned shift',
+  path: ['shiftEffectiveDate']
 });
+
+const NO_SHIFT_TEMPLATE_OPTION = '__no_shift__';
 
 interface EditCandidateDialogProps {
   candidateId: string;
@@ -86,6 +101,7 @@ const EditCandidateDialog = ({ candidateId, isOpen, onClose, onSuccess }: EditCa
   const { data: candidate, isLoading: candidateLoading } = useCandidate(candidateId);
   const { data: departments } = useDepartments(user?.orgId || '');
   const updateCandidateMutation = useUpdateCandidate();
+  const { data: shiftTemplates = [], isLoading: shiftTemplatesLoading } = useShiftTemplates(user?.orgId, !!user?.orgId);
 
   const form = useForm({
     resolver: zodResolver(editCandidateSchema),
@@ -97,6 +113,8 @@ const EditCandidateDialog = ({ candidateId, isOpen, onClose, onSuccess }: EditCa
       departmentId: 'none',
       annualPackage: 0,
       hiredDate: '',
+  shiftTemplateId: '',
+  shiftEffectiveDate: '',
       emergencyContact: '',
       dateOfBirth: '',
       address: '',
@@ -109,6 +127,23 @@ const EditCandidateDialog = ({ candidateId, isOpen, onClose, onSuccess }: EditCa
     },
   });
 
+  const selectedShiftTemplateId = form.watch('shiftTemplateId');
+  const hiredDateValue = form.watch('hiredDate');
+
+  useEffect(() => {
+    if (!selectedShiftTemplateId) {
+      if (form.getValues('shiftEffectiveDate')) {
+        form.setValue('shiftEffectiveDate', '');
+      }
+      return;
+    }
+
+    const currentEffective = form.getValues('shiftEffectiveDate');
+    if (!currentEffective && hiredDateValue) {
+      form.setValue('shiftEffectiveDate', hiredDateValue);
+    }
+  }, [selectedShiftTemplateId, hiredDateValue, form]);
+
   useEffect(() => {
     if (isOpen && candidate) {
       // Populate form with candidate data
@@ -120,6 +155,8 @@ const EditCandidateDialog = ({ candidateId, isOpen, onClose, onSuccess }: EditCa
         departmentId: candidate.departmentId || 'none',
         annualPackage: candidate.annualPackage || 0,
         hiredDate: candidate.hiredDate || '',
+  shiftTemplateId: candidate.shiftTemplateId || '',
+  shiftEffectiveDate: candidate.shiftEffectiveDate ? candidate.shiftEffectiveDate.split('T')[0] : '',
         emergencyContact: candidate.emergencyContact || '',
         dateOfBirth: candidate.dateOfBirth || '',
         address: candidate.address || '',
@@ -139,7 +176,12 @@ const EditCandidateDialog = ({ candidateId, isOpen, onClose, onSuccess }: EditCa
   const onSubmit = async (data: any) => {
     try {
       setSaving(true);
-      await updateCandidateMutation.mutateAsync({ id: candidateId, data });
+      const payload = {
+        ...data,
+        shiftTemplateId: data.shiftTemplateId || undefined,
+        shiftEffectiveDate: data.shiftTemplateId ? data.shiftEffectiveDate || undefined : undefined,
+      };
+      await updateCandidateMutation.mutateAsync({ id: candidateId, data: payload });
 
       toast({
         title: 'Success',
@@ -359,6 +401,67 @@ const EditCandidateDialog = ({ candidateId, isOpen, onClose, onSuccess }: EditCa
                       </FormItem>
                     )}
                   />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                  <FormField
+                    control={form.control}
+                    name="shiftTemplateId"
+                    render={({ field }) => {
+                      const value = field.value || NO_SHIFT_TEMPLATE_OPTION
+                      return (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <Layers className="h-4 w-4" />
+                            Shift Template
+                          </FormLabel>
+                          <Select
+                            value={value}
+                            onValueChange={(val) => field.onChange(val === NO_SHIFT_TEMPLATE_OPTION ? '' : val)}
+                            disabled={shiftTemplatesLoading}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder={shiftTemplatesLoading ? 'Loading shift templates...' : 'Select shift template'} />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value={NO_SHIFT_TEMPLATE_OPTION}>No shift assignment</SelectItem>
+                              {shiftTemplates.map((template) => (
+                                <SelectItem key={template.id} value={template.id}>
+                                  {template.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {!shiftTemplatesLoading && shiftTemplates.length === 0 && (
+                            <FormDescription>No shift templates available for this organization.</FormDescription>
+                          )}
+                          <FormMessage />
+                        </FormItem>
+                      )
+                    }}
+                  />
+
+                  {selectedShiftTemplateId && (
+                    <FormField
+                      control={form.control}
+                      name="shiftEffectiveDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <CalendarClock className="h-4 w-4" />
+                            Shift Effective Date
+                          </FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormDescription>Defaults to hired date if left blank.</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                 </div>
               </CardContent>
             </Card>
