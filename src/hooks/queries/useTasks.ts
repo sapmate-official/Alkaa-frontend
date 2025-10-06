@@ -397,14 +397,35 @@ export function useUpdateTask() {
     mutationFn: ({ id, data }: { id: string; data: UpdateTaskRequest }) =>
       tasksApi.updateTask(id, data),
     onSuccess: (updatedTask, { id }) => {
-      queryClient.invalidateQueries({ queryKey: taskKeys.detail(id) })
+      // Update the specific task in cache
+      queryClient.setQueryData(taskKeys.detail(id), updatedTask)
+      
+      // Invalidate all related queries
       queryClient.invalidateQueries({ queryKey: taskKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: taskKeys.managerTasks(updatedTask.createdById) })
+      
       if (updatedTask.groupId) {
         queryClient.invalidateQueries({ queryKey: taskKeys.groupTasks(updatedTask.groupId) })
       }
+      
       // Invalidate user tasks for all assignees
-      updatedTask.assignments.forEach(assignment => {
-        queryClient.invalidateQueries({ queryKey: taskKeys.userTasks(assignment.assignedToId) })
+      if (updatedTask.assignments && Array.isArray(updatedTask.assignments)) {
+        updatedTask.assignments.forEach(assignment => {
+          queryClient.invalidateQueries({ queryKey: taskKeys.userTasks(assignment.assignedToId) })
+        })
+      }
+      
+      // Update user tasks query data directly for immediate UI update
+      updatedTask.assignments?.forEach(assignment => {
+        queryClient.setQueryData(
+          taskKeys.userTasks(assignment.assignedToId),
+          (oldTasks: Task[] | undefined) => {
+            if (!oldTasks) return oldTasks
+            return oldTasks.map(task => 
+              task.id === id ? updatedTask : task
+            )
+          }
+        )
       })
     },
   })

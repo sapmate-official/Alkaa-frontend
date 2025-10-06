@@ -120,10 +120,15 @@ const EmployeeView = () => {
     try {
       setUpdatingTaskId(taskId);
       
-      await updateTaskMutation.mutateAsync({
+      const updatedTask = await updateTaskMutation.mutateAsync({
         id: taskId,
         data: { status: newStatus }
       });
+      
+      // Update selected task if it's the one being updated
+      if (selectedTask?.id === taskId) {
+        setSelectedTask(updatedTask);
+      }
       
       toast({
         title: "Success",
@@ -224,9 +229,9 @@ const EmployeeView = () => {
 
   return (
     <div className="h-full flex flex-col w-full min-h-0 overflow-hidden">
-      {/* Header Stats */}
+      {/* Header */}
       <div className="p-2 sm:p-4 border-b flex-shrink-0">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between">
           <h1 className="text-lg sm:text-xl font-semibold">My Tasks</h1>
           {canAccessDashboard && (
             <Button
@@ -240,41 +245,6 @@ const EmployeeView = () => {
             </Button>
           )}
         </div>
-        
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-4">
-          <Card>
-            <CardContent className="p-2 sm:p-4">
-              <div className="text-center">
-                <div className="text-lg sm:text-2xl font-bold text-orange-600">{stats.pending}</div>
-                <div className="text-xs sm:text-sm text-muted-foreground">Pending</div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-2 sm:p-4">
-              <div className="text-center">
-                <div className="text-lg sm:text-2xl font-bold text-blue-600">{stats.inProgress}</div>
-                <div className="text-xs sm:text-sm text-muted-foreground">In Progress</div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-2 sm:p-4">
-              <div className="text-center">
-                <div className="text-lg sm:text-2xl font-bold text-green-600">{stats.completed}</div>
-                <div className="text-xs sm:text-sm text-muted-foreground">Completed</div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-2 sm:p-4">
-              <div className="text-center">
-                <div className="text-lg sm:text-2xl font-bold text-red-600">{stats.overdue}</div>
-                <div className="text-xs sm:text-sm text-muted-foreground">Overdue</div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
 
       <div className="flex-1 flex min-h-0 relative">
@@ -285,7 +255,27 @@ const EmployeeView = () => {
             : 'flex'
         } w-full lg:w-1/3 border-r border-border flex-col min-h-0`}>
           <div className="p-2 sm:p-4 border-b flex-shrink-0">
-            <h2 className="text-base sm:text-lg font-semibold mb-4">My Tasks</h2>
+            <div className="mb-4">
+              <h2 className="text-base sm:text-lg font-semibold mb-2">Overview</h2>
+              <div className="flex justify-around text-center text-xs sm:text-sm">
+                <div>
+                  <div className="font-bold text-orange-600">{stats.pending}</div>
+                  <div className="text-muted-foreground">Pending</div>
+                </div>
+                <div>
+                  <div className="font-bold text-blue-600">{stats.inProgress}</div>
+                  <div className="text-muted-foreground">In Progress</div>
+                </div>
+                <div>
+                  <div className="font-bold text-green-600">{stats.completed}</div>
+                  <div className="text-muted-foreground">Completed</div>
+                </div>
+                <div>
+                  <div className="font-bold text-red-600">{stats.overdue}</div>
+                  <div className="text-muted-foreground">Overdue</div>
+                </div>
+              </div>
+            </div>
             
             <div className="space-y-3">
               <div className="relative">
@@ -441,7 +431,7 @@ const EmployeeView = () => {
 
               <div className="flex-1 flex flex-col min-h-0">
                 {/* Task Details */}
-                <div className="flex-shrink-0 p-2 sm:p-4 border-b max-h-60 sm:max-h-80 overflow-y-auto custom-scrollbar mobile-scroll-momentum">
+                <div className="flex-shrink-0 p-2 sm:p-4 border-b overflow-y-auto custom-scrollbar mobile-scroll-momentum">
                   <Card>
                     <CardHeader className="pb-2 sm:pb-4">
                       <CardTitle className="text-sm sm:text-base">Task Details</CardTitle>
@@ -524,6 +514,7 @@ const EmployeeView = () => {
                               </div>
                             </div>
                           ))}
+
                           <div ref={messagesEndRef} />
                         </div>
                       )}
@@ -586,3 +577,4 @@ const EmployeeView = () => {
 };
 
 export default EmployeeView;
+
