@@ -1,8 +1,18 @@
 import { lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
-// Lazy load payroll components - using existing components
+// Lazy load payroll components
 const DashboardOfPayroll = lazy(() => import('./DashboardOfPayroll'));
+const PayrollWorkflowDashboard = lazy(() => import('./PayrollWorkflowDashboard'));
+const PayrollAdminDashboard = lazy(() => import('./AdminLevel/PayrollAdminDashboard'));
+const PayrollPipelinePage = lazy(() => import('./AdminLevel/PayrollPipelinePage'));
+const SalaryTemplateEditor = lazy(() => import('./AdminLevel/SalaryTemplateEditor'));
+const EmployeeSelfServicePortal = lazy(() => import('./EmployeeLevel/EmployeeSelfServicePortal'));
+const ManagerReviewDashboard = lazy(() => import('./ManagerLevel/ManagerReviewDashboard'));
+const OrganizationPayslipHistory = lazy(() => import('./AdminLevel/EmployeePortal/OrganizationPayslipHistory'));
+const OrganizationTaxSummaries = lazy(() => import('./AdminLevel/Reporting/OrganizationTaxSummaries'));
+
+// Legacy components
 const MainCompOfViewPayslipOfAllSubordinatesPayroll = lazy(() => import('./ManagerLevel/ViewPayslipOfAllSubordinatesPayroll/MainCompOfViewPayslipOfAllSubordinatesPayroll'));
 const MainGenerateSubordinateSalaryPage = lazy(() => import('./ManagerLevel/GenerateSalary/MainGenerateSubordinateSalaryPage'));
 const MainSubordinateSalaryTransactionPage = lazy(() => import('./ManagerLevel/Salarytransaction/MainSubordinateSalaryTransactionPage'));
@@ -11,59 +21,66 @@ const MainCompOfViewPayslipOfAllUsersPayroll = lazy(() => import('./AdminLevel/V
 const MainAllUsersSalaryTransactionPage = lazy(() => import('./AdminLevel/Salarytransaction/MainSalaryUsersTransactionPage'));
 
 /**
- * PayrollModule - Restructured to align with RouteDict for better maintainability
+ * PayrollModule - Comprehensive payroll management system with workflow-based approach
  * 
- * Route Structure (from RouteDict.Payroll):
- * - /p/payroll/dashboard - Main dashboard
- * - /p/payroll/dashboard-users - Dashboard for users view
- * - /p/payroll/generate - Generate payroll
- * - /p/payroll/salary-transaction - Salary transactions
- * - /p/payroll/view-all-employees - View all employees payroll
- * - /p/payroll/view-employee/:id - View specific employee payroll
- * - /p/payroll/view-own - View own payroll
- * - /p/payroll/new-version - New version features
- * - /p/payroll/admin-transaction - Admin transactions
- * - /p/payroll/admin-payslip - Admin payslip management
- * - /p/payroll/subordinate-transaction - Manager level transactions
+ * Route Structure:
+ * - /p/payroll/dashboard - Legacy dashboard
+ * - /p/payroll/workflow - New comprehensive workflow dashboard
+ * - /p/payroll/admin - Admin-specific features
+ * - /p/payroll/manager - Manager-specific features  
+ * - /p/payroll/employee - Employee self-service
+ * - Legacy routes maintained for backward compatibility
  */
 const PayrollModule = () => {
   return (
     <Routes>
-      {/* Base payroll route - redirect to dashboard as per RouteDict structure */}
-      <Route index element={<Navigate to="dashboard" replace />} />
+      {/* Base payroll route - redirect to new workflow dashboard */}
+      <Route index element={<Navigate to="workflow" replace />} />
       
-      {/* Main Dashboard Routes - Aligned with RouteDict.Payroll.Dashboard */}
+      {/* New Comprehensive Workflow Dashboard */}
+      <Route path="workflow" element={<PayrollWorkflowDashboard />} />
+      
+      {/* Role-based Dashboards */}
+      <Route path="admin" element={<PayrollAdminDashboard />} />
+      <Route path="admin/pipeline" element={<PayrollPipelinePage />} />
+      <Route path="admin/templates" element={<SalaryTemplateEditor />} />
+      <Route path="admin/payslip-history" element={<OrganizationPayslipHistory />} />
+      <Route path="admin/tax-summaries" element={<OrganizationTaxSummaries />} />
+      <Route path="manager" element={<ManagerReviewDashboard />} />
+      <Route path="employee" element={<EmployeeSelfServicePortal />} />
+      
+      {/* Legacy Dashboard Routes - Maintained for backward compatibility */}
       <Route path="dashboard" element={<DashboardOfPayroll />} />
-      <Route path="dashboard-users" element={<DashboardOfPayroll />} /> {/* Reusing dashboard for now */}
+      <Route path="dashboard-users" element={<DashboardOfPayroll />} />
       
-      {/* Generate Payroll - Aligned with RouteDict.Payroll.Generate */}
+      {/* Generate Payroll Routes */}
       <Route path="generate" element={<MainGenerateUsersSalaryPage />} />
       
-      {/* Salary Transaction - Aligned with RouteDict.Payroll.SalaryTransaction */}
+      {/* Transaction Routes */}
       <Route path="salary-transaction" element={<MainAllUsersSalaryTransactionPage />} />
       
-      {/* View Routes - Aligned with RouteDict.Payroll view routes */}
+      {/* View Routes */}
       <Route path="view-all-employees" element={<MainCompOfViewPayslipOfAllUsersPayroll />} />
-      <Route path="view-employee/:id" element={<MainCompOfViewPayslipOfAllUsersPayroll />} /> {/* Parameterized route */}
+      <Route path="view-employee/:id" element={<MainCompOfViewPayslipOfAllUsersPayroll />} />
       <Route path="view-own" element={<MainCompOfViewPayslipOfAllUsersPayroll />} />
       
-      {/* New Version - Aligned with RouteDict.Payroll.NewVersion */}
-      <Route path="new-version" element={<DashboardOfPayroll />} /> {/* Placeholder for new features */}
-      
-      {/* Admin Level Routes - Aligned with RouteDict.Payroll.Admin */}
+      {/* Admin Level Routes */}
       <Route path="admin-transaction" element={<MainAllUsersSalaryTransactionPage />} />
       <Route path="admin-payslip" element={<MainCompOfViewPayslipOfAllUsersPayroll />} />
       
-      {/* Manager Level Routes - Aligned with RouteDict.Payroll.Manager */}
+      {/* Manager Level Routes */}
       <Route path="subordinate-transaction" element={<MainSubordinateSalaryTransactionPage />} />
-      
-      {/* Legacy Routes - Maintaining backward compatibility */}
       <Route path="subordinate/payslip" element={<MainCompOfViewPayslipOfAllSubordinatesPayroll />} />
       <Route path="subordinate/generate" element={<MainGenerateSubordinateSalaryPage />} />
       <Route path="subordinate/transaction" element={<MainSubordinateSalaryTransactionPage />} />
+      
+      {/* Additional Admin Routes */}
       <Route path="admin/payslip" element={<MainCompOfViewPayslipOfAllUsersPayroll />} />
       <Route path="admin/generate" element={<MainGenerateUsersSalaryPage />} />
       <Route path="admin/transaction" element={<MainAllUsersSalaryTransactionPage />} />
+      
+      {/* New Version Routes */}
+      <Route path="new-version" element={<PayrollWorkflowDashboard />} />
     </Routes>
   );
 };

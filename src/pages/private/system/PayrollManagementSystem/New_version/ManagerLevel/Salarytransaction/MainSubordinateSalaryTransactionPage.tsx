@@ -102,7 +102,7 @@ interface SalaryReport {
 }
 
 interface BankDetails {
-  accountHolder: string;
+  accountHolderName: string;
   accountNumber: string;
   ifscCode: string;
   bankName: string;
@@ -1144,12 +1144,12 @@ const MainSubordinateSalaryTransactionPage: React.FC = () => {
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <p className="text-muted-foreground">Account Holder:</p>
                       <div className="flex items-center justify-between">
-                        <p className="font-medium">{bankDetails.accountHolder}</p>
+                        <p className="font-medium">{bankDetails.accountHolderName}</p>
                         <Button 
                           variant="ghost" 
                           size="sm"
                           className="h-6 w-6 p-0"
-                          onClick={() => copyToClipboard(bankDetails.accountHolder, "Account holder name")}
+                          onClick={() => copyToClipboard(bankDetails.accountHolderName, "Account holder name")}
                         >
                           <ClipboardCopy className="h-3.5 w-3.5" />
                         </Button>

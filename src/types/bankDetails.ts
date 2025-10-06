@@ -1,5 +1,5 @@
 export interface IBankDetails {
-    accountHolder: string;
+    accountHolderName: string;
     accountNumber: string;
     ifscCode: string;
     bankName: string;

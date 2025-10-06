@@ -1,11 +1,13 @@
 import { userIdAtom } from "../store/atom";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import { useAtom } from "jotai";
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { User } from "../types/general";
 import { backendDomain } from "../constants/Domain";
 import { useNavigate } from "react-router-dom";
 import Loader from "@/components/Loader";
+
+axios.defaults.withCredentials = true;
 
 interface Organization {
     orgId: string;
@@ -25,13 +27,17 @@ interface AuthContextType {
     authStep: AuthStep;
     logout: () => void;
     reinitializeAuth: () => void;
-    signIn: (email: string, password: string) => Promise<string | undefined>;
-    // New multi-tenant auth methods
-    checkEmail: (email: string) => Promise<{ singleOrganization?: boolean; multipleOrganizations?: boolean; organizations?: Organization[]; organization?: Organization }>;
-    verifyPassword: (email: string, password: string, orgId?: string) => Promise<{ sessionToken: string; organizationName: string; otpExpiresIn: number }>;
-    verifyOtp: (sessionToken: string, otpCode: string) => Promise<void>;
-    selectOrganization: (organization: Organization, email: string) => void;
+    // Enhanced Multi-tenant + 2FA auth methods (UNIFIED - CORRECTED)
+    discoverOrganizations: (email: string) => Promise<{ organizations?: Organization[]; message: string; requiresPasswordReset?: boolean; singleInactiveOrganization?: any }>;
+    verifyCredentials: (email: string, password: string, orgId: string) => Promise<{ requiresOTP?: boolean; sessionToken?: string; organizationName?: string; requiresPasswordReset?: boolean; message?: string }>;
+    requestOtp: (sessionToken: string) => Promise<{ expiresIn: number }>;
+    verifyLoginOtp: (sessionToken: string, otp: string) => Promise<void>;
+    resendOtp: (sessionToken: string) => Promise<{ expiresIn: number }>;
     resetAuthFlow: () => void;
+    progressToPasswordStep: () => void;
+    // Inactive user password reset methods
+    requestResetOtp: (email: string, orgId: string) => Promise<{ expiresIn: number; maskedEmail: string }>;
+    verifyResetOtp: (email: string, orgId: string, otp: string) => Promise<{ verificationToken: string; userDetails: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -164,7 +170,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 throw new Error("Token expired");
             }
 
-            const response = await axios.get(`${backendDomain}/api/v1/general/validate-token`);
+            const response = await axios.get(`${backendDomain}/api/v1/auth/validate-token`);
             
             if (response.status === 200 && response.data.user) {
                 setUser(response.data.user);
@@ -232,108 +238,203 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
     };
     
-    const signIn = async (email: string, password: string) => {
-        try {
-            const response = await axios.post(
-                `${backendDomain}/api/v1/general/login`, 
-                { email, password }
-            );
-            
-            if (response.status === 200) {
-                if (response.data.accessToken && response.data.refreshToken) {
-                    tokenStorage.setAccessToken(response.data.accessToken);
-                    tokenStorage.setRefreshToken(response.data.refreshToken);
-                    await validateToken();
-                    return undefined; // No error
-                }
-                throw new Error("No tokens received");
-            }
-        } catch (error) {
-            if (axios.isAxiosError(error)) {
-                const axiosError = error as AxiosError;
-                if (axiosError.response?.status === 401) {
-                    return (axiosError?.response?.data as { message: string })?.message || 
-                           "Invalid email or password";
-                }
-                return "Unexpected login error";
-            }
-            return "Login failed";
-        }
+
+
+
+
+    const resetAuthFlow = () => {
+        setAuthStep({ step: 'email' });
     };
 
-    // New multi-tenant authentication methods
-    const checkEmail = async (email: string) => {
+    const progressToPasswordStep = () => {
+        setAuthStep({ step: 'password' });
+    };
+
+    // Enhanced Multi-tenant + 2FA authentication methods (CORRECTED)
+    const discoverOrganizations = async (email: string) => {
         try {
-            const response = await axios.post(`${backendDomain}/api/v1/general/check-email`, { email });
+            const response = await axios.post(`${backendDomain}/api/v1/auth/discover-organizations`, {
+                email
+            });
             
-            if (response.data.singleOrganization) {
-                setAuthStep({ 
-                    step: 'password', 
-                    data: { 
-                        email, 
-                        organization: response.data.organization 
-                    } 
-                });
-                return { singleOrganization: true, organization: response.data.organization };
-            } else if (response.data.multipleOrganizations) {
-                setAuthStep({ 
-                    step: 'organization', 
-                    data: { 
-                        email, 
-                        organizations: response.data.organizations 
-                    } 
-                });
-                return { 
-                    multipleOrganizations: true, 
-                    organizations: response.data.organizations 
+            if (response.data.requiresPasswordReset && response.data.singleInactiveOrganization) {
+                // Single inactive organization - initiate reset flow immediately
+                return {
+                    requiresPasswordReset: true,
+                    singleInactiveOrganization: response.data.singleInactiveOrganization,
+                    message: response.data.message
                 };
             }
             
-            throw new Error('Invalid response from server');
-        } catch (error) {
-            console.log(error);
+            if (response.data.organizations) {
+                if (response.data.organizations.length === 1) {
+                    // Single organization - automatically set and progress to password
+                    setAuthStep({ 
+                        step: 'password', 
+                        data: { 
+                            email, 
+                            selectedOrganization: response.data.organizations[0]
+                        } 
+                    });
+                } else {
+                    // Multiple organizations - show selection
+                    setAuthStep({ 
+                        step: 'organization', 
+                        data: { 
+                            email, 
+                            organizations: response.data.organizations 
+                        } 
+                    });
+                }
+                
+                return {
+                    organizations: response.data.organizations,
+                    message: response.data.message
+                };
+            }
             
+            throw new Error('No organizations found');
+        } catch (error) {
             if (axios.isAxiosError(error)) {
-                throw new Error(error.response?.data?.message || 'Failed to check email');
+                throw new Error(error.response?.data?.message || 'Failed to find organizations');
             }
             throw error;
         }
     };
 
-    const verifyPassword = async (email: string, password: string, orgId?: string) => {
+    const requestResetOtp = async (email: string, orgId: string) => {
         try {
-            const response = await axios.post(`${backendDomain}/api/v1/general/verify-password`, {
+            const response = await axios.post(`${backendDomain}/api/v1/auth/request-reset-otp`, {
+                email,
+                orgId
+            });
+            
+            return {
+                expiresIn: response.data.expiresIn || 600,
+                maskedEmail: response.data.maskedEmail
+            };
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                throw new Error(error.response?.data?.message || 'Failed to request reset OTP');
+            }
+            throw error;
+        }
+    };
+
+    const verifyResetOtp = async (email: string, orgId: string, otp: string) => {
+        try {
+            const response = await axios.post(`${backendDomain}/api/v1/auth/verify-reset-otp`, {
+                email,
+                orgId,
+                otp
+            });
+            
+            return {
+                verificationToken: response.data.verificationToken,
+                userDetails: response.data.userDetails
+            };
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                throw new Error(error.response?.data?.message || 'Failed to verify reset OTP');
+            }
+            throw error;
+        }
+    };
+
+    const verifyCredentials = async (email: string, password: string, orgId: string) => {
+        try {
+            const response = await axios.post(`${backendDomain}/api/v1/auth/verify-credentials`, {
                 email,
                 password,
                 orgId
             });
             
-            setAuthStep({ 
-                step: 'otp', 
-                data: { 
+            if (response.data.requiresOTP) {
+                setAuthStep({ 
+                    step: 'otp', 
+                    data: { 
+                        sessionToken: response.data.sessionToken,
+                        organizationName: response.data.organizationName
+                    } 
+                });
+                return {
+                    requiresOTP: true,
                     sessionToken: response.data.sessionToken,
                     organizationName: response.data.organizationName
-                } 
-            });
-            
-            return {
-                sessionToken: response.data.sessionToken,
-                organizationName: response.data.organizationName,
-                otpExpiresIn: response.data.otpExpiresIn
-            };
+                };
+            } else {
+                // Login completed without 2FA
+                if (response.data.accessToken && response.data.refreshToken) {
+                    tokenStorage.setAccessToken(response.data.accessToken);
+                    tokenStorage.setRefreshToken(response.data.refreshToken);
+                    
+                    // Store organization context
+                    if (response.data.user.orgId && response.data.organization?.name) {
+                        tokenStorage.setOrgData(response.data.user.orgId, response.data.organization.name);
+                    }
+                    
+                    await validateToken();
+                    setAuthStep({ step: 'complete' });
+                }
+                return { requiresOTP: false };
+            }
         } catch (error) {
             if (axios.isAxiosError(error)) {
-                throw new Error(error.response?.data?.message || 'Failed to verify password');
+                // Check if it's an inactive user error that requires password reset
+                if (error.response?.status === 403 && 
+                    error.response?.data?.error === 'ACCOUNT_INACTIVE' && 
+                    error.response?.data?.requiresPasswordReset) {
+                    
+                    const { verificationToken, userDetails } = error.response.data;
+                    
+                    // Navigate to password reset page with the token
+                    navigate(`/reset-password/${verificationToken}`, { 
+                        replace: true,
+                        state: { 
+                            userEmail: userDetails.email,
+                            userName: userDetails.firstName,
+                            orgName: userDetails.orgName,
+                            isInactiveUserReset: true
+                        }
+                    });
+                    
+                    // Reset auth flow after navigation
+                    setAuthStep({ step: 'email' });
+                    
+                    return {
+                        requiresPasswordReset: true,
+                        message: error.response.data.message
+                    };
+                }
+                
+                throw new Error(error.response?.data?.message || 'Failed to verify credentials');
             }
             throw error;
         }
     };
 
-    const verifyOtp = async (sessionToken: string, otpCode: string) => {
+    const requestOtp = async (sessionToken: string) => {
         try {
-            const response = await axios.post(`${backendDomain}/api/v1/general/verify-otp`, {
+            const response = await axios.post(`${backendDomain}/api/v1/auth/request-otp`, {
+                sessionToken
+            });
+            
+            return {
+                expiresIn: response.data.expiresIn || 600
+            };
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                throw new Error(error.response?.data?.message || 'Failed to request OTP');
+            }
+            throw error;
+        }
+    };
+
+    const verifyLoginOtp = async (sessionToken: string, otp: string) => {
+        try {
+            const response = await axios.post(`${backendDomain}/api/v1/auth/verify-login-otp`, {
                 sessionToken,
-                otpCode
+                otp
             });
             
             if (response.data.accessToken && response.data.refreshToken) {
@@ -341,8 +442,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 tokenStorage.setRefreshToken(response.data.refreshToken);
                 
                 // Store organization context
-                if (response.data.userData.orgId && response.data.userData.orgName) {
-                    tokenStorage.setOrgData(response.data.userData.orgId, response.data.userData.orgName);
+                if (response.data.userData.orgId && response.data.organization?.name) {
+                    tokenStorage.setOrgData(response.data.userData.orgId, response.data.organization.name);
                 }
                 
                 await validateToken();
@@ -358,18 +459,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
     };
 
-    const selectOrganization = (organization: Organization, email: string) => {
-        setAuthStep({ 
-            step: 'password', 
-            data: { 
-                email, 
-                organization 
-            } 
-        });
-    };
-
-    const resetAuthFlow = () => {
-        setAuthStep({ step: 'email' });
+    const resendOtp = async (sessionToken: string) => {
+        try {
+            const response = await axios.post(`${backendDomain}/api/v1/auth/resend-otp`, {
+                sessionToken
+            });
+            
+            return {
+                expiresIn: response.data.expiresIn || 600
+            };
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                throw new Error(error.response?.data?.message || 'Failed to resend OTP');
+            }
+            throw error;
+        }
     };
 
     useEffect(() => {
@@ -420,12 +524,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         authStep,
         logout,
         reinitializeAuth: initializeAuth,
-        signIn,
-        checkEmail,
-        verifyPassword,
-        verifyOtp,
-        selectOrganization,
-        resetAuthFlow
+        // Enhanced Multi-tenant + 2FA methods (CORRECTED)
+        discoverOrganizations,
+        verifyCredentials,
+        requestOtp,
+        verifyLoginOtp,
+        resendOtp,
+        resetAuthFlow,
+        progressToPasswordStep,
+        // Inactive user password reset methods
+        requestResetOtp,
+        verifyResetOtp
     };
     
     if (!isInitialized) {

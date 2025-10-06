@@ -1,3 +1,5 @@
+import type { EmployeeShift, ShiftTemplate } from './shift'
+
 export interface SuperAdmin {
   id: string;
   email: string;
@@ -134,6 +136,7 @@ export interface User {
   sentTransactions: TransactionTable[];
   receivedTransactions: TransactionTable[];
   organizationAdmin: OrganizationAdmin[];
+  employeeShifts?: EmployeeShift[];
 }
 
 export interface UserRole {
@@ -148,7 +151,7 @@ export interface UserRole {
 export interface BankDetails {
   id: string;
   userId: string;
-  accountHolder: string;
+  accountHolderName: string;
   accountNumber: string;
   ifscCode: string;
   bankName: string;
@@ -636,8 +639,11 @@ export interface OnboardingCandidate {
   hiredDate?: string;
   annualPackage?: number;
   monthlySalary?: number;
+  salaryTemplateId?: string;
   departmentId?: string;
   managerId?: string;
+  shiftTemplateId?: string;
+  shiftEffectiveDate?: string;
   status: OnboardingStatus;
   invitedAt?: Date;
   formSubmittedAt?: Date;
@@ -660,6 +666,7 @@ export interface OnboardingCandidate {
   manager?: User;
   createdBy?: User;
   reviewedBy?: User;
+  shiftTemplate?: ShiftTemplate;
 }
 
 // Relationship API Interfaces

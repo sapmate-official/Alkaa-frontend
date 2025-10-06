@@ -34,7 +34,7 @@ import { useAtom } from 'jotai';
 import { permissionListAtom } from '@/store/atom';
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Clock, MapPin, Laptop, Calendar, UserCheck, ClipboardList, CheckCircle, XCircle, Layers, History } from "lucide-react";
+import { Clock, MapPin, Laptop, Calendar, UserCheck, ClipboardList, CheckCircle, XCircle, Layers, History, Activity as ActivityIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import LazyLocationViewer from '@/components/LazyLocationViewer';
 import RouteDict from '@/routes/RouteDict';
@@ -454,14 +454,24 @@ const AttendancePanel = () => {
           )}
 
           {(canViewOwnAttendance || canViewOthersAttendance) && (
-            <Button
-              onClick={() => router(RouteDict.Attendance.History)}
-              variant="outline"
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <History className="mr-2 h-4 w-4" />
-              History
-            </Button>
+            <>
+              <Button
+                onClick={() => router(RouteDict.Attendance.Activity)}
+                variant="outline"
+                className="bg-slate-700 hover:bg-slate-800 text-white"
+              >
+                <ActivityIcon className="mr-2 h-4 w-4" />
+                Activity
+              </Button>
+              <Button
+                onClick={() => router(RouteDict.Attendance.History)}
+                variant="outline"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <History className="mr-2 h-4 w-4" />
+                History
+              </Button>
+            </>
           )}
         </div>
       </div>

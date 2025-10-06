@@ -98,17 +98,25 @@ export const usePayslipPDF = (): UsePayslipPDFReturn => {
         return transformStatisticsToPayslipData(fallbackResponse.data.data);
       }
 
-      // If PDF data endpoint succeeded, the data should already be in the correct format
-      const pdfData = response.data.data;
-      
-      // Validate that the data has the expected structure for PayslipData
-      if (pdfData && typeof pdfData === 'object' && pdfData.employee && pdfData.company) {
-        return pdfData as PayslipData;
-      } else {
-        // If not in expected format, transform it using existing logic
-        console.warn('PDF data not in expected format, transforming...');
-        return transformStatisticsToPayslipData(pdfData);
-      }
+      // Transform the backend response to match our PayslipData interface
+      const statistics = response.data.data;
+      const effectiveWorkingDays = statistics.attendanceAnalysis.workingDays || 0;
+      const basicRate = effectiveWorkingDays > 0
+        ? statistics.salaryBreakdown.basicSalary / effectiveWorkingDays
+        : statistics.salaryBreakdown.basicSalary;
+
+      const transformedData: PayslipData = {
+        // Basic Information
+        month: statistics.basicInfo.month,
+        year: statistics.basicInfo.year,
+        monthName: statistics.basicInfo.monthName,
+        payDate: statistics.basicInfo.processedAt 
+          ? new Date(statistics.basicInfo.processedAt).toLocaleDateString('en-GB')
+          : new Date().toLocaleDateString('en-GB'),
+        period: `M${statistics.basicInfo.month.toString().padStart(2, '0')}${statistics.basicInfo.year}`,
+        status: statistics.basicInfo.status,
+        paymentMode: statistics.basicInfo.paymentInfo.mode || 'MANUAL',
+        paymentRef: statistics.basicInfo.paymentInfo.reference,
 
     } catch (error) {
       console.error('Error fetching payslip data:', error);
@@ -145,13 +153,33 @@ export const usePayslipPDF = (): UsePayslipPDFReturn => {
         bankDetails: undefined // This might need to be added to the backend response
       },
 
-      // Company Information (this might need to be added to backend or use default)
-      company: {
-        name: 'Alkaa Solutions', // You might want to get this from organization data
-        address: 'Business Address, City, Country',
-        email: 'hr@alkaa.com',
-        phone: '+1 (555) 123-4567'
-      },
+        // Earnings Breakdown
+        earnings: {
+          basicSalary: {
+            description: 'Basic Salary',
+            hours: effectiveWorkingDays,
+            rate: basicRate,
+            current: statistics.salaryBreakdown.basicSalary,
+            ytd: statistics.salaryBreakdown.basicSalary * statistics.basicInfo.month
+          },
+          allowances: Object.entries(statistics.salaryBreakdown.allowanceDetails).map(([key, value]) => ({
+            description: key.toUpperCase(),
+            current: value as number,
+            ytd: (value as number) * statistics.basicInfo.month
+          })),
+          additionalPayments: [
+            ...(statistics.salaryBreakdown.additionalPayments.incentive > 0 ? [{
+              description: 'Incentive',
+              current: statistics.salaryBreakdown.additionalPayments.incentive,
+              ytd: statistics.salaryBreakdown.additionalPayments.incentive * statistics.basicInfo.month
+            }] : []),
+            ...(statistics.salaryBreakdown.additionalPayments.bonus > 0 ? [{
+              description: 'Bonus',
+              current: statistics.salaryBreakdown.additionalPayments.bonus,
+              ytd: statistics.salaryBreakdown.additionalPayments.bonus * statistics.basicInfo.month
+            }] : [])
+          ]
+        },
 
       // Financial Information
       basicSalary: statistics.salaryBreakdown.basicSalary,
@@ -168,26 +196,10 @@ export const usePayslipPDF = (): UsePayslipPDFReturn => {
           current: statistics.salaryBreakdown.basicSalary,
           ytd: statistics.salaryBreakdown.basicSalary * month
         },
-        allowances: [
-          {
-            description: 'Total Allowances',
-            current: statistics.salaryBreakdown.totalAllowances,
-            ytd: statistics.salaryBreakdown.totalAllowances * month
-          }
-        ],
-        additionalPayments: [
-          {
-            description: 'Incentive',
-            current: statistics.salaryBreakdown.additionalPayments.incentive,
-            ytd: statistics.salaryBreakdown.additionalPayments.incentive * month
-          },
-          {
-            description: 'Bonus',
-            current: statistics.salaryBreakdown.additionalPayments.bonus,
-            ytd: statistics.salaryBreakdown.additionalPayments.bonus * month
-          }
-        ]
-      },
+        attendanceDetails: statistics.attendanceDetails,
+        salaryContext: statistics.salaryContext,
+        ruleContext: statistics.ruleContext,
+        penaltyContext: statistics.penaltyContext,
 
       // Deductions
       deductions: [

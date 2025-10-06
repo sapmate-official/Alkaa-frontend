@@ -21,6 +21,7 @@ const RouteDict = {
         EditBank: (id:string | null)=> id?`/p/profile/edit/bank/${id}`:"/p/profile/edit/bank",
         BankDetails: "/p/profile/bank",
         SalaryParameter: "/p/profile/salary-parameter",
+        Settings: "/p/profile/settings",
     },
 
     // Employee Management System
@@ -52,6 +53,7 @@ const RouteDict = {
         History: "/p/attendance/history",
         PastDays: "/p/attendance/pastdays",
         Verification: "/p/attendance/verification",
+        Activity: "/p/attendance/activity",
         AdminVerification: "/p/attendance/admin-verification",
     },
 
@@ -90,9 +92,13 @@ const RouteDict = {
         ViewOwn: "/p/payroll/view-own",
         NewVersion: "/p/payroll/new-version",
         Admin:{
+            Base: "/p/payroll/admin",
+            Pipeline: "/p/payroll/admin/pipeline",
             Transaction: "/p/payroll/admin-transaction",
             Payslip: "/p/payroll/admin-payslip",
             Generate: "/p/payroll/admin/generate",
+            PayslipHistory: "/p/payroll/admin/payslip-history",
+            TaxSummaries: "/p/payroll/admin/tax-summaries",
         },
         Manager:{
             Transaction: "/p/payroll/subordinate-transaction",

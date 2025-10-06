@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
-import { BriefcaseIcon, BanknotesIcon, UserIcon, PencilIcon, CalendarIcon, PhoneIcon, MapPinIcon, EnvelopeIcon, IdentificationIcon } from "@heroicons/react/24/outline"
+import { BriefcaseIcon, BanknotesIcon, UserIcon, PencilIcon, CalendarIcon, PhoneIcon, MapPinIcon, EnvelopeIcon, IdentificationIcon, CogIcon } from "@heroicons/react/24/outline"
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/providers/AuthContext'
 import { Button } from "@/components/ui/button"
@@ -249,20 +249,36 @@ const ProfileInfo = () => {
                                     </div>
                                 </div>
                             </div>
-                            {(isManager || isOwnProfile || canEditProfile() || isOrgAdmin) && (
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="flex items-center gap-2 hover:bg-primary/10"
-                                    onClick={() => {
-                                        const link = isManager ? RouteDict.Profile.Edit(id ?? null) : RouteDict.Profile.Edit(null);
-                                        navigate(link)
-                                    }}
-                                >
-                                    <PencilIcon className="h-4 w-4" />
-                                    Edit Profile
-                                </Button>
-                            )}
+                            <div className="flex items-center gap-2">
+                                {/* Settings button - only for own profile */}
+                                {isOwnProfile && (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="flex items-center gap-2 hover:bg-secondary/80"
+                                        onClick={() => navigate(RouteDict.Profile.Settings)}
+                                    >
+                                        <CogIcon className="h-4 w-4" />
+                                        Settings
+                                    </Button>
+                                )}
+                                
+                                {/* Edit Profile button */}
+                                {(isManager || isOwnProfile || canEditProfile() || isOrgAdmin) && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="flex items-center gap-2 hover:bg-primary/10"
+                                        onClick={() => {
+                                            const link = isManager ? RouteDict.Profile.Edit(id ?? null) : RouteDict.Profile.Edit(null);
+                                            navigate(link)
+                                        }}
+                                    >
+                                        <PencilIcon className="h-4 w-4" />
+                                        Edit Profile
+                                    </Button>
+                                )}
+                            </div>
                         </CardHeader>
                     </Card>
                 </motion.div>

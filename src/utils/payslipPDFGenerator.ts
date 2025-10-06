@@ -62,6 +62,10 @@ export interface PayslipData {
     unpaidLeaveDays: number;
     attendancePercentage: number;
   };
+  attendanceDetails?: Record<string, unknown>;
+  salaryContext?: Record<string, unknown>;
+  ruleContext?: Record<string, unknown>;
+  penaltyContext?: Record<string, unknown>;
   ytd: {
     grossPay: number;
     totalDeductions: number;

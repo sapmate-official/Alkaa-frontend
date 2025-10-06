@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -40,23 +40,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/providers/AuthContext';
 import { APIDictionary } from '@/services/api/v2/APIdict';
+import { APIV3Dictionary } from '@/services/api/v3/Api3Dicts';
 import axios from 'axios';
-import { 
-  OnboardingCandidate, 
-  OnboardingStatus, 
+import {
+  OnboardingCandidate,
+  OnboardingStatus,
   Department,
-  User 
+  User
 } from '@/types/general';
-
-// Interface for manager dropdown options
-interface ManagerOption extends Pick<User, 'id' | 'firstName' | 'lastName' | 'email' | 'status'> {
-  department?: {
-    id: string;
-    name: string;
-  };
-}
 import CandidateReview from './CandidateReview';
 import EditCandidateDialog from './EditCandidateDialog';
+import RoleSelector from './RoleSelector';
+import { useShiftTemplates } from '@/hooks/queries/useShiftManagement';
 import {
   UserPlus,
   Send,
@@ -76,10 +71,39 @@ import {
   Trash2,
   FileSearch,
   Settings,
-  Edit3
+  Edit3,
+  FileSpreadsheet,
+  RefreshCw,
+  Loader,
+  Layers,
+  CalendarClock
 } from 'lucide-react';
 
 // Import the new comprehensive review dialog
+
+// Interface for manager dropdown options
+interface ManagerOption extends Pick<User, 'id' | 'firstName' | 'lastName' | 'email' | 'status'> {
+  department?: {
+    id: string;
+    name: string;
+  };
+}
+
+const isValidDepartment = (dept: unknown): dept is Department => {
+  if (typeof dept !== 'object' || dept === null) return false;
+  const candidate = dept as Partial<Department>;
+  return typeof candidate.id !== 'undefined' && String(candidate.id).trim().length > 0;
+};
+
+type SalaryTemplateSummary = {
+  id: string;
+  name: string;
+  description?: string | null;
+  isDefault?: boolean | null;
+};
+
+const MANUAL_TEMPLATE_OPTION = '__manual__';
+const NO_SHIFT_TEMPLATE_OPTION = '__no_shift__';
 
 const candidateSchema = z.object({
   firstName: z.string().min(2, 'First name is required'),
@@ -90,9 +114,17 @@ const candidateSchema = z.object({
   departmentId: z.string().optional(),
   managerId: z.string().optional(),
   hiredDate: z.string().optional(),
+  shiftTemplateId: z.string().optional(),
+  shiftEffectiveDate: z.string().optional(),
+}).refine((data) => {
+  if (data.shiftTemplateId) {
+    return !!data.shiftEffectiveDate
+  }
+  return true
+}, {
+  message: 'Select an effective date when assigning a shift template',
+  path: ['shiftEffectiveDate']
 });
-
-import RoleSelector from './RoleSelector';
 
 const OnboardingManagement = () => {
   const { user } = useAuth();
@@ -113,6 +145,27 @@ const OnboardingManagement = () => {
   const [statusFilter, setStatusFilter] = useState<OnboardingStatus | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [rejectionReason, setRejectionReason] = useState('');
+  const [salaryTemplates, setSalaryTemplates] = useState<SalaryTemplateSummary[]>([]);
+  const [salaryTemplatesLoading, setSalaryTemplatesLoading] = useState(false);
+  const [salaryTemplateError, setSalaryTemplateError] = useState<string | null>(null);
+  const [hasUserChosenTemplate, setHasUserChosenTemplate] = useState(false);
+  const hasUserChosenTemplateRef = useRef(hasUserChosenTemplate);
+  const { data: shiftTemplates = [], isLoading: shiftTemplatesLoading } = useShiftTemplates(user?.orgId, !!user?.orgId);
+
+  type CompletionData = {
+    departmentId: string;
+    roleId: string;
+    managerId: string;
+    monthlySalary: number;
+    annualPackage: number;
+    salaryTemplateId?: string;
+    shiftTemplateId?: string;
+    shiftEffectiveDate?: string;
+  };
+
+  useEffect(() => {
+    hasUserChosenTemplateRef.current = hasUserChosenTemplate;
+  }, [hasUserChosenTemplate]);
 
   // Form
   const form = useForm({
@@ -126,8 +179,27 @@ const OnboardingManagement = () => {
       departmentId: '',
       managerId: '',
       hiredDate: '',
+      shiftTemplateId: '',
+      shiftEffectiveDate: '',
     }
   });
+
+  const selectedShiftTemplateId = form.watch('shiftTemplateId');
+  const hiredDateValue = form.watch('hiredDate');
+
+  useEffect(() => {
+    if (!selectedShiftTemplateId) {
+      if (form.getValues('shiftEffectiveDate')) {
+        form.setValue('shiftEffectiveDate', '');
+      }
+      return;
+    }
+
+    const currentEffectiveDate = form.getValues('shiftEffectiveDate');
+    if (!currentEffectiveDate && hiredDateValue) {
+      form.setValue('shiftEffectiveDate', hiredDateValue);
+    }
+  }, [selectedShiftTemplateId, hiredDateValue, form]);
 
   // Auto-calculate salary fields
   const handleAnnualPackageChange = (value: number) => {
@@ -144,15 +216,8 @@ const OnboardingManagement = () => {
     }
   };
 
-  // Fetch data
-  useEffect(() => {
-    console.log('OnboardingManagement useEffect - User:', user);
-    fetchCandidates();
-    fetchDepartments();
-    fetchManagers();
-  }, [user?.orgId]); // Add dependency on orgId
 
-  const fetchCandidates = async () => {
+  const fetchCandidates = useCallback(async () => {
     try {
       const response = await axios.get(`${APIDictionary.onboarding}`, {
         withCredentials: true
@@ -166,31 +231,35 @@ const OnboardingManagement = () => {
         variant: 'destructive',
       });
     }
-  };
+  }, [toast]);
 
-  const fetchDepartments = async () => {
+  const fetchDepartments = useCallback(async () => {
     try {
-      const response = await axios.get(`${APIDictionary.department}/org/${user?.orgId}`, {
+      if (!user?.orgId) {
+        setDepartments([]);
+        return;
+      }
+
+      const response = await axios.get(`${APIDictionary.department}/org/${user.orgId}`, {
         withCredentials: true,
       });
-      const departmentData = response.data || [];
+      const departmentData = Array.isArray(response.data) ? response.data : [];
       console.log('Fetched departments:', departmentData);
       
       // Filter out any departments with invalid IDs
-      const validDepartments = departmentData.filter((dept: any): dept is Department => 
-        dept && dept.id && dept.id.toString().trim() !== ''
-      );
+      const validDepartments = departmentData.filter(isValidDepartment);
       
       setDepartments(validDepartments);
     } catch (error) {
       console.error(error);
     }
-  };
+  }, [user?.orgId]);
 
-  const fetchManagers = async () => {
+  const fetchManagers = useCallback(async () => {
     try {
       if (!user?.orgId) {
         console.error('No organization ID available for user:', user);
+        setManagers([]);
         return;
       }
       
@@ -215,7 +284,74 @@ const OnboardingManagement = () => {
         console.error('API Error Status:', error.response?.status);
       }
     }
-  };
+  }, [user]);
+
+  const fetchSalaryTemplates = useCallback(async () => {
+    if (!user?.orgId) {
+      return;
+    }
+
+    setSalaryTemplatesLoading(true);
+    setSalaryTemplateError(null);
+
+    try {
+      const response = await axios.get(APIV3Dictionary.payroll.templates.list, {
+        withCredentials: true
+      });
+
+      const payload = response.data as {
+        success?: boolean;
+        data?: SalaryTemplateSummary[];
+        message?: string;
+      };
+
+      if (payload?.success === false) {
+        setSalaryTemplates([]);
+        setSalaryTemplateError(payload.message || 'Failed to load salary templates');
+        return;
+      }
+
+      if (Array.isArray(payload?.data)) {
+        setSalaryTemplates(payload.data);
+
+        if (!hasUserChosenTemplateRef.current) {
+          const defaultTemplate = payload.data.find(template => template.isDefault);
+          const fallbackTemplate = defaultTemplate || payload.data[0];
+
+          if (fallbackTemplate) {
+            setCompletionData(prev => {
+              if (prev.salaryTemplateId) {
+                return prev;
+              }
+
+              return {
+                ...prev,
+                salaryTemplateId: fallbackTemplate.id
+              };
+            });
+            setHasUserChosenTemplate(true);
+            hasUserChosenTemplateRef.current = true;
+          }
+        }
+      } else {
+        setSalaryTemplates([]);
+      }
+    } catch (error) {
+      console.error('Failed to load salary templates:', error);
+      setSalaryTemplateError('Failed to load salary templates');
+      setSalaryTemplates([]);
+    } finally {
+      setSalaryTemplatesLoading(false);
+    }
+  }, [user?.orgId]);
+
+  useEffect(() => {
+    console.log('OnboardingManagement useEffect - User:', user);
+    fetchCandidates();
+    fetchDepartments();
+    fetchManagers();
+    fetchSalaryTemplates();
+  }, [user, fetchCandidates, fetchDepartments, fetchManagers, fetchSalaryTemplates]);
 
   // Create candidate
   const onSubmit = async (data: z.infer<typeof candidateSchema>) => {
@@ -227,6 +363,11 @@ const OnboardingManagement = () => {
         orgId: user?.orgId,
         createdById: user?.id,
       };
+
+      if (!payload.shiftTemplateId) {
+        delete payload.shiftTemplateId;
+        delete payload.shiftEffectiveDate;
+      }
 
       const response = await axios.post(`${APIDictionary.onboarding}`, payload, {
         withCredentials: true,
@@ -353,12 +494,15 @@ const OnboardingManagement = () => {
 
   // Complete onboarding
   const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
-  const [completionData, setCompletionData] = useState({
+  const [completionData, setCompletionData] = useState<CompletionData>({
     departmentId: '',
     roleId: '',
     managerId: '',
     monthlySalary: 0,
-    annualPackage: 0
+    annualPackage: 0,
+    salaryTemplateId: undefined,
+    shiftTemplateId: undefined,
+    shiftEffectiveDate: undefined
   });
 
   const fetchRoles = async () => {
@@ -384,13 +528,37 @@ const OnboardingManagement = () => {
       roleId: '',
       managerId: candidate.managerId || '',
       monthlySalary: candidate.monthlySalary || (candidate.annualPackage ? candidate.annualPackage / 12 : 0),
-      annualPackage: candidate.annualPackage || (candidate.monthlySalary ? candidate.monthlySalary * 12 : 0)
+      annualPackage: candidate.annualPackage || (candidate.monthlySalary ? candidate.monthlySalary * 12 : 0),
+      salaryTemplateId: candidate.salaryTemplateId || undefined,
+      shiftTemplateId: candidate.shiftTemplateId || undefined,
+      shiftEffectiveDate: candidate.shiftEffectiveDate ? candidate.shiftEffectiveDate.split('T')[0] : undefined
     });
 
+  const candidateTemplateSelected = Boolean(candidate.salaryTemplateId);
+  setHasUserChosenTemplate(candidateTemplateSelected);
+  hasUserChosenTemplateRef.current = candidateTemplateSelected;
+
     await fetchRoles();
+    await fetchSalaryTemplates();
     setSelectedCandidate(candidate);
     setIsCompleteDialogOpen(true);
   };
+
+  useEffect(() => {
+    if (!completionData.shiftTemplateId) {
+      if (completionData.shiftEffectiveDate) {
+        setCompletionData(prev => ({ ...prev, shiftEffectiveDate: undefined }));
+      }
+      return;
+    }
+
+    if (!completionData.shiftEffectiveDate) {
+      const defaultDate = selectedCandidate?.hiredDate ? new Date(selectedCandidate.hiredDate).toISOString().split('T')[0] : undefined;
+      if (defaultDate) {
+        setCompletionData(prev => ({ ...prev, shiftEffectiveDate: defaultDate }));
+      }
+    }
+  }, [completionData.shiftTemplateId, completionData.shiftEffectiveDate, selectedCandidate?.hiredDate]);
 
   const submitCompletion = async () => {
     if (!completionData.roleId) {
@@ -404,9 +572,17 @@ const OnboardingManagement = () => {
 
     try {
       setLoading(true);
+      const payload = { ...completionData } as CompletionData;
+      if (!payload.salaryTemplateId) {
+        delete payload.salaryTemplateId;
+      }
+      if (!payload.shiftTemplateId) {
+        delete payload.shiftTemplateId;
+        delete payload.shiftEffectiveDate;
+      }
       const response = await axios.post(
         `${APIDictionary.onboarding}/${selectedCandidate?.id}/complete`,
-        completionData,
+        payload,
         { withCredentials: true }
       );
 
@@ -416,6 +592,8 @@ const OnboardingManagement = () => {
           description: 'Onboarding completed. Employee account created.',
         });
         setIsCompleteDialogOpen(false);
+        setHasUserChosenTemplate(false);
+        hasUserChosenTemplateRef.current = false;
         fetchCandidates();
       }
     } catch (error) {
@@ -764,16 +942,18 @@ const OnboardingManagement = () => {
 
       {/* Create Candidate Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[525px]">
-          <DialogHeader>
-            <DialogTitle>Add New Candidate</DialogTitle>
-            <DialogDescription>
-              Create a new onboarding candidate. An invitation will be sent to their email.
-            </DialogDescription>
-          </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <DialogContent className="sm:max-w-[600px] overflow-hidden p-0">
+          <div className="flex max-h-[85vh] flex-col">
+            <DialogHeader className="px-6 pt-6">
+              <DialogTitle>Add New Candidate</DialogTitle>
+              <DialogDescription>
+                Create a new onboarding candidate. An invitation will be sent to their email.
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-1 flex-col overflow-hidden">
+                <div className="flex-1 space-y-4 overflow-y-auto px-6 pb-6">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="firstName"
@@ -800,9 +980,9 @@ const OnboardingManagement = () => {
                     </FormItem>
                   )}
                 />
-              </div>
-              
-              <FormField
+          </div>
+
+          <FormField
                 control={form.control}
                 name="email"
                 render={({ field }) => (
@@ -815,8 +995,8 @@ const OnboardingManagement = () => {
                   </FormItem>
                 )}
               />
-              
-              <FormField
+                  
+          <FormField
                 control={form.control}
                 name="departmentId"
                 render={({ field }) => (
@@ -843,7 +1023,7 @@ const OnboardingManagement = () => {
                 )}
               />
 
-              <FormField
+          <FormField
                 control={form.control}
                 name="managerId"
                 render={({ field }) => (
@@ -873,7 +1053,7 @@ const OnboardingManagement = () => {
                 )}
               />
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="annualPackage"
@@ -917,9 +1097,9 @@ const OnboardingManagement = () => {
                     </FormItem>
                   )}
                 />
-              </div>
+          </div>
 
-              <FormField
+          <FormField
                 control={form.control}
                 name="hiredDate"
                 render={({ field }) => (
@@ -933,23 +1113,83 @@ const OnboardingManagement = () => {
                 )}
               />
 
-              
+          <FormField
+                control={form.control}
+                name="shiftTemplateId"
+                render={({ field }) => {
+                  const value = field.value || NO_SHIFT_TEMPLATE_OPTION;
+                  return (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <Layers className="h-4 w-4" />
+                        Shift Template
+                      </FormLabel>
+                      <Select
+                        value={value}
+                        onValueChange={(val) => field.onChange(val === NO_SHIFT_TEMPLATE_OPTION ? '' : val)}
+                        disabled={shiftTemplatesLoading}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={shiftTemplatesLoading ? 'Loading shift templates...' : 'Select shift template'} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value={NO_SHIFT_TEMPLATE_OPTION}>No shift assignment</SelectItem>
+                          {shiftTemplates.map((template) => (
+                            <SelectItem key={template.id} value={template.id}>
+                              {template.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {!shiftTemplatesLoading && shiftTemplates.length === 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          No shift templates available. Configure them from organization settings.
+                        </p>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
+              />
 
-              <div className="flex justify-end gap-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsCreateDialogOpen(false)}
-                  disabled={loading}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={loading}>
-                  {loading ? 'Creating...' : 'Create Candidate'}
-                </Button>
-              </div>
-            </form>
-          </Form>
+                  {selectedShiftTemplateId && (
+                    <FormField
+                  control={form.control}
+                  name="shiftEffectiveDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <CalendarClock className="h-4 w-4" />
+                        Shift Effective Date
+                      </FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                    />
+                  )}
+                </div>
+
+                <div className="flex flex-shrink-0 justify-end gap-2 border-t px-6 py-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsCreateDialogOpen(false)}
+                    disabled={loading}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={loading}>
+                    {loading ? 'Creating...' : 'Create Candidate'}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -995,6 +1235,18 @@ const OnboardingManagement = () => {
                       ? `₹${selectedCandidate.annualPackage.toLocaleString()}`
                       : 'Not set'
                     }
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Shift Template</label>
+                  <p className="text-sm">{selectedCandidate.shiftTemplate?.name || 'Not assigned'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Shift Effective Date</label>
+                  <p className="text-sm">
+                    {selectedCandidate.shiftEffectiveDate
+                      ? new Date(selectedCandidate.shiftEffectiveDate).toLocaleDateString()
+                      : 'Not set'}
                   </p>
                 </div>
                 <div>
@@ -1182,6 +1434,64 @@ const OnboardingManagement = () => {
                 onRoleCreated={fetchRoles}
               />
 
+              {/* Salary Template */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Salary Template
+                </label>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                  <Select
+                    value={completionData.salaryTemplateId ?? MANUAL_TEMPLATE_OPTION}
+                    onValueChange={(value) => {
+                      setHasUserChosenTemplate(true);
+                      hasUserChosenTemplateRef.current = true;
+                      setCompletionData(prev => ({
+                        ...prev,
+                        salaryTemplateId: value === MANUAL_TEMPLATE_OPTION ? undefined : value
+                      }));
+                    }}
+                    disabled={salaryTemplatesLoading && salaryTemplates.length === 0}
+                  >
+                    <SelectTrigger className="w-full sm:w-64">
+                      <SelectValue placeholder="Select salary template" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={MANUAL_TEMPLATE_OPTION}>Manual configuration</SelectItem>
+                      {salaryTemplates.map((template) => (
+                        <SelectItem key={template.id} value={template.id}>
+                          {template.name}{template.isDefault ? ' (Default)' : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={fetchSalaryTemplates}
+                    disabled={salaryTemplatesLoading}
+                  >
+                    {salaryTemplatesLoading ? (
+                      <Loader className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Templates auto-apply allowances and deductions. Leave on manual configuration to manage parameters later.
+                </p>
+                {salaryTemplateError && (
+                  <p className="text-xs text-destructive">{salaryTemplateError}</p>
+                )}
+                {salaryTemplates.length === 0 && !salaryTemplatesLoading && (
+                  <p className="text-xs text-muted-foreground">
+                    No salary templates available yet. Configure them from the payroll workspace to enable automatic structures.
+                  </p>
+                )}
+              </div>
+
               {/* Monthly Salary */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Monthly Salary (Optional)</label>
@@ -1195,13 +1505,22 @@ const OnboardingManagement = () => {
                 <p className="text-xs text-muted-foreground">
                   Will be auto-calculated from annual package if not provided
                 </p>
+                {completionData.salaryTemplateId && (
+                  <p className="text-xs text-muted-foreground">
+                    The selected template will apply allowances and deductions based on this monthly amount.
+                  </p>
+                )}
               </div>
 
               <div className="flex justify-end gap-2 pt-4">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setIsCompleteDialogOpen(false)}
+                  onClick={() => {
+                    setIsCompleteDialogOpen(false);
+                    setHasUserChosenTemplate(false);
+                    hasUserChosenTemplateRef.current = false;
+                  }}
                   disabled={loading}
                 >
                   Cancel

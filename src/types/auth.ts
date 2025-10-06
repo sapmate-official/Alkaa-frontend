@@ -2,6 +2,8 @@ export interface LoginRequest {
   email: string
   password: string
   rememberMe?: boolean
+  organizationId?: string
+  orgId?: string
 }
 
 export interface LoginResponse {
@@ -78,12 +80,15 @@ export interface CheckEmailResponse {
 export interface VerifyPasswordRequest {
   email: string
   password: string
+  organizationId?: string
+  orgId?: string
 }
 
 export interface VerifyOtpRequest {
-  email: string
+  email?: string
   otp: string
-  type: 'LOGIN' | 'PASSWORD_RESET' | 'EMAIL_VERIFICATION'
+  type?: 'LOGIN' | 'PASSWORD_RESET' | 'EMAIL_VERIFICATION'
+  sessionToken?: string
 }
 
 export interface ValidateTokenRequest {

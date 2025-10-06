@@ -6,4 +6,5 @@ export const attendanceKeys = {
   pastDays: () => [...attendanceKeys.all, 'past-days'] as const,
   livePanel: () => [...attendanceKeys.all, 'live-panel'] as const,
   verification: () => [...attendanceKeys.all, 'verification'] as const,
+  activity: (orgId: string, params?: any) => [...attendanceKeys.all, 'activity', orgId, params] as const,
 }

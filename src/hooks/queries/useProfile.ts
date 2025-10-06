@@ -12,11 +12,18 @@ export const profileQueryKeys = {
   user: (userId: string) => ['profile', 'user', userId] as const,
   userDetails: (userId: string) => ['profile', 'user-details', userId] as const,
   bankDetails: (userId: string) => ['profile', 'bank-details', userId] as const,
+  allBankDetails: ['profile', 'bank-details', 'all'] as const,
   salaryParameters: (userId: string) => ['profile', 'salary-parameters', userId] as const,
   relationship: (targetUserId?: string) => 
     targetUserId 
       ? ['profile', 'relationship', 'user', targetUserId] as const
       : ['profile', 'relationship', 'organization'] as const,
+}
+
+export type OrganizationBankDetailsRecord = IBankDetails & {
+  id: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 // Profile Info Query
@@ -73,12 +80,27 @@ export const useBankDetailsQuery = (userId: string) => {
   return useQuery({
     queryKey: profileQueryKeys.bankDetails(userId),
     queryFn: async () => {
-      const response = await axios.get(`${APIDictionary.bank}/${userId}`, {
+      const response = await axios.get(`${APIDictionary.bank}/user/${userId}`, {
         withCredentials: true
       })
-      return response.data as IBankDetails
+      return response.data?.data || null
     },
     enabled: !!userId,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+// All Bank Details Query (admin scope)
+export const useAllBankDetailsQuery = (enabled: boolean = true) => {
+  return useQuery({
+    queryKey: profileQueryKeys.allBankDetails,
+    queryFn: async () => {
+      const response = await axios.get(APIDictionary.allBankDetails(), {
+        withCredentials: true
+      })
+      return (response.data ?? []) as OrganizationBankDetailsRecord[]
+    },
+    enabled,
     staleTime: 5 * 60 * 1000,
   })
 }
@@ -143,7 +165,7 @@ export const useUpdateBankDetailsMutation = () => {
 
   return useMutation({
     mutationFn: async (data: IBankDetails) => {
-      const response = await axios.put(APIDictionary.bank, data, {
+      const response = await axios.post(APIDictionary.bank, data, {
         withCredentials: true
       })
       return response.data

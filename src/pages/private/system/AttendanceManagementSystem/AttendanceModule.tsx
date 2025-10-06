@@ -7,6 +7,7 @@ const AttendanceHistory = lazy(() => import('./history'));
 const AttendanceVerification = lazy(() => import('./verification'));
 const AttendanceLivePanel = lazy(() => import('./livePanel'));
 const PastNotCheckedDays = lazy(() => import('./pastdays'));
+const AttendanceActivity = lazy(() => import('./activity'));
 
 const AttendanceModule = () => {
   return (
@@ -16,6 +17,7 @@ const AttendanceModule = () => {
       <Route path="verification" element={<AttendanceVerification />} />
       <Route path="live-panel" element={<AttendanceLivePanel />} />
       <Route path="pastdays" element={<PastNotCheckedDays />} />
+      <Route path="activity" element={<AttendanceActivity />} />
     </Routes>
   );
 };

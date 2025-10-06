@@ -1,0 +1,123 @@
+graph TD
+    %% Phase 1: Setup and Configuration
+    subgraph "Phase 1: Setup & Configuration (One-Time/Periodic)"
+        A[Admin Dashboard] --> B[Salary Templates Editor]
+        B --> C[Define Salary Structures]
+        C --> D[Configure Calculation Rules]
+        D --> E[Apply to Users/Departments]
+        E --> F[Employee Self-Service Portal]
+        F --> G[Update Personal Info & Bank Details]
+        G --> H[Notify Employees of Updates]
+    end
+
+    %% Phase 2: Monthly Payroll Cycle
+    subgraph "Phase 2: Monthly Payroll Cycle (Automated)"
+        %% Trigger
+        I[Month-End Trigger] --> J[Attendance System Integration]
+        J --> K[Background Job Queue]
+        
+        %% Calculation
+        K --> L[Salary Calculation Engine]
+        L --> M[Apply Overtime Rules]
+        M --> N[Calculate Deductions & Taxes]
+        N --> O[Data Validation & Error Check]
+        
+        %% Review Process
+        O --> P{Validation Passed?}
+        P -->|No| Q[Flag Anomalies for Review]
+        P -->|Yes| R[Manager/Admin Review Dashboard]
+        Q --> R
+        R --> S[Bulk Approve/Reject with Comments]
+        S --> T{Approved?}
+        T -->|No| U[Return for Corrections]
+        T -->|Yes| V[Generate Payslips & PDFs]
+        
+        %% Finalization
+        V --> W[Queue Payment Processing]
+        W --> X[Banking API Integration]
+        X --> Y[Send Notifications to Employees]
+        Y --> Z[Employee Preview & Dispute Option]
+        Z --> AA{Dispute Filed?}
+        AA -->|Yes| BB[Re-review Process]
+        AA -->|No| CC[Payment Processing Complete]
+        BB --> R
+    end
+
+    %% Phase 3: Post-Payroll
+    subgraph "Phase 3: Post-Payroll & Reporting"
+        DD[Employee Portal Access] --> EE[Historical Payslips View]
+        EE --> FF[Download/Print Options]
+        
+        GG[Admin Reporting Dashboard] --> HH[Generate Compliance Reports]
+        HH --> II[Tax Summaries & Analytics]
+        II --> JJ[Export Data]
+        
+        KK[Annual Reconciliation] --> LL[Audit Trail Review]
+        LL --> MM[Handle Corrections]
+    end
+
+    %% Event-Driven Connections
+    H -.-> I
+    CC --> DD
+    CC --> GG
+    U -.-> L
+    
+    %% User Role Interactions
+    subgraph "User Interfaces"
+        NN[Employee Interface<br/>- Salary Preview<br/>- Payslip Downloads<br/>- Dispute Filing]
+        OO[Manager Interface<br/>- Team Overview<br/>- Quick Approvals<br/>- Bulk Actions]
+        PP[Admin Interface<br/>- Full Control<br/>- Analytics<br/>- System Config]
+    end
+
+    %% External Systems
+    subgraph "External Integrations"
+        QQ[Banking APIs]
+        RR[Tax Calculation Services]
+        SS[HR Systems]
+        TT[Notification Services]
+    end
+
+    %% Supporting Infrastructure
+    subgraph "Infrastructure Layer"
+        UU["Event-Driven Queue<br/>(Bull.js/Redis)"]
+        VV["Database<br/>(Prisma + Caching)"]
+        WW["PDF Generation Service"]
+        XX["Audit & Logging"]
+    end
+
+    %% Connect interfaces to processes
+    NN -.-> F
+    NN -.-> Z
+    NN -.-> DD
+    OO -.-> R
+    OO -.-> S
+    PP -.-> A
+    PP -.-> R
+    PP -.-> GG
+
+    %% Connect external systems
+    X --> QQ
+    N --> RR
+    J --> SS
+    Y --> TT
+    H --> TT
+
+    %% Connect infrastructure
+    K --> UU
+    L --> VV
+    V --> WW
+    S --> XX
+
+    %% Styling
+    classDef phaseBox fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
+    classDef processBox fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef userBox fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
+    classDef externalBox fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
+    classDef infraBox fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    
+    class A,B,C,D,E,F,G,H phaseBox
+    class I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,AA,BB,CC processBox
+    class DD,EE,FF,GG,HH,II,JJ,KK,LL,MM processBox
+    class NN,OO,PP userBox
+    class QQ,RR,SS,TT externalBox
+    class UU,VV,WW,XX infraBox

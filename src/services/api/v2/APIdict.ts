@@ -1,15 +1,22 @@
 import { backendDomain } from "@/constants/Domain";
 
 export const APIDictionary = {
-    // Authentication endpoints
-    setPassword: `${backendDomain}/api/v1/general/set-password`,
-    login: `${backendDomain}/api/v1/general/login`,
-    checkEmail: `${backendDomain}/api/v1/general/check-email`,
-    verifyPassword: `${backendDomain}/api/v1/general/verify-password`,
-    verifyOtp: `${backendDomain}/api/v1/general/verify-otp`,
-    validateToken: `${backendDomain}/api/v1/general/validate-token`,
-    refreshToken: `${backendDomain}/api/v1/general/refresh-token`,
-    logout: `${backendDomain}/api/v1/general/logout`,
+    // Enhanced Multi-tenant + 2FA authentication flow (unified - recommended)
+    discoverOrganizations: `${backendDomain}/api/v1/auth/discover-organizations`,
+    verifyCredentials: `${backendDomain}/api/v1/auth/verify-credentials`,
+    requestOtp: `${backendDomain}/api/v1/auth/request-otp`,
+    verifyLoginOtp: `${backendDomain}/api/v1/auth/verify-login-otp`,
+    resendOtp: `${backendDomain}/api/v1/auth/resend-otp`,
+    
+    // Core authentication endpoints
+    setPassword: `${backendDomain}/api/v1/auth/set-password`,
+    validateToken: `${backendDomain}/api/v1/auth/validate-token`,
+    refreshToken: `${backendDomain}/api/v1/auth/refresh-token`,
+    logout: `${backendDomain}/api/v1/auth/logout`,
+    
+    // User preferences
+    toggle2FA: `${backendDomain}/api/v1/auth/toggle-2fa`,
+    notificationPreferences: `${backendDomain}/api/v1/auth/notification-preferences`,
     
     // Legacy endpoints
     leaveTypeList: `${backendDomain}/api/v1/leave/type`,
@@ -57,6 +64,7 @@ export const APIDictionary = {
     holiday_type: `${backendDomain}/api/v2/holiday-type`,
     holiday_type_by_org: (orgId:string) => `${backendDomain}/api/v2/holiday-type/${orgId}`,
     OrganizationSettings: () => `${backendDomain}/api/v3/settings`,
+    attendanceActivity: (orgId: string) => `${backendDomain}/api/v3/attendance/organizations/${orgId}/activity`,
     SalaryRecordExistence: (userId: string, month: number, year: number) => `${backendDomain}/api/v2/salary/user/${userId}/monthly/${month}/year/${year}`,
     permissionPreset: `${backendDomain}/api/v3/permission-preset`,
 
@@ -92,6 +100,26 @@ export const APIDictionary = {
     // Relationship Endpoints
     relationshipWithUser: (targetUserId: string) => `${backendDomain}/api/v2/relationship/user/${targetUserId}`,
     relationshipOrganization: `${backendDomain}/api/v2/relationship/organization`,
+
+    shift: {
+        templates: {
+            list: (orgId: string) => `${backendDomain}/api/v2/shift/templates/org/${orgId}`,
+            create: `${backendDomain}/api/v2/shift/templates`,
+            update: (id: string) => `${backendDomain}/api/v2/shift/templates/${id}`,
+            remove: (id: string) => `${backendDomain}/api/v2/shift/templates/${id}`
+        },
+        rules: {
+            list: (orgId: string) => `${backendDomain}/api/v2/shift/rules/org/${orgId}`,
+            createBreak: `${backendDomain}/api/v2/shift/rules/break`,
+            createAttendance: `${backendDomain}/api/v2/shift/rules/attendance`,
+            createOvertime: `${backendDomain}/api/v2/shift/rules/overtime`
+        },
+        employee: {
+            current: (userId: string) => `${backendDomain}/api/v2/shift/employee/${userId}`,
+            assign: (userId: string) => `${backendDomain}/api/v2/shift/employee/${userId}`,
+            updateAssignment: (assignmentId: string) => `${backendDomain}/api/v2/shift/employee/assignment/${assignmentId}`
+        }
+    },
 
     // Additional Leave Management Endpoints
     leave_request_user: (userId: string) => `${backendDomain}/api/v2/leave-request/user/${userId}`,
