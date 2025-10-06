@@ -7,6 +7,8 @@ import { backendDomain } from "../constants/Domain";
 import { useNavigate } from "react-router-dom";
 import Loader from "@/components/Loader";
 
+axios.defaults.withCredentials = true;
+
 interface Organization {
     orgId: string;
     orgName: string;

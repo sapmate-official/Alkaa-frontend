@@ -29,6 +29,8 @@ export interface CandidateReviewData {
     hiredDate?: string;
     departmentId?: string;
     department?: any;
+    shiftTemplateId?: string;
+    shiftEffectiveDate?: string;
   };
   submittedData: {
     personalInfo: any;
@@ -61,6 +63,8 @@ export interface UpdateCandidateRequest {
   bankIFSC?: string;
   bankName?: string;
   accountHolderName?: string;
+  shiftTemplateId?: string;
+  shiftEffectiveDate?: string;
 }
 
 export interface ReviewCandidateRequest {

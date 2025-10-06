@@ -30,6 +30,7 @@ import { Department, User } from '@/types/general';
 import RoleAssignment from './RoleAssignment';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
+import { useShiftTemplates } from '@/hooks/queries/useShiftManagement';
 import {
   Loader,
   RefreshCw,
@@ -49,12 +50,15 @@ import {
   Users,
   FileSpreadsheet,
   Briefcase,
-  Calculator
+  Calculator,
+  Layers,
+  CalendarClock
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { debounce } from 'lodash';
 
 const MANUAL_TEMPLATE_OPTION = '__manual__';
+const NO_SHIFT_TEMPLATE_OPTION = '__no_shift__';
 
 type SalaryTemplateSummary = {
   id: string;
@@ -75,6 +79,16 @@ const basicDetailsSchema = z.object({
   panNumber: z.string().optional(),
   employeeId: z.string().optional(),
   hiredDate: z.string().nonempty('Hired Date is required'),
+  shiftTemplateId: z.string().optional(),
+  shiftEffectiveDate: z.string().optional(),
+}).refine((data) => {
+  if (data.shiftTemplateId) {
+    return !!data.shiftEffectiveDate
+  }
+  return true
+}, {
+  message: 'Please select an effective date when assigning a shift template',
+  path: ['shiftEffectiveDate']
 });
 
 const bankDetailsSchema = z.object({
@@ -128,6 +142,8 @@ type EmployeeFormValues = {
   panNumber: string;
   employeeId: string;
   hiredDate: string;
+  shiftTemplateId?: string;
+  shiftEffectiveDate?: string;
   accountHolder: string;
   accountNumber: string;
   ifscCode: string;
@@ -162,6 +178,7 @@ const CreateEmployeeNew = () => {
   const [draftId, setDraftId] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isDraftModified, setIsDraftModified] = useState(false);
+  const { data: shiftTemplates = [], isLoading: shiftTemplatesLoading } = useShiftTemplates(user?.orgId, !!user?.orgId);
 
   const fetchDepartments = async () => {
     try {
@@ -212,6 +229,8 @@ const CreateEmployeeNew = () => {
       panNumber: '',
       employeeId: '',
       hiredDate: '',
+  shiftTemplateId: undefined,
+  shiftEffectiveDate: '',
 
       // Bank Details
       accountHolder: '',
@@ -291,6 +310,23 @@ const CreateEmployeeNew = () => {
     fetchEmployeeId();
     fetchSalaryTemplates();
   }, [user?.orgId, fetchSalaryTemplates]);
+
+  const selectedShiftTemplateId = form.watch('shiftTemplateId');
+  const hiredDateValue = form.watch('hiredDate');
+
+  useEffect(() => {
+    if (!selectedShiftTemplateId) {
+      if (form.getValues('shiftEffectiveDate')) {
+        form.setValue('shiftEffectiveDate', '');
+      }
+      return;
+    }
+
+    const currentEffectiveDate = form.getValues('shiftEffectiveDate');
+    if (!currentEffectiveDate && hiredDateValue) {
+      form.setValue('shiftEffectiveDate', hiredDateValue);
+    }
+  }, [selectedShiftTemplateId, hiredDateValue, form]);
 
   const fetchEmployeeId = async () => {
     try {
@@ -672,6 +708,74 @@ const CreateEmployeeNew = () => {
             </FormItem>
           )}
         />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="shiftTemplateId"
+          render={({ field }) => {
+            const selectValue = field.value ?? NO_SHIFT_TEMPLATE_OPTION
+            return (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                  <Layers className="h-4 w-4" />
+                  Shift Template
+                </FormLabel>
+                <Select
+                  value={selectValue}
+                  onValueChange={(value) => field.onChange(value === NO_SHIFT_TEMPLATE_OPTION ? undefined : value)}
+                  disabled={shiftTemplatesLoading}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={shiftTemplatesLoading ? 'Loading shift templates...' : 'Select shift template'} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value={NO_SHIFT_TEMPLATE_OPTION}>No shift assignment</SelectItem>
+                    {shiftTemplates.map((template) => (
+                      <SelectItem key={template.id} value={template.id}>
+                        {template.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  Assign a default shift for this employee. You can change it later from the employee profile.
+                </FormDescription>
+                {!shiftTemplatesLoading && shiftTemplates.length === 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    No active shift templates found. Create templates from organization settings.
+                  </p>
+                )}
+                <FormMessage />
+              </FormItem>
+            )
+          }}
+        />
+
+        {selectedShiftTemplateId && (
+          <FormField
+            control={form.control}
+            name="shiftEffectiveDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                  <CalendarClock className="h-4 w-4" />
+                  Shift Effective Date
+                </FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormDescription>
+                  Defaults to the hired date. Used to start attendance tracking on the correct day.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
       </div>
 
       <FormField
