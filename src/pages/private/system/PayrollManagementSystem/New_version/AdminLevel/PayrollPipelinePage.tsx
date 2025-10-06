@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { AlertCircle, ChevronLeft, ChevronRight, Save } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
 import PipelineVisualization from './components/PipelineVisualization'
 import CreateCycleStep from './components/steps/CreateCycleStep'
 import SetupStep from './components/steps/SetupStep'
@@ -11,6 +12,12 @@ import ProcessingStep from './components/steps/ProcessingStep'
 import ReviewStep from './components/steps/ReviewStep'
 import ApprovalStep from './components/steps/ApprovalStep'
 import PayoutStep from './components/steps/PayoutStep'
+import {
+  getPipelineProgress,
+  savePipelineProgress,
+  clearPipelineProgress,
+  type PipelineProgressData,
+} from './services/pipelineApi'
 
 export type StepStatus = 'not_started' | 'in_progress' | 'completed' | 'failed' | 'skipped'
 
@@ -172,10 +179,14 @@ const getStepStatusLabel = (status: StepStatus): string => {
 }
 
 const PayrollPipelinePage = () => {
+  const { toast } = useToast()
   const [currentStep, setCurrentStep] = useState(1)
   const [cycleData, setCycleData] = useState<CycleData>(INITIAL_CYCLE_DATA)
   const [pipelineSteps, setPipelineSteps] = useState<PipelineStepDefinition[]>(PIPELINE_STEPS)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [isLoadingProgress, setIsLoadingProgress] = useState(false)
+  const [isSavingProgress, setIsSavingProgress] = useState(false)
+  const [hasSavedProgress, setHasSavedProgress] = useState(false)
 
   // Update step status based on cycle data
   useEffect(() => {
@@ -283,42 +294,140 @@ const PayrollPipelinePage = () => {
     handleNext()
   }, [handleNext])
 
-  const handleSaveProgress = useCallback(() => {
-    // Save progress to localStorage or backend
-    localStorage.setItem('payroll_pipeline_progress', JSON.stringify({
-      currentStep,
-      cycleData,
-      timestamp: new Date().toISOString()
-    }))
-    setHasUnsavedChanges(false)
-    console.log('Progress saved:', { currentStep, cycleData })
-  }, [currentStep, cycleData])
+  const handleSaveProgress = useCallback(async () => {
+    if (!cycleData.month || !cycleData.year) {
+      console.warn('Cannot save progress: No cycle month/year set')
+      return
+    }
+
+    setIsSavingProgress(true)
+    try {
+      // Build step data from cycle data
+      const stepData: PipelineProgressData['stepData'] = {
+        setupCompleted: cycleData.setupComplete,
+        employeesSelected: Boolean(cycleData.cycle && cycleData.cycleId),
+        templateAssigned: Boolean(cycleData.template),
+        salariesProcessed: cycleData.allProcessed,
+        reviewCompleted: cycleData.allReviewed,
+        finalApproved: cycleData.approved,
+        // Include full cycle data for restoration
+        cycleId: cycleData.cycleId,
+        cycle: cycleData.cycle,
+        template: cycleData.template,
+        employeesVerified: cycleData.employeesVerified,
+        attendanceImported: cycleData.attendanceImported,
+        processingProgress: cycleData.processingProgress,
+        failedCount: cycleData.failedCount,
+        pendingReviewCount: cycleData.pendingReviewCount,
+        payoutInitiated: cycleData.payoutInitiated,
+        payoutComplete: cycleData.payoutComplete,
+      }
+
+      await savePipelineProgress(cycleData.month, cycleData.year, currentStep, stepData)
+      setHasUnsavedChanges(false)
+      setHasSavedProgress(true)
+      
+      toast({
+        title: 'Progress Saved',
+        description: 'Your pipeline progress has been saved.',
+      })
+    } catch (error) {
+      console.error('Failed to save progress:', error)
+      toast({
+        title: 'Save Failed',
+        description: 'Could not save progress. Please try again.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsSavingProgress(false)
+    }
+  }, [currentStep, cycleData, toast])
 
   // Load saved progress on mount
   useEffect(() => {
-    const saved = localStorage.getItem('payroll_pipeline_progress')
-    if (saved) {
+    const loadProgress = async () => {
+      const month = cycleData.month || new Date().getMonth() + 1
+      const year = cycleData.year || new Date().getFullYear()
+
+      setIsLoadingProgress(true)
       try {
-        const { currentStep: savedStep, cycleData: savedData } = JSON.parse(saved)
-        if (savedStep && savedData) {
+        const response = await getPipelineProgress(month, year)
+        
+        if (response.success && response.data) {
+          const { currentStep: savedStep, stepData } = response.data
+          
+          // Restore cycle data from step data
+          const restoredCycleData: CycleData = {
+            ...INITIAL_CYCLE_DATA,
+            month,
+            year,
+            cycleId: stepData.cycleId,
+            cycle: stepData.cycle,
+            template: stepData.template,
+            setupComplete: stepData.setupCompleted || false,
+            employeesVerified: stepData.employeesVerified || false,
+            attendanceImported: stepData.attendanceImported || false,
+            allProcessed: stepData.salariesProcessed || false,
+            processingProgress: stepData.processingProgress || 0,
+            failedCount: stepData.failedCount || 0,
+            allReviewed: stepData.reviewCompleted || false,
+            pendingReviewCount: stepData.pendingReviewCount || 0,
+            approved: stepData.finalApproved || false,
+            payoutInitiated: stepData.payoutInitiated || false,
+            payoutComplete: stepData.payoutComplete || false,
+          }
+
           setCurrentStep(savedStep)
-          setCycleData(savedData)
+          setCycleData(restoredCycleData)
+          setHasSavedProgress(true)
+          
+          toast({
+            title: 'Progress Restored',
+            description: `Resumed from step ${savedStep}: ${PIPELINE_STEPS[savedStep - 1].name}`,
+          })
         }
       } catch (error) {
         console.error('Failed to load saved progress:', error)
+        // Don't show error toast on first load - just continue normally
+      } finally {
+        setIsLoadingProgress(false)
       }
     }
-  }, [])
 
-  // Auto-save on data change (debounced)
+    loadProgress()
+  }, []) // Only run on mount
+
+  // Auto-save progress when step or data changes
   useEffect(() => {
-    if (hasUnsavedChanges) {
+    if (hasUnsavedChanges && !isLoadingProgress && cycleData.month && cycleData.year) {
       const timer = setTimeout(() => {
         handleSaveProgress()
-      }, 2000)
+      }, 2000) // Debounce: save 2 seconds after last change
+      
       return () => clearTimeout(timer)
     }
-  }, [hasUnsavedChanges, handleSaveProgress])
+  }, [hasUnsavedChanges, isLoadingProgress, cycleData.month, cycleData.year, handleSaveProgress])
+
+  // Clear progress after final completion
+  useEffect(() => {
+    const clearProgressAfterCompletion = async () => {
+      if (cycleData.payoutComplete && hasSavedProgress && cycleData.month && cycleData.year) {
+        try {
+          await clearPipelineProgress(cycleData.month, cycleData.year)
+          setHasSavedProgress(false)
+          
+          toast({
+            title: 'Pipeline Complete',
+            description: 'Progress has been cleared. Starting fresh next time.',
+          })
+        } catch (error) {
+          console.error('Failed to clear progress:', error)
+        }
+      }
+    }
+
+    clearProgressAfterCompletion()
+  }, [cycleData.payoutComplete, cycleData.month, cycleData.year, hasSavedProgress, toast])
 
   const overallProgress = Math.round(
     (pipelineSteps.filter((s) => s.status === 'completed').length / pipelineSteps.length) * 100
@@ -344,10 +453,10 @@ const PayrollPipelinePage = () => {
                 variant="outline"
                 size="sm"
                 onClick={handleSaveProgress}
-                disabled={!hasUnsavedChanges}
+                disabled={!hasUnsavedChanges || isSavingProgress || isLoadingProgress}
               >
                 <Save className="h-4 w-4 mr-2" />
-                {hasUnsavedChanges ? 'Save Progress' : 'Saved'}
+                {isSavingProgress ? 'Saving...' : hasUnsavedChanges ? 'Save Progress' : 'Saved'}
               </Button>
             </div>
           </div>

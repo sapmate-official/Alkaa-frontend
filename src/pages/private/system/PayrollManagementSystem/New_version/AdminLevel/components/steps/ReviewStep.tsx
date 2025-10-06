@@ -6,42 +6,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { CheckCircle, Eye, FileText, CheckCircle2, Loader2 } from 'lucide-react'
 import ReviewDrawer from './ReviewDrawer'
 import { useToast } from '@/hooks/use-toast'
+import * as pipelineApi from '../../services/pipelineApi'
+import type { PayrollCycleDetails } from '../../../types/payroll'
 
-// Mock salary record type - should match your actual API response
-type SalaryRecord = {
-  id: string
-  userId: string
-  netSalary: number
-  basicSalary: number
-  grossSalary: number
-  totalAllowances: number
-  totalDeductions: number
-  status: string
-  reviewStatus?: 'approved' | 'rejected' | 'pending'
-  reviewComments?: string
-  reviewedAt?: string
-  processedAt?: string
-  allowances?: Record<string, number>
-  deductions?: Record<string, number>
-  user?: {
-    firstName?: string
-    lastName?: string
-    employeeId?: string
-    department?: {
-      name?: string
-    }
-  }
-  templateName?: string
-  templateId?: string
-  attendanceSummary?: {
-    workingDays?: number
-    presentDays?: number
-    absentDays?: number
-    halfDays?: number
-    paidLeaveDays?: number
-    unpaidLeaveDays?: number
-  }
-}
+// Use the SalaryRecord type from PayrollCycleDetails
+type SalaryRecord = PayrollCycleDetails['salaryRecords'][number]
 
 const ReviewStep = ({ cycleData, onDataChange, onNext }: StepProps) => {
   const { toast } = useToast()
@@ -53,9 +22,9 @@ const ReviewStep = ({ cycleData, onDataChange, onNext }: StepProps) => {
   const processedCount = cycleData.processedCount || totalEmployees
 
   // Calculate review statistics from records
-  const pendingCount = salaryRecords.filter(r => !r.reviewStatus || r.reviewStatus === 'pending').length
-  const approvedCount = salaryRecords.filter(r => r.reviewStatus === 'approved').length
-  const rejectedCount = salaryRecords.filter(r => r.reviewStatus === 'rejected').length
+  const pendingCount = salaryRecords.filter(r => r.status === 'PENDING' || r.status === 'PROCESSED').length
+  const approvedCount = salaryRecords.filter(r => r.status === 'APPROVED').length
+  const rejectedCount = salaryRecords.filter(r => r.status === 'REJECTED').length
   const allReviewed = salaryRecords.length > 0 && pendingCount === 0
 
   // Fetch salary records when component mounts or when needed
@@ -64,54 +33,22 @@ const ReviewStep = ({ cycleData, onDataChange, onNext }: StepProps) => {
 
     setIsLoading(true)
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch(`/api/payroll/cycles/${cycleData.cycle.id}/salary-records`)
-      // const data = await response.json()
+      const response = await pipelineApi.fetchCycleSalaryRecords(cycleData.cycle.id)
       
-      // Mock data for demonstration
-      const mockRecords: SalaryRecord[] = Array.from({ length: processedCount }, (_, i) => ({
-        id: `record-${i + 1}`,
-        userId: `user-${i + 1}`,
-        basicSalary: 50000 + (i * 1000),
-        grossSalary: 60000 + (i * 1200),
-        totalAllowances: 10000 + (i * 200),
-        totalDeductions: 5000 + (i * 100),
-        netSalary: 55000 + (i * 1100),
-        status: 'PROCESSED',
-        reviewStatus: 'pending',
-        processedAt: new Date().toISOString(),
-        user: {
-          firstName: `Employee`,
-          lastName: `${i + 1}`,
-          employeeId: `EMP${String(i + 1).padStart(3, '0')}`,
-          department: { name: 'Engineering' }
-        },
-        templateName: 'Standard Template',
-        allowances: {
-          'HRA': 5000 + (i * 100),
-          'Transport': 3000 + (i * 50),
-          'Special': 2000 + (i * 50)
-        },
-        deductions: {
-          'PF': 2500 + (i * 50),
-          'Tax': 2500 + (i * 50)
-        },
-        attendanceSummary: {
-          workingDays: 26,
-          presentDays: 24 + (i % 3),
-          absentDays: 2 - (i % 3),
-          halfDays: i % 2,
-          paidLeaveDays: 1,
-          unpaidLeaveDays: 0
-        }
-      }))
-
-      setSalaryRecords(mockRecords)
+      if (response.success && response.data.salaryRecords) {
+        setSalaryRecords(response.data.salaryRecords)
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to load salary records',
+          variant: 'destructive'
+        })
+      }
     } catch (error) {
       console.error('Failed to fetch salary records:', error)
       toast({
         title: 'Error',
-        description: 'Failed to load salary records. Please try again.',
+        description: error instanceof Error ? error.message : 'Failed to load salary records. Please try again.',
         variant: 'destructive'
       })
     } finally {
@@ -128,34 +65,32 @@ const ReviewStep = ({ cycleData, onDataChange, onNext }: StepProps) => {
 
   const handleApproveRecord = async (recordId: string, comments?: string) => {
     try {
-      // TODO: Replace with actual API call
-      // await fetch(`/api/payroll/salary-records/${recordId}/approve`, {
-      //   method: 'POST',
-      //   body: JSON.stringify({ comments })
-      // })
+      const response = await pipelineApi.approveSalaryRecord(recordId, comments)
+      
+      if (response.success) {
+        // Update local state
+        setSalaryRecords(prev => prev.map(record => 
+          record.id === recordId 
+            ? { 
+                ...record, 
+                status: 'APPROVED',
+                reviewComments: comments || null,
+                reviewedAt: new Date(response.data.reviewedAt).toISOString()
+              }
+            : record
+        ))
 
-      // Update local state
-      setSalaryRecords(prev => prev.map(record => 
-        record.id === recordId 
-          ? { 
-              ...record, 
-              reviewStatus: 'approved' as const, 
-              reviewComments: comments,
-              reviewedAt: new Date().toISOString()
-            }
-          : record
-      ))
-
-      toast({
-        title: 'Success',
-        description: 'Salary record approved successfully',
-        variant: 'default'
-      })
+        toast({
+          title: 'Success',
+          description: 'Salary record approved successfully',
+          variant: 'default'
+        })
+      }
     } catch (error) {
       console.error('Failed to approve record:', error)
       toast({
         title: 'Error',
-        description: 'Failed to approve salary record. Please try again.',
+        description: error instanceof Error ? error.message : 'Failed to approve salary record. Please try again.',
         variant: 'destructive'
       })
       throw error
@@ -173,34 +108,32 @@ const ReviewStep = ({ cycleData, onDataChange, onNext }: StepProps) => {
     }
 
     try {
-      // TODO: Replace with actual API call
-      // await fetch(`/api/payroll/salary-records/${recordId}/reject`, {
-      //   method: 'POST',
-      //   body: JSON.stringify({ comments })
-      // })
+      const response = await pipelineApi.rejectSalaryRecord(recordId, comments)
+      
+      if (response.success) {
+        // Update local state
+        setSalaryRecords(prev => prev.map(record => 
+          record.id === recordId 
+            ? { 
+                ...record, 
+                status: 'REJECTED',
+                reviewComments: comments,
+                reviewedAt: new Date(response.data.reviewedAt).toISOString()
+              }
+            : record
+        ))
 
-      // Update local state
-      setSalaryRecords(prev => prev.map(record => 
-        record.id === recordId 
-          ? { 
-              ...record, 
-              reviewStatus: 'rejected' as const, 
-              reviewComments: comments,
-              reviewedAt: new Date().toISOString()
-            }
-          : record
-      ))
-
-      toast({
-        title: 'Success',
-        description: 'Salary record rejected with comments',
-        variant: 'default'
-      })
+        toast({
+          title: 'Success',
+          description: 'Salary record rejected with comments',
+          variant: 'default'
+        })
+      }
     } catch (error) {
       console.error('Failed to reject record:', error)
       toast({
         title: 'Error',
-        description: 'Failed to reject salary record. Please try again.',
+        description: error instanceof Error ? error.message : 'Failed to reject salary record. Please try again.',
         variant: 'destructive'
       })
       throw error

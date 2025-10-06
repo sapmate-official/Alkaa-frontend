@@ -24,41 +24,10 @@ import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import { ChevronLeft, ChevronRight, Loader2, ThumbsUp, ThumbsDown, CheckCircle, XCircle } from 'lucide-react'
+import type { PayrollCycleDetails } from '../../../types/payroll'
 
-type SalaryRecord = {
-  id: string
-  userId: string
-  netSalary: number
-  basicSalary: number
-  grossSalary: number
-  totalAllowances: number
-  totalDeductions: number
-  status: string
-  reviewStatus?: 'approved' | 'rejected' | 'pending'
-  reviewComments?: string
-  reviewedAt?: string
-  processedAt?: string
-  allowances?: Record<string, number>
-  deductions?: Record<string, number>
-  user?: {
-    firstName?: string
-    lastName?: string
-    employeeId?: string
-    department?: {
-      name?: string
-    }
-  }
-  templateName?: string
-  templateId?: string
-  attendanceSummary?: {
-    workingDays?: number
-    presentDays?: number
-    absentDays?: number
-    halfDays?: number
-    paidLeaveDays?: number
-    unpaidLeaveDays?: number
-  }
-}
+// Use SalaryRecord type from PayrollCycleDetails
+type SalaryRecord = PayrollCycleDetails['salaryRecords'][number]
 
 type ReviewDrawerProps = {
   open: boolean
@@ -147,17 +116,32 @@ const ReviewDrawer: React.FC<ReviewDrawerProps> = ({
     }
   }
 
-  const getReviewStatusBadge = (reviewStatus?: string) => {
-    if (!reviewStatus || reviewStatus === 'pending') {
+  // Helper functions to calculate totals
+  const calculateTotalAllowances = (record: SalaryRecord) => {
+    if (!record.allowances) return 0
+    return Object.values(record.allowances).reduce((sum, amount) => sum + amount, 0)
+  }
+
+  const calculateTotalDeductions = (record: SalaryRecord) => {
+    if (!record.deductions) return 0
+    return Object.values(record.deductions).reduce((sum, amount) => sum + amount, 0)
+  }
+
+  const calculateGrossSalary = (record: SalaryRecord) => {
+    return record.basicSalary + calculateTotalAllowances(record)
+  }
+
+  const getReviewStatusBadge = (status?: string) => {
+    if (!status || status === 'PENDING' || status === 'PROCESSED' || status === 'PROCESSING') {
       return <Badge variant="secondary">Pending Review</Badge>
     }
-    if (reviewStatus === 'approved') {
+    if (status === 'APPROVED') {
       return <Badge variant="success" className="bg-green-100 text-green-700 border-green-200">
         <CheckCircle className="h-3 w-3 mr-1" />
         Approved
       </Badge>
     }
-    if (reviewStatus === 'rejected') {
+    if (status === 'REJECTED') {
       return <Badge variant="destructive">
         <XCircle className="h-3 w-3 mr-1" />
         Rejected
@@ -174,9 +158,9 @@ const ReviewDrawer: React.FC<ReviewDrawerProps> = ({
     ? Object.entries(selectedRecord.deductions).map(([key, amount]) => ({ key, amount }))
     : []
 
-  const pendingCount = records.filter(r => !r.reviewStatus || r.reviewStatus === 'pending').length
-  const approvedCount = records.filter(r => r.reviewStatus === 'approved').length
-  const rejectedCount = records.filter(r => r.reviewStatus === 'rejected').length
+  const pendingCount = records.filter(r => !r.status || r.status === 'PENDING' || r.status === 'PROCESSED').length
+  const approvedCount = records.filter(r => r.status === 'APPROVED').length
+  const rejectedCount = records.filter(r => r.status === 'REJECTED').length
 
   return (
     <Drawer
@@ -243,7 +227,7 @@ const ReviewDrawer: React.FC<ReviewDrawerProps> = ({
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium">{fullName}</span>
-                          {getReviewStatusBadge(record.reviewStatus)}
+                          {getReviewStatusBadge(record.status)}
                         </div>
                         <p className="mt-2 text-xs text-muted-foreground">
                           {employeeId} • Net {formatCurrency(record.netSalary)}
@@ -306,7 +290,7 @@ const ReviewDrawer: React.FC<ReviewDrawerProps> = ({
                       </div>
                     </div>
                     <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      {getReviewStatusBadge(selectedRecord.reviewStatus)}
+                      {getReviewStatusBadge(selectedRecord.status)}
                       <span>
                         Net {formatCurrency(selectedRecord.netSalary)} • Basic {formatCurrency(selectedRecord.basicSalary)}
                       </span>
@@ -342,12 +326,12 @@ const ReviewDrawer: React.FC<ReviewDrawerProps> = ({
                     <div className="grid gap-4 md:grid-cols-3">
                       <div className="rounded-lg border p-4">
                         <p className="text-xs text-muted-foreground">Gross Salary</p>
-                        <p className="text-xl font-bold">{formatCurrency(selectedRecord.grossSalary)}</p>
+                        <p className="text-xl font-bold">{formatCurrency(calculateGrossSalary(selectedRecord))}</p>
                       </div>
                       <div className="rounded-lg border p-4">
                         <p className="text-xs text-muted-foreground">Total Deductions</p>
                         <p className="text-xl font-bold text-red-600">
-                          - {formatCurrency(selectedRecord.totalDeductions)}
+                          - {formatCurrency(calculateTotalDeductions(selectedRecord))}
                         </p>
                       </div>
                       <div className="rounded-lg border p-4 bg-green-50">
@@ -371,7 +355,7 @@ const ReviewDrawer: React.FC<ReviewDrawerProps> = ({
                             <Separator className="my-2" />
                             <div className="flex items-center justify-between text-sm font-semibold">
                               <span>Total Allowances</span>
-                              <span>{formatCurrency(selectedRecord.totalAllowances)}</span>
+                              <span>{formatCurrency(calculateTotalAllowances(selectedRecord))}</span>
                             </div>
                           </div>
                         ) : (
@@ -392,7 +376,7 @@ const ReviewDrawer: React.FC<ReviewDrawerProps> = ({
                             <Separator className="my-2" />
                             <div className="flex items-center justify-between text-sm font-semibold">
                               <span>Total Deductions</span>
-                              <span>{formatCurrency(selectedRecord.totalDeductions)}</span>
+                              <span>{formatCurrency(calculateTotalDeductions(selectedRecord))}</span>
                             </div>
                           </div>
                         ) : (
@@ -462,7 +446,7 @@ const ReviewDrawer: React.FC<ReviewDrawerProps> = ({
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {selectedRecord.reviewStatus === 'approved' && (
+                    {selectedRecord.status === 'APPROVED' && (
                       <Alert className="border-green-200 bg-green-50">
                         <CheckCircle className="h-4 w-4 text-green-600" />
                         <AlertTitle className="text-green-900">Already Approved</AlertTitle>
@@ -475,7 +459,7 @@ const ReviewDrawer: React.FC<ReviewDrawerProps> = ({
                       </Alert>
                     )}
 
-                    {selectedRecord.reviewStatus === 'rejected' && (
+                    {selectedRecord.status === 'REJECTED' && (
                       <Alert variant="destructive">
                         <XCircle className="h-4 w-4" />
                         <AlertTitle>Rejected</AlertTitle>
@@ -490,7 +474,7 @@ const ReviewDrawer: React.FC<ReviewDrawerProps> = ({
 
                     <div className="space-y-2">
                       <label htmlFor="review-comments" className="text-sm font-medium">
-                        Review Comments {selectedRecord.reviewStatus !== 'approved' && '(Required for rejection)'}
+                        Review Comments {selectedRecord.status !== 'APPROVED' && '(Required for rejection)'}
                       </label>
                       <Textarea
                         id="review-comments"
@@ -505,7 +489,7 @@ const ReviewDrawer: React.FC<ReviewDrawerProps> = ({
                     <div className="flex gap-2">
                       <Button
                         onClick={handleApprove}
-                        disabled={isSubmitting || selectedRecord.reviewStatus === 'approved'}
+                        disabled={isSubmitting || selectedRecord.status === 'APPROVED'}
                         className="flex-1 bg-green-600 hover:bg-green-700"
                       >
                         {isSubmitting ? (
@@ -517,7 +501,7 @@ const ReviewDrawer: React.FC<ReviewDrawerProps> = ({
                       </Button>
                       <Button
                         onClick={handleReject}
-                        disabled={isSubmitting || !reviewComments.trim() || selectedRecord.reviewStatus === 'rejected'}
+                        disabled={isSubmitting || !reviewComments.trim() || selectedRecord.status === 'REJECTED'}
                         variant="destructive"
                         className="flex-1"
                       >
