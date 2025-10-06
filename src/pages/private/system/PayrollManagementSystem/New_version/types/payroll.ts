@@ -439,3 +439,80 @@ export interface PayrollCycleProcessingStatusResponse {
     updatedAt: string;
   } | null;
 }
+
+export interface PayrollSalaryStatistics {
+  basicInfo: {
+    salaryRecordId: string;
+    month: number;
+    monthName: string;
+    year: number;
+  };
+  attendanceAnalysis: {
+    totalDaysInMonth: number;
+    workingDays: number;
+    presentDays: number;
+    halfDays: number;
+    absentDays: number;
+    paidLeaveDays: number;
+    unpaidLeaveDays: number;
+    attendancePercentage: number;
+    summaryByStatus?: Record<string, number>;
+    totals?: {
+      hoursWorked: number;
+      breakMinutes: number;
+      attendanceEntries: number;
+      geofenceViolationCount: number;
+    };
+  };
+  attendanceDetails?: {
+    calendar?: Array<{
+      date: string;
+      day: number;
+      attendanceStatus?: string;
+      isWeekend?: boolean;
+      records?: Array<{
+        id?: string;
+        status?: string | null;
+        checkInTime?: string | null;
+        checkOutTime?: string | null;
+        durationHours?: number | null;
+        notes?: string | null;
+        verificationStatus?: string | null;
+      }>;
+      leave?: Array<Record<string, unknown>> | null;
+      holiday?: Record<string, unknown> | null;
+    }>;
+    summaryByStatus?: Record<string, number>;
+    totals?: {
+      hoursWorked?: number;
+      breakMinutes?: number;
+      attendanceEntries?: number;
+      geofenceViolationCount?: number;
+    };
+    breakHistory?: Array<{
+      id?: string;
+      breakType?: string | null;
+      durationMinutes?: number | null;
+      status?: string | null;
+      startTime?: string | null;
+      endTime?: string | null;
+      note?: string | null;
+    }>;
+    geofenceHistory?: Array<{
+      id?: string;
+      geofenceName?: string | null;
+      violationType?: string | null;
+      severity?: string | null;
+      startTime?: string | null;
+      resolvedAt?: string | null;
+      distance?: number | null;
+      action?: string | null;
+    }>;
+    metadata?: {
+      monthStart?: string;
+      monthEnd?: string;
+      weekendDays?: number[];
+      daysInMonth?: number;
+    };
+  };
+}

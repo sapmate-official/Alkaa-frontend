@@ -6,7 +6,6 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card'
-import { TabsContent } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { AlertCircle, DollarSign, BarChart3, Download, FileText } from 'lucide-react'
 import { PayrollCycle, PayrollPayoutStatus } from '../../../types/payroll'
@@ -42,7 +41,7 @@ const TransactionsTab = ({
   onBulkPaymentRecord,
   onNavigateReporting
 }: TransactionsTabProps) => (
-  <TabsContent value="transactions" className="space-y-6">
+  <div className="space-y-6">
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
@@ -247,7 +246,7 @@ const TransactionsTab = ({
         </div>
       </CardContent>
     </Card>
-  </TabsContent>
+  </div>
 )
 
 export default TransactionsTab

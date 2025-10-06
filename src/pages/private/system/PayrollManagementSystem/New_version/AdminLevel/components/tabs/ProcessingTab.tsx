@@ -6,7 +6,6 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card'
-import { TabsContent } from '@/components/ui/tabs'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { AlertCircle, Play } from 'lucide-react'
@@ -37,7 +36,7 @@ const ProcessingTab = ({
   onStartPayrollCycle,
   isProcessing
 }: ProcessingTabProps) => (
-  <TabsContent value="processing" className="space-y-6">
+  <div className="space-y-6">
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
@@ -150,7 +149,7 @@ const ProcessingTab = ({
         )}
       </CardContent>
     </Card>
-  </TabsContent>
+  </div>
 )
 
 export default ProcessingTab

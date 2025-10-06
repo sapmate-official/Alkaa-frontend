@@ -6,7 +6,6 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card'
-import { TabsContent } from '@/components/ui/tabs'
 import { Settings, FileText, Users, AlertCircle } from 'lucide-react'
 
 type SetupConfigTabProps = {
@@ -22,7 +21,7 @@ const SetupConfigTab = ({
   onNavigateBankManagement,
   onNavigateNotificationSettings
 }: SetupConfigTabProps) => (
-  <TabsContent value="setup" className="space-y-6">
+  <div className="space-y-6">
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <Card>
         <CardHeader>
@@ -76,7 +75,7 @@ const SetupConfigTab = ({
         </CardContent>
       </Card>
     </div>
-  </TabsContent>
+  </div>
 )
 
 export default SetupConfigTab

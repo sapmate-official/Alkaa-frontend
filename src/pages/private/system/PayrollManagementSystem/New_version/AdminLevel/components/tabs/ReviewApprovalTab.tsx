@@ -6,7 +6,6 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card'
-import { TabsContent } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { CheckCircle, Loader2 } from 'lucide-react'
 import { PayrollCycle } from '../../../types/payroll'
@@ -34,7 +33,7 @@ const ReviewApprovalTab = ({
   isProcessing,
   reviewLoadingCycleId
 }: ReviewApprovalTabProps) => (
-  <TabsContent value="review-approval" className="space-y-6">
+  <div className="space-y-6">
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
@@ -102,7 +101,7 @@ const ReviewApprovalTab = ({
         )}
       </CardContent>
     </Card>
-  </TabsContent>
+  </div>
 )
 
 export default ReviewApprovalTab

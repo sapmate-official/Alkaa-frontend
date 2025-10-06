@@ -7,7 +7,6 @@ import {
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { TabsContent } from '@/components/ui/tabs'
 import { Loader2, Calendar, DollarSign, AlertCircle, TrendingUp, Play } from 'lucide-react'
 import { PayrollCycle, PayrollStatistics, PayrollCycleProcessingStatusResponse } from '../../../types/payroll'
 import { formatCurrency, formatDuration, getStatusBadgeVariant, getStatusIcon } from '../../utils/ui'
@@ -55,7 +54,7 @@ const OverviewTab = ({
   cyclePendingDelete
 }: OverviewTabProps) => {
   return (
-    <TabsContent value="overview" className="space-y-6">
+    <div className="space-y-6">
       {statistics && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card>
@@ -298,7 +297,7 @@ const OverviewTab = ({
           </div>
         </CardContent>
       </Card>
-    </TabsContent>
+    </div>
   )
 }
 

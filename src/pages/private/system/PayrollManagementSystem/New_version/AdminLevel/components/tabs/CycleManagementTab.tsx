@@ -7,7 +7,6 @@ import {
   CardTitle
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { TabsContent } from '@/components/ui/tabs'
 import { Clock } from 'lucide-react'
 import { MonthAndYearSelector } from '../../../ui/MonthYearPicker'
 import { PayrollCycle, PayrollCycleProcessingStatusResponse } from '../../../types/payroll'
@@ -47,7 +46,7 @@ const CycleManagementTab = ({
   getProgressErrorForCycle,
   cycleProgressMap
 }: CycleManagementTabProps) => (
-  <TabsContent value="cycle-management" className="space-y-6">
+  <div className="space-y-6">
     <Card>
       <CardHeader>
         <CardTitle>Create New Payroll Cycle</CardTitle>
@@ -148,7 +147,7 @@ const CycleManagementTab = ({
         )}
       </CardContent>
     </Card>
-  </TabsContent>
+  </div>
 )
 
 export default CycleManagementTab

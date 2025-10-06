@@ -64,6 +64,7 @@ export const APIDictionary = {
     holiday_type: `${backendDomain}/api/v2/holiday-type`,
     holiday_type_by_org: (orgId:string) => `${backendDomain}/api/v2/holiday-type/${orgId}`,
     OrganizationSettings: () => `${backendDomain}/api/v3/settings`,
+    attendanceActivity: (orgId: string) => `${backendDomain}/api/v3/attendance/organizations/${orgId}/activity`,
     SalaryRecordExistence: (userId: string, month: number, year: number) => `${backendDomain}/api/v2/salary/user/${userId}/monthly/${month}/year/${year}`,
     permissionPreset: `${backendDomain}/api/v3/permission-preset`,
 

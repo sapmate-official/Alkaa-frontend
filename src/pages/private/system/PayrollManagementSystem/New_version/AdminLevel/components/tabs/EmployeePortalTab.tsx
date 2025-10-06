@@ -6,7 +6,6 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card'
-import { TabsContent } from '@/components/ui/tabs'
 import { Users, FileText, Download, AlertCircle, Settings } from 'lucide-react'
 
 type EmployeePortalTabProps = {
@@ -20,7 +19,7 @@ const EmployeePortalTab = ({
   onNavigateSendNotification,
   onNavigatePortalSettings
 }: EmployeePortalTabProps) => (
-  <TabsContent value="employee-portal" className="space-y-6">
+  <div className="space-y-6">
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <Card>
         <CardHeader>
@@ -78,7 +77,7 @@ const EmployeePortalTab = ({
         </CardContent>
       </Card>
     </div>
-  </TabsContent>
+  </div>
 )
 
 export default EmployeePortalTab

@@ -98,6 +98,21 @@ export const useVerificationQueueQuery = () => {
   })
 }
 
+// Attendance Activity Feed Query
+export const useAttendanceActivityQuery = (orgId?: string, params?: { limit?: number }) => {
+  return useQuery({
+    queryKey: attendanceKeys.activity(orgId || 'unknown', params),
+    queryFn: () => {
+      if (!orgId) {
+        return Promise.resolve({ success: true, data: [], scope: 'SELF', pagination: { limit: params?.limit ?? 50, total: 0 } });
+      }
+      return attendanceApi.getAttendanceActivity(orgId, params)
+    },
+    enabled: Boolean(orgId),
+    staleTime: 1000 * 60, // 1 minute
+  })
+}
+
 // Approve/Reject Attendance Mutation
 export const useAttendanceVerificationMutation = () => {
   const queryClient = useQueryClient()
