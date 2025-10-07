@@ -107,8 +107,13 @@ interface PreStatisticsResponse {
   data: PreStatisticsData;
 }
 
+type LeaveTypeInfo = {
+  name?: string;
+  [key: string]: unknown;
+};
+
 interface LeaveStats {
-  leaveType: string;
+  leaveType: string | LeaveTypeInfo | null | undefined;
   count: number;
   dates: string[];
 }
@@ -347,6 +352,18 @@ const MainCompOfViewPayslipOfAllUsersPayroll = () => {
   // Helper function to get month name
   const getMonthName = (month: number): string => {
     return new Date(2000, month - 1, 1).toLocaleString('default', { month: 'long' })
+  }
+
+  const getLeaveTypeLabel = (leaveType: LeaveStats['leaveType']): string => {
+    if (!leaveType) return 'Unknown Leave Type'
+    if (typeof leaveType === 'string') return leaveType
+    if (typeof leaveType === 'object' && leaveType !== null) {
+      const { name } = leaveType as LeaveTypeInfo
+      if (typeof name === 'string' && name.trim().length > 0) {
+        return name
+      }
+    }
+    return 'Unknown Leave Type'
   }
   
   return (
@@ -647,7 +664,9 @@ const MainCompOfViewPayslipOfAllUsersPayroll = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                       {preStatistics.leaveStats.map((leave, index) => (
                                         <div key={index} className="flex justify-between items-center p-2 bg-muted/30 rounded border">
-                                          <span className="text-sm text-foreground">{leave.leaveType}</span>
+                                          <span className="text-sm text-foreground">
+                                            {getLeaveTypeLabel(leave.leaveType)}
+                                          </span>
                                           <Badge variant="outline">{leave.count} days</Badge>
                                         </div>
                                       ))}
