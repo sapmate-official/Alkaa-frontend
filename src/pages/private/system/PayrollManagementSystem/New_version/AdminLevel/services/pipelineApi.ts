@@ -37,14 +37,14 @@ export interface ApproveRejectResponse {
  * Uses: APIV3Dictionary.payroll.getCycleDetails(cycleId)
  */
 export const fetchCycleSalaryRecords = async (cycleId: string): Promise<CycleSalaryRecordsResponse> => {
-  const response = await axios.get<PayrollCycleDetails>(
+  const response = await axios.get<{ success: boolean; data: PayrollCycleDetails }>(
     APIV3Dictionary.payroll.getCycleDetails(cycleId),
     { withCredentials: true }
   );
 
   return {
-    success: true,
-    data: response.data
+    success: response.data.success,
+    data: response.data.data
   };
 };
 
@@ -201,7 +201,7 @@ export const getPipelineProgress = async (
   year: number
 ): Promise<PipelineProgressResponse> => {
   const response = await axios.get(
-    `${import.meta.env.VITE_API_BASE_URL || ''}/api/v3/payroll/pipeline/progress/${month}/${year}`,
+    APIV3Dictionary.payroll.pipeline.getProgress(month, year),
     { withCredentials: true }
   );
 
@@ -219,7 +219,7 @@ export const savePipelineProgress = async (
   stepData: PipelineProgressData['stepData']
 ): Promise<{ success: boolean; message: string; data: any }> => {
   const response = await axios.post(
-    `${import.meta.env.VITE_API_BASE_URL || ''}/api/v3/payroll/pipeline/progress`,
+    APIV3Dictionary.payroll.pipeline.saveProgress,
     { month, year, currentStep, stepData },
     { withCredentials: true }
   );
@@ -236,7 +236,7 @@ export const clearPipelineProgress = async (
   year: number
 ): Promise<{ success: boolean; message: string }> => {
   const response = await axios.delete(
-    `${import.meta.env.VITE_API_BASE_URL || ''}/api/v3/payroll/pipeline/progress/${month}/${year}`,
+    APIV3Dictionary.payroll.pipeline.clearProgress(month, year),
     { withCredentials: true }
   );
 

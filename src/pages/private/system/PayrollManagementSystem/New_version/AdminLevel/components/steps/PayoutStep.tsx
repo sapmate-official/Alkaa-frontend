@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { StepProps } from '../../PayrollPipelinePage'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -19,6 +20,7 @@ import {
 } from 'lucide-react'
 
 const PayoutStep = ({ cycleData, onDataChange, onComplete }: StepProps) => {
+  const navigate = useNavigate()
   const [payoutStatus, setPayoutStatus] = useState<'ready' | 'processing' | 'completed'>(
     cycleData.payoutComplete ? 'completed' : 'ready'
   )
@@ -27,6 +29,28 @@ const PayoutStep = ({ cycleData, onDataChange, onComplete }: StepProps) => {
   const totalEmployees = cycleData.cycle?.totalEmployees || 0
   const processedCount = cycleData.processedCount || totalEmployees
   const totalAmount = processedCount * 45000 // Simulated
+
+  const navigateWithFallback = useCallback(
+    (path: string) => {
+      if (!path) {
+        return
+      }
+      navigate(path)
+    },
+    [navigate]
+  )
+
+  const handleViewPayslips = useCallback(() => {
+    navigateWithFallback('/p/payroll/admin/payslip')
+  }, [navigateWithFallback])
+
+  const handleDownloadReports = useCallback(() => {
+    navigateWithFallback('/p/payroll/admin/tax-summaries')
+  }, [navigateWithFallback])
+
+  const handleViewTransactions = useCallback(() => {
+    navigateWithFallback('/p/payroll/admin/transaction')
+  }, [navigateWithFallback])
 
   const handleInitiatePayout = async () => {
     setPayoutStatus('processing')
@@ -119,15 +143,15 @@ const PayoutStep = ({ cycleData, onDataChange, onComplete }: StepProps) => {
                   <div className="space-y-3">
                     <h4 className="font-medium text-sm">Payout Actions:</h4>
                     <div className="space-y-2">
-                      <Button variant="outline" className="w-full justify-start">
+                      <Button variant="outline" className="w-full justify-start" onClick={handleViewPayslips}>
                         <FileText className="h-4 w-4 mr-2" />
                         Generate Payslips
                       </Button>
-                      <Button variant="outline" className="w-full justify-start">
+                      <Button variant="outline" className="w-full justify-start" onClick={handleViewTransactions}>
                         <Download className="h-4 w-4 mr-2" />
                         Export Transaction File
                       </Button>
-                      <Button variant="outline" className="w-full justify-start">
+                      <Button variant="outline" className="w-full justify-start" onClick={handleDownloadReports}>
                         <FileText className="h-4 w-4 mr-2" />
                         Generate Reports
                       </Button>
@@ -220,15 +244,15 @@ const PayoutStep = ({ cycleData, onDataChange, onComplete }: StepProps) => {
                   <div className="space-y-3">
                     <h4 className="font-medium text-sm">Post-Payout Actions:</h4>
                     <div className="space-y-2">
-                      <Button variant="outline" className="w-full justify-start">
+                      <Button variant="outline" className="w-full justify-start" onClick={handleViewPayslips}>
                         <FileText className="h-4 w-4 mr-2" />
                         View Payslips
                       </Button>
-                      <Button variant="outline" className="w-full justify-start">
+                      <Button variant="outline" className="w-full justify-start" onClick={handleDownloadReports}>
                         <Download className="h-4 w-4 mr-2" />
                         Download Reports
                       </Button>
-                      <Button variant="outline" className="w-full justify-start">
+                      <Button variant="outline" className="w-full justify-start" onClick={handleViewTransactions}>
                         <CheckCircle2 className="h-4 w-4 mr-2" />
                         View Transaction History
                       </Button>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { StepProps } from '../../PayrollPipelinePage'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -6,39 +6,277 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { CheckCircle, AlertCircle, Play, Loader2 } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
+import axios from 'axios'
+import { APIV3Dictionary } from '@/services/api/v3/Api3Dicts'
+import { tokenStorage } from '@/providers/AuthContext'
 
 const ProcessingStep = ({ cycleData, onDataChange, onNext }: StepProps) => {
+  const { toast } = useToast()
   const [isProcessing, setIsProcessing] = useState(false)
-  const [progress, setProgress] = useState(cycleData.processingProgress || 0)
-  
+  const [progress, setProgress] = useState(0)
+  const pollingRef = useRef<NodeJS.Timeout | null>(null)
+  const cycleId = cycleData.cycle?.id
   const totalEmployees = cycleData.cycle?.totalEmployees || 0
-  const processedCount = Math.floor((progress / 100) * totalEmployees)
-  const failedCount = cycleData.failedCount || 0
-  const hasProcessed = cycleData.allProcessed
+  const cycleStatus = cycleData.cycle?.status
+  const eventSourceRef = useRef<EventSource | null>(null)
+  const [isStreamActive, setIsStreamActive] = useState(false)
+  const [statusCounts, setStatusCounts] = useState({
+    processed: cycleData.processedCount || 0,
+    failed: cycleData.failedCount || 0,
+    total: totalEmployees
+  })
 
-  const handleStartProcessing = async () => {
-    setIsProcessing(true)
-    
-    // Simulate processing with progress updates
-    for (let i = progress; i <= 100; i += 10) {
-      await new Promise(resolve => setTimeout(resolve, 300))
-      setProgress(i)
-      onDataChange((prev) => ({
-        ...prev,
-        processingStarted: true,
-        processingProgress: i,
-        processedCount: Math.floor((i / 100) * totalEmployees)
-      }))
+  // Get current counts from cycleData
+  const processedCount = statusCounts.processed
+  const failedCount = statusCounts.failed
+  const trackedTotalEmployees = statusCounts.total || totalEmployees
+  const hasProcessed = cycleData.allProcessed
+  
+  // Calculate progress from processed count
+  const calculatedProgress = trackedTotalEmployees > 0 ? Math.round((processedCount / trackedTotalEmployees) * 100) : 0
+  
+  // Show processing if status is IN_PROGRESS or if we have progress
+  const isActivelyProcessing = isProcessing || cycleStatus === 'IN_PROGRESS' || (progress > 0 && progress < 100)
+  const shouldShowProgressView = cycleData.processingStarted || isActivelyProcessing || progress > 0
+  
+  // Update progress state when cycleData changes
+  useEffect(() => {
+    if (cycleData.processingProgress !== undefined) {
+      setProgress(cycleData.processingProgress)
+    } else if (calculatedProgress !== progress) {
+      setProgress(calculatedProgress)
     }
-    
-    setIsProcessing(false)
+  }, [cycleData.processingProgress, calculatedProgress, progress])
+
+  useEffect(() => {
+    setStatusCounts({
+      processed: cycleData.processedCount || 0,
+      failed: cycleData.failedCount || 0,
+      total: cycleData.cycle?.totalEmployees || totalEmployees
+    })
+  }, [cycleData.processedCount, cycleData.failedCount, cycleData.cycle?.totalEmployees, totalEmployees])
+
+  const stopPolling = useCallback(() => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current)
+      pollingRef.current = null
+    }
+  }, [])
+
+  // Poll for processing status
+  const handleStatusUpdate = useCallback((status: any) => {
+    if (!status) return
+
+    const cycleStats = status.cycle ?? status
+    const processedFromStatus = cycleStats?.processedCount ?? status.processedCount ?? 0
+    const failedFromStatus = cycleStats?.failedCount ?? status.failedCount ?? 0
+  const totalFromStatus = cycleStats?.totalEmployees ?? status.totalEmployees ?? (statusCounts.total || totalEmployees)
+    const percentComplete = typeof status.percentComplete === 'number'
+      ? status.percentComplete
+      : (totalFromStatus > 0 ? Math.round((processedFromStatus / totalFromStatus) * 100) : 0)
+    const jobStatus = status.job?.status
+    const cycleStage = cycleStats?.status
+    const isComplete = cycleStage === 'COMPLETED' || percentComplete >= 100
+    const isProcessingStatus = !isComplete && (jobStatus === 'PROCESSING' || cycleStage === 'IN_PROGRESS' || processedFromStatus < totalFromStatus)
+
+    setProgress(percentComplete)
+    setIsProcessing(isProcessingStatus)
+    setStatusCounts({
+      processed: processedFromStatus,
+      failed: failedFromStatus,
+      total: totalFromStatus
+    })
+
     onDataChange((prev) => ({
       ...prev,
-      allProcessed: true,
-      processingProgress: 100,
-      processedCount: totalEmployees,
-      failedCount: 0
-    }))
+      cycle: prev.cycle ? { ...prev.cycle, status: cycleStage ?? prev.cycle.status, totalEmployees: totalFromStatus } : prev.cycle,
+      processingStarted: true,
+      processingProgress: percentComplete,
+      processedCount: processedFromStatus,
+      failedCount: failedFromStatus,
+      allProcessed: isComplete && failedFromStatus === 0
+    }), { markDirty: false })
+
+    if (isComplete) {
+      stopPolling()
+    }
+  }, [onDataChange, statusCounts.total, totalEmployees, stopPolling])
+
+  const checkProcessingStatus = useCallback(async () => {
+    if (!cycleId) return
+
+    try {
+      const response = await axios.get(
+        APIV3Dictionary.payroll.getCycleProcessingStatus(cycleId),
+        { withCredentials: true }
+      )
+
+      if (response.data.success && response.data.data) {
+        handleStatusUpdate(response.data.data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch processing status:', error)
+    }
+  }, [cycleId, handleStatusUpdate])
+
+  const startPolling = useCallback((intervalMs: number) => {
+    stopPolling()
+    pollingRef.current = setInterval(() => {
+      checkProcessingStatus()
+    }, intervalMs)
+  }, [checkProcessingStatus, stopPolling])
+
+  // Start polling when processing begins
+  useEffect(() => {
+    const shouldPoll = (isProcessing || cycleStatus === 'IN_PROGRESS') && !isStreamActive
+
+    if (shouldPoll) {
+      checkProcessingStatus()
+      startPolling(document.hidden ? 6000 : 2000)
+    } else {
+      stopPolling()
+    }
+
+    return () => {
+      stopPolling()
+    }
+  }, [isProcessing, cycleStatus, isStreamActive, checkProcessingStatus, startPolling, stopPolling])
+
+  // Check initial status on mount
+  useEffect(() => {
+    if (cycleId) {
+      checkProcessingStatus()
+    }
+  }, [cycleId, checkProcessingStatus])
+
+  // Stream updates via SSE when available
+  useEffect(() => {
+    if (!cycleId || typeof window === 'undefined' || typeof EventSource === 'undefined') {
+      setIsStreamActive(false)
+      return
+    }
+
+    const accessToken = tokenStorage.getAccessToken()
+    if (!accessToken) {
+      setIsStreamActive(false)
+      return
+    }
+
+    let streamUrl = APIV3Dictionary.payroll.getCycleProcessingStream(cycleId)
+    try {
+      const url = new URL(streamUrl)
+      url.searchParams.set('token', accessToken)
+      streamUrl = url.toString()
+    } catch (urlError) {
+      console.error('Failed to prepare progress stream URL:', urlError)
+      setIsStreamActive(false)
+      return
+    }
+
+    try {
+      const eventSource = new EventSource(streamUrl)
+      eventSourceRef.current = eventSource
+
+      eventSource.onopen = () => {
+        setIsStreamActive(true)
+        stopPolling()
+      }
+
+      eventSource.onmessage = (event) => {
+        try {
+          const payload = JSON.parse(event.data)
+          handleStatusUpdate(payload)
+        } catch (parseError) {
+          console.error('Failed to parse progress stream payload:', parseError)
+        }
+      }
+
+      eventSource.onerror = (event) => {
+        console.error('Progress stream encountered an error:', event)
+        eventSource.close()
+        eventSourceRef.current = null
+        setIsStreamActive(false)
+      }
+
+      return () => {
+        eventSource.close()
+        eventSourceRef.current = null
+        setIsStreamActive(false)
+      }
+    } catch (streamError) {
+      console.error('Failed to establish progress stream:', streamError)
+      setIsStreamActive(false)
+    }
+  }, [cycleId, handleStatusUpdate, stopPolling])
+
+  // Adjust polling frequency when tab visibility changes
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      const shouldPoll = (isProcessing || cycleStatus === 'IN_PROGRESS') && !isStreamActive
+      if (!shouldPoll) {
+        stopPolling()
+        return
+      }
+
+      if (document.hidden) {
+        startPolling(6000)
+      } else {
+        checkProcessingStatus()
+        startPolling(2000)
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [isProcessing, cycleStatus, isStreamActive, startPolling, stopPolling, checkProcessingStatus])
+
+  const handleStartProcessing = async () => {
+    if (!cycleId) {
+      toast({
+        title: 'Error',
+        description: 'No cycle ID found',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    setIsProcessing(true)
+    
+    try {
+      const response = await axios.post(
+        APIV3Dictionary.payroll.startCycle(cycleId),
+        {},
+        { withCredentials: true }
+      )
+
+      if (response.data.success) {
+        toast({
+          title: 'Processing Started',
+          description: 'Salary processing has been queued and will begin shortly',
+        })
+        
+        // Start polling for status
+        checkProcessingStatus()
+      } else {
+        toast({
+          title: 'Error',
+          description: response.data.message || 'Failed to start processing',
+          variant: 'destructive'
+        })
+        setIsProcessing(false)
+      }
+    } catch (error) {
+      console.error('Failed to start processing:', error)
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to start salary processing',
+        variant: 'destructive'
+      })
+      setIsProcessing(false)
+    }
   }
 
   const handleSubmitForReview = () => {
@@ -58,7 +296,7 @@ const ProcessingStep = ({ cycleData, onDataChange, onNext }: StepProps) => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {!cycleData.processingStarted ? (
+          {!shouldShowProgressView ? (
             <>
               <Alert>
                 <AlertCircle className="h-4 w-4" />
@@ -72,7 +310,7 @@ const ProcessingStep = ({ cycleData, onDataChange, onNext }: StepProps) => {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-muted-foreground">Total Employees</p>
-                    <p className="text-2xl font-bold">{totalEmployees}</p>
+                    <p className="text-2xl font-bold">{trackedTotalEmployees}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Status</p>
@@ -83,14 +321,14 @@ const ProcessingStep = ({ cycleData, onDataChange, onNext }: StepProps) => {
 
               <Button 
                 onClick={handleStartProcessing} 
-                disabled={isProcessing}
+                disabled={isProcessing || !cycleId}
                 className="w-full"
                 size="lg"
               >
                 {isProcessing ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Processing...
+                    Starting...
                   </>
                 ) : (
                   <>
@@ -103,18 +341,29 @@ const ProcessingStep = ({ cycleData, onDataChange, onNext }: StepProps) => {
           ) : (
             <>
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Processing Progress</span>
-                  <span className="text-sm text-muted-foreground">{progress}%</span>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Processing Progress</span>
+                    <span className="text-sm font-semibold">{progress}%</span>
+                  </div>
+                  <Progress value={progress} className="h-3" />
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{processedCount} of {trackedTotalEmployees} employees processed</span>
+                    {isActivelyProcessing && progress < 100 && (
+                      <span className="flex items-center gap-1">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Processing...
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <Progress value={progress} className="h-2" />
                 
                 <div className="grid grid-cols-3 gap-4 mt-4">
                   <Card>
                     <CardContent className="pt-4">
                       <div className="text-center">
                         <p className="text-muted-foreground text-xs mb-1">Total</p>
-                        <p className="text-2xl font-bold">{totalEmployees}</p>
+                        <p className="text-2xl font-bold">{trackedTotalEmployees}</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -138,16 +387,17 @@ const ProcessingStep = ({ cycleData, onDataChange, onNext }: StepProps) => {
                   </Card>
                 </div>
 
-                {isProcessing && (
+                {isActivelyProcessing && progress < 100 && (
                   <Alert>
                     <Loader2 className="h-4 w-4 animate-spin" />
                     <AlertDescription>
-                      Processing salary calculations... Please wait while we calculate salaries for all employees.
+                      Processing salary calculations in background... {processedCount} of {trackedTotalEmployees} employees completed.
+                      {failedCount > 0 && ` ${failedCount} failed.`}
                     </AlertDescription>
                   </Alert>
                 )}
 
-                {hasProcessed && !isProcessing && (
+                {hasProcessed && !isActivelyProcessing && (
                   <>
                     <Alert className="border-green-200 bg-green-50">
                       <CheckCircle className="h-4 w-4 text-green-600" />

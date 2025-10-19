@@ -2166,10 +2166,21 @@ const SalaryTemplateEditor = () => {
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => {
+                          const allEmployeeIds = new Set(filteredEmployees.map(emp => emp.id))
+                          setSelectedEmployeeIds(allEmployeeIds)
+                        }}
+                        disabled={filteredEmployees.length === 0 || selectedEmployeesCount === filteredEmployees.length}
+                      >
+                        Select All
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => setSelectedEmployeeIds(() => new Set<string>())}
                         disabled={selectedEmployeesCount === 0}
                       >
-                        Clear
+                        Clear All
                       </Button>
                     </div>
                   </div>
@@ -2256,10 +2267,21 @@ const SalaryTemplateEditor = () => {
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => {
+                          const allDepartmentIds = new Set(filteredDepartments.map(dept => dept.id))
+                          setSelectedDepartmentIds(allDepartmentIds)
+                        }}
+                        disabled={filteredDepartments.length === 0 || selectedDepartmentsCount === filteredDepartments.length}
+                      >
+                        Select All
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => setSelectedDepartmentIds(() => new Set<string>())}
                         disabled={selectedDepartmentsCount === 0}
                       >
-                        Clear
+                        Clear All
                       </Button>
                     </div>
                   </div>

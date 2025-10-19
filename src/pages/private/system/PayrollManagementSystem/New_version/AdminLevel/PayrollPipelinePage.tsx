@@ -59,7 +59,7 @@ export interface CycleData {
 
 export interface StepProps {
   cycleData: CycleData
-  onDataChange: (data: CycleData | ((prev: CycleData) => CycleData)) => void
+  onDataChange: (data: CycleData | ((prev: CycleData) => CycleData), options?: { markDirty?: boolean }) => void
   onNext: () => void
   onBack: () => void
   onComplete: () => void
@@ -276,17 +276,16 @@ const PayrollPipelinePage = () => {
     }
   }, [currentStep, pipelineSteps])
 
-  const handleDataChange = useCallback((dataOrUpdater: CycleData | ((prev: CycleData) => CycleData)) => {
-    if (typeof dataOrUpdater === 'function') {
-      setCycleData((prev) => {
-        const updated = dataOrUpdater(prev)
+  const handleDataChange = useCallback((dataOrUpdater: CycleData | ((prev: CycleData) => CycleData), options?: { markDirty?: boolean }) => {
+    const markDirty = options?.markDirty !== undefined ? options.markDirty : true
+
+    setCycleData((prev) => {
+      const updated = typeof dataOrUpdater === 'function' ? dataOrUpdater(prev) : dataOrUpdater
+      if (markDirty) {
         setHasUnsavedChanges(true)
-        return updated
-      })
-    } else {
-      setCycleData(dataOrUpdater)
-      setHasUnsavedChanges(true)
-    }
+      }
+      return updated
+    })
   }, [])
 
   const handleComplete = useCallback(() => {
@@ -323,7 +322,12 @@ const PayrollPipelinePage = () => {
         payoutComplete: cycleData.payoutComplete,
       }
 
-      await savePipelineProgress(cycleData.month, cycleData.year, currentStep, stepData)
+      const backendStepIndex = Math.min(
+        PIPELINE_STEPS.length - 1,
+        Math.max(0, currentStep - 1)
+      )
+
+      await savePipelineProgress(cycleData.month, cycleData.year, backendStepIndex, stepData)
       setHasUnsavedChanges(false)
       setHasSavedProgress(true)
       
@@ -377,13 +381,14 @@ const PayrollPipelinePage = () => {
             payoutComplete: stepData.payoutComplete || false,
           }
 
-          setCurrentStep(savedStep)
+          const clampedSavedStep = Math.min(Math.max(savedStep, 0), PIPELINE_STEPS.length - 1)
+          setCurrentStep(clampedSavedStep + 1)
           setCycleData(restoredCycleData)
           setHasSavedProgress(true)
           
           toast({
             title: 'Progress Restored',
-            description: `Resumed from step ${savedStep}: ${PIPELINE_STEPS[savedStep - 1].name}`,
+            description: `Resumed from step ${clampedSavedStep + 1}: ${PIPELINE_STEPS[clampedSavedStep]?.name ?? 'Unknown Step'}`,
           })
         }
       } catch (error) {

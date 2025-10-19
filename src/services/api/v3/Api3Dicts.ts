@@ -36,6 +36,7 @@ export const APIV3Dictionary = {
         approveCycle: (cycleId: string) => `${backendDomain}/api/v3/payroll/cycle/approve/${cycleId}`,
         getCycleDetails: (cycleId: string) => `${backendDomain}/api/v3/payroll/cycle/${cycleId}`,
         getCycleProcessingStatus: (cycleId: string) => `${backendDomain}/api/v3/payroll/cycle/${cycleId}/status`,
+    getCycleProcessingStream: (cycleId: string) => `${backendDomain}/api/v3/payroll/cycle/${cycleId}/stream`,
         initiateCyclePayout: (cycleId: string) => `${backendDomain}/api/v3/payroll/cycle/${cycleId}/payout/initiate`,
         getCyclePayoutSummary: (cycleId: string) => `${backendDomain}/api/v3/payroll/cycle/${cycleId}/payout/summary`,
         deleteCycle: (cycleId: string) => `${backendDomain}/api/v3/payroll/cycle/${cycleId}`,
@@ -115,6 +116,13 @@ export const APIV3Dictionary = {
             list: `${backendDomain}/api/v3/payroll/transactions`,
             pay: `${backendDomain}/api/v3/payroll/transactions/pay`,
             bySalaryRecord: (salaryRecordId: string) => `${backendDomain}/api/v3/payroll/transactions/${salaryRecordId}`
+        },
+
+        // Pipeline progress management (UI state persistence)
+        pipeline: {
+            getProgress: (month: number, year: number) => `${backendDomain}/api/v3/payroll/pipeline/progress/${month}/${year}`,
+            saveProgress: `${backendDomain}/api/v3/payroll/pipeline/progress`,
+            clearProgress: (month: number, year: number) => `${backendDomain}/api/v3/payroll/pipeline/progress/${month}/${year}`,
         },
     },
     attendance: AttendanceAPIV3Dictionary

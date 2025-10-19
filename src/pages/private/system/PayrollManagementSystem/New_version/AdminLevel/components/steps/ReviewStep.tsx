@@ -8,6 +8,8 @@ import ReviewDrawer from './ReviewDrawer'
 import { useToast } from '@/hooks/use-toast'
 import * as pipelineApi from '../../services/pipelineApi'
 import type { PayrollCycleDetails } from '../../../types/payroll'
+import { APIV3Dictionary } from '@/services/api/v3/Api3Dicts'
+import axios from 'axios'
 
 // Use the SalaryRecord type from PayrollCycleDetails
 type SalaryRecord = PayrollCycleDetails['salaryRecords'][number]
@@ -17,6 +19,7 @@ const ReviewStep = ({ cycleData, onDataChange, onNext }: StepProps) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [salaryRecords, setSalaryRecords] = useState<SalaryRecord[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isBulkApproving, setIsBulkApproving] = useState(false)
 
   const totalEmployees = cycleData.cycle?.totalEmployees || 0
   const processedCount = cycleData.processedCount || totalEmployees
@@ -27,6 +30,13 @@ const ReviewStep = ({ cycleData, onDataChange, onNext }: StepProps) => {
   const rejectedCount = salaryRecords.filter(r => r.status === 'REJECTED').length
   const allReviewed = salaryRecords.length > 0 && pendingCount === 0
 
+  // Fetch salary records when component mounts or cycle changes
+  useEffect(() => {
+    if (cycleData.cycle?.id && salaryRecords.length === 0 && !isLoading) {
+      fetchSalaryRecords()
+    }
+  }, [cycleData.cycle?.id])
+
   // Fetch salary records when component mounts or when needed
   const fetchSalaryRecords = async () => {
     if (!cycleData.cycle?.id) return
@@ -35,12 +45,16 @@ const ReviewStep = ({ cycleData, onDataChange, onNext }: StepProps) => {
     try {
       const response = await pipelineApi.fetchCycleSalaryRecords(cycleData.cycle.id)
       
-      if (response.success && response.data.salaryRecords) {
+      console.log('Fetched cycle response:', response)
+      
+      if (response.success && response.data?.salaryRecords) {
+        console.log('Salary records:', response.data.salaryRecords)
         setSalaryRecords(response.data.salaryRecords)
       } else {
+        console.error('Invalid response structure:', response)
         toast({
           title: 'Error',
-          description: 'Failed to load salary records',
+          description: 'Failed to load salary records - invalid response structure',
           variant: 'destructive'
         })
       }
@@ -94,6 +108,66 @@ const ReviewStep = ({ cycleData, onDataChange, onNext }: StepProps) => {
         variant: 'destructive'
       })
       throw error
+    }
+  }
+
+  const handleApproveAllPending = async () => {
+    const pendingStatuses = new Set<SalaryRecord['status'] | undefined>(['PENDING', 'PROCESSED', 'PROCESSING', 'IN_PROGRESS', undefined])
+    const targetRecords = salaryRecords.filter(record => pendingStatuses.has(record.status))
+
+    if (targetRecords.length === 0) {
+      toast({
+        title: 'Nothing to approve',
+        description: 'All salary records are already approved or have been rejected.',
+      })
+      return
+    }
+
+    const confirmMessage = `Approve all ${targetRecords.length} pending salary record${targetRecords.length > 1 ? 's' : ''}?`
+    if (typeof window !== 'undefined' && !window.confirm(confirmMessage)) {
+      return
+    }
+
+    setIsBulkApproving(true)
+    try {
+      const response = await pipelineApi.bulkApproveSalaryRecords(targetRecords.map(record => record.id))
+
+      if (response.success) {
+        const approvedAt = new Date().toISOString()
+        const approvedIds = new Set(targetRecords.map(record => record.id))
+
+        setSalaryRecords(prev => prev.map(record => (
+          approvedIds.has(record.id)
+            ? {
+                ...record,
+                status: 'APPROVED',
+                reviewComments: record.reviewComments || null,
+                reviewedAt: approvedAt
+              }
+            : record
+        )))
+
+        toast({
+          title: 'All pending salaries approved',
+          description: response.message || 'Every pending salary record has been approved successfully.',
+          variant: 'default'
+        })
+      } else {
+        toast({
+          title: 'Bulk approval failed',
+          description: response.message || 'Unable to approve all salary records. Please try again.',
+          variant: 'destructive'
+        })
+      }
+    } catch (error) {
+      console.error('Failed to approve all salary records:', error)
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to approve all salary records. Please try again.',
+        variant: 'destructive'
+      })
+    } finally {
+      setIsBulkApproving(false)
     }
   }
 
@@ -248,7 +322,86 @@ const ReviewStep = ({ cycleData, onDataChange, onNext }: StepProps) => {
                 </Card>
               )}
 
-              {!allReviewed && (
+              {salaryRecords.length === 0 && !isLoading && (
+                <Alert className="border-yellow-200 bg-yellow-50">
+                  <AlertDescription className="space-y-4">
+                    <div className="text-yellow-900">
+                      <strong>No Salary Records Found</strong>
+                      <p className="mt-2 text-sm">
+                        No salary records were found for this cycle. This could happen if:
+                      </p>
+                      <ul className="mt-2 text-sm list-disc list-inside space-y-1">
+                        <li>No employees were processed in the previous step</li>
+                        <li>All salary records failed during processing</li>
+                        <li>The cycle was created but not started</li>
+                      </ul>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => {
+                          onDataChange((prev) => ({
+                            ...prev,
+                            reviewStarted: false,
+                            allReviewed: false,
+                            pendingReviewCount: 0,
+                          }))
+                          toast({
+                            title: 'Skipped Review',
+                            description: 'Review step skipped. You can proceed to the next step.',
+                          })
+                          onNext()
+                        }}
+                        variant="outline"
+                        className="flex-1"
+                      >
+                        Skip Review & Continue
+                      </Button>
+                      <Button
+                        onClick={async () => {
+                          if (!cycleData.cycle?.id) return
+                          
+                          if (confirm('Are you sure you want to delete this payroll cycle? This action cannot be undone.')) {
+                            try {
+                              const response = await axios.delete(
+                                APIV3Dictionary.payroll.deleteCycle(cycleData.cycle.id),
+                                { withCredentials: true }
+                              )
+                              
+                              if (response.data.success) {
+                                toast({
+                                  title: 'Success',
+                                  description: 'Payroll cycle deleted successfully',
+                                })
+                                // Reset to first step
+                                window.location.reload()
+                              } else {
+                                toast({
+                                  title: 'Error',
+                                  description: response.data.message || 'Failed to delete cycle',
+                                  variant: 'destructive'
+                                })
+                              }
+                            } catch (error) {
+                              console.error('Failed to delete cycle:', error)
+                              toast({
+                                title: 'Error',
+                                description: error instanceof Error ? error.message : 'Failed to delete cycle. Please try again.',
+                                variant: 'destructive'
+                              })
+                            }
+                          }
+                        }}
+                        variant="destructive"
+                        className="flex-1"
+                      >
+                        Delete Cycle & Start Over
+                      </Button>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {!allReviewed && salaryRecords.length > 0 && (
                 <Button onClick={handleOpenReviewDrawer} className="w-full" size="lg">
                   <Eye className="h-4 w-4 mr-2" />
                   {approvedCount > 0 ? 'Continue Review Process' : 'Start Review Process'}
@@ -331,6 +484,8 @@ const ReviewStep = ({ cycleData, onDataChange, onNext }: StepProps) => {
         onApproveRecord={handleApproveRecord}
         onRejectRecord={handleRejectRecord}
         isLoading={isLoading}
+        onApproveAllPending={handleApproveAllPending}
+        isBulkApproving={isBulkApproving}
       />
     </div>
   )
