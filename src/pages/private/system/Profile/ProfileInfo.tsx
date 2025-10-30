@@ -14,6 +14,9 @@ import { motion } from 'framer-motion'
 import BankDetails from '@/components/BankDetails'
 import RouteDict from '@/routes/RouteDict'
 import { useProfileQuery, useRelationshipQuery } from '@/hooks/queries/useProfile'
+import { EmploymentTypeBadge } from '@/components/employment/EmploymentTypeBadge'
+import { UserRulesCard } from '@/components/employment/UserRulesCard'
+import { EmploymentType } from '@/types/employmentType'
 
 const ProfileInfo = () => {
     const { id } = useParams()
@@ -246,6 +249,13 @@ const ProfileInfo = () => {
                                                 {profileInfo.roles[0].role?.name}
                                             </span>
                                         )}
+                                        {profileInfo?.employmentType && (
+                                            <EmploymentTypeBadge
+                                                employmentType={profileInfo.employmentType as EmploymentType}
+                                                size="md"
+                                                showLabel={true}
+                                            />
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -407,6 +417,24 @@ const ProfileInfo = () => {
                                     </div>
                                 )}
                                 
+                                {profileInfo?.contractEndDate && (
+                                    <div className="flex items-start gap-3">
+                                        <div className="rounded-full bg-yellow-100 p-2 mt-1">
+                                            <CalendarIcon className="w-4 h-4 text-yellow-600" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-sm text-muted-foreground font-medium">Contract End Date</p>
+                                            <p className="font-medium">
+                                                {new Date(profileInfo.contractEndDate).toLocaleDateString(undefined, {
+                                                    year: 'numeric',
+                                                    month: 'long',
+                                                    day: 'numeric'
+                                                })}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                                
                                 {profileInfo?.roles && profileInfo?.roles?.length > 0 && (
                                     <div className="sm:col-span-2">
                                         <div className="space-y-3">
@@ -423,6 +451,18 @@ const ProfileInfo = () => {
                                 )}
                             </CardContent>
                         </Card>
+                    </motion.div>
+                )}
+
+                {/* Employment Type Rules Card */}
+                {canDisplayEmploymentInfo() && profileInfo?.orgId && (
+                    <motion.div
+                        initial="hidden"
+                        animate="visible"
+                        variants={cardVariants}
+                        transition={{ duration: 0.3, delay: 0.25 }}
+                    >
+                        <UserRulesCard orgId={profileInfo.orgId} userId={profileInfo.id} />
                     </motion.div>
                 )}
 

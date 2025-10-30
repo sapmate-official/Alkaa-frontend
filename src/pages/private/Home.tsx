@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { APIDictionary } from '@/services/api/v2/APIdict';
 import { useAuth } from '@/providers/AuthContext';
-import { Users, Clock, CalendarDays, Activity } from 'lucide-react';
+import { Users, Clock, CalendarDays, Activity, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import RouteDict from '@/routes/RouteDict';
@@ -12,6 +12,8 @@ import { useAtom } from 'jotai';
 import { dashboardDataAtom, specialEventsAtom } from '@/store/atom';
 import { AttendanceRecord, User } from '@/types/general';
 import { SpecialEvents } from '@/components/dashboard/SpecialEvents';
+import { EmploymentTypeBadge } from '@/components/employment/EmploymentTypeBadge';
+import { EmploymentType } from '@/types/employmentType';
 
 interface ModifiedUser extends User {
   name: string;
@@ -171,7 +173,16 @@ const Home = () => {
   return (
     <div className="p-4 md:p-6 space-y-4 md:space-y-6 w-full h-full overflow-y-auto max-w-full">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
+          {user?.employmentType && (
+            <EmploymentTypeBadge
+              employmentType={user.employmentType as EmploymentType}
+              size="sm"
+              showLabel={false}
+            />
+          )}
+        </div>
         <div className="flex flex-wrap gap-2">
           <Button onClick={refreshDashboard} variant="outline" size="sm" disabled={isLoading}>
             {isLoading ? 'Loading...' : 'Refresh'}
@@ -182,6 +193,34 @@ const Home = () => {
           </Button>
         </div>
       </div>
+
+      {/* Contract Warning Banner */}
+      {user?.contractEndDate && (() => {
+        const now = new Date();
+        const endDate = new Date(user.contractEndDate);
+        const daysRemaining = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        const isExpiringSoon = daysRemaining > 0 && daysRemaining <= 30;
+        
+        if (isExpiringSoon) {
+          return (
+            <Card className="bg-red-50 border-red-200">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="font-semibold text-red-900">Contract Expiring Soon</h3>
+                    <p className="text-sm text-red-700 mt-1">
+                      Your contract ends in {daysRemaining} days ({endDate.toLocaleDateString()}).
+                      Please contact your manager or HR for renewal.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        }
+        return null;
+      })()}
 
       {/* Key Metrics */}
       <div className="grid gap-3 md:gap-4 grid-cols-2 md:grid-cols-4">

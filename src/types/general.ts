@@ -118,6 +118,9 @@ export interface User {
   terminationDate?: Date;
   annualPackage?: number;
   monthlySalary?: number;
+  employmentType?: 'FULL_TIME' | 'PART_TIME' | 'INTERN' | 'CONTRACT' | 'CONSULTANT';
+  contractEndDate?: Date;
+  isActive?: boolean;
   createdAt: Date;
   updatedAt: Date;
   organization: Organization;
