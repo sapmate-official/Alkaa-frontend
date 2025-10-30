@@ -1,4 +1,5 @@
 import type { EmployeeShift, ShiftTemplate } from './shift'
+import { EmploymentType } from './employmentType'
 
 export interface SuperAdmin {
   id: string;
@@ -118,7 +119,7 @@ export interface User {
   terminationDate?: Date;
   annualPackage?: number;
   monthlySalary?: number;
-  employmentType?: 'FULL_TIME' | 'PART_TIME' | 'INTERN' | 'CONTRACT' | 'CONSULTANT';
+  employmentType?: EmploymentType;
   contractEndDate?: Date;
   isActive?: boolean;
   createdAt: Date;
@@ -449,7 +450,8 @@ export interface SalaryParameter {
 export enum UserStatus {
   active = "active",
   inactive = "inactive",
-  suspended = "suspended"
+  suspended = "suspended",
+  terminated = "terminated"
 }
 
 export enum LeaveStatus {
@@ -645,6 +647,8 @@ export interface OnboardingCandidate {
   salaryTemplateId?: string;
   departmentId?: string;
   managerId?: string;
+  employmentType?: EmploymentType;
+  contractEndDate?: string;
   shiftTemplateId?: string;
   shiftEffectiveDate?: string;
   status: OnboardingStatus;

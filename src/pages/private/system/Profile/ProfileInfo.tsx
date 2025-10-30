@@ -216,18 +216,28 @@ const ProfileInfo = () => {
                     transition={{ duration: 0.3 }}
                 >
                     <Card className={`shadow-sm hover:shadow transition-shadow duration-300 ${
-                        profileInfo?.status !== 'active' ? 'border-red-500 bg-red-50 dark:bg-red-950/20' : ''
+                        profileInfo?.status === 'terminated' ? 'border-red-500 bg-red-50 dark:bg-red-950/20' : 
+                        profileInfo?.status === 'suspended' ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20' :
+                        profileInfo?.status === 'inactive' ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20' : ''
                     }`}>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <Avatar className={`h-20 w-20 ring-2 ring-offset-2 ${
-                                    profileInfo?.status !== 'active' 
+                                    profileInfo?.status === 'terminated' 
                                         ? 'ring-red-500 ring-offset-red-50 dark:ring-offset-red-950/20' 
+                                        : profileInfo?.status === 'suspended'
+                                        ? 'ring-orange-500 ring-offset-orange-50 dark:ring-offset-orange-950/20'
+                                        : profileInfo?.status === 'inactive'
+                                        ? 'ring-yellow-500 ring-offset-yellow-50 dark:ring-offset-yellow-950/20'
                                         : 'ring-primary/20 ring-offset-background'
                                 }`}>
                                     <AvatarFallback className={`text-xl font-semibold ${
-                                        profileInfo?.status !== 'active' 
+                                        profileInfo?.status === 'terminated' 
                                             ? 'text-red-700 bg-red-100 dark:bg-red-900 dark:text-red-200' 
+                                            : profileInfo?.status === 'suspended'
+                                            ? 'text-orange-700 bg-orange-100 dark:bg-orange-900 dark:text-orange-200'
+                                            : profileInfo?.status === 'inactive'
+                                            ? 'text-yellow-700 bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-200'
                                             : ''
                                     }`}>
                                         {profileInfo?.firstName?.charAt(0)} {profileInfo?.lastName?.charAt(0)}
@@ -235,7 +245,9 @@ const ProfileInfo = () => {
                                 </Avatar>
                                 <div className="space-y-2">
                                     <CardTitle className={`text-2xl font-bold ${
-                                        profileInfo?.status !== 'active' ? 'text-red-700 dark:text-red-400' : ''
+                                        profileInfo?.status === 'terminated' ? 'text-red-700 dark:text-red-400' :
+                                        profileInfo?.status === 'suspended' ? 'text-orange-700 dark:text-orange-400' :
+                                        profileInfo?.status === 'inactive' ? 'text-yellow-700 dark:text-yellow-400' : ''
                                     }`}>
                                         {profileInfo?.firstName} {profileInfo?.lastName}
                                     </CardTitle>

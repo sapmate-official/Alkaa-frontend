@@ -48,6 +48,7 @@ import {
   Department,
   User
 } from '@/types/general';
+import { EmploymentType, EMPLOYMENT_TYPE_LABELS } from '@/types/employmentType';
 import CandidateReview from './CandidateReview';
 import EditCandidateDialog from './EditCandidateDialog';
 import RoleSelector from './RoleSelector';
@@ -114,6 +115,10 @@ const candidateSchema = z.object({
   departmentId: z.string().optional(),
   managerId: z.string().optional(),
   hiredDate: z.string().optional(),
+  employmentType: z.nativeEnum(EmploymentType, {
+    required_error: 'Employment type is required',
+  }),
+  contractEndDate: z.string().optional(),
   shiftTemplateId: z.string().optional(),
   shiftEffectiveDate: z.string().optional(),
 }).refine((data) => {
@@ -124,6 +129,15 @@ const candidateSchema = z.object({
 }, {
   message: 'Select an effective date when assigning a shift template',
   path: ['shiftEffectiveDate']
+}).refine((data) => {
+  // Validate that CONTRACT, CONSULTANT, and INTERN types have contract end date
+  if ([EmploymentType.CONTRACT, EmploymentType.CONSULTANT, EmploymentType.INTERN].includes(data.employmentType)) {
+    return !!data.contractEndDate;
+  }
+  return true;
+}, {
+  message: 'Contract end date is required for Contract, Consultant, and Intern employees',
+  path: ['contractEndDate']
 });
 
 const OnboardingManagement = () => {
@@ -179,6 +193,8 @@ const OnboardingManagement = () => {
       departmentId: '',
       managerId: '',
       hiredDate: '',
+      employmentType: EmploymentType.FULL_TIME,
+      contractEndDate: '',
       shiftTemplateId: '',
       shiftEffectiveDate: '',
     }
@@ -1112,6 +1128,50 @@ const OnboardingManagement = () => {
                   </FormItem>
                 )}
               />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="employmentType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Employment Type</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select employment type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {Object.entries(EMPLOYMENT_TYPE_LABELS).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {form.watch('employmentType') && 
+             [EmploymentType.CONTRACT, EmploymentType.CONSULTANT, EmploymentType.INTERN].includes(form.watch('employmentType') as EmploymentType) && (
+              <FormField
+                control={form.control}
+                name="contractEndDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contract End Date</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+          </div>
 
           <FormField
                 control={form.control}

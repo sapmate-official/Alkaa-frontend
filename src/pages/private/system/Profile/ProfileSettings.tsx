@@ -279,7 +279,11 @@ const ProfileSettings = () => {
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Account Status</Label>
-                  <Badge variant={user.status === 'active' ? 'default' : 'secondary'}>
+                  <Badge variant={
+                    user.status === 'active' ? 'default' :
+                    user.status === 'terminated' ? 'destructive' :
+                    user.status === 'suspended' ? 'destructive' : 'secondary'
+                  }>
                     {user.status}
                   </Badge>
                 </div>

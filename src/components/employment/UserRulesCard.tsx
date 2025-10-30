@@ -21,6 +21,17 @@ export const UserRulesCard: React.FC<UserRulesCardProps> = ({ orgId, userId }) =
       try {
         setIsLoading(true);
         const data = await employmentTypeService.getUserRulesSummary(orgId, userId);
+        console.log('Fetched rules summary:', data);
+
+        // Validate the data structure
+        if (!data || typeof data !== 'object') {
+          throw new Error('Invalid response structure');
+        }
+
+        if (!data.rules || typeof data.rules !== 'object') {
+          throw new Error('Missing or invalid rules object');
+        }
+
         setRulesSummary(data);
       } catch (err) {
         console.error('Failed to fetch user rules:', err);
@@ -51,6 +62,12 @@ export const UserRulesCard: React.FC<UserRulesCardProps> = ({ orgId, userId }) =
   }
 
   if (error || !rulesSummary) {
+    return null;
+  }
+
+  // Add safety check for rules object
+  if (!rulesSummary.rules || typeof rulesSummary.rules !== 'object') {
+    console.error('Invalid rules structure in rulesSummary:', rulesSummary);
     return null;
   }
 
@@ -117,10 +134,12 @@ export const UserRulesCard: React.FC<UserRulesCardProps> = ({ orgId, userId }) =
         <CardTitle className="text-lg">Employment Rules</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b">
-          <span className="text-sm text-gray-600">Employment Type:</span>
-          <Badge variant="secondary">{EMPLOYMENT_TYPE_LABELS[rulesSummary.employmentType]}</Badge>
-        </div>
+        {rulesSummary.employmentType && (
+          <div className="flex items-center justify-between pb-3 border-b">
+            <span className="text-sm text-gray-600">Employment Type:</span>
+            <Badge variant="secondary">{EMPLOYMENT_TYPE_LABELS[rulesSummary.employmentType]}</Badge>
+          </div>
+        )}
 
         {rulesSummary.contractEndDate && (
           <div className="flex items-center gap-2 bg-red-50 p-3 rounded-lg border border-red-100">
@@ -132,10 +151,18 @@ export const UserRulesCard: React.FC<UserRulesCardProps> = ({ orgId, userId }) =
         )}
 
         <div className="space-y-3">
-          <RuleItem title="Attendance" rule={rulesSummary.rules.attendance} />
-          <RuleItem title="Leave" rule={rulesSummary.rules.leave} />
-          <RuleItem title="Break" rule={rulesSummary.rules.break} />
-          <RuleItem title="Payroll" rule={rulesSummary.rules.payroll} />
+          {rulesSummary.rules.attendance && (
+            <RuleItem title="Attendance" rule={rulesSummary.rules.attendance} />
+          )}
+          {rulesSummary.rules.leave && (
+            <RuleItem title="Leave" rule={rulesSummary.rules.leave} />
+          )}
+          {rulesSummary.rules.break && (
+            <RuleItem title="Break" rule={rulesSummary.rules.break} />
+          )}
+          {rulesSummary.rules.payroll && (
+            <RuleItem title="Payroll" rule={rulesSummary.rules.payroll} />
+          )}
         </div>
 
         <div className="pt-3 border-t">

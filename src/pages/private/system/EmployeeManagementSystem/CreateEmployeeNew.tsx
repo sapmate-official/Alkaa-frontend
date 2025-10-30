@@ -56,6 +56,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { debounce } from 'lodash';
+import { EmploymentType, EMPLOYMENT_TYPE_LABELS } from '@/types/employmentType';
 
 const MANUAL_TEMPLATE_OPTION = '__manual__';
 const NO_SHIFT_TEMPLATE_OPTION = '__no_shift__';
@@ -79,6 +80,10 @@ const basicDetailsSchema = z.object({
   panNumber: z.string().optional(),
   employeeId: z.string().optional(),
   hiredDate: z.string().nonempty('Hired Date is required'),
+  employmentType: z.nativeEnum(EmploymentType, {
+    required_error: 'Employment type is required',
+  }),
+  contractEndDate: z.string().optional(),
   shiftTemplateId: z.string().optional(),
   shiftEffectiveDate: z.string().optional(),
 }).refine((data) => {
@@ -89,6 +94,15 @@ const basicDetailsSchema = z.object({
 }, {
   message: 'Please select an effective date when assigning a shift template',
   path: ['shiftEffectiveDate']
+}).refine((data) => {
+  // Validate that CONTRACT, CONSULTANT, and INTERN types have contract end date
+  if ([EmploymentType.CONTRACT, EmploymentType.CONSULTANT, EmploymentType.INTERN].includes(data.employmentType)) {
+    return !!data.contractEndDate;
+  }
+  return true;
+}, {
+  message: 'Contract end date is required for Contract, Consultant, and Intern employees',
+  path: ['contractEndDate']
 });
 
 const bankDetailsSchema = z.object({
@@ -142,6 +156,8 @@ type EmployeeFormValues = {
   panNumber: string;
   employeeId: string;
   hiredDate: string;
+  employmentType: EmploymentType;
+  contractEndDate?: string;
   shiftTemplateId?: string;
   shiftEffectiveDate?: string;
   accountHolder: string;
@@ -229,6 +245,8 @@ const CreateEmployeeNew = () => {
       panNumber: '',
       employeeId: '',
       hiredDate: '',
+      employmentType: EmploymentType.FULL_TIME,
+      contractEndDate: '',
   shiftTemplateId: undefined,
   shiftEffectiveDate: '',
 
@@ -708,6 +726,62 @@ const CreateEmployeeNew = () => {
             </FormItem>
           )}
         />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="employmentType"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2">
+                <BriefcaseBusiness className="h-4 w-4" />
+                Employment Type
+              </FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select employment type" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {Object.entries(EMPLOYMENT_TYPE_LABELS).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                Select the type of employment for this employee
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        {form.watch('employmentType') && 
+         [EmploymentType.CONTRACT, EmploymentType.CONSULTANT, EmploymentType.INTERN].includes(form.watch('employmentType')) && (
+          <FormField
+            control={form.control}
+            name="contractEndDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Contract End Date
+                </FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormDescription>
+                  Required for Contract, Consultant, and Intern employees
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

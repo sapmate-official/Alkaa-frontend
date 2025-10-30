@@ -395,7 +395,7 @@ const EmployeeManagement: React.FC = () => {
                                                 <Badge variant={
                                                     employee.status === 'active' ? 'default' :
                                                         employee.status === 'inactive' ? 'secondary' :
-                                                            'destructive'
+                                                            employee.status === 'terminated' || employee.status === 'suspended' ? 'destructive' : 'secondary'
                                                 }>
                                                     {employee.status}
                                                 </Badge>
@@ -506,7 +506,7 @@ const EmployeeManagement: React.FC = () => {
                                                         <Badge variant={
                                                             selectedEmployee.status === 'active' ? 'default' :
                                                                 selectedEmployee.status === 'inactive' ? 'secondary' :
-                                                                    'destructive'
+                                                                    selectedEmployee.status === 'terminated' || selectedEmployee.status === 'suspended' ? 'destructive' : 'secondary'
                                                         }>
                                                             {selectedEmployee.status}
                                                         </Badge>

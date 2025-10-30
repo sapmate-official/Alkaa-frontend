@@ -41,6 +41,10 @@ export const OrganizationSelector: React.FC<OrganizationSelectorProps> = ({
                 return 'bg-green-100 text-green-800';
             case 'inactive':
                 return 'bg-yellow-100 text-yellow-800';
+            case 'suspended':
+                return 'bg-orange-100 text-orange-800';
+            case 'terminated':
+                return 'bg-red-100 text-red-800';
             default:
                 return 'bg-gray-100 text-gray-800';
         }

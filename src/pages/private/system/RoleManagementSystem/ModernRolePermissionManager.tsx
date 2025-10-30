@@ -646,8 +646,16 @@ const ModernRolePermissionManager = () => {
                             </TableCell>
                             <TableCell>
                               <Badge 
-                                variant={user.status === 'active' ? "default" : "secondary"}
-                                className={user.status === 'active' ? "bg-green-100 text-green-700" : ""}
+                                variant={
+                                  user.status === 'active' ? "default" :
+                                  user.status === 'terminated' || user.status === 'suspended' ? "destructive" : "secondary"
+                                }
+                                className={
+                                  user.status === 'active' ? "bg-green-100 text-green-700" :
+                                  user.status === 'terminated' ? "bg-red-100 text-red-700" :
+                                  user.status === 'suspended' ? "bg-orange-100 text-orange-700" :
+                                  user.status === 'inactive' ? "bg-yellow-100 text-yellow-700" : ""
+                                }
                               >
                                 {user.status}
                               </Badge>
