@@ -11,12 +11,15 @@ import { Button } from "@/components/ui/button"
 import { permissionListAtom } from '@/store/atom'
 import { useAtom } from 'jotai'
 import { motion } from 'framer-motion'
+import { useState } from 'react'
 import BankDetails from '@/components/BankDetails'
 import RouteDict from '@/routes/RouteDict'
 import { useProfileQuery, useRelationshipQuery } from '@/hooks/queries/useProfile'
 import { EmploymentTypeBadge } from '@/components/employment/EmploymentTypeBadge'
 import { UserRulesCard } from '@/components/employment/UserRulesCard'
 import { EmploymentType } from '@/types/employmentType'
+import { UserStatusManagementCard } from '@/components/user/UserStatusManagementCard'
+import { EmploymentTypeChangeDialog } from '@/components/employment/EmploymentTypeChangeDialog'
 
 const ProfileInfo = () => {
     const { id } = useParams()
@@ -26,6 +29,7 @@ const ProfileInfo = () => {
     const navigate = useNavigate()
     const { toast } = useToast()
     const [permissionList] = useAtom(permissionListAtom)
+    const [showEmploymentTypeDialog, setShowEmploymentTypeDialog] = useState(false)
 
     const profileId = id || user?.id || ''
     
@@ -139,6 +143,16 @@ const ProfileInfo = () => {
         const isOwnProfile = !id || id === user?.id;
         const isManager = user?.id && profileInfo?.managerId && profileInfo?.managerId === user?.id;
         return isOwnProfile || isManager;
+    };
+
+    const canManageStatus = () => {
+        // Check for status management permissions
+        return hasPermission('change_user_status') || hasPermission('manage_users') || hasPermission('manage_organization');
+    };
+
+    const canManageEmploymentType = () => {
+        // Check for employment type management permissions
+        return hasPermission('change_employment_type') || hasPermission('manage_users') || hasPermission('manage_organization');
     };
     
     if (isLoading) {
@@ -304,6 +318,51 @@ const ProfileInfo = () => {
                         </CardHeader>
                     </Card>
                 </motion.div>
+
+                {/* User Status Management Card */}
+                {canManageStatus() && profileInfo && (
+                    <motion.div 
+                        initial="hidden"
+                        animate="visible"
+                        variants={cardVariants}
+                        transition={{ duration: 0.3, delay: 0.15 }}
+                    >
+                        <UserStatusManagementCard
+                            user={profileInfo}
+                            canManageStatus={canManageStatus()}
+                        />
+                    </motion.div>
+                )}
+
+                {/* Employment Type Management Section */}
+                {canManageEmploymentType() && profileInfo && (
+                    <motion.div 
+                        initial="hidden"
+                        animate="visible"
+                        variants={cardVariants}
+                        transition={{ duration: 0.3, delay: 0.2 }}
+                    >
+                        <Card className="shadow-sm hover:shadow-md transition-shadow duration-300">
+                            <CardHeader>
+                                <CardTitle className="text-lg flex items-center justify-between">
+                                    <span>Employment Type Management</span>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setShowEmploymentTypeDialog(true)}
+                                    >
+                                        Change Type
+                                    </Button>
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-sm text-muted-foreground">
+                                    Promote, demote, or change the user's employment type.
+                                </p>
+                            </CardContent>
+                        </Card>
+                    </motion.div>
+                )}
 
                 {canDisplayPersonalInfo() && (
                     <motion.div 
@@ -525,6 +584,15 @@ const ProfileInfo = () => {
                     <BankDetails userId={id || user?.id || ''} />
                 )}
             </div>
+
+            {/* Dialogs */}
+            {profileInfo && (
+                <EmploymentTypeChangeDialog
+                    open={showEmploymentTypeDialog}
+                    onOpenChange={setShowEmploymentTypeDialog}
+                    user={profileInfo}
+                />
+            )}
         </div>
     )
 }

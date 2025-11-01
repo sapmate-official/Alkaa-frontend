@@ -67,11 +67,30 @@ export const employmentTypeService = {
     data: {
       employmentType: EmploymentType;
       contractEndDate?: string;
+      effectiveDate?: string;
+      reason?: string;
+      notes?: string;
     }
   ): Promise<void> {
     await axios.patch(`${API_BASE_URL}/users/${userId}/employment-type`, data, {
       withCredentials: true,
     });
+  },
+
+  // Get employment type history
+  async getEmploymentTypeHistory(
+    userId: string,
+    limit: number = 50,
+    offset: number = 0
+  ): Promise<any> {
+    const response = await axios.get(
+      `${API_BASE_URL}/users/${userId}/employment-type/history`,
+      {
+        params: { limit, offset },
+        withCredentials: true,
+      }
+    );
+    return response.data;
   },
 
   // Get expiring contracts
