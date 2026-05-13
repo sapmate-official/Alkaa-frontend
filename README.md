@@ -1,8 +1,10 @@
+<div align="center">
+  <img src="./public/logo.svg" alt="Alkaa Logo" width="220"/>
+
 # ALKAA - HR Management System
 
-## Comprehensive Documentation & Software Requirements Specification   
-    
-![Alkaa Logo](public/assets/logo_icon.svg)
+### Comprehensive Documentation & Software Requirements Specification
+</div>
   
 ## Table of Contents
 - [Introduction](#introduction)
