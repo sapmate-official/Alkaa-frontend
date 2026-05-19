@@ -62,28 +62,9 @@ export default defineConfig({
             return 'utilities';
           }
           
-          // Feature-based chunks
-          if (id.includes('src/pages/private/system/BillingManagement')) {
-            return 'billing-feature';
-          }
-          
-          if (id.includes('src/pages/private/system/AttendanceManagement')) {
-            return 'attendance-feature';
-          }
-          
-          if (id.includes('src/pages/private/system/EmployeeManagement') || 
-              id.includes('src/pages/private/system/DepartmentManagement') ||
-              id.includes('src/pages/private/system/OrganizationManagement')) {
-            return 'organization-feature';
-          }
-          
-          // System/admin features
-          if (id.includes('src/pages/private/system/Permission') ||
-              id.includes('src/pages/private/system/Role') ||
-              id.includes('src/pages/private/system/ActivityLog')) {
-            return 'system-feature';
-          }
-          
+          // Feature chunks intentionally not forced.
+          // For large route areas (billing/attendance/org/system/etc.), forcing everything into a single
+          // chunk can surface TDZ/circular-init issues only after minification and chunk flattening.
           return undefined;
         }
       }
