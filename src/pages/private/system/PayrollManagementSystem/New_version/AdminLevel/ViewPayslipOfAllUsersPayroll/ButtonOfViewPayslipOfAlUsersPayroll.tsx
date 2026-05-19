@@ -6,11 +6,10 @@ import { useAtom } from 'jotai'
 import { useNavigate } from 'react-router-dom'
 
 const ButtonOfViewPayslipOfAllUsersPayroll = () => {
-
     const [permissions] = useAtom(permissionListAtom)
+    const navigate = useNavigate()
     const hasPermission = CheckPermission("view_salary_slip_of_all",permissions)
     if(!hasPermission) return null
-    const navigate = useNavigate()
   return (
     <div>
         <Button

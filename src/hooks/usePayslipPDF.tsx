@@ -71,6 +71,10 @@ export const usePayslipPDF = (): UsePayslipPDFReturn => {
 
       // Transform the backend response to match our PayslipData interface
       const statistics = response.data.data;
+      
+      // Extract organization data from the response
+      const orgData = statistics.basicInfo.organization || {};
+      
       const transformedData: PayslipData = {
         // Basic Information
         month: statistics.basicInfo.month,
@@ -89,16 +93,20 @@ export const usePayslipPDF = (): UsePayslipPDFReturn => {
           name: statistics.basicInfo.employee.name,
           employeeId: statistics.basicInfo.employee.employeeId || 'N/A',
           department: statistics.basicInfo.employee.department || 'N/A',
-          email: 'N/A', // This might need to be added to the backend response
-          bankDetails: undefined // This might need to be added to the backend response
+          email: statistics.basicInfo.employee.email || 'N/A',
+          bankDetails: statistics.basicInfo.employee.bankDetails ? {
+            bankName: statistics.basicInfo.employee.bankDetails.bankName || 'N/A',
+            accountNumber: statistics.basicInfo.employee.bankDetails.accountNumber || 'N/A',
+            ifscCode: statistics.basicInfo.employee.bankDetails.ifscCode || 'N/A'
+          } : undefined
         },
 
-        // Company Information (this might need to be added to backend or use default)
+        // Company Information - Use actual organization data from backend
         company: {
-          name: 'Company Name', // You might want to get this from organization data
-          address: 'Company Address',
-          email: 'hr@company.com',
-          phone: 'Company Phone'
+          name: orgData.name || 'Company Name',
+          address: orgData.address || 'Company Address',
+          email: orgData.email || 'hr@company.com',
+          phone: orgData.phone || orgData.contactNumber || 'Company Phone'
         },
 
         // Financial Data

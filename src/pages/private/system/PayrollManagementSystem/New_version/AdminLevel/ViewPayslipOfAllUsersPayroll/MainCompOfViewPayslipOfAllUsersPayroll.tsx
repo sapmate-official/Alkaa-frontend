@@ -27,7 +27,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 
 // Icons
-import { Plus, Download, Trash, Users, Calendar, Clock, UserCheck, UserX, Award, TrendingUp } from 'lucide-react'
+import { Plus, Download, Trash, Users, Calendar, Clock, UserCheck, UserX, Award, TrendingUp, FileText } from 'lucide-react'
 
 // Local components
 import ButtonOfUsersSalaryTransaction from '../Salarytransaction/ButtonOfUsersSalaryTransaction'
@@ -38,6 +38,7 @@ import { useAuth } from '@/providers/AuthContext.tsx'
 import { APIDictionary } from '@/services/api/v2/APIdict'
 import { APIV3Dictionary } from '@/services/api/v3/Api3Dicts'
 import { usePayslipPDF } from '../../../../../../../hooks/usePayslipPDF.tsx'
+import { useNavigate } from 'react-router-dom'
 
 // Types
 interface User {
@@ -129,6 +130,7 @@ interface StatisticsResponse {
 const MainCompOfViewPayslipOfAllUsersPayroll = () => {
   
   const { user } = useAuth()
+  const navigate = useNavigate()
   
   // PDF generation hook - must be at component level
   const { generatePayslipPDF } = usePayslipPDF()
@@ -440,11 +442,24 @@ const MainCompOfViewPayslipOfAllUsersPayroll = () => {
           <Card className="flex-1 rounded-none border-0">
             <CardHeader className="bg-primary text-primary-foreground flex-shrink-0">
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                <CardTitle className="text-lg">
-                  {selectedUser 
-                    ? `Payslips for ${selectedUser.firstName || ''} ${selectedUser.lastName || ''}` 
-                    : 'Select an employee to view payslips'}
-                </CardTitle>
+                <div className="flex flex-col md:flex-row items-start md:items-center gap-4 flex-1">
+                  <CardTitle className="text-lg">
+                    {selectedUser 
+                      ? `Payslips for ${selectedUser.firstName || ''} ${selectedUser.lastName || ''}` 
+                      : 'Select an employee to view payslips'}
+                  </CardTitle>
+                  
+                  {/* Custom Payslip Button */}
+                  <Button 
+                    variant="secondary" 
+                    size="sm"
+                    onClick={() => navigate('/p/payroll/custom-payslip')}
+                    className="whitespace-nowrap"
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    Custom Payslip
+                  </Button>
+                </div>
                 
                 <div className="w-full md:w-auto">
                   <MonthYearPicker

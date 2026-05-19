@@ -9,6 +9,7 @@ const MainSubordinateSalaryTransactionPage = lazy(() => import('./ManagerLevel/S
 const MainGenerateUsersSalaryPage = lazy(() => import('./AdminLevel/GenerateSalary/MainGenerateUserSalaryPage'));
 const MainCompOfViewPayslipOfAllUsersPayroll = lazy(() => import('./AdminLevel/ViewPayslipOfAllUsersPayroll/MainCompOfViewPayslipOfAllUsersPayroll'));
 const MainAllUsersSalaryTransactionPage = lazy(() => import('./AdminLevel/Salarytransaction/MainSalaryUsersTransactionPage'));
+const CustomPayslipGenerator = lazy(() => import('./AdminLevel/CustomPayslipGenerator/CustomPayslipGenerator'));
 
 /**
  * PayrollModule - Restructured to align with RouteDict for better maintainability
@@ -53,6 +54,7 @@ const PayrollModule = () => {
       {/* Admin Level Routes - Aligned with RouteDict.Payroll.Admin */}
       <Route path="admin-transaction" element={<MainAllUsersSalaryTransactionPage />} />
       <Route path="admin-payslip" element={<MainCompOfViewPayslipOfAllUsersPayroll />} />
+      <Route path="custom-payslip" element={<CustomPayslipGenerator />} />
       
       {/* Manager Level Routes - Aligned with RouteDict.Payroll.Manager */}
       <Route path="subordinate-transaction" element={<MainSubordinateSalaryTransactionPage />} />
