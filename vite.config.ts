@@ -67,10 +67,6 @@ export default defineConfig({
             return 'billing-feature';
           }
           
-          if (id.includes('src/pages/private/system/PayrollManagement')) {
-            return 'payroll-feature';
-          }
-          
           if (id.includes('src/pages/private/system/AttendanceManagement')) {
             return 'attendance-feature';
           }
