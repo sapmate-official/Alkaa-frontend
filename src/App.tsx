@@ -21,6 +21,7 @@ import { TimezoneProvider } from './hooks/useTimezone.tsx';
 const LandingPage = lazy(() => import('./pages/public/LandingPage'));
 const SetPassword = lazy(() => import('./pages/public/SetPassword'));
 const SignIn = lazy(() => import('./pages/public/auth/SignIn'));
+const OnboardingForm = lazy(() => import('./components/onboarding/OnboardingForm'));
 
 // Core modules - group related components
 const ProfileModule = lazy(() => import('./pages/private/system/Profile/ProfileModule'));
@@ -55,6 +56,8 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/reset-password/:token" element={<SetPassword />} />
           <Route path="/auth/signin" element={<AuthProvider><SignIn /></AuthProvider>} />
+          <Route path="/onboarding/:token" element={<OnboardingForm />} />
+          <Route path="/onboarding" element={<OnboardingForm />} />
           
           {/* Protected Routes - Wrapped in AuthProvider */}
           <Route
