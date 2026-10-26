@@ -147,21 +147,26 @@ const OnboardingForm = () => {
     try {
       setLoading(true);
       
+      // Clean and sanitize phone and bank inputs
+      const cleanPhone = (val?: string) => (val ? val.replace(/[\s\-\(\)]/g, '') : '');
+      const cleanBankNumber = (val?: string) => (val ? val.replace(/\s+/g, '') : '');
+      const cleanIFSC = (val?: string) => (val ? val.replace(/\s+/g, '').toUpperCase() : '');
+
       // Structure the data properly including bank details
       const formData = {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        mobileNumber: data.mobileNumber,
-        emergencyContact: data.emergencyContact,
+        firstName: data.firstName?.trim(),
+        lastName: data.lastName?.trim(),
+        mobileNumber: cleanPhone(data.mobileNumber),
+        emergencyContact: cleanPhone(data.emergencyContact),
         dateOfBirth: data.dateOfBirth,
-        address: data.address,
-        adharNumber: data.adharNumber,
-        panNumber: data.panNumber,
+        address: data.address?.trim(),
+        adharNumber: data.adharNumber?.trim() || undefined,
+        panNumber: data.panNumber?.trim()?.toUpperCase() || undefined,
         bankDetails: {
-          accountNumber: data.bankAccountNumber,
-          ifscCode: data.bankIFSC,
-          bankName: data.bankName,
-          accountHolderName: data.accountHolderName
+          accountNumber: cleanBankNumber(data.bankAccountNumber),
+          ifscCode: cleanIFSC(data.bankIFSC),
+          bankName: data.bankName?.trim(),
+          accountHolderName: data.accountHolderName?.trim()
         }
       };
       
@@ -195,9 +200,31 @@ const OnboardingForm = () => {
           variant: 'destructive',
         });
       } else {
+        const detailMessages = Array.isArray(errorResponse?.details)
+          ? errorResponse.details.map((d: any) => d.msg).filter(Boolean).join(' • ')
+          : null;
+
+        // Map field errors to form fields if available
+        if (Array.isArray(errorResponse?.details)) {
+          errorResponse.details.forEach((d: any) => {
+            const fieldPath = d.path;
+            if (fieldPath === 'bankDetails.accountNumber') {
+              form.setError('bankAccountNumber', { message: d.msg });
+            } else if (fieldPath === 'bankDetails.ifscCode') {
+              form.setError('bankIFSC', { message: d.msg });
+            } else if (fieldPath === 'bankDetails.bankName') {
+              form.setError('bankName', { message: d.msg });
+            } else if (fieldPath === 'bankDetails.accountHolderName') {
+              form.setError('accountHolderName', { message: d.msg });
+            } else if (fieldPath in form.getValues()) {
+              form.setError(fieldPath as any, { message: d.msg });
+            }
+          });
+        }
+
         toast({
-          title: 'Error',
-          description: errorResponse?.error || 'Failed to submit information',
+          title: errorResponse?.error || 'Validation Failed',
+          description: detailMessages || errorResponse?.message || 'Please check the required fields and try again.',
           variant: 'destructive',
         });
       }
@@ -392,7 +419,7 @@ const OnboardingForm = () => {
               </p>
             </div>
 
-            {candidate.status === OnboardingStatus.REJECTED && (
+            {(candidate.status === OnboardingStatus.FORM_SUBMITTED || candidate.status === OnboardingStatus.REJECTED) && (
               <Button 
                 className="mt-4" 
                 onClick={() => {
@@ -400,7 +427,7 @@ const OnboardingForm = () => {
                   window.scrollTo(0, 0);
                 }}
               >
-                Update Information
+                {candidate.status === OnboardingStatus.REJECTED ? 'Update Information' : 'Edit Information'}
               </Button>
             )}
           </CardContent>
