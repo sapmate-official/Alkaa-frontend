@@ -210,7 +210,7 @@ const ClientRoute = () => {
 const SuperAdminRoute = () => {
   return (
     <Routes>
-      <Route path="/" element={<LandingPage />} />
+      <Route path="/" element={<Navigate to="/p/organization" replace />} />
       <Route path="/organization/*" element={<OrganizationModule />} />
       <Route path="/system/*" element={<SystemModule />} />
       <Route path="/logout" element={<Logout />} />
