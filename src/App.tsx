@@ -38,7 +38,8 @@ import ModernRolePermissionPage from './pages/private/system/RoleManagementSyste
 
 
 // Admin modules (less frequently used)
-const OrganizationModule = lazy(() => import('./pages/private/system/SpecificOrganizationManagementSystem/ClientOrganizationModule.tsx'));
+const ClientOrganizationModule = lazy(() => import('./pages/private/system/SpecificOrganizationManagementSystem/ClientOrganizationModule.tsx'));
+const AdminOrganizationModule = lazy(() => import('./pages/private/system/OrganizationManagementSystem/OrganizationModule.tsx'));
 const SystemModule = lazy(() => import('./pages/private/system/SystemManagement/SystemModule'));
 
 // Individual components that don't fit into modules
@@ -174,7 +175,7 @@ const ClientRoute = () => {
 
       <Route path="/organization/*" element={
         <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['view_organization_basic_details', 'see_team_details', 'view_own_department_info', 'view_organization_detailed_info']}>
-          <OrganizationModule />
+          <ClientOrganizationModule />
         </PermissionRouteBasedOnKey>
       } />
       <Route path="/onboarding/*" element={
@@ -211,7 +212,8 @@ const SuperAdminRoute = () => {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/p/organization" replace />} />
-      <Route path="/organization/*" element={<OrganizationModule />} />
+      <Route path="/organization/*" element={<AdminOrganizationModule />} />
+      <Route path="/permission/*" element={<SystemModule />} />
       <Route path="/system/*" element={<SystemModule />} />
       <Route path="/logout" element={<Logout />} />
     </Routes>

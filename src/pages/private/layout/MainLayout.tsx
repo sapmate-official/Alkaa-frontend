@@ -269,8 +269,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             <div className={`${open ? 'flex-1' : 'w-full'}`}>
               <SidebarLink
                 link={{
-                  label: ` ${user?.firstName} ${user?.lastName}` || "User",
-                  href: RouteDict.Profile.Info(user?.id || ""),
+                  label: user?.firstName || user?.lastName ? `${user?.firstName || ''} ${user?.lastName || ''}`.trim() : ((user as any)?.name || user?.email || "User"),
+                  href: userDetails?.superAdmin ? '#' : RouteDict.Profile.Info(user?.id || ""),
                   icon: userDetails?.avatar ? (
                     <img
                       src={userDetails?.avatar}
