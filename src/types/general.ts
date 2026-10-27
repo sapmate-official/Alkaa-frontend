@@ -114,6 +114,8 @@ export interface User {
   employeeId?: string;
   hiredDate?: Date;
   terminationDate?: Date;
+  jobTitle?: string;
+  businessEmail?: string;
   annualPackage?: number;
   monthlySalary?: number;
   createdAt: Date;

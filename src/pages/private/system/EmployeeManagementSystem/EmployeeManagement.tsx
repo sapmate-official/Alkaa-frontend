@@ -12,6 +12,9 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useAtomValue } from 'jotai'
 import { permissionListAtom } from '@/store/atom'
 import { createPortal } from 'react-dom'
+import { useQueryClient } from '@tanstack/react-query'
+import axios from 'axios'
+import { APIDictionary } from '@/services/api/v2/APIdict'
 // Import TanStack Query hooks
 import { 
   useEmployees, 
@@ -98,6 +101,43 @@ const EmployeeManagement: React.FC = () => {
     const [deleteConfirmStep, setDeleteConfirmStep] = useState(1);
     const [confirmationEmail, setConfirmationEmail] = useState('');
     const [isDeleting, setIsDeleting] = useState(false);
+    const queryClient = useQueryClient();
+    const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
+    const [deactivationDate, setDeactivationDate] = useState(new Date().toISOString().split('T')[0]);
+
+    const handleToggleEmployeeStatus = async (targetStatus: 'active' | 'inactive', termDate?: string) => {
+        if (!selectedEmployee) return;
+        try {
+            setIsLoadingActions(true);
+            await axios.put(APIDictionary.userProfile(selectedEmployee.id), {
+                status: targetStatus,
+                terminationDate: targetStatus === 'inactive' ? (termDate || new Date().toISOString()) : null
+            }, { withCredentials: true });
+
+            queryClient.invalidateQueries({ queryKey: ['employees'] });
+            queryClient.invalidateQueries({ queryKey: ['profile'] });
+
+            setSelectedEmployee(prev => prev ? {
+                ...prev,
+                status: targetStatus,
+                terminationDate: targetStatus === 'inactive' ? (termDate || new Date().toISOString()) : undefined
+            } : null);
+
+            setShowDeactivateDialog(false);
+            toast({
+                title: targetStatus === 'inactive' ? "Employee Deactivated" : "Employee Activated",
+                description: `${selectedEmployee.firstName} ${selectedEmployee.lastName} is now marked ${targetStatus}.`
+            });
+        } catch (err: any) {
+            toast({
+                title: "Error",
+                description: err?.response?.data?.error || "Failed to update employee status",
+                variant: "destructive"
+            });
+        } finally {
+            setIsLoadingActions(false);
+        }
+    };
 
     // Update filtered employees when employees data changes
     useEffect(() => {
@@ -383,10 +423,20 @@ const EmployeeManagement: React.FC = () => {
                                     {filteredEmployees.map((employee) => (
                                         <TableRow key={employee.id}>
                                             <TableCell className="font-medium">
-                                                {employee.firstName} {employee.lastName}
+                                                <div>{employee.firstName} {employee.lastName}</div>
+                                                {(employee.jobTitle || employee.roles?.[0]?.role?.name) && (
+                                                    <div className="text-xs text-muted-foreground font-normal">
+                                                        {employee.jobTitle || employee.roles?.[0]?.role?.name}
+                                                    </div>
+                                                )}
                                             </TableCell>
                                             <TableCell>{employee.employeeId || 'N/A'}</TableCell>
-                                            <TableCell>{employee.email}</TableCell>
+                                            <TableCell>
+                                                <div>{employee.email}</div>
+                                                {employee.businessEmail && employee.businessEmail !== employee.email && (
+                                                    <div className="text-xs text-muted-foreground">{employee.businessEmail}</div>
+                                                )}
+                                            </TableCell>
                                             <TableCell>{employee.department?.name || 'Unassigned'}</TableCell>
                                             <TableCell>
                                                 {employee.roles?.[0]?.role?.name || 'No Role'}
@@ -399,6 +449,11 @@ const EmployeeManagement: React.FC = () => {
                                                 }>
                                                     {employee.status}
                                                 </Badge>
+                                                {employee.status === 'inactive' && employee.terminationDate && (
+                                                    <div className="text-[11px] text-destructive mt-0.5 font-medium">
+                                                        Terminated: {new Date(employee.terminationDate).toLocaleDateString()}
+                                                    </div>
+                                                )}
                                             </TableCell>
                                             <TableCell>
                                                 <Button
@@ -537,11 +592,74 @@ const EmployeeManagement: React.FC = () => {
                                                 </div>
 
                                                 <div>
+                                                    <Label>Job Title / Designation</Label>
+                                                    <p className="text-sm mt-1 font-medium">
+                                                        {selectedEmployee.jobTitle || 'Unassigned'}
+                                                    </p>
+                                                </div>
+
+                                                {selectedEmployee.businessEmail && (
+                                                    <div>
+                                                        <Label>Business Email</Label>
+                                                        <p className="text-sm mt-1">{selectedEmployee.businessEmail}</p>
+                                                    </div>
+                                                )}
+
+                                                <div>
                                                     <Label>Joined On</Label>
                                                     <p className="text-sm mt-1">
                                                         {new Date(selectedEmployee.createdAt).toLocaleDateString()}
                                                     </p>
                                                 </div>
+
+                                                {selectedEmployee.terminationDate && (
+                                                    <div>
+                                                        <Label className="text-destructive font-medium">Termination Date</Label>
+                                                        <p className="text-sm mt-1 text-destructive font-semibold">
+                                                            {new Date(selectedEmployee.terminationDate).toLocaleDateString()}
+                                                        </p>
+                                                    </div>
+                                                )}
+
+                                                {selectedEmployee.updatedAt && (
+                                                    <div>
+                                                        <Label>Last Modified</Label>
+                                                        <p className="text-sm mt-1 text-muted-foreground">
+                                                            {new Date(selectedEmployee.updatedAt).toLocaleDateString()}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Status Management Action */}
+                                            <div className="mt-6 p-4 rounded-lg border bg-muted/40">
+                                                <h4 className="text-sm font-semibold mb-2">Account Status & Termination</h4>
+                                                <p className="text-xs text-muted-foreground mb-3">
+                                                    Manage employee active status and record termination date for offboarding records.
+                                                </p>
+                                                {selectedEmployee.status === 'active' ? (
+                                                    <Button
+                                                        variant="destructive"
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            setDeactivationDate(new Date().toISOString().split('T')[0]);
+                                                            setShowDeactivateDialog(true);
+                                                        }}
+                                                    >
+                                                        Deactivate / Offboard Employee
+                                                    </Button>
+                                                ) : (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="border-green-600 text-green-700 hover:bg-green-50"
+                                                        onClick={() => handleToggleEmployeeStatus('active')}
+                                                        disabled={isLoadingActions}
+                                                    >
+                                                        {isLoadingActions ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                                                        Reactivate Employee
+                                                    </Button>
+                                                )}
                                             </div>
 
                                             {/* Add Hard Delete section at the bottom of the profile tab */}
@@ -720,6 +838,56 @@ const EmployeeManagement: React.FC = () => {
                             >
                                 Close
                             </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {/* Deactivation Confirmation Dialog */}
+            {showDeactivateDialog && createPortal(
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+                    <div className="bg-background rounded-lg max-w-md w-full p-6 shadow-xl border">
+                        <h3 className="text-lg font-bold text-destructive mb-2">Deactivate Employee</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                            You are deactivating <strong>{selectedEmployee?.firstName} {selectedEmployee?.lastName}</strong>
+                            {selectedEmployee?.jobTitle ? ` (${selectedEmployee.jobTitle})` : ''}.
+                            Please specify their official termination date.
+                        </p>
+
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <label htmlFor="termDate" className="text-sm font-medium">Termination Date *</label>
+                                <input
+                                    type="date"
+                                    id="termDate"
+                                    value={deactivationDate}
+                                    onChange={(e) => setDeactivationDate(e.target.value)}
+                                    className="w-full p-2 border rounded-md bg-background"
+                                />
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-2">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setShowDeactivateDialog(false)}
+                                    disabled={isLoadingActions}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    variant="destructive"
+                                    onClick={() => handleToggleEmployeeStatus('inactive', deactivationDate)}
+                                    disabled={isLoadingActions || !deactivationDate}
+                                >
+                                    {isLoadingActions ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                            Deactivating...
+                                        </>
+                                    ) : "Confirm Deactivation"}
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </div>,

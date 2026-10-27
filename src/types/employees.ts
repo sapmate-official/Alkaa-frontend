@@ -33,6 +33,10 @@ export interface Employee {
   phone?: string
   position?: string
   hireDate?: string
+  jobTitle?: string
+  businessEmail?: string
+  terminationDate?: string
+  updatedAt?: string
   organizationId: string
 }
 

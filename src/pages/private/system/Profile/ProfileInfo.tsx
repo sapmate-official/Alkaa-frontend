@@ -236,14 +236,19 @@ const ProfileInfo = () => {
                                     }`}>
                                         {profileInfo?.firstName} {profileInfo?.lastName}
                                     </CardTitle>
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex flex-wrap items-center gap-3">
                                         <Badge variant={profileInfo?.status === 'active' ? 'default' : 'destructive'}
                                             className="px-3 py-1 text-xs font-medium uppercase tracking-wider">
                                             {profileInfo?.status}
                                         </Badge>
-                                        {profileInfo?.roles && profileInfo.roles[0] && (
-                                            <span className="text-sm text-muted-foreground">
-                                                {profileInfo.roles[0].role?.name}
+                                        {(profileInfo?.jobTitle || (profileInfo?.roles && profileInfo.roles[0])) && (
+                                            <span className="text-sm font-medium text-muted-foreground">
+                                                {profileInfo?.jobTitle || profileInfo.roles[0].role?.name}
+                                            </span>
+                                        )}
+                                        {profileInfo?.updatedAt && (
+                                            <span className="text-xs text-muted-foreground">
+                                                • Last modified: {new Date(profileInfo.updatedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
                                             </span>
                                         )}
                                     </div>
@@ -291,6 +296,17 @@ const ProfileInfo = () => {
                                         <p className="font-medium">{profileInfo?.email}</p>
                                     </div>
                                 </div>
+                                {profileInfo?.businessEmail && (
+                                    <div className="flex items-start gap-3">
+                                        <div className="rounded-full bg-primary/10 p-2 mt-1">
+                                            <EnvelopeIcon className="w-4 h-4 text-primary" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-sm text-muted-foreground font-medium">Business Email</p>
+                                            <p className="font-medium">{profileInfo.businessEmail}</p>
+                                        </div>
+                                    </div>
+                                )}
                                 
                                 {profileInfo?.mobileNumber && (
                                     <div className="flex items-start gap-3">
@@ -365,6 +381,15 @@ const ProfileInfo = () => {
                             <CardContent className="grid gap-6 sm:grid-cols-2">
                                 <div className="flex items-start gap-3">
                                     <div className="rounded-full bg-primary/10 p-2 mt-1">
+                                        <BriefcaseIcon className="w-4 h-4 text-primary" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-sm text-muted-foreground font-medium">Job Title</p>
+                                        <p className="font-medium">{profileInfo?.jobTitle || 'Not Specified'}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <div className="rounded-full bg-primary/10 p-2 mt-1">
                                         <IdentificationIcon className="w-4 h-4 text-primary" />
                                     </div>
                                     <div className="space-y-1">
@@ -382,6 +407,23 @@ const ProfileInfo = () => {
                                             <p className="text-sm text-muted-foreground font-medium">Hire Date</p>
                                             <p className="font-medium">
                                                 {new Date(profileInfo?.hiredDate).toLocaleDateString(undefined, {
+                                                    year: 'numeric',
+                                                    month: 'long',
+                                                    day: 'numeric'
+                                                })}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                                {profileInfo?.terminationDate && (
+                                    <div className="flex items-start gap-3">
+                                        <div className="rounded-full bg-red-100 dark:bg-red-950/40 p-2 mt-1">
+                                            <CalendarIcon className="w-4 h-4 text-red-600 dark:text-red-400" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-sm text-red-600 dark:text-red-400 font-medium">Termination Date</p>
+                                            <p className="font-medium text-red-700 dark:text-red-300">
+                                                {new Date(profileInfo.terminationDate).toLocaleDateString(undefined, {
                                                     year: 'numeric',
                                                     month: 'long',
                                                     day: 'numeric'

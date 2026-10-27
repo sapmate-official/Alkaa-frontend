@@ -22,6 +22,9 @@ interface FormDataType {
   firstName: string;
   lastName: string;
   email: string;
+  businessEmail?: string;
+  jobTitle?: string;
+  terminationDate?: string;
   address: string;
   adharNumber: string;
   panNumber: string;
@@ -85,6 +88,9 @@ const ProfileEdit = () => {
     firstName: '',
     lastName: '',
     email: '',
+    businessEmail: '',
+    jobTitle: '',
+    terminationDate: '',
     address: '',
     adharNumber: '',
     panNumber: '',
@@ -141,6 +147,9 @@ const ProfileEdit = () => {
         firstName: userData?.firstName || '',
         lastName: userData?.lastName || '',
         email: userData?.email || '',
+        businessEmail: userData?.businessEmail || '',
+        jobTitle: userData?.jobTitle || '',
+        terminationDate: userData?.terminationDate ? String(userData.terminationDate).split('T')[0] : '',
         address: userData?.address || '',
         adharNumber: userData?.adharNumber || '',
         panNumber: userData?.panNumber || '',
@@ -206,10 +215,16 @@ const ProfileEdit = () => {
   };
 
   const handleSelectChange = (name: keyof FormDataType, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [name]: value || ''
-    }));
+    setFormData(prev => {
+      const updated = {
+        ...prev,
+        [name]: value || ''
+      };
+      if (name === 'status' && (value === 'inactive' || value === 'suspended') && !prev.terminationDate) {
+        updated.terminationDate = new Date().toISOString().split('T')[0];
+      }
+      return updated;
+    });
   };
 
   if (loading) {
@@ -389,6 +404,20 @@ const ProfileEdit = () => {
                   </Select>
                 </div>
               )}
+              {canEditStatus && (formData.status === 'inactive' || formData.status === 'suspended') && (
+                <div className="space-y-2">
+                  <Label htmlFor="terminationDate" className="text-destructive font-medium">Termination Date *</Label>
+                  <Input
+                    type="date"
+                    id="terminationDate"
+                    name="terminationDate"
+                    value={formData.terminationDate || ''}
+                    onChange={handleChange}
+                    className="w-full border-destructive/50 focus-visible:ring-destructive"
+                  />
+                  <p className="text-xs text-muted-foreground">The official termination/deactivation date.</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -403,6 +432,19 @@ const ProfileEdit = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="jobTitle">Job Title / Designation</Label>
+                <Input
+                  type="text"
+                  id="jobTitle"
+                  name="jobTitle"
+                  placeholder="e.g. Senior Software Engineer"
+                  value={formData.jobTitle || ''}
+                  onChange={handleChange}
+                  disabled={!canEditEmployeeInfo && !canEditSubordinatesEmployeeInfo && !canEditAllUserEmployeeInfo}
+                  className="w-full"
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="hiredDate">Hiring Date *</Label>
                 <Input
