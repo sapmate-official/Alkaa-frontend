@@ -95,9 +95,11 @@ export function MultiTenantLoginForm({
                 selectedOrganization?.orgId
             );
             
-            setSessionToken(result.sessionToken);
-            setOrganizationName(result.organizationName);
-            setOtpExpiresIn(result.otpExpiresIn);
+            if (result?.sessionToken) {
+                setSessionToken(result.sessionToken);
+                setOrganizationName(result.organizationName || '');
+                setOtpExpiresIn(result.otpExpiresIn || 600);
+            }
         } catch (err: any) {
             setError(err.message || "Failed to verify password");
         } finally {

@@ -28,7 +28,7 @@ interface AuthContextType {
     signIn: (email: string, password: string) => Promise<string | undefined>;
     // New multi-tenant auth methods
     checkEmail: (email: string) => Promise<{ singleOrganization?: boolean; multipleOrganizations?: boolean; organizations?: Organization[]; organization?: Organization }>;
-    verifyPassword: (email: string, password: string, orgId?: string) => Promise<{ sessionToken: string; organizationName: string; otpExpiresIn: number }>;
+    verifyPassword: (email: string, password: string, orgId?: string) => Promise<{ sessionToken?: string; organizationName?: string; otpExpiresIn?: number; [key: string]: any }>;
     verifyOtp: (sessionToken: string, otpCode: string) => Promise<void>;
     selectOrganization: (organization: Organization, email: string) => void;
     resetAuthFlow: () => void;
@@ -307,6 +307,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 password,
                 orgId
             });
+
+            // Direct login (e.g. SuperAdmin or direct token authentication without OTP)
+            if (response.data.accessToken && response.data.refreshToken) {
+                tokenStorage.setAccessToken(response.data.accessToken);
+                tokenStorage.setRefreshToken(response.data.refreshToken);
+                if (response.data.organization?.id) {
+                    tokenStorage.setOrgData(response.data.organization.id, response.data.organization.name);
+                }
+                await validateToken();
+                setAuthStep({ step: 'complete' });
+                return response.data;
+            }
             
             setAuthStep({ 
                 step: 'otp', 
