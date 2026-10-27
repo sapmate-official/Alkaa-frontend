@@ -204,6 +204,7 @@ const ClientRoute = () => {
       <Route path='/task/*' element={<TaskModule  />} />
 
       <Route path="/logout" element={<Logout />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }
@@ -216,6 +217,7 @@ const SuperAdminRoute = () => {
       <Route path="/permission/*" element={<SystemModule />} />
       <Route path="/system/*" element={<SystemModule />} />
       <Route path="/logout" element={<Logout />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }

@@ -14,15 +14,28 @@ const ListOfNotification = lazy(() => import('../NotificationManagementSystem/Li
 const SystemModule = () => {
   return (
     <Routes>
+      {/* Root/Index when mounted directly on /permission or /system */}
+      <Route index element={<PermissionManagement />} />
+      <Route path="list" element={<PermissionManagement />} />
+      <Route path="create" element={<PermissionCreate />} />
+
+      {/* Permission routes */}
       <Route path="permission" element={<PermissionManagement />} />
       <Route path="permission/create" element={<PermissionCreate />} />
+      <Route path="permission/list" element={<PermissionManagement />} />
+
+      {/* System management routes */}
       <Route path="activity-logs" element={<ActivityLogsManagement />} />
       <Route path="role" element={<RolesPermissionsManagement />} />
+      <Route path="role/*" element={<RolesPermissionsManagement />} />
       <Route path="holiday" element={<HolidayManagementSystem />} />
+      <Route path="holiday/*" element={<HolidayManagementSystem />} />
       <Route path="notification" element={<ListOfNotification />} />
       <Route path="notification/template" element={<ListOfNotificationTemplate />} />
       <Route path="notification/templates/create" element={<NotificationTemplateCreate />} />
 
+      {/* Fallback */}
+      <Route path="*" element={<PermissionManagement />} />
     </Routes>
   );
 };
