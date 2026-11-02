@@ -248,7 +248,7 @@ const EditCandidateDialog = ({ candidateId, isOpen, onClose, onSuccess }: EditCa
                       <FormItem>
                         <FormLabel className="flex items-center gap-2">
                           <Mail className="h-4 w-4" />
-                          Email
+                          Personal Email
                         </FormLabel>
                         <FormControl>
                           <Input type="email" placeholder="john.doe@example.com" {...field} />

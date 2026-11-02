@@ -601,7 +601,7 @@ const OnboardingManagement = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Candidate</TableHead>
-                  <TableHead>Email</TableHead>
+                  <TableHead>Personal Email</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Department</TableHead>
                   <TableHead>Package</TableHead>
@@ -768,7 +768,7 @@ const OnboardingManagement = () => {
           <DialogHeader>
             <DialogTitle>Add New Candidate</DialogTitle>
             <DialogDescription>
-              Create a new onboarding candidate. An invitation will be sent to their email.
+              Create a new onboarding candidate. An invitation will be sent to their personal email.
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
@@ -807,7 +807,7 @@ const OnboardingManagement = () => {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>Personal Email</FormLabel>
                     <FormControl>
                       <Input type="email" placeholder="john.doe@example.com" {...field} />
                     </FormControl>
@@ -971,7 +971,7 @@ const OnboardingManagement = () => {
                   </p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Email</label>
+                  <label className="text-sm font-medium text-muted-foreground">Personal Email</label>
                   <p className="text-sm">{selectedCandidate.email}</p>
                 </div>
                 <div>
@@ -1063,7 +1063,7 @@ const OnboardingManagement = () => {
                     </span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Email:</span>
+                    <span className="text-muted-foreground">Personal Email:</span>
                     <span className="ml-2">{selectedCandidate.email}</span>
                   </div>
                   {selectedCandidate.mobileNumber && (
@@ -1143,7 +1143,7 @@ const OnboardingManagement = () => {
                     <span className="ml-2 font-medium">{selectedCandidate.firstName} {selectedCandidate.lastName}</span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Email:</span>
+                    <span className="text-muted-foreground">Personal Email:</span>
                     <span className="ml-2">{selectedCandidate.email}</span>
                   </div>
                   <div>

@@ -378,7 +378,7 @@ const CandidateReview = ({ candidateId, isOpen, onClose, onActionComplete }: Can
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">Email:</span>
+                      <span className="font-medium">Personal Email:</span>
                       <span>{candidateInfo.email}</span>
                     </div>
                     <div className="flex items-center gap-2">
