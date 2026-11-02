@@ -412,7 +412,8 @@ const EmployeeManagement: React.FC = () => {
                                     <TableRow>
                                         <TableHead>Name</TableHead>
                                         <TableHead>Employee ID</TableHead>
-                                        <TableHead>Email</TableHead>
+                                        <TableHead>Business Email</TableHead>
+                                        <TableHead>Personal Email</TableHead>
                                         <TableHead>Department</TableHead>
                                         <TableHead>Role</TableHead>
                                         <TableHead>Status</TableHead>
@@ -432,10 +433,24 @@ const EmployeeManagement: React.FC = () => {
                                             </TableCell>
                                             <TableCell>{employee.employeeId || 'N/A'}</TableCell>
                                             <TableCell>
-                                                <div>{employee.email}</div>
-                                                {employee.businessEmail && employee.businessEmail !== employee.email && (
-                                                    <div className="text-xs text-muted-foreground">{employee.businessEmail}</div>
-                                                )}
+                                                {(() => {
+                                                    const lower = (employee.email || '').toLowerCase();
+                                                    const isPersonal = lower.includes('@gmail.') || lower.includes('@yahoo.') || lower.includes('@outlook.') || lower.includes('@hotmail.');
+                                                    const bEmail = employee.businessEmail || (!isPersonal && employee.email ? employee.email : null);
+                                                    return bEmail ? (
+                                                        <span className="font-medium text-foreground">{bEmail}</span>
+                                                    ) : (
+                                                        <span className="text-muted-foreground text-xs italic">Pending automation</span>
+                                                    );
+                                                })()}
+                                            </TableCell>
+                                            <TableCell>
+                                                {(() => {
+                                                    const lower = (employee.email || '').toLowerCase();
+                                                    const isPersonal = lower.includes('@gmail.') || lower.includes('@yahoo.') || lower.includes('@outlook.') || lower.includes('@hotmail.');
+                                                    const pEmail = employee.personalEmail || (isPersonal ? employee.email : null) || employee.email || '-';
+                                                    return <span className="text-muted-foreground">{pEmail}</span>;
+                                                })()}
                                             </TableCell>
                                             <TableCell>{employee.department?.name || 'Unassigned'}</TableCell>
                                             <TableCell>
@@ -551,8 +566,12 @@ const EmployeeManagement: React.FC = () => {
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div>
-                                                    <Label>Email</Label>
-                                                    <p className="text-sm mt-1">{selectedEmployee.email}</p>
+                                                    <Label>Personal Email</Label>
+                                                    <p className="text-sm mt-1">{selectedEmployee.personalEmail || selectedEmployee.email || '-'}</p>
+                                                </div>
+                                                <div>
+                                                    <Label>Business Email</Label>
+                                                    <p className="text-sm mt-1 font-medium">{selectedEmployee.businessEmail || 'Pending automation / Not assigned'}</p>
                                                 </div>
 
                                                 <div>

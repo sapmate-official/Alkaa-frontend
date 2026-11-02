@@ -35,6 +35,7 @@ export interface Employee {
   hireDate?: string
   jobTitle?: string
   businessEmail?: string
+  personalEmail?: string
   terminationDate?: string
   updatedAt?: string
   organizationId: string
@@ -44,6 +45,8 @@ export interface CreateEmployeeRequest {
   firstName: string
   lastName: string
   email: string
+  businessEmail?: string
+  personalEmail?: string
   employeeId?: string
   departmentId?: string
   managerId?: string
@@ -56,6 +59,8 @@ export interface UpdateEmployeeRequest {
   firstName?: string
   lastName?: string
   email?: string
+  businessEmail?: string
+  personalEmail?: string
   employeeId?: string
   status?: 'active' | 'inactive' | 'suspended'
   departmentId?: string

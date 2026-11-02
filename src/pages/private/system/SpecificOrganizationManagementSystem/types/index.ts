@@ -13,6 +13,8 @@ export interface User {
   firstName: string;
   lastName: string;
   email: string;
+  businessEmail?: string | null;
+  personalEmail?: string | null;
   employeeId: string | null;
   status: string;
   departmentId?: string;

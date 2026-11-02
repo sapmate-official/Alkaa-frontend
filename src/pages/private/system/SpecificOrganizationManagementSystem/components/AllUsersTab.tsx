@@ -48,6 +48,8 @@ export const AllUsersTab = ({
       const lastName = user?.lastName?.toLowerCase() || '';
       const fullName = `${firstName} ${lastName}`.trim();
       const email = user?.email?.toLowerCase() || '';
+      const businessEmail = user?.businessEmail?.toLowerCase() || '';
+      const personalEmail = user?.personalEmail?.toLowerCase() || '';
       const employeeId = user?.employeeId?.toLowerCase() || '';
       const id = user?.id?.toLowerCase() || '';
       
@@ -57,6 +59,8 @@ export const AllUsersTab = ({
         lastName.includes(searchLower) ||
         fullName.includes(searchLower) ||
         email.includes(searchLower) ||
+        businessEmail.includes(searchLower) ||
+        personalEmail.includes(searchLower) ||
         employeeId.includes(searchLower) ||
         id.includes(searchLower)
       ) {
@@ -181,7 +185,8 @@ export const AllUsersTab = ({
               <TableHeader>
                 <TableRow>
                   <TableHead>Employee</TableHead>
-                  <TableHead>Email</TableHead>
+                  <TableHead>Business Email</TableHead>
+                  <TableHead>Personal Email</TableHead>
                   <TableHead>Employee ID</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
@@ -201,7 +206,26 @@ export const AllUsersTab = ({
                       </Avatar>
                       <span>{`${user?.firstName || ''} ${user?.lastName || ''}`}</span>
                     </TableCell>
-                    <TableCell>{user?.email}</TableCell>
+                    <TableCell>
+                      {(() => {
+                        const lower = (user?.email || '').toLowerCase();
+                        const isPersonal = lower.includes('@gmail.') || lower.includes('@yahoo.') || lower.includes('@outlook.') || lower.includes('@hotmail.');
+                        const bEmail = user?.businessEmail || (!isPersonal && user?.email ? user.email : null);
+                        return bEmail ? (
+                          <span className="font-medium text-foreground">{bEmail}</span>
+                        ) : (
+                          <span className="text-muted-foreground text-xs italic">Pending automation</span>
+                        );
+                      })()}
+                    </TableCell>
+                    <TableCell>
+                      {(() => {
+                        const lower = (user?.email || '').toLowerCase();
+                        const isPersonal = lower.includes('@gmail.') || lower.includes('@yahoo.') || lower.includes('@outlook.') || lower.includes('@hotmail.');
+                        const pEmail = user?.personalEmail || (isPersonal ? user?.email : null) || user?.email || '-';
+                        return <span className="text-muted-foreground">{pEmail}</span>;
+                      })()}
+                    </TableCell>
                     <TableCell>{user?.employeeId || 'N/A'}</TableCell>
                     <TableCell>
                       <Badge variant={user?.status === 'active' ? "success" : "destructive"}>
