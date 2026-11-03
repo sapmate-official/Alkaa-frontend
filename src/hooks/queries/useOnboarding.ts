@@ -16,7 +16,8 @@ export const onboardingKeys = {
 export interface CandidateReviewData {
   candidateInfo: {
     id: string;
-    email: string;
+    personalEmail?: string;
+    email?: string;
     firstName: string;
     lastName: string;
     mobileNumber?: string;
@@ -47,6 +48,7 @@ export interface CandidateReviewData {
 export interface UpdateCandidateRequest {
   firstName?: string;
   lastName?: string;
+  personalEmail?: string;
   email?: string;
   mobileNumber?: string;
   departmentId?: string;

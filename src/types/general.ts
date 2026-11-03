@@ -629,7 +629,9 @@ export interface OnboardingCandidate {
   id: string;
   firstName?: string;
   lastName?: string;
-  email: string;
+  personalEmail?: string;
+  businessEmail?: string;
+  email?: string;
   mobileNumber?: string;
   emergencyContact?: string;
   dateOfBirth?: string;

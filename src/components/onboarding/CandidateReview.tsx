@@ -34,7 +34,8 @@ import {
 interface ReviewData {
   candidateInfo: {
     id: string;
-    email: string;
+    personalEmail?: string;
+    email?: string;
     firstName: string;
     lastName: string;
     mobileNumber: string;
@@ -379,7 +380,7 @@ const CandidateReview = ({ candidateId, isOpen, onClose, onActionComplete }: Can
                     <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4 text-muted-foreground" />
                       <span className="font-medium">Personal Email:</span>
-                      <span>{candidateInfo.email}</span>
+                      <span>{candidateInfo.personalEmail || candidateInfo.email}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Building2 className="h-4 w-4 text-muted-foreground" />

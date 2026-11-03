@@ -491,7 +491,7 @@ const OnboardingManagement = () => {
     const matchesSearch = 
       candidate.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       candidate.lastName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      candidate.email.toLowerCase().includes(searchQuery.toLowerCase());
+      (candidate.personalEmail || candidate.email || "").toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
 
@@ -619,7 +619,7 @@ const OnboardingManagement = () => {
                           : 'Not provided'}
                       </div>
                     </TableCell>
-                    <TableCell>{candidate.email}</TableCell>
+                    <TableCell>{candidate.personalEmail || candidate.email}</TableCell>
                     <TableCell>
                       <Badge 
                         variant="outline" 
@@ -677,7 +677,7 @@ const OnboardingManagement = () => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => deleteCandidate(candidate.id, `${candidate.firstName || ''} ${candidate.lastName || ''}`.trim() || candidate.email)}
+                              onClick={() => deleteCandidate(candidate.id, `${candidate.firstName || ''} ${candidate.lastName || ''}`.trim() || candidate.personalEmail || candidate.email || "")}
                               disabled={loading}
                               className="text-red-600 hover:text-red-700"
                               title="Abort onboarding process for unresponsive candidate"
@@ -972,7 +972,7 @@ const OnboardingManagement = () => {
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Personal Email</label>
-                  <p className="text-sm">{selectedCandidate.email}</p>
+                  <p className="text-sm">{selectedCandidate.personalEmail || selectedCandidate.email}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Status</label>
@@ -1064,7 +1064,7 @@ const OnboardingManagement = () => {
                   </div>
                   <div>
                     <span className="text-muted-foreground">Personal Email:</span>
-                    <span className="ml-2">{selectedCandidate.email}</span>
+                    <span className="ml-2">{selectedCandidate.personalEmail || selectedCandidate.email}</span>
                   </div>
                   {selectedCandidate.mobileNumber && (
                     <div>
@@ -1144,7 +1144,7 @@ const OnboardingManagement = () => {
                   </div>
                   <div>
                     <span className="text-muted-foreground">Personal Email:</span>
-                    <span className="ml-2">{selectedCandidate.email}</span>
+                    <span className="ml-2">{selectedCandidate.personalEmail || selectedCandidate.email}</span>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Annual Package:</span>

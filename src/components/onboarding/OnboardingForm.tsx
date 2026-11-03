@@ -392,7 +392,7 @@ const OnboardingForm = () => {
                   </h4>
                   <div className="space-y-1 text-sm text-muted-foreground">
                     <p><strong>Name:</strong> {candidate.firstName} {candidate.lastName}</p>
-                    <p><strong>Personal Email:</strong> {candidate.email}</p>
+                    <p><strong>Personal Email:</strong> {candidate.personalEmail || candidate.email}</p>
                     {candidate.mobileNumber && (
                       <p><strong>Mobile:</strong> {candidate.mobileNumber}</p>
                     )}
@@ -460,7 +460,7 @@ const OnboardingForm = () => {
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-muted-foreground" />
                 <span className="text-muted-foreground">Personal Email:</span>
-                <span>{candidate.email}</span>
+                <span>{candidate.personalEmail || candidate.email}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Building2 className="h-4 w-4 text-muted-foreground" />

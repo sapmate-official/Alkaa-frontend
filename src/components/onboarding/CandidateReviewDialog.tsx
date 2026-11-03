@@ -291,7 +291,7 @@ export const CandidateReviewDialog: React.FC<CandidateReviewDialogProps> = ({
                         <label className="text-sm font-medium text-muted-foreground">Personal Email</label>
                         <p className="text-sm flex items-center gap-2">
                           <Mail className="h-4 w-4" />
-                          {candidateInfo.email}
+                          {candidateInfo.personalEmail || candidateInfo.email}
                         </p>
                       </div>
                       <div>
