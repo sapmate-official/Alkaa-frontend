@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { HolidayType } from '../types/holiday.types';
-import { backendDomain } from '@/constants/Domain';
-const API_URL = backendDomain
+import { legacyBackendDomain } from '@/constants/Domain';
+const API_URL = legacyBackendDomain
 
 export const holidayTypeService = {
   // Get all holiday types for an organization

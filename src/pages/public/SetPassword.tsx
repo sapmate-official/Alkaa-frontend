@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
-import { APIDictionary } from '../../services/api/v2/APIdict';
+import { authApi } from '@/services/api/auth/authApi';
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -28,9 +27,9 @@ const SetPassword = () => {
     setIsLoading(true);
 
     try {
-      await axios.post(APIDictionary.setPassword, {
+      await authApi.setPassword({
         password,
-        verificationToken: token,
+        verificationToken: token ?? '',
       });
 
       toast({
@@ -40,7 +39,7 @@ const SetPassword = () => {
       });
 
       navigate(RouteDict.SignInPage);
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to set password. Please try again.",

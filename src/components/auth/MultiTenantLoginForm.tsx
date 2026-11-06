@@ -61,10 +61,10 @@ export function MultiTenantLoginForm({
             } else if (result.multipleOrganizations && result.organizations) {
                 setOrganizations(result.organizations);
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.log(err);
             
-            setError(err.message || "Failed to check email");
+            setError(err instanceof Error ? err.message : "Failed to check email");
         } finally {
             setIsLoading(false);
         }
@@ -97,11 +97,15 @@ export function MultiTenantLoginForm({
             
             if (result?.sessionToken) {
                 setSessionToken(result.sessionToken);
-                setOrganizationName(result.organizationName || '');
-                setOtpExpiresIn(result.otpExpiresIn || 600);
             }
-        } catch (err: any) {
-            setError(err.message || "Failed to verify password");
+            setOrganizationName(
+                result?.organizationName ||
+                selectedOrganization?.orgName ||
+                ''
+            );
+            setOtpExpiresIn(result?.otpExpiresIn || 600);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Failed to verify password");
         } finally {
             setIsLoading(false);
         }
@@ -114,8 +118,8 @@ export function MultiTenantLoginForm({
         try {
             await verifyOtp(sessionToken, otpCode);
             // Navigation will be handled by the AuthContext after successful login
-        } catch (err: any) {
-            setError(err.message || "Failed to verify OTP");
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Failed to verify OTP");
         } finally {
             setIsLoading(false);
         }

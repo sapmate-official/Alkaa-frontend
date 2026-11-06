@@ -1,4 +1,12 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  type QueryKey,
+  type UseMutationOptions,
+  type UseQueryOptions
+} from '@tanstack/react-query'
+import axios from 'axios'
 import { authApi, publicApi } from '@/services/api/auth/authApi'
 import type {
   CheckEmailResponse,
@@ -57,7 +65,7 @@ export function useCheckOnboardingTokenValidity(token: string) {
 }
 
 export function usePublicData(type: 'departments' | 'roles' | 'locations') {
-  return useQuery<any[]>({
+  return useQuery<unknown[]>({
     queryKey: [...publicKeys.all, 'data', type],
     queryFn: () => publicApi.getPublicData(type),
     staleTime: 15 * 60 * 1000, // 15 minutes
@@ -138,7 +146,7 @@ export function useSetPassword() {
     mutationFn: authApi.setPassword,
     onSuccess: (_, variables) => {
       // Invalidate token validation for the used token
-      queryClient.invalidateQueries({ queryKey: authKeys.validateToken(variables.token) })
+      queryClient.invalidateQueries({ queryKey: authKeys.validateToken(variables.verificationToken) })
     },
   })
 }
@@ -175,17 +183,17 @@ export function useSubmitOnboardingForm() {
 
 // Utility hooks for common auth patterns
 export function useAuthenticatedQuery<T>(
-  queryKey: any[],
+  queryKey: QueryKey,
   queryFn: () => Promise<T>,
-  options?: any
+  options?: Omit<UseQueryOptions<T>, 'queryKey' | 'queryFn' | 'retry'>
 ) {
   return useQuery<T>({
     queryKey,
     queryFn,
     ...options,
     // Automatically handle authentication errors
-    retry: (failureCount, error: any) => {
-      if (error?.response?.status === 401) {
+    retry: (failureCount, error: unknown) => {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
         return false // Don't retry on auth errors
       }
       return failureCount < 3
@@ -195,20 +203,20 @@ export function useAuthenticatedQuery<T>(
 
 export function useAuthenticatedMutation<TData, TVariables>(
   mutationFn: (variables: TVariables) => Promise<TData>,
-  options?: any
+  options?: UseMutationOptions<TData, unknown, TVariables>
 ) {
   const queryClient = useQueryClient()
 
-  return useMutation<TData, any, TVariables>({
+  return useMutation<TData, unknown, TVariables>({
     mutationFn,
     ...options,
-    onError: (error: any, variables, context) => {
-      if (error?.response?.status === 401) {
+    onError: (error, variables, onMutateResult, context) => {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
         // Handle auth errors globally
         queryClient.clear()
         window.location.href = '/auth/signin'
       }
-      options?.onError?.(error, variables, context)
+      options?.onError?.(error, variables, onMutateResult, context)
     },
   })
 }

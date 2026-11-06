@@ -104,7 +104,7 @@ const setupAxiosInterceptors = (navigate: ReturnType<typeof useNavigate>) => {
                     const response = await axios.post(
                         `${backendDomain}/api/v1/general/refresh-token`,
                         { refreshToken },
-                        { headers: { Authorization: `Bearer ${refreshToken}` } }
+                        { withCredentials: true, headers: { Authorization: `Bearer ${refreshToken}` } }
                     );
 
                     if (response.data.accessToken && response.data.refreshToken) {
@@ -143,7 +143,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [authStep, setAuthStep] = useState<AuthStep>({ step: 'email' });
-    const [, setUser_id] = useAtom<number | null>(userIdAtom);
+    const [, setUser_id] = useAtom<string | null>(userIdAtom);
     const navigate = useNavigate();
     const [isInitialized, setIsInitialized] = useState(false);
     
@@ -164,11 +164,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 throw new Error("Token expired");
             }
 
-            const response = await axios.get(`${backendDomain}/api/v1/general/validate-token`);
+            const response = await axios.get(`${backendDomain}/api/v1/general/validate-token`, {
+                withCredentials: true
+            });
             
             if (response.status === 200 && response.data.user) {
                 setUser(response.data.user);
-                setUser_id(response.data.user?.userId);
+                setUser_id(response.data.user.id ?? null);
                 return response.data.user;
             } else {
                 throw new Error("Invalid token response");
@@ -200,7 +202,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                         const response = await axios.post(
                             `${backendDomain}/api/v1/general/refresh-token`,
                             { refreshToken },
-                            { headers: { Authorization: `Bearer ${refreshToken}` } }
+                            { withCredentials: true, headers: { Authorization: `Bearer ${refreshToken}` } }
                         );
 
                         if (response.data.accessToken && response.data.refreshToken) {
@@ -235,16 +237,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const signIn = async (email: string, password: string) => {
         try {
             const response = await axios.post(
-                `${backendDomain}/api/v1/general/login`, 
-                { email, password }
+                `${backendDomain}/api/v1/general/login`,
+                { email, password },
+                { withCredentials: true }
             );
-            
+
             if (response.status === 200) {
                 if (response.data.accessToken && response.data.refreshToken) {
                     tokenStorage.setAccessToken(response.data.accessToken);
                     tokenStorage.setRefreshToken(response.data.refreshToken);
+                    if (response.data.organization?.id) {
+                        tokenStorage.setOrgData(
+                            response.data.organization.id,
+                            response.data.organization.name
+                        );
+                    }
                     await validateToken();
+                    setAuthStep({ step: 'complete' });
                     return undefined; // No error
+                }
+                if (response.data.requiresTwoFactor) {
+                    setAuthStep({
+                        step: 'otp',
+                        data: {
+                            email,
+                            sessionToken: response.data.sessionToken
+                        }
+                    });
+                    return undefined;
                 }
                 throw new Error("No tokens received");
             }
@@ -264,7 +284,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     // New multi-tenant authentication methods
     const checkEmail = async (email: string) => {
         try {
-            const response = await axios.post(`${backendDomain}/api/v1/general/check-email`, { email });
+            const response = await axios.post(`${backendDomain}/api/v1/general/check-email`, { email }, {
+                withCredentials: true
+            });
             
             if (response.data.singleOrganization) {
                 setAuthStep({ 
@@ -306,6 +328,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 email,
                 password,
                 orgId
+            }, {
+                withCredentials: true
             });
 
             // Direct login (e.g. SuperAdmin or direct token authentication without OTP)
@@ -319,20 +343,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 setAuthStep({ step: 'complete' });
                 return response.data;
             }
-            
-            setAuthStep({ 
-                step: 'otp', 
-                data: { 
+
+            // Two-factor flow: the TS backend identifies the pending user by
+            // email (+ optional orgId) and does not issue a temp session token.
+            if (response.data.requiresTwoFactor || response.data.sessionToken) {
+                setAuthStep({
+                    step: 'otp',
+                    data: {
+                        email,
+                        orgId,
+                        sessionToken: response.data.sessionToken,
+                        organizationName:
+                            response.data.organizationName ||
+                            response.data.organization?.name
+                    }
+                });
+
+                return {
+                    requiresTwoFactor: true,
                     sessionToken: response.data.sessionToken,
-                    organizationName: response.data.organizationName
-                } 
-            });
-            
-            return {
-                sessionToken: response.data.sessionToken,
-                organizationName: response.data.organizationName,
-                otpExpiresIn: response.data.otpExpiresIn
-            };
+                    email: response.data.email ?? email,
+                    userId: response.data.userId,
+                    organizationName:
+                        response.data.organizationName ||
+                        response.data.organization?.name,
+                    otpExpiresIn: response.data.otpExpiresIn
+                };
+            }
+
+            throw new Error('Unexpected authentication response');
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 throw new Error(error.response?.data?.message || 'Failed to verify password');
@@ -343,20 +382,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const verifyOtp = async (sessionToken: string, otpCode: string) => {
         try {
+            const pending = authStep.data ?? {};
             const response = await axios.post(`${backendDomain}/api/v1/general/verify-otp`, {
-                sessionToken,
+                sessionToken: sessionToken || pending.sessionToken || undefined,
+                email: pending.email,
+                orgId: pending.orgId,
                 otpCode
+            }, {
+                withCredentials: true
             });
-            
+
             if (response.data.accessToken && response.data.refreshToken) {
                 tokenStorage.setAccessToken(response.data.accessToken);
                 tokenStorage.setRefreshToken(response.data.refreshToken);
-                
+
                 // Store organization context
-                if (response.data.userData.orgId && response.data.userData.orgName) {
-                    tokenStorage.setOrgData(response.data.userData.orgId, response.data.userData.orgName);
+                if (response.data.organization?.id) {
+                    tokenStorage.setOrgData(
+                        response.data.organization.id,
+                        response.data.organization.name
+                    );
                 }
-                
+
                 await validateToken();
                 setAuthStep({ step: 'complete' });
             } else {
@@ -405,7 +452,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             if (refreshToken) {
                 await axios.post(
                     `${backendDomain}/api/v1/general/logout`,
-                    { refreshToken }
+                    { refreshToken },
+                    { withCredentials: true }
                 );
             }
         } catch (error) {

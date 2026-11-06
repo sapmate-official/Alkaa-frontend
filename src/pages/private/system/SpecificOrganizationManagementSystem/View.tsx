@@ -16,7 +16,7 @@ import {
   OrganizationChartTab 
 } from './components';
 import RouteDict from '@/routes/RouteDict';
-import { useOrganization, useOrganizationDepartments, useTeamMembers } from '@/hooks/queries'
+import { useLegacyOrganization, useOrganizationDepartments, useTeamMembers } from '@/hooks/queries'
 
 const SpecificOrganizationView = () => {
   const [permissions] = useAtom(permissionListAtom)
@@ -36,7 +36,7 @@ const SpecificOrganizationView = () => {
 
   // Use TanStack Query hooks
   const orgId = user?.organization?.id
-  const { data: organization, isLoading: isLoadingOrg } = useOrganization(orgId, !!orgId)
+  const { data: organization, isLoading: isLoadingOrg } = useLegacyOrganization(orgId, !!orgId)
   const { data: departments = [], isLoading: isLoadingDepartments } = useOrganizationDepartments(
     orgId,
     permissionChecks.canViewDepartmentList || permissionChecks.canViewAllDepartments || permissionChecks.canViewOwnDepartment

@@ -208,8 +208,11 @@ export {
 // Organization Management
 export {
   // Organization hooks
-  useOrganization, useOrganizations, useOrganizationDepartments, useTeamMembers, useUpdateOrganization,
+  useOrganization, useLegacyOrganization, useOrganizations, useOrganizationDepartments, useTeamMembers,
+  useCreateOrganization, useUpdateOrganization, useDeleteOrganization,
+  useOrganizationAdmins, useSetOrganizationAdmin, useRemoveOrganizationAdmin,
   useOrganizationChart, useOrganizationManagerChart,
-  type OrganizationType, type Department, type TeamMember, type User,
+  type OrganizationType, type OrganizationAdmin, type OrganizationCounts,
+  type Department, type TeamMember, type User,
   organizationKeys
 } from './useOrganizations'

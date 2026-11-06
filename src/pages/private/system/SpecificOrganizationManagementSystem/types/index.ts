@@ -5,7 +5,7 @@ export interface SubscriptionPlan {
   monthlyPrice: number;
   annualPrice: number;
   maxUsers: number;
-  features?: any;
+  features?: unknown;
 }
 
 export interface User {
@@ -36,13 +36,22 @@ export interface User {
 export interface OrganizationType {
   id: string;
   name: string;
-  industry: string;
-  subscriptionPlanId: string;
-  subscriptionPlan: SubscriptionPlan;
+  industry: string | null;
+  logo?: string | null;
+  address?: string | null;
+  timezone?: string | null;
+  subscriptionPlanId?: string | null;
+  subscriptionPlan?: SubscriptionPlan | null;
   subscriptionStart: string;
-  subscriptionEnd: string;
+  subscriptionEnd: string | null;
   isActive: boolean;
-  users: User[];
+  users?: User[];
+  counts?: {
+    users: number;
+    departments: number;
+    roles: number;
+    admins: number;
+  };
 }
 
 export interface Department {

@@ -1,22 +1,22 @@
-import { backendDomain } from '../../../constants/Domain';
+import { legacyBackendDomain } from '../../../constants/Domain';
 
 export const APIV3Dictionary = {
-    permission: `${backendDomain}/api/v3/permission`,
+    permission: `${legacyBackendDomain}/api/v3/permission`,
     payroll: {
-        base: `${backendDomain}/api/v3/payroll`,
+        base: `${legacyBackendDomain}/api/v3/payroll`,
         getPayslip: (month: string | number, year: string | number, userId: string = 'undefined') => 
-            `${backendDomain}/api/v3/payroll/payslip/${month}/${year}/${userId}`,
+            `${legacyBackendDomain}/api/v3/payroll/payslip/${month}/${year}/${userId}`,
         getStatistics: (salaryRecordId: string) => 
-            `${backendDomain}/api/v3/payroll/statistics/${salaryRecordId}`,
+            `${legacyBackendDomain}/api/v3/payroll/statistics/${salaryRecordId}`,
         generateSalary: (month: string | number, year: string | number, userId: string = 'undefined') => 
-            `${backendDomain}/api/v3/payroll/salary-generate/${month}/${year}/${userId}`,
+            `${legacyBackendDomain}/api/v3/payroll/salary-generate/${month}/${year}/${userId}`,
         downloadPayslip: (salaryRecordId: string) => 
-            `${backendDomain}/api/v3/payroll/download/${salaryRecordId}`,
+            `${legacyBackendDomain}/api/v3/payroll/download/${salaryRecordId}`,
         preStatistics: (month: string | number, year: string | number, userId: string = 'undefined') =>
-            `${backendDomain}/api/v3/payroll/pre-stats/${month}/${year}/${userId}`,
+            `${legacyBackendDomain}/api/v3/payroll/pre-stats/${month}/${year}/${userId}`,
         customPayslip: {
-            preview: `${backendDomain}/api/v3/payroll/custom/preview`,
-            generate: `${backendDomain}/api/v3/payroll/custom/generate`,
+            preview: `${legacyBackendDomain}/api/v3/payroll/custom/preview`,
+            generate: `${legacyBackendDomain}/api/v3/payroll/custom/generate`,
         }
     }
 };

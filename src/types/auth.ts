@@ -64,15 +64,22 @@ export interface CheckEmailRequest {
   email: string
 }
 
+export interface OrganizationLoginEntry {
+  orgId: string
+  orgName: string
+  userId: string
+  userStatus: string
+}
+
 export interface CheckEmailResponse {
-  exists: boolean
-  isVerified: boolean
-  hasPassword: boolean
-  organization?: {
-    id: string
-    name: string
-    domain: string
-  }
+  exists?: boolean
+  isVerified?: boolean
+  hasPassword?: boolean
+  singleOrganization?: boolean
+  multipleOrganizations?: boolean
+  organization?: OrganizationLoginEntry
+  organizations?: OrganizationLoginEntry[]
+  message?: string
 }
 
 export interface VerifyPasswordRequest {
@@ -91,13 +98,20 @@ export interface ValidateTokenRequest {
 }
 
 export interface ValidateTokenResponse {
-  valid: boolean
-  expired: boolean
-  type: 'ACCESS' | 'REFRESH' | 'RESET' | 'VERIFICATION'
+  valid?: boolean
+  expired?: boolean
+  type?: 'ACCESS' | 'REFRESH' | 'RESET' | 'VERIFICATION'
   user?: {
     id: string
     email: string
+    [key: string]: unknown
   }
+  organization?: {
+    id: string
+    name: string
+    [key: string]: unknown
+  }
+  [key: string]: unknown
 }
 
 export interface PublicOrganizationInfo {

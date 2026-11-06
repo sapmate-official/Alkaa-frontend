@@ -2,6 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { APIDictionary } from '@/services/api/v2/APIdict'
 import { APIV2Dictionary } from '@/services/api/v2/Api2Dicts'
+import { backendDomain } from '@/constants/Domain'
+
+// The TS backend exposes the organization module under /api/v1/organization.
+const organizationBase = `${backendDomain}/api/v1/organization`
 
 // Types
 export interface SubscriptionPlan {
@@ -11,7 +15,7 @@ export interface SubscriptionPlan {
   monthlyPrice: number;
   annualPrice: number;
   maxUsers: number;
-  features?: any;
+  features?: unknown;
 }
 
 export interface User {
@@ -30,16 +34,32 @@ export interface User {
   subordinates?: User[];
 }
 
+export interface OrganizationCounts {
+  users: number;
+  departments: number;
+  roles: number;
+  admins: number;
+}
+
 export interface OrganizationType {
   id: string;
   name: string;
-  industry: string;
-  subscriptionPlanId: string;
-  subscriptionPlan: SubscriptionPlan;
+  industry: string | null;
+  logo: string | null;
+  address: string | null;
+  timezone: string | null;
+  subscriptionPlanId?: string | null;
   subscriptionStart: string;
-  subscriptionEnd: string;
+  subscriptionEnd: string | null;
   isActive: boolean;
-  users: User[];
+  createdAt: string;
+  updatedAt: string;
+  counts: OrganizationCounts;
+  settings?: Record<string, unknown>;
+  // Legacy shapes kept for screens that have not been migrated yet.
+  subscriptionPlan?: SubscriptionPlan | null;
+  users?: User[];
+  departments?: Department[];
 }
 
 export interface Department {
@@ -63,17 +83,63 @@ export interface TeamMember {
 }
 
 export interface OrganizationChartData {
-  chart: any[];
+  chart: unknown[];
   isOrgAdmin: boolean;
 }
+
+export interface OrganizationAdmin {
+  id: string;
+  userId: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  status: string;
+  department: { id: string; name: string } | null;
+  roles: string[];
+  createdAt: string;
+}
+
+export interface OrganizationAdminAssignment {
+  id: string;
+  userId: string;
+  orgId: string;
+  roleId: string;
+}
+
+const ORGANIZATION_WRITABLE_FIELDS = [
+  'name',
+  'industry',
+  'logo',
+  'address',
+  'timezone',
+  'subscriptionPlanId',
+  'subscriptionStart',
+  'subscriptionEnd',
+  'isActive',
+  'settings'
+] as const;
+
+const toWritePayload = (data: Partial<OrganizationType>): Record<string, unknown> => {
+  const payload: Record<string, unknown> = {};
+  const record = data as unknown as Record<string, unknown>;
+  for (const field of ORGANIZATION_WRITABLE_FIELDS) {
+    const value = record[field];
+    if (value !== undefined) {
+      payload[field] = value;
+    }
+  }
+  return payload;
+};
 
 // Query Keys
 export const organizationKeys = {
   all: ['organizations'] as const,
   lists: () => [...organizationKeys.all, 'list'] as const,
-  list: (filters: Record<string, any>) => [...organizationKeys.lists(), { filters }] as const,
+  list: (filters: Record<string, unknown>) => [...organizationKeys.lists(), { filters }] as const,
   details: () => [...organizationKeys.all, 'detail'] as const,
   detail: (id: string) => [...organizationKeys.details(), id] as const,
+  legacyDetail: (id: string) => [...organizationKeys.all, 'legacyDetail', id] as const,
+  admins: (orgId: string) => [...organizationKeys.all, 'admins', orgId] as const,
   departments: (orgId: string) => [...organizationKeys.all, 'departments', orgId] as const,
   teamMembers: (userId: string) => [...organizationKeys.all, 'teamMembers', userId] as const,
   subscriptionPlans: () => [...organizationKeys.all, 'subscriptionPlans'] as const,
@@ -84,6 +150,67 @@ export const organizationKeys = {
 // API Functions
 const organizationApi = {
   async getOrganizationById(orgId: string): Promise<OrganizationType> {
+    const response = await axios.get(`${organizationBase}/${orgId}`, { withCredentials: true })
+    return response.data
+  },
+
+  async getAllOrganizations(filters?: Record<string, unknown>): Promise<OrganizationType[]> {
+    const params = new URLSearchParams()
+    Object.entries(filters || {}).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params.set(key, String(value))
+      }
+    })
+    const query = params.toString()
+    const response = await axios.get(
+      query ? `${organizationBase}?${query}` : organizationBase,
+      { withCredentials: true }
+    )
+    return response.data.data || []
+  },
+
+  async createOrganization(data: Partial<OrganizationType>): Promise<OrganizationType> {
+    const response = await axios.post(organizationBase, toWritePayload(data), {
+      withCredentials: true
+    })
+    return response.data
+  },
+
+  async updateOrganization(orgId: string, data: Partial<OrganizationType>): Promise<OrganizationType> {
+    const response = await axios.patch(`${organizationBase}/${orgId}`, toWritePayload(data), {
+      withCredentials: true
+    })
+    return response.data
+  },
+
+  async deleteOrganization(orgId: string): Promise<void> {
+    await axios.delete(`${organizationBase}/${orgId}`, { withCredentials: true })
+  },
+
+  async getOrganizationAdmins(orgId: string): Promise<OrganizationAdmin[]> {
+    const response = await axios.get(`${organizationBase}/${orgId}/admins`, {
+      withCredentials: true
+    })
+    return response.data.data || []
+  },
+
+  async setOrganizationAdmin(orgId: string, userId: string): Promise<OrganizationAdminAssignment> {
+    const response = await axios.post(
+      `${organizationBase}/${orgId}/admins`,
+      { userId },
+      { withCredentials: true }
+    )
+    return response.data
+  },
+
+  async removeOrganizationAdmin(orgId: string, userId: string): Promise<void> {
+    await axios.delete(`${organizationBase}/${orgId}/admins/${userId}`, {
+      withCredentials: true
+    })
+  },
+
+  // Legacy endpoints (not yet ported to the TS backend).
+  async getLegacyOrganizationById(orgId: string): Promise<OrganizationType> {
     const response = await axios.get(`${APIDictionary.Organization}/${orgId}`, { withCredentials: true })
     return response.data.data || response.data
   },
@@ -98,18 +225,12 @@ const organizationApi = {
     return response.data.data || response.data
   },
 
-  async getAllOrganizations(filters?: Record<string, any>): Promise<OrganizationType[]> {
-    const params = new URLSearchParams(filters)
-    const response = await axios.get(`${APIDictionary.Organization}?${params}`, { withCredentials: true })
-    return response.data.data || response.data
-  },
-
   async getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
     const response = await axios.get(`${APIDictionary.Organization}/subscription-plans`, { withCredentials: true })
     return response.data.data || response.data
   },
 
-  async getOrganizationChart(orgId: string): Promise<any[]> {
+  async getOrganizationChart(orgId: string): Promise<unknown[]> {
     const response = await axios.get(APIDictionary.OrganizationChart(orgId), { withCredentials: true })
     return response.data.data || response.data
   },
@@ -118,11 +239,6 @@ const organizationApi = {
     const response = await axios.get(APIDictionary.OrganizationManagerChart(orgId, userId), { withCredentials: true })
     return response.data
   },
-
-  async updateOrganization(data: Partial<OrganizationType>): Promise<OrganizationType> {
-    const response = await axios.patch(APIDictionary.Organization, data, { withCredentials: true })
-    return response.data.data || response.data
-  },
 }
 
 // Query Hooks
@@ -130,6 +246,15 @@ export function useOrganization(orgId?: string, enabled: boolean = true) {
   return useQuery<OrganizationType>({
     queryKey: organizationKeys.detail(orgId || ''),
     queryFn: () => organizationApi.getOrganizationById(orgId || ''),
+    enabled: !!orgId && enabled,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  })
+}
+
+export function useLegacyOrganization(orgId?: string, enabled: boolean = true) {
+  return useQuery<OrganizationType>({
+    queryKey: organizationKeys.legacyDetail(orgId || ''),
+    queryFn: () => organizationApi.getLegacyOrganizationById(orgId || ''),
     enabled: !!orgId && enabled,
     staleTime: 1000 * 60 * 5, // 5 minutes
   })
@@ -153,7 +278,7 @@ export function useTeamMembers(userId?: string, enabled: boolean = true) {
   })
 }
 
-export function useOrganizations(filters?: Record<string, any>) {
+export function useOrganizations(filters?: Record<string, unknown>) {
   return useQuery<OrganizationType[]>({
     queryKey: organizationKeys.list(filters || {}),
     queryFn: () => organizationApi.getAllOrganizations(filters),
@@ -170,7 +295,7 @@ export function useSubscriptionPlans() {
 }
 
 export function useOrganizationChart(orgId?: string, enabled: boolean = true) {
-  return useQuery<any[]>({
+  return useQuery<unknown[]>({
     queryKey: organizationKeys.chart(orgId || ''),
     queryFn: () => organizationApi.getOrganizationChart(orgId || ''),
     enabled: !!orgId && enabled,
@@ -187,18 +312,72 @@ export function useOrganizationManagerChart(orgId?: string, userId?: string, ena
   })
 }
 
+export function useOrganizationAdmins(orgId?: string, enabled: boolean = true) {
+  return useQuery<OrganizationAdmin[]>({
+    queryKey: organizationKeys.admins(orgId || ''),
+    queryFn: () => organizationApi.getOrganizationAdmins(orgId || ''),
+    enabled: !!orgId && enabled,
+    staleTime: 1000 * 60, // 1 minute
+  })
+}
+
 // Mutation Hooks
+export function useCreateOrganization() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: Partial<OrganizationType>) => organizationApi.createOrganization(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: organizationKeys.lists() })
+    },
+  })
+}
+
 export function useUpdateOrganization() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: Partial<OrganizationType>) => organizationApi.updateOrganization(data),
+    mutationFn: ({ id, ...data }: Partial<OrganizationType> & { id: string }) =>
+      organizationApi.updateOrganization(id, data),
     onSuccess: (_, variables) => {
-      // Invalidate related queries
-      if (variables.id) {
-        queryClient.invalidateQueries({ queryKey: organizationKeys.detail(variables.id) })
-      }
+      queryClient.invalidateQueries({ queryKey: organizationKeys.detail(variables.id) })
       queryClient.invalidateQueries({ queryKey: organizationKeys.lists() })
+    },
+  })
+}
+
+export function useDeleteOrganization() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (orgId: string) => organizationApi.deleteOrganization(orgId),
+    onSuccess: (_, orgId) => {
+      queryClient.invalidateQueries({ queryKey: organizationKeys.detail(orgId) })
+      queryClient.invalidateQueries({ queryKey: organizationKeys.lists() })
+    },
+  })
+}
+
+export function useSetOrganizationAdmin(orgId?: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (userId: string) => organizationApi.setOrganizationAdmin(orgId || '', userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: organizationKeys.admins(orgId || '') })
+      queryClient.invalidateQueries({ queryKey: organizationKeys.detail(orgId || '') })
+    },
+  })
+}
+
+export function useRemoveOrganizationAdmin(orgId?: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (userId: string) => organizationApi.removeOrganizationAdmin(orgId || '', userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: organizationKeys.admins(orgId || '') })
+      queryClient.invalidateQueries({ queryKey: organizationKeys.detail(orgId || '') })
     },
   })
 }

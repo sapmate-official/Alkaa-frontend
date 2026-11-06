@@ -85,11 +85,17 @@ const OrganizationHome = () => {
                             <div className="space-y-4">
                                 <div className="flex items-center text-sm">
                                     <Building2 className="mr-2 h-4 w-4" />
-                                    <span>Plan: {org?.subscriptionPlan?.name}</span>
+                                    <span>
+                                        Plan: {org?.subscriptionPlan?.name || org?.subscriptionPlanId || 'Not configured'}
+                                    </span>
                                 </div>
                                 <div className="flex items-center text-sm">
                                     <Users className="mr-2 h-4 w-4" />
-                                    <span>{org?.users?.length || 0} Users</span>
+                                    <span>{org?.counts?.users ?? org?.users?.length ?? 0} Users</span>
+                                </div>
+                                <div className="flex items-center text-sm">
+                                    <Users className="mr-2 h-4 w-4" />
+                                    <span>{org?.counts?.admins ?? 0} Admins</span>
                                 </div>
                                 <Button
                                     variant="outline"

@@ -50,7 +50,7 @@ export interface SpecialEvent {
   entity: Record<string, any>;
 }
 
-export const userIdAtom = atom<number | null>(null)
+export const userIdAtom = atom<string | null>(null)
 export const userAtom = atom<User | null>(null)
 export const permissionListAtom = atom<Permission[]>([])
 export const dashboardDataAtom = atom<DashboardData | null>(null)

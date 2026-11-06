@@ -7,10 +7,18 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useParams, useNavigate } from "react-router-dom"
-import { useOrganization, useUpdateOrganization, OrganizationType } from '@/hooks/queries'
+import {
+  useOrganization,
+  useUpdateOrganization,
+  useOrganizationAdmins,
+  useSetOrganizationAdmin,
+  useRemoveOrganizationAdmin,
+  OrganizationType
+} from '@/hooks/queries'
 import { useSubscriptionPlans } from '@/hooks/queries/useBilling'
+import { getApiErrorMessage } from '@/lib/apiError'
 import { useEffect, useState } from "react"
-import { ArrowLeft, Users, Layers, ShieldCheck, CheckCircle2, XCircle } from "lucide-react"
+import { ArrowLeft, Users, Layers, ShieldCheck, CheckCircle2, XCircle, Trash2, UserPlus } from "lucide-react"
 
 const SpecificOrganizationHome = () => {
   const params = useParams<{ organizationId?: string; id?: string }>()
@@ -22,9 +30,44 @@ const SpecificOrganizationHome = () => {
   const { data: organization, isLoading: isLoadingOrg, error: orgError } = useOrganization(orgId)
   const { data: subscriptionPlans = [], isLoading: isLoadingPlans } = useSubscriptionPlans()
   const updateMutation = useUpdateOrganization()
+  const { data: admins = [], isLoading: isLoadingAdmins } = useOrganizationAdmins(orgId)
+  const setAdminMutation = useSetOrganizationAdmin(orgId)
+  const removeAdminMutation = useRemoveOrganizationAdmin(orgId)
 
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState<Partial<OrganizationType>>({})
+  const [adminUserId, setAdminUserId] = useState('')
+
+  const handlePromoteAdmin = async () => {
+    if (!organization || !adminUserId.trim()) return
+    try {
+      await setAdminMutation.mutateAsync(adminUserId.trim())
+      toast({ title: 'Admin added', description: 'The user can now manage this organization.' })
+      setAdminUserId('')
+    } catch (error: unknown) {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to add admin',
+        description: getApiErrorMessage(
+          error,
+          'Please verify the user id and try again.'
+        )
+      })
+    }
+  }
+
+  const handleRemoveAdmin = async (userId: string) => {
+    try {
+      await removeAdminMutation.mutateAsync(userId)
+      toast({ title: 'Admin removed' })
+    } catch (error: unknown) {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to remove admin',
+        description: getApiErrorMessage(error, 'Please try again.')
+      })
+    }
+  }
 
   // Sync form data when organization data loads
   useEffect(() => {
@@ -36,7 +79,7 @@ const SpecificOrganizationHome = () => {
   const handleSave = () => {
     if (!organization) return
 
-    updateMutation.mutate(formData, {
+    updateMutation.mutate({ ...formData, id: organization.id }, {
       onSuccess: () => {
         toast({
           title: "Success",
@@ -60,7 +103,7 @@ const SpecificOrganizationHome = () => {
     const updatedData = { ...formData, isActive: checked }
     setFormData(updatedData)
 
-    updateMutation.mutate(updatedData, {
+    updateMutation.mutate({ ...updatedData, id: organization.id }, {
       onSuccess: () => {
         toast({
           title: "Success",
@@ -140,8 +183,13 @@ const SpecificOrganizationHome = () => {
     )
   }
 
-  const userCount = (organization as any)?.users?.length || 0;
-  const deptCount = (organization as any)?.departments?.length || 0;
+  const userCount = organization.counts?.users ?? organization.users?.length ?? 0;
+  const deptCount = organization.counts?.departments ?? organization.departments?.length ?? 0;
+  const planName =
+    organization.subscriptionPlan?.name ||
+    subscriptionPlans.find((plan) => plan.id === organization.subscriptionPlanId)?.name ||
+    organization.subscriptionPlanId ||
+    'No Plan Configured';
 
   return (
     <div className="container mx-auto py-6 overflow-y-auto space-y-6">
@@ -223,10 +271,10 @@ const SpecificOrganizationHome = () => {
             <ShieldCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{organization.subscriptionPlan?.name || "Free/Standard"}</div>
+            <div className="text-2xl font-bold">{planName}</div>
             <p className="text-xs text-muted-foreground">
-              {((organization.subscriptionPlan as any)?.price || (organization.subscriptionPlan as any)?.monthlyPrice)
-                ? `$${(organization.subscriptionPlan as any)?.price || (organization.subscriptionPlan as any)?.monthlyPrice}/month`
+              {organization.subscriptionEnd
+                ? `Ends ${new Date(organization.subscriptionEnd).toLocaleDateString()}`
                 : "Active Subscription"}
             </p>
           </CardContent>
@@ -287,19 +335,78 @@ const SpecificOrganizationHome = () => {
                   <SelectContent>
                     {subscriptionPlans.map((plan) => (
                       <SelectItem key={plan.id} value={plan.id}>
-                        {plan.name} - ${(plan as any).price || (plan as any).monthlyPrice || 0}/month
+                        {plan.name} - ${plan.price || 0}/month
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               ) : (
-                <Input
-                  value={organization.subscriptionPlan?.name || 'No Plan Configured'}
-                  disabled
-                />
+                <Input value={planName} disabled />
               )}
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5" />
+            Organization Admins
+          </CardTitle>
+          <CardDescription>
+            Promote an existing user (by user id) to manage this organization.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Input
+              value={adminUserId}
+              onChange={(event) => setAdminUserId(event.target.value)}
+              placeholder="User ID"
+              className="flex-1"
+            />
+            <Button
+              onClick={handlePromoteAdmin}
+              disabled={!adminUserId.trim() || setAdminMutation.isPending}
+            >
+              <UserPlus className="mr-2 h-4 w-4" />
+              {setAdminMutation.isPending ? 'Adding...' : 'Add Admin'}
+            </Button>
+          </div>
+
+          {isLoadingAdmins ? (
+            <p className="text-sm text-muted-foreground">Loading admins...</p>
+          ) : admins.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No admins assigned yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {admins.map((admin) => (
+                <div
+                  key={admin.id}
+                  className="flex items-center justify-between rounded-md border p-3"
+                >
+                  <div>
+                    <p className="font-medium">
+                      {`${admin.firstName ?? ''} ${admin.lastName ?? ''}`.trim() || admin.email}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {admin.email}
+                      {admin.roles.length > 0 ? ` · ${admin.roles.join(', ')}` : ''}
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleRemoveAdmin(admin.userId)}
+                    disabled={removeAdminMutation.isPending}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

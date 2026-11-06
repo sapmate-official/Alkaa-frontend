@@ -48,7 +48,7 @@ import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { backendDomain } from '@/constants/Domain';
+import { legacyBackendDomain } from '@/constants/Domain';
 import { useToast } from '@/hooks/use-toast';
 import RouteDict from '@/routes/RouteDict';
 
@@ -383,7 +383,7 @@ const AlkaaLandingPage: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch(`${backendDomain}/api/v2/public/demo-request`, {
+      const response = await fetch(`${legacyBackendDomain}/api/v2/public/demo-request`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
