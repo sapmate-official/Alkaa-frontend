@@ -51,13 +51,13 @@ interface linkType {
 
 export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [open, setOpen] = useState(false);
-  const [userDetails, setUserDetails] = useState<any | null>(null);
-  const [, setIsUserLoading] = useState(true);
   const [links, setLinks] = useState<linkType[]>([]);
   const { user, isLoading } = useAuth();
   const location = useLocation();
   const [permissionList] = useAtom(permissionListAtom);
   const [leaveRequestsNumber, setLeaveRequestsNumber] = useState(0);
+  const isSuperAdmin = Boolean(user?.superAdmin || user?.isSuperAdmin);
+  const avatar = (user as { avatar?: string } | null)?.avatar;
 
   const noSidebarPaths = ['/', '/auth/signin'];
   const shouldShowSidebar = !noSidebarPaths.includes(location.pathname) &&
@@ -75,29 +75,14 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
     }
   }
-  const fetchUserDetails = async () => {
-    try {
-      if (!user?.id) return;
-      setIsUserLoading(true);
-      const response = await axios.get(APIDictionary.userProfile(user?.id), { withCredentials: true });
-      const data = response.data;
-      setUserDetails(data);
-    } catch (error) {
-      console.error("Error fetching user details", error);
-    } finally {
-      setIsUserLoading(false);
-    }
-  };
-
   useEffect(() => {
-    if (user && !isLoading) {
-      fetchUserDetails();
+    if (user && !isLoading && !isSuperAdmin) {
       fetchLeaveRequests()
     }
-  }, [user, isLoading]);
+  }, [user, isLoading, isSuperAdmin]);
 
   useEffect(() => {
-    const baseLinks = userDetails?.superAdmin ? [
+    const baseLinks = isSuperAdmin ? [
       {
         label: "Organization",
         href: RouteDict.Organization.Base,
@@ -166,7 +151,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       //     icon: <FaRegBell className="h-5 w-5" />
       //   });
       // }
-       else if (permission.module === "Organization") {
+       else if (permission.module === "Organization" || permission.key === 'view_organization_basic_details' || permission.key === 'view_organization_detailed_info') {
         if (baseLinks.some(link => link.label === "Organization")) continue;
         baseLinks.push({
           label: "Organization",
@@ -180,7 +165,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           href: RouteDict.Department.Base,
           icon: <HiOutlineBuildingOffice2 className="h-5 w-5" />
         });
-      } else if (permission.name === "Manage User Roles") {
+      } else if (permission.name === "Manage User Roles" || permission.key === 'manage_role') {
         baseLinks.push({
           label: "Roles & Permission",
           href: RouteDict.Role.Base,
@@ -241,7 +226,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     });
 
     setLinks(baseLinks);
-  }, [userDetails, permissionList]);
+  }, [isSuperAdmin, permissionList]);
 
   if (!shouldShowSidebar) {
     return <>{children}</>;
@@ -270,10 +255,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               <SidebarLink
                 link={{
                   label: user?.firstName || user?.lastName ? `${user?.firstName || ''} ${user?.lastName || ''}`.trim() : ((user as any)?.name || user?.email || "User"),
-                  href: userDetails?.superAdmin ? '#' : RouteDict.Profile.Info(user?.id || ""),
-                  icon: userDetails?.avatar ? (
+                  href: isSuperAdmin ? '#' : RouteDict.Profile.Info(user?.id || ""),
+                  icon: avatar ? (
                     <img
-                      src={userDetails?.avatar}
+                      src={avatar}
                       alt="avatar"
                       className="h-6 w-6 rounded-full"
                     />

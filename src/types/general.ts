@@ -96,6 +96,9 @@ export interface RolePermission {
 export interface User {
   id: string;
   orgId: string;
+  superAdmin?: boolean;
+  isSuperAdmin?: boolean;
+  permissions?: string[];
   departmentId?: string;
   managerId?: string;
   email: string;

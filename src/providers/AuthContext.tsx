@@ -1,8 +1,8 @@
-import { userIdAtom } from "../store/atom";
+import { permissionListAtom, userIdAtom } from "../store/atom";
 import axios, { AxiosError } from "axios";
 import { useAtom } from "jotai";
 import React, { createContext, useState, useContext, useEffect } from "react";
-import { User } from "../types/general";
+import { Permission, User } from "../types/general";
 import { backendDomain } from "../constants/Domain";
 import { useNavigate } from "react-router-dom";
 import Loader from "@/components/Loader";
@@ -66,6 +66,9 @@ export const tokenStorage = {
         }
     }
 };
+
+const toPermissionList = (keys?: string[]): Permission[] =>
+    (keys ?? []).map((key) => ({ key, name: key, module: '' } as Permission));
 
 // Configure axios interceptors
 const setupAxiosInterceptors = (navigate: ReturnType<typeof useNavigate>) => {
@@ -144,6 +147,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const [isLoading, setIsLoading] = useState(true);
     const [authStep, setAuthStep] = useState<AuthStep>({ step: 'email' });
     const [, setUser_id] = useAtom<string | null>(userIdAtom);
+    const [, setPermissionList] = useAtom(permissionListAtom);
     const navigate = useNavigate();
     const [isInitialized, setIsInitialized] = useState(false);
     
@@ -171,6 +175,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             if (response.status === 200 && response.data.user) {
                 setUser(response.data.user);
                 setUser_id(response.data.user.id ?? null);
+                setPermissionList(toPermissionList(response.data.user.permissions));
                 return response.data.user;
             } else {
                 throw new Error("Invalid token response");
@@ -462,6 +467,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             // Always clear tokens and user state
             setUser(null);
             setUser_id(null);
+            setPermissionList([]);
             tokenStorage.clearTokens();
             setIsLoading(false);
             setAuthStep({ step: 'email' });

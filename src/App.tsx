@@ -3,10 +3,6 @@ import './styles/App.css'
 import { Route, Routes, Navigate, BrowserRouter, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './providers/AuthContext.tsx';
 import Loader from './components/Loader';
-import axios from 'axios';
-import { APIDictionary } from './services/api/v2/APIdict';
-import { useAtom } from 'jotai';
-import { permissionListAtom } from './store/atom';
 import PermissionRouteBasedOnKey from './components/RouteSecurityWrapper/PermissionBasedOnKey';
 import { Toaster } from './components/ui/toaster';
 import RouteDict from './routes/RouteDict';
@@ -84,55 +80,27 @@ function App() {
 }
 
 const ProtectedRoute: React.FC = () => {
-  const { user, isLoading } = useAuth();
-  const [userDetails, setUserDetails] = useState<any | null>(null);
-  const [isUserLoading, setIsUserLoading] = useState(true);
-  const [, setPermissionList] = useAtom(permissionListAtom);
+  const { user, isLoading, reinitializeAuth } = useAuth();
   const location = useLocation();
   const [previousPath, setPreviousPath] = useState<string | null>(null);
-
-  const fetchUserDetails = async () => {
-    try {
-      if (!user?.id) return;
-      setIsUserLoading(true);
-      const response = await axios.get(APIDictionary.userProfile(user?.id), { withCredentials: true });
-      const data = response.data;
-
-      setUserDetails(data);
-      setPermissionList(data?.user?.roles[0]?.role?.permissions?.map((permission: any) => permission.permission));
-    } catch (error) {
-      console.error("Error fetching user details", error);
-    } finally {
-      setIsUserLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (user && !isLoading) {
-      fetchUserDetails();
-    }
-  }, [user, isLoading]);
+  const isSuperAdmin = Boolean(user?.superAdmin || user?.isSuperAdmin);
 
   useEffect(() => {
     if (previousPath?.includes('/role') && !location.pathname.includes('/role')) {
-      fetchUserDetails();
+      void reinitializeAuth();
     }
     setPreviousPath(location.pathname);
-  }, [location.pathname]);
+  }, [location.pathname, previousPath, reinitializeAuth]);
 
-  if (isLoading || isUserLoading) {
+  if (isLoading) {
     return <Loader />;
   }
 
-  if (!user && !isLoading) {
+  if (!user) {
     return <Navigate to={RouteDict.SignInPage} replace />;
   }
 
-  if (userDetails?.superAdmin) {
-    return <SuperAdminRoute />;
-  } else {
-    return <ClientRoute />;
-  }
+  return isSuperAdmin ? <SuperAdminRoute /> : <ClientRoute />;
 }
 
 const ClientRoute = () => {
