@@ -1,15 +1,15 @@
-import { legacyBackendDomain } from "@/constants/Domain";
+import { backendDomain, legacyBackendDomain } from "@/constants/Domain";
 
 export const APIDictionary = {
-    // Authentication endpoints
-    setPassword: `${legacyBackendDomain}/api/v1/general/set-password`,
-    login: `${legacyBackendDomain}/api/v1/general/login`,
-    checkEmail: `${legacyBackendDomain}/api/v1/general/check-email`,
-    verifyPassword: `${legacyBackendDomain}/api/v1/general/verify-password`,
-    verifyOtp: `${legacyBackendDomain}/api/v1/general/verify-otp`,
-    validateToken: `${legacyBackendDomain}/api/v1/general/validate-token`,
-    refreshToken: `${legacyBackendDomain}/api/v1/general/refresh-token`,
-    logout: `${legacyBackendDomain}/api/v1/general/logout`,
+    // Authentication endpoints (TypeScript Backend)
+    setPassword: `${backendDomain}/api/v1/general/set-password`,
+    login: `${backendDomain}/api/v1/general/login`,
+    checkEmail: `${backendDomain}/api/v1/general/check-email`,
+    verifyPassword: `${backendDomain}/api/v1/general/verify-password`,
+    verifyOtp: `${backendDomain}/api/v1/general/verify-otp`,
+    validateToken: `${backendDomain}/api/v1/general/validate-token`,
+    refreshToken: `${backendDomain}/api/v1/general/refresh-token`,
+    logout: `${backendDomain}/api/v1/general/logout`,
     
     // Legacy endpoints
     leaveTypeList: `${legacyBackendDomain}/api/v1/leave/type`,
@@ -19,20 +19,20 @@ export const APIDictionary = {
     respondLeaveRequest: `${legacyBackendDomain}/api/v1/manager/respond-leave`,
     leaveTypeCreate: `${legacyBackendDomain}/api/v1/manager/leave-type/create`,
     leaveBalance:`${legacyBackendDomain}/api/v1/employee/leave-balance`,
-    employee_list:`${legacyBackendDomain}/api/v1/manager/employee-list`,
-    create_employee:`${legacyBackendDomain}/api/v1/employee/register`,
+    employee_list:`${backendDomain}/api/v1/manager/employee-list`,
+    create_employee:`${backendDomain}/api/v1/employee/register`,
     checkIn:`${legacyBackendDomain}/api/v2/attendance/check-in`,
     checkOut:`${legacyBackendDomain}/api/v2/attendance/check-out`,
     todaySessions:`${legacyBackendDomain}/api/v2/attendance/session/`,
     attendanceHistory:`${legacyBackendDomain}/api/v2/attendance/history`,
-    userProfile: (id: string) => `${legacyBackendDomain}/api/v2/user/${id}`,
-    updateProfile: (id: string) => `${legacyBackendDomain}/api/v2/user/${id}`,
-    Organization: `${legacyBackendDomain}/api/v2/organization`,
+    userProfile: (id: string) => `${backendDomain}/api/v2/user/${id}`,
+    updateProfile: (id: string) => `${backendDomain}/api/v2/user/${id}`,
+    Organization: `${backendDomain}/api/v2/organization`,
     OrganizationChart: (orgId: string) => `${legacyBackendDomain}/api/v2/organization/${orgId}/chart`,
     OrganizationManagerChart: (orgId: string, userId?: string) => `${legacyBackendDomain}/api/v2/organization/${orgId}/manager-chart${userId ? `?userId=${userId}` : ''}`,
     Permission: `${legacyBackendDomain}/api/v2/permission`,
     role: `${legacyBackendDomain}/api/v2/role`,
-    user: `${legacyBackendDomain}/api/v2/user`,
+    user: `${backendDomain}/api/v2/user`,
     role_permission: `${legacyBackendDomain}/api/v2/role-permission`,
     roleAddPermissions: (roleId: string) => `${legacyBackendDomain}/api/v2/role/${roleId}/permissions/add`,
     roleRemovePermissions: (roleId: string) => `${legacyBackendDomain}/api/v2/role/${roleId}/permissions/remove`,
@@ -47,7 +47,7 @@ export const APIDictionary = {
     bank: `${legacyBackendDomain}/api/v2/bank-details`,
     payrollParameters: (userId: string) => `${legacyBackendDomain}/api/v2/payroll/parameters/${userId}`,
     notification: `${legacyBackendDomain}/api/v2/notification`,
-    department: `${legacyBackendDomain}/api/v2/department`,
+    department: `${backendDomain}/api/v2/department`,
     dashboard: (userId: string) => `${legacyBackendDomain}/api/v2/screen/dashboard/${userId}`,
     get_payroll: (userId: string) => `${legacyBackendDomain}/api/v2/payroll/user/${userId}`,
     get_payroll_stats: (userId: string) => `${legacyBackendDomain}/api/v2/payroll/statistics/${userId}`,
@@ -71,7 +71,7 @@ export const APIDictionary = {
     userRecentActivities: (targetUserId: string) => `${legacyBackendDomain}/api/v2/activity-logs/user/${targetUserId}/recent`,
 
     // Onboarding Endpoints
-    onboarding: `${legacyBackendDomain}/api/v2/onboarding`,
+    onboarding: `${backendDomain}/api/v2/onboarding`,
 
     // Task Management Endpoints
     task: `${legacyBackendDomain}/api/v2/task`,
