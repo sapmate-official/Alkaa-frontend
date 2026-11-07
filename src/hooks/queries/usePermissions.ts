@@ -1,20 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { APIDictionary } from '@/services/api/v2/APIdict'
+import type { Permission, RawPermission } from './rolePayload'
+import { normalizePermission, unwrapItem, unwrapList } from './rolePayload'
 
-// Types
-export interface Permission {
-  id: string
-  name: string
-  description?: string
-  category: string
-  action: string
-  resource: string
-  organizationId?: string
-  isSystem: boolean
-  createdAt: string
-  updatedAt: string
-}
+export type { Permission } from './rolePayload'
 
 export interface PermissionCategory {
   id: string
@@ -58,7 +48,7 @@ export interface CreatePermissionPresetRequest {
 export const permissionKeys = {
   all: ['permissions'] as const,
   lists: () => [...permissionKeys.all, 'list'] as const,
-  list: (filters: Record<string, any>) => [...permissionKeys.lists(), { filters }] as const,
+  list: (filters: Record<string, unknown>) => [...permissionKeys.lists(), { filters }] as const,
   details: () => [...permissionKeys.all, 'detail'] as const,
   detail: (id: string) => [...permissionKeys.details(), id] as const,
   categories: () => [...permissionKeys.all, 'categories'] as const,
@@ -67,29 +57,43 @@ export const permissionKeys = {
   userPermissions: (userId: string) => [...permissionKeys.all, 'user', userId] as const,
 }
 
+type PermissionEnvelope = RawPermission | { data?: RawPermission }
+type PermissionListEnvelope = RawPermission[] | { data?: RawPermission[] }
+
 // API Functions
 const permissionsApi = {
   async getAllPermissions(orgId?: string): Promise<Permission[]> {
     if (!orgId) {
-      throw new Error('Organization ID is required to fetch permissions');
+      throw new Error('Organization ID is required to fetch permissions')
     }
-    const response = await axios.get(`${APIDictionary.permission}/org/${orgId}`, { withCredentials: true })
-    return response.data.data || response.data
+    const response = await axios.get<PermissionListEnvelope>(
+      `${APIDictionary.permission}/org/${orgId}`,
+      { withCredentials: true }
+    )
+    return unwrapList(response.data).map(normalizePermission)
   },
 
   async getPermissionById(id: string): Promise<Permission> {
-    const response = await axios.get(`${APIDictionary.Permission}/${id}`, { withCredentials: true })
-    return response.data.data || response.data
+    const response = await axios.get<PermissionEnvelope>(`${APIDictionary.Permission}/${id}`, {
+      withCredentials: true,
+    })
+    return normalizePermission(unwrapItem(response.data))
   },
 
   async createPermission(data: CreatePermissionRequest): Promise<Permission> {
-    const response = await axios.post(APIDictionary.Permission, data, { withCredentials: true })
-    return response.data.data || response.data
+    const response = await axios.post<PermissionEnvelope>(APIDictionary.Permission, data, {
+      withCredentials: true,
+    })
+    return normalizePermission(unwrapItem(response.data))
   },
 
   async updatePermission(id: string, data: UpdatePermissionRequest): Promise<Permission> {
-    const response = await axios.put(`${APIDictionary.Permission}/${id}`, data, { withCredentials: true })
-    return response.data.data || response.data
+    const response = await axios.put<PermissionEnvelope>(
+      `${APIDictionary.Permission}/${id}`,
+      data,
+      { withCredentials: true }
+    )
+    return normalizePermission(unwrapItem(response.data))
   },
 
   async deletePermission(id: string): Promise<void> {
@@ -97,28 +101,48 @@ const permissionsApi = {
   },
 
   async getPermissionCategories(): Promise<PermissionCategory[]> {
-    const response = await axios.get(`${APIDictionary.Permission}/categories`, { withCredentials: true })
-    return response.data.data || response.data
+    const response = await axios.get<PermissionCategory[] | { data?: PermissionCategory[] }>(
+      `${APIDictionary.Permission}/categories`,
+      { withCredentials: true }
+    )
+    return unwrapList(response.data)
   },
 
   async getPermissionPresets(): Promise<PermissionPreset[]> {
-    const response = await axios.get(APIDictionary.permissionPreset, { withCredentials: true })
-    return response.data.data || response.data
+    const response = await axios.get<PermissionPreset[] | { data?: PermissionPreset[] }>(
+      APIDictionary.permissionPreset,
+      { withCredentials: true }
+    )
+    return unwrapList(response.data)
   },
 
   async getPermissionPresetById(id: string): Promise<PermissionPreset> {
-    const response = await axios.get(`${APIDictionary.permissionPreset}/${id}`, { withCredentials: true })
-    return response.data.data || response.data
+    const response = await axios.get<PermissionPreset | { data?: PermissionPreset }>(
+      `${APIDictionary.permissionPreset}/${id}`,
+      { withCredentials: true }
+    )
+    return unwrapItem(response.data)
   },
 
   async createPermissionPreset(data: CreatePermissionPresetRequest): Promise<PermissionPreset> {
-    const response = await axios.post(APIDictionary.permissionPreset, data, { withCredentials: true })
-    return response.data.data || response.data
+    const response = await axios.post<PermissionPreset | { data?: PermissionPreset }>(
+      APIDictionary.permissionPreset,
+      data,
+      { withCredentials: true }
+    )
+    return unwrapItem(response.data)
   },
 
-  async updatePermissionPreset(id: string, data: Partial<CreatePermissionPresetRequest>): Promise<PermissionPreset> {
-    const response = await axios.put(`${APIDictionary.permissionPreset}/${id}`, data, { withCredentials: true })
-    return response.data.data || response.data
+  async updatePermissionPreset(
+    id: string,
+    data: Partial<CreatePermissionPresetRequest>
+  ): Promise<PermissionPreset> {
+    const response = await axios.put<PermissionPreset | { data?: PermissionPreset }>(
+      `${APIDictionary.permissionPreset}/${id}`,
+      data,
+      { withCredentials: true }
+    )
+    return unwrapItem(response.data)
   },
 
   async deletePermissionPreset(id: string): Promise<void> {
@@ -126,9 +150,12 @@ const permissionsApi = {
   },
 
   async getUserPermissions(userId: string): Promise<Permission[]> {
-    const response = await axios.get(`${APIDictionary.user}/${userId}/permissions`, { withCredentials: true })
-    return response.data.data || response.data
-  }
+    const response = await axios.get<PermissionListEnvelope>(
+      `${APIDictionary.user}/${userId}/permissions`,
+      { withCredentials: true }
+    )
+    return unwrapList(response.data).map(normalizePermission)
+  },
 }
 
 // Query Hooks

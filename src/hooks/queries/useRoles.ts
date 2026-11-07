@@ -1,30 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { APIDictionary } from '@/services/api/v2/APIdict'
+import type { RawRole, Role } from './rolePayload'
+import { normalizeRole, unwrapItem, unwrapList } from './rolePayload'
 
-// Types
-export interface Role {
-  id: string
-  name: string
-  description?: string
-  organizationId: string
-  permissions: Permission[]
-  isDefault: boolean
-  createdAt: string
-  updatedAt: string
-  _count?: {
-    users: number
-  }
-}
-
-export interface Permission {
-  id: string
-  name: string
-  description?: string
-  category: string
-  action: string
-  resource: string
-}
+export type { Permission, Role } from './rolePayload'
 
 export interface RoleHierarchy {
   id: string
@@ -56,7 +36,7 @@ export interface AssignPermissionsRequest {
 export const roleKeys = {
   all: ['roles'] as const,
   lists: () => [...roleKeys.all, 'list'] as const,
-  list: (filters: Record<string, any>) => [...roleKeys.lists(), { filters }] as const,
+  list: (filters: Record<string, unknown>) => [...roleKeys.lists(), { filters }] as const,
   details: () => [...roleKeys.all, 'detail'] as const,
   detail: (id: string) => [...roleKeys.details(), id] as const,
   permissions: (roleId: string) => [...roleKeys.all, 'permissions', roleId] as const,
@@ -64,29 +44,44 @@ export const roleKeys = {
   userRoles: (userId: string) => [...roleKeys.all, 'user', userId] as const,
 }
 
+type RoleEnvelope = RawRole | { data?: RawRole }
+type RoleListEnvelope = RawRole[] | { data?: RawRole[] }
+type RoleMutationEnvelope = { success?: boolean; role?: RawRole } | RawRole
+
+const unwrapRoleMutation = (payload: RoleMutationEnvelope): RawRole =>
+  'role' in payload && payload.role ? payload.role : (payload as RawRole)
+
 // API Functions
 const rolesApi = {
   async getAllRoles(orgId?: string): Promise<Role[]> {
     if (!orgId) {
-      throw new Error('Organization ID is required to fetch roles');
+      throw new Error('Organization ID is required to fetch roles')
     }
-    const response = await axios.get(`${APIDictionary.role}/org/${orgId}`, { withCredentials: true })
-    return response.data.data || response.data
+    const response = await axios.get<RoleListEnvelope>(`${APIDictionary.role}/org/${orgId}`, {
+      withCredentials: true,
+    })
+    return unwrapList(response.data).map(normalizeRole)
   },
 
   async getRoleById(id: string): Promise<Role> {
-    const response = await axios.get(`${APIDictionary.role}/${id}`, { withCredentials: true })
-    return response.data.data || response.data
+    const response = await axios.get<RoleEnvelope>(`${APIDictionary.role}/${id}`, {
+      withCredentials: true,
+    })
+    return normalizeRole(unwrapItem(response.data))
   },
 
   async createRole(data: CreateRoleRequest & { orgId: string }): Promise<Role> {
-    const response = await axios.post(APIDictionary.role, data, { withCredentials: true })
-    return response.data.data || response.data
+    const response = await axios.post<RoleEnvelope>(APIDictionary.role, data, {
+      withCredentials: true,
+    })
+    return normalizeRole(unwrapItem(response.data))
   },
 
   async updateRole(id: string, data: UpdateRoleRequest): Promise<Role> {
-    const response = await axios.put(`${APIDictionary.role}/${id}`, data, { withCredentials: true })
-    return response.data.data || response.data
+    const response = await axios.put<RoleEnvelope>(`${APIDictionary.role}/${id}`, data, {
+      withCredentials: true,
+    })
+    return normalizeRole(unwrapItem(response.data))
   },
 
   async deleteRole(id: string): Promise<void> {
@@ -94,36 +89,51 @@ const rolesApi = {
   },
 
   async assignPermissions(roleId: string, data: AssignPermissionsRequest): Promise<void> {
-    await axios.post(`${APIDictionary.role_permission}`, {
-      roleId,
-      ...data
-    }, { withCredentials: true })
+    await axios.post(
+      `${APIDictionary.role_permission}`,
+      {
+        roleId,
+        ...data,
+      },
+      { withCredentials: true }
+    )
   },
 
   async removePermissions(roleId: string, permissionIds: string[]): Promise<void> {
     await axios.delete(`${APIDictionary.role_permission}`, {
       data: { roleId, permissionIds },
-      withCredentials: true
+      withCredentials: true,
     })
   },
 
   async addPermissionsToRole(roleId: string, permissionIds: string[]): Promise<Role> {
-    const response = await axios.post(APIDictionary.roleAddPermissions(roleId), {
-      permissions: permissionIds
-    }, { withCredentials: true })
-    return response.data.role || response.data
+    const response = await axios.post<RoleMutationEnvelope>(
+      APIDictionary.roleAddPermissions(roleId),
+      {
+        permissions: permissionIds,
+      },
+      { withCredentials: true }
+    )
+    return normalizeRole(unwrapRoleMutation(response.data))
   },
 
   async removePermissionsFromRole(roleId: string, permissionIds: string[]): Promise<Role> {
-    const response = await axios.post(APIDictionary.roleRemovePermissions(roleId), {
-      permissions: permissionIds
-    }, { withCredentials: true })
-    return response.data.role || response.data
+    const response = await axios.post<RoleMutationEnvelope>(
+      APIDictionary.roleRemovePermissions(roleId),
+      {
+        permissions: permissionIds,
+      },
+      { withCredentials: true }
+    )
+    return normalizeRole(unwrapRoleMutation(response.data))
   },
 
   async getRoleHierarchy(): Promise<RoleHierarchy[]> {
-    const response = await axios.get(`${APIDictionary.role}/hierarchy`, { withCredentials: true })
-    return response.data.data || response.data
+    const response = await axios.get<RoleHierarchy[] | { data?: RoleHierarchy[] }>(
+      `${APIDictionary.role}/hierarchy`,
+      { withCredentials: true }
+    )
+    return unwrapList(response.data)
   },
 
   async updateRoleHierarchy(hierarchy: Partial<RoleHierarchy>[]): Promise<void> {
@@ -131,8 +141,11 @@ const rolesApi = {
   },
 
   async getUserRoles(userId: string): Promise<Role[]> {
-    const response = await axios.get(`${APIDictionary.user_role}/user/${userId}`, { withCredentials: true })
-    return response.data.data || response.data
+    const response = await axios.get<RoleListEnvelope>(
+      `${APIDictionary.user_role}/user/${userId}`,
+      { withCredentials: true }
+    )
+    return unwrapList(response.data).map(normalizeRole)
   },
 
   async assignUserRole(userId: string, roleId: string): Promise<void> {
@@ -142,9 +155,9 @@ const rolesApi = {
   async removeUserRole(userId: string, roleId: string): Promise<void> {
     await axios.delete(APIDictionary.user_role, {
       data: { userId, roleId },
-      withCredentials: true
+      withCredentials: true,
     })
-  }
+  },
 }
 
 // Query Hooks

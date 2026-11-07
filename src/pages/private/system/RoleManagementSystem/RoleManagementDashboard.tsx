@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Trash2, Edit, PlusCircle, Loader2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import axios from 'axios';
 import { useAuth } from '@/providers/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -62,6 +63,27 @@ interface LoadingButtonProps extends ButtonProps {
 // Constants for pagination
 const USERS_PER_PAGE = 50;
 const PERMISSIONS_PER_PAGE = 20;
+
+interface ApiErrorBody {
+  message?: string;
+  error?: string;
+  invalidIds?: string[];
+}
+
+const parseApiError = (
+  error: unknown,
+  fallback: string
+): { message: string; invalidIds?: string[] } => {
+  if (axios.isAxiosError<ApiErrorBody>(error)) {
+    const data = error.response?.data;
+    return {
+      message: data?.message ?? data?.error ?? fallback,
+      invalidIds: data?.invalidIds,
+    };
+  }
+
+  return { message: fallback };
+};
 
 const RolesPermissionsManagement = () => {
   // State for UI
@@ -208,17 +230,15 @@ const RolesPermissionsManagement = () => {
       setNewRolePermissions([]);
       setCreatePermissionCurrentPage(1);
       setCreatePermissionSearch('');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      // Enhanced error handling for new backend validation
-      const errorMessage = error?.response?.data?.message || 'Failed to create role';
-      const invalidIds = error?.response?.data?.invalidIds;
-      
+      const { message, invalidIds } = parseApiError(error, 'Failed to create role');
+
       toast({
         title: 'Error',
-        description: invalidIds 
-          ? `${errorMessage}. Invalid permission IDs: ${invalidIds.join(', ')}`
-          : errorMessage,
+        description: invalidIds
+          ? `${message}. Invalid permission IDs: ${invalidIds.join(', ')}`
+          : message,
         variant: 'destructive'
       });
     }
@@ -272,17 +292,15 @@ const RolesPermissionsManagement = () => {
       setPermissionCurrentPage(1);
       setPermissionSearch('');
       setPermissionUpdateMode('replace');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      // Enhanced error handling for new backend validation
-      const errorMessage = error?.response?.data?.message || 'Failed to update role';
-      const invalidIds = error?.response?.data?.invalidIds;
-      
+      const { message, invalidIds } = parseApiError(error, 'Failed to update role');
+
       toast({
         title: 'Error',
-        description: invalidIds 
-          ? `${errorMessage}. Invalid permission IDs: ${invalidIds.join(', ')}`
-          : errorMessage,
+        description: invalidIds
+          ? `${message}. Invalid permission IDs: ${invalidIds.join(', ')}`
+          : message,
         variant: 'destructive'
       });
     }
@@ -510,7 +528,7 @@ const RolesPermissionsManagement = () => {
         </div>
         <div className="overflow-y-auto max-h-[500px]">
           <PermissionPresetManager 
-            permissions={permissions as any} 
+            permissions={permissions} 
             onSelectPreset={handleSelectPreset} 
           />
         </div>
@@ -624,7 +642,7 @@ const RolesPermissionsManagement = () => {
         </div>
         <div className="overflow-y-auto max-h-[500px]">
           <PermissionPresetManager 
-            permissions={permissions as any} 
+            permissions={permissions} 
             onSelectPreset={handleSelectPreset} 
           />
         </div>

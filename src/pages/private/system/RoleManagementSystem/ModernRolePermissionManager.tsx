@@ -1,4 +1,5 @@
 import { useAuth } from '@/providers/AuthContext';
+import axios from 'axios';
 import { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -99,6 +100,27 @@ interface LoadingStates {
   deleting: boolean;
 }
 
+interface ApiErrorBody {
+  message?: string;
+  error?: string;
+  invalidIds?: string[];
+}
+
+const parseApiError = (
+  error: unknown,
+  fallback: string
+): { message: string; invalidIds?: string[] } => {
+  if (axios.isAxiosError<ApiErrorBody>(error)) {
+    const data = error.response?.data;
+    return {
+      message: data?.message ?? data?.error ?? fallback,
+      invalidIds: data?.invalidIds,
+    };
+  }
+
+  return { message: fallback };
+};
+
 const ModernRolePermissionManager = () => {
   // User context
   const { user } = useAuth();
@@ -177,8 +199,8 @@ const ModernRolePermissionManager = () => {
 
   // Get user count for a role
   const getUserCountForRole = (roleId: string) => {
-    return users.filter((user: any) => 
-      user.roles?.some((userRole: any) => userRole.roleId === roleId)
+    return users.filter((user: Employee) =>
+      user.roles?.some((userRole) => userRole.roleId === roleId)
     ).length;
   };
 
@@ -229,16 +251,14 @@ const ModernRolePermissionManager = () => {
       setNewRoleDescription('');
       setSelectedPermissions([]);
       setIsCreateRoleOpen(false);
-    } catch (error: any) {
-      // Enhanced error handling for new backend validation
-      const errorMessage = error?.response?.data?.message || 'Failed to create role';
-      const invalidIds = error?.response?.data?.invalidIds;
-      
+    } catch (error: unknown) {
+      const { message, invalidIds } = parseApiError(error, 'Failed to create role');
+
       toast({
         title: 'Error',
-        description: invalidIds 
-          ? `${errorMessage}. Invalid permission IDs: ${invalidIds.join(', ')}`
-          : errorMessage,
+        description: invalidIds
+          ? `${message}. Invalid permission IDs: ${invalidIds.join(', ')}`
+          : message,
         variant: 'destructive'
       });
     }
@@ -293,16 +313,14 @@ const ModernRolePermissionManager = () => {
       setSelectedRole(null);
       setEditedPermissions([]);
       setPermissionUpdateMode('replace');
-    } catch (error: any) {
-      // Enhanced error handling for new backend validation
-      const errorMessage = error?.response?.data?.message || 'Failed to update role';
-      const invalidIds = error?.response?.data?.invalidIds;
-      
+    } catch (error: unknown) {
+      const { message, invalidIds } = parseApiError(error, 'Failed to update role');
+
       toast({
         title: 'Error',
-        description: invalidIds 
-          ? `${errorMessage}. Invalid permission IDs: ${invalidIds.join(', ')}`
-          : errorMessage,
+        description: invalidIds
+          ? `${message}. Invalid permission IDs: ${invalidIds.join(', ')}`
+          : message,
         variant: 'destructive'
       });
     }
@@ -322,7 +340,7 @@ const ModernRolePermissionManager = () => {
 
       setIsDeleteRoleOpen(false);
       setSelectedRole(null);
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to delete role',
@@ -410,7 +428,7 @@ const ModernRolePermissionManager = () => {
         </Card>
 
         {/* Main Content */}
-        <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'roles' | 'permissions' | 'assignments')} className="space-y-6">
           <TabsList className="grid w-full grid-cols-3 bg-white border border-slate-200 p-1 rounded-xl shadow-lg">
             <TabsTrigger value="roles" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg">
               <Shield className="mr-2 h-4 w-4" />
@@ -635,9 +653,16 @@ const ModernRolePermissionManager = () => {
                             </TableCell>
                             <TableCell>
                               <div className="flex flex-wrap gap-1">
-                                {user.roles?.map((userRole: any) => (
-                                  <Badge key={userRole.role.id} variant="secondary" className="text-xs">
-                                    {roles.find(r => r.id === userRole.role.id)?.name || 'Unknown Role'}
+                                {user.roles?.map((userRole, index) => (
+                                  <Badge
+                                    key={userRole.role?.id ?? userRole.roleId ?? index}
+                                    variant="secondary"
+                                    className="text-xs"
+                                  >
+                                    {userRole.role
+                                      ? roles.find(r => r.id === userRole.role?.id)?.name ||
+                                        userRole.role.name
+                                      : 'Unknown Role'}
                                   </Badge>
                                 )) || (
                                   <Badge variant="outline" className="text-xs">No roles assigned</Badge>

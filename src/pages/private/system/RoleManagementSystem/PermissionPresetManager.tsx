@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/providers/AuthContext';
 import { APIDictionary } from '@/services/api/v2/APIdict';
-import { Permission } from '@/types/general';
 
 import {
   Dialog,
@@ -27,8 +26,13 @@ interface PermissionPreset {
   permissions: string[];
 }
 
+interface PermissionOption {
+  id: string;
+  name: string;
+}
+
 interface PermissionPresetManagerProps {
-  permissions: Permission[];
+  permissions: PermissionOption[];
   onSelectPreset: (permissionIds: string[]) => void;
 }
 
@@ -52,11 +56,7 @@ const PermissionPresetManager: React.FC<PermissionPresetManagerProps> = ({
     delete: false,
   });
 
-  useEffect(() => {
-    fetchPresets();
-  }, []);
-
-  const fetchPresets = async () => {
+  const fetchPresets = useCallback(async () => {
     setIsLoading((prev) => ({ ...prev, fetch: true }));
     try {
       const response = await axios.get(`${APIDictionary.permissionPreset}/org/${user?.orgId}`);
@@ -71,7 +71,11 @@ const PermissionPresetManager: React.FC<PermissionPresetManagerProps> = ({
     } finally {
       setIsLoading((prev) => ({ ...prev, fetch: false }));
     }
-  };
+  }, [toast, user?.orgId]);
+
+  useEffect(() => {
+    fetchPresets();
+  }, [fetchPresets]);
 
   const handleCreatePreset = async () => {
     setIsLoading((prev) => ({ ...prev, create: true }));
