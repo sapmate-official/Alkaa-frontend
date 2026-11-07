@@ -363,11 +363,13 @@ const OnboardingManagement = () => {
 
   const fetchRoles = async () => {
     try {
-      const response = await axios.get(`${APIDictionary.role}/org/${user?.orgId}`, {
+      const orgId = user?.orgId || (user as any)?.organizationId;
+      const url = orgId ? `${APIDictionary.role}/org/${orgId}` : `${APIDictionary.role}`;
+      const response = await axios.get(url, {
         withCredentials: true
       });
       // We'll use the response data directly in the dialog
-      return response.data || [];
+      return response.data?.data || response.data || [];
     } catch (error) {
       console.error('Failed to fetch roles:', error);
       return [];

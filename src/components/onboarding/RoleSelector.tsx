@@ -70,14 +70,17 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ value, onChange, onRoleCrea
   useEffect(() => {
     fetchRoles();
     fetchPermissions();
-  }, []);
+  }, [user?.orgId, (user as any)?.organizationId]);
 
   const fetchRoles = async () => {
     try {
-      const response = await axios.get(`${APIDictionary.role}/org/${user?.orgId}`, {
+      const orgId = user?.orgId || (user as any)?.organizationId;
+      const url = orgId ? `${APIDictionary.role}/org/${orgId}` : `${APIDictionary.role}`;
+      const response = await axios.get(url, {
         withCredentials: true
       });
-      setRoles(response.data || []);
+      const data = response.data?.data || response.data || [];
+      setRoles(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to fetch roles:', error);
     }
@@ -179,7 +182,7 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ value, onChange, onRoleCrea
     <div className="space-y-2">
       <Label>Role *</Label>
       <div className="flex gap-2">
-        <Select value={value} onValueChange={onChange}>
+        <Select value={value || undefined} onValueChange={onChange}>
           <SelectTrigger className="flex-1">
             <SelectValue placeholder="Select Role" />
           </SelectTrigger>
