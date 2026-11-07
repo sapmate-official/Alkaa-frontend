@@ -380,9 +380,10 @@ const OnboardingManagement = () => {
     const candidate = candidates.find(c => c.id === candidateId);
     if (!candidate) return;
 
-    // Pre-fill with existing data if available
+    // Pre-fill with existing data if available, defaulting to first department if not set
+    const defaultDeptId = candidate.departmentId || (departments.length > 0 ? departments[0].id : '');
     setCompletionData({
-      departmentId: candidate.departmentId || '',
+      departmentId: defaultDeptId,
       roleId: '',
       managerId: candidate.managerId || '',
       monthlySalary: candidate.monthlySalary || (candidate.annualPackage ? candidate.annualPackage / 12 : 0),
@@ -395,6 +396,15 @@ const OnboardingManagement = () => {
   };
 
   const submitCompletion = async () => {
+    if (!completionData.departmentId) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please select a department for the employee',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (!completionData.roleId) {
       toast({
         title: 'Validation Error',
@@ -1161,20 +1171,25 @@ const OnboardingManagement = () => {
 
               {/* Department Selection */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Department *</label>
-                <select
-                  value={completionData.departmentId}
-                  onChange={(e) => setCompletionData(prev => ({ ...prev, departmentId: e.target.value }))}
-                  className="w-full p-2 border rounded-md bg-background"
-                  required
+                <label className="text-sm font-medium text-foreground">Department *</label>
+                <Select
+                  value={completionData.departmentId || undefined}
+                  onValueChange={(val) => setCompletionData(prev => ({ ...prev, departmentId: val }))}
                 >
-                  <option value="">Select Department</option>
-                  {departments.map((dept) => (
-                    <option key={dept.id} value={dept.id}>
-                      {dept.name} ({dept.code})
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full h-10 px-3 bg-card border-border/70 text-foreground text-left focus:ring-primary">
+                    <SelectValue placeholder="Select Department" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {departments.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.id} textValue={`${dept.name} (${dept.code})`}>
+                        <div className="flex flex-col text-left py-0.5">
+                          <span className="font-medium text-foreground">{dept.name}</span>
+                          <span className="text-xs text-muted-foreground">Code: {dept.code}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Role Selection */}
@@ -1186,31 +1201,33 @@ const OnboardingManagement = () => {
 
               {/* Monthly Salary */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Monthly Salary (Optional)</label>
-                <input
+                <label className="text-sm font-medium text-foreground">Monthly Salary (Optional)</label>
+                <Input
                   type="number"
-                  value={completionData.monthlySalary}
+                  value={completionData.monthlySalary || ''}
                   onChange={(e) => setCompletionData(prev => ({ ...prev, monthlySalary: parseFloat(e.target.value) || 0 }))}
                   placeholder="Enter monthly salary"
-                  className="w-full p-2 border rounded-md bg-background"
+                  className="h-10 bg-card border-border/70 text-foreground focus:ring-primary"
                 />
                 <p className="text-xs text-muted-foreground">
                   Will be auto-calculated from annual package if not provided
                 </p>
               </div>
 
-              <div className="flex justify-end gap-2 pt-4">
+              <div className="flex justify-end gap-3 pt-4 border-t border-border/40">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setIsCompleteDialogOpen(false)}
                   disabled={loading}
+                  className="h-10 px-4"
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={submitCompletion}
-                  disabled={loading || !completionData.departmentId || !completionData.roleId}
+                  disabled={loading}
+                  className="h-10 px-6 font-medium shadow-md transition-all hover:shadow-primary/20"
                 >
                   {loading ? 'Processing...' : 'Complete Onboarding'}
                 </Button>

@@ -180,19 +180,19 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ value, onChange, onRoleCrea
 
   return (
     <div className="space-y-2">
-      <Label>Role *</Label>
-      <div className="flex gap-2">
+      <Label className="text-sm font-medium text-foreground">Role *</Label>
+      <div className="flex items-center gap-2">
         <Select value={value || undefined} onValueChange={onChange}>
-          <SelectTrigger className="flex-1">
+          <SelectTrigger className="flex-1 h-10 px-3 bg-card border-border/70 text-foreground text-left focus:ring-primary">
             <SelectValue placeholder="Select Role" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="max-h-72">
             {roles.map((role) => (
-              <SelectItem key={role.id} value={role.id}>
-                <div>
-                  <div className="font-medium">{role.name}</div>
+              <SelectItem key={role.id} value={role.id} textValue={role.name}>
+                <div className="flex flex-col text-left py-0.5">
+                  <span className="font-medium text-foreground">{role.name}</span>
                   {role.description && (
-                    <div className="text-xs text-muted-foreground">{role.description}</div>
+                    <span className="text-xs text-muted-foreground line-clamp-1">{role.description}</span>
                   )}
                 </div>
               </SelectItem>
@@ -202,7 +202,13 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ value, onChange, onRoleCrea
         
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline" size="icon" type="button">
+            <Button
+              variant="outline"
+              size="icon"
+              type="button"
+              className="h-10 w-10 shrink-0 bg-card border-border/70 hover:bg-accent text-foreground"
+              title="Create New Role"
+            >
               <Plus className="h-4 w-4" />
             </Button>
           </DialogTrigger>
