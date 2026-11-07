@@ -177,8 +177,8 @@ const OnboardingManagement = () => {
       console.log('Fetched departments:', departmentData);
       
       // Filter out any departments with invalid IDs
-      const validDepartments = departmentData.filter((dept: any): dept is Department => 
-        dept && dept.id && dept.id.toString().trim() !== ''
+      const validDepartments = departmentData.filter((dept: unknown): dept is Department => 
+        Boolean(dept && typeof dept === 'object' && 'id' in dept && String((dept as Department).id).trim() !== '')
       );
       
       setDepartments(validDepartments);
@@ -363,7 +363,7 @@ const OnboardingManagement = () => {
 
   const fetchRoles = async () => {
     try {
-      const orgId = user?.orgId || (user as any)?.organizationId;
+      const orgId = user?.orgId;
       const url = orgId ? `${APIDictionary.role}/org/${orgId}` : `${APIDictionary.role}`;
       const response = await axios.get(url, {
         withCredentials: true

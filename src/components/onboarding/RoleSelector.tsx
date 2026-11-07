@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -67,14 +67,9 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ value, onChange, onRoleCrea
     }
   ];
 
-  useEffect(() => {
-    fetchRoles();
-    fetchPermissions();
-  }, [user?.orgId, (user as any)?.organizationId]);
-
-  const fetchRoles = async () => {
+  const fetchRoles = useCallback(async () => {
     try {
-      const orgId = user?.orgId || (user as any)?.organizationId;
+      const orgId = user?.orgId;
       const url = orgId ? `${APIDictionary.role}/org/${orgId}` : `${APIDictionary.role}`;
       const response = await axios.get(url, {
         withCredentials: true
@@ -84,9 +79,9 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ value, onChange, onRoleCrea
     } catch (error) {
       console.error('Failed to fetch roles:', error);
     }
-  };
+  }, [user?.orgId]);
 
-  const fetchPermissions = async () => {
+  const fetchPermissions = useCallback(async () => {
     try {
       const response = await axios.get(`${APIDictionary.Permission}`, { 
         withCredentials: true 
@@ -109,7 +104,12 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ value, onChange, onRoleCrea
     } catch (error) {
       console.error('Failed to fetch permissions:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchRoles();
+    fetchPermissions();
+  }, [fetchRoles, fetchPermissions]);
 
   const handleCreateRole = async () => {
     if (!newRoleName || selectedPermissions.length === 0) {
@@ -150,11 +150,14 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ value, onChange, onRoleCrea
       }
       onRoleCreated?.();
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating role:', error);
+      const message = axios.isAxiosError(error)
+        ? ((error.response?.data as { message?: string })?.message ?? error.message)
+        : 'Failed to create role';
       toast({
         title: 'Error',
-        description: error?.response?.data?.message || 'Failed to create role',
+        description: message,
         variant: 'destructive'
       });
     } finally {
