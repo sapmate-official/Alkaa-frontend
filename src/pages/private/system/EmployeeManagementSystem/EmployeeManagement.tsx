@@ -38,7 +38,7 @@ const EmployeeManagement: React.FC = () => {
     
     const { 
         data: departments = []
-    } = useDepartmentsQuery()
+    } = useDepartmentsQuery(user?.orgId)
     
     const { 
         data: roles = []
