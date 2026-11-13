@@ -10,5 +10,5 @@ const legacyBackend =
 export const backendDomain = trimTrailingSlash(primaryBackend)
 
 // Legacy backend retained for modules that have not been ported yet
-// (attendance, leave, payroll, billing, departments, tasks, ...).
+// (attendance, payroll, billing, departments, tasks, ...).
 export const legacyBackendDomain = trimTrailingSlash(legacyBackend)

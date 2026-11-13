@@ -180,7 +180,7 @@ const AttendanceVerificationComponent: React.FC = () => {
     fetchAttendanceRecords();
   }, [user?.id, hasVerifyAllPermission, hasVerifySubordinatesPermission]);
 
-  const postVerificationCall = async (attendanceId: string, verificationStatus: AttendanceVerificationStatus) => {
+  const postVerificationCall = async (attendanceId: string, verificationStatus: AttendanceVerificationStatus, remarks?: string) => {
     try {
       let endpoint = `${APIDictionary.attendance}/manager/verification`;
       
@@ -193,6 +193,7 @@ const AttendanceVerificationComponent: React.FC = () => {
         userId: user?.id,
         attendanceId,
         verificationStatus,
+        remarks,
       }, {
         withCredentials: true,
       });
@@ -216,7 +217,7 @@ const AttendanceVerificationComponent: React.FC = () => {
   };
 
   const verifyAttendance = (id: string, status: AttendanceVerificationStatus, notes: string) => {
-    postVerificationCall(id, status);
+    postVerificationCall(id, status, notes);
     setRecords(
       records.map((record) =>
         record.id === id
@@ -231,7 +232,7 @@ const AttendanceVerificationComponent: React.FC = () => {
   const bulkVerifyAttendance = (status: AttendanceVerificationStatus) => {
     records
       .filter((record) => selectedRecordIds.includes(record.id))
-      .forEach((record) => postVerificationCall(record.id, status));
+      .forEach((record) => postVerificationCall(record.id, status, bulkActionNote));
     setRecords(
       records.map((record) =>
         selectedRecordIds.includes(record.id)

@@ -41,10 +41,7 @@ export const useCheckInMutation = () => {
   return useMutation({
     mutationFn: attendanceApi.checkIn,
     onSuccess: () => {
-      // Invalidate today's sessions to refetch
-      const today = format(new Date(), 'yyyy-MM-dd')
-      queryClient.invalidateQueries({ queryKey: attendanceKeys.sessions(today) })
-      queryClient.invalidateQueries({ queryKey: attendanceKeys.history() })
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.all })
     },
   })
 }
@@ -56,11 +53,7 @@ export const useCheckOutMutation = () => {
   return useMutation({
     mutationFn: attendanceApi.checkOut,
     onSuccess: () => {
-      // Invalidate today's sessions and past days
-      const today = format(new Date(), 'yyyy-MM-dd')
-      queryClient.invalidateQueries({ queryKey: attendanceKeys.sessions(today) })
-      queryClient.invalidateQueries({ queryKey: attendanceKeys.pastDays() })
-      queryClient.invalidateQueries({ queryKey: attendanceKeys.history() })
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.all })
     },
   })
 }

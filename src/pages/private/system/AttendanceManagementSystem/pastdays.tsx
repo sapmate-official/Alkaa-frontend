@@ -49,6 +49,9 @@ interface ReportData {
     [key: string]: string;
 }
 
+const toLocalDate = (dateKey: string, time: string) => new Date(`${dateKey}T${time}:00`);
+const toDisplayDate = (dateKey: string) => new Date(`${dateKey}T12:00:00`);
+
 const PastNotCheckedDays = () => {
     const [data, setData] = useState<AttendanceSession[]>([]);
     const [loading, setLoading] = useState(true);
@@ -108,13 +111,9 @@ const PastNotCheckedDays = () => {
 
         try {
             const checkInDate = new Date(selectedSession.checkInTime);
-            const [hours, minutes] = values.checkOutTime.split(':');
+            const dateKey = selectedSession.date.slice(0, 10);
+            const checkOutDate = toLocalDate(dateKey, values.checkOutTime);
 
-            // Use client-side time for checkout
-            const checkOutDate = new Date(checkInDate);
-            checkOutDate.setHours(parseInt(hours), parseInt(minutes), 0);
-
-            // Simple validation for checkout time
             if (checkOutDate <= checkInDate) {
                 toast({
                     title: "Error",
@@ -146,7 +145,7 @@ const PastNotCheckedDays = () => {
             console.error('Failed to end session:', error);
             toast({
                 title: "Error",
-                description: "Failed to end session",
+                description: axios.isAxiosError(error) ? error.response?.data?.message || "Failed to end session" : "Failed to end session",
                 variant: "destructive",
             });
         } finally {
@@ -167,21 +166,10 @@ const PastNotCheckedDays = () => {
         try {
             setLoading(true);
             
-            // Prepare the date objects using client-side time
-            const selectedDate = new Date(values.date);
-            const currentClientTime = new Date(); // For reference
-            
-            // Create check-in datetime using client-side date
-            const [checkInHours, checkInMinutes] = values.checkInTime.split(':');
-            const checkInDateTime = new Date(selectedDate);
-            checkInDateTime.setHours(parseInt(checkInHours), parseInt(checkInMinutes), 0);
-            
-            // Create check-out datetime using client-side date
-            const [checkOutHours, checkOutMinutes] = values.checkOutTime.split(':');
-            const checkOutDateTime = new Date(selectedDate);
-            checkOutDateTime.setHours(parseInt(checkOutHours), parseInt(checkOutMinutes), 0);
-            
-            // Simple validation for checkout time
+            const currentClientTime = new Date();
+            const checkInDateTime = toLocalDate(values.date, values.checkInTime);
+            const checkOutDateTime = toLocalDate(values.date, values.checkOutTime);
+
             if (checkOutDateTime <= checkInDateTime) {
                 toast({
                     title: "Error",
@@ -191,20 +179,21 @@ const PastNotCheckedDays = () => {
                 setLoading(false);
                 return;
             }
-            
-            // Format the location data
-            const locationString = `${location.latitude},${location.longitude}`;
-            
-            // Create payload with client timestamps
+
+            const locationPayload = {
+                latitude: location.latitude,
+                longitude: location.longitude
+            };
+
             const payload = {
-                date: format(selectedDate, 'yyyy-MM-dd'),
+                date: values.date,
                 checkInTime: checkInDateTime.toISOString(),
-                checkInLocation: locationString,
+                checkInLocation: locationPayload,
                 checkOutTime: checkOutDateTime.toISOString(),
-                checkOutLocation: locationString,
+                checkOutLocation: locationPayload,
                 notes: values.notes,
                 reportContent: JSON.stringify(reportData),
-                clientTimestamp: currentClientTime.toISOString(), // When the request was made
+                clientTimestamp: currentClientTime.toISOString(),
                 clientTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone
             };
             
@@ -322,7 +311,7 @@ const PastNotCheckedDays = () => {
                                 <Card key={session.id} className="p-4">
                                     <div className="flex justify-between items-center">
                                         <div>
-                                            <p className="font-semibold">Date: {format(new Date(session.date), 'PPP')}</p>
+                                            <p className="font-semibold">Date: {format(toDisplayDate(session.date.slice(0, 10)), 'PPP')}</p>
                                             <p>Check In: {format(new Date(session.checkInTime), 'pp')}</p>
                                             <p>Session: {session.sessionNumber}</p>
                                         </div>

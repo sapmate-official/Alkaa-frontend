@@ -30,6 +30,9 @@ interface UserOption {
   department?: string;
 }
 
+const toDateKey = (value: string) => new Date(value).toISOString().slice(0, 10);
+const fromDateKey = (dateKey: string) => new Date(`${dateKey}T12:00:00`);
+
 const AttendanceHistory = () => {
   const { user } = useAuth();
   const [permissionList] = useAtom(permissionListAtom);
@@ -95,15 +98,23 @@ const AttendanceHistory = () => {
     setIsLoading(true);
     try {
       const targetUserId = (canViewOthers && selectedUserId) ? selectedUserId : user?.id;
-      const response = await axios.get(`${APIDictionary.attendance}/user/${targetUserId}`, { withCredentials: true });
-      const sessions = response.data;
-      
+      const response = await axios.get(`${APIDictionary.attendance}/user/${targetUserId}`, {
+        params: { limit: 100 },
+        withCredentials: true
+      });
+      const payload = response.data;
+      const sessions: AttendanceSession[] = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : [];
+
       const grouped = sessions.reduce((acc: GroupedSessions, session: AttendanceSession) => {
-        const date = format(new Date(session.date), 'yyyy-MM-dd');
+        const date = toDateKey(session.date);
         if (!acc[date]) {
           acc[date] = [];
         }
-        
+
         acc[date].push(session);
         return acc;
       }, {});
@@ -163,13 +174,16 @@ const AttendanceHistory = () => {
 
   const getStatusColor = (status: string) => {
     switch(status) {
-      case 'COMPLETED': return { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200', accent: '#10b981' };
-      case 'PENDING': return { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', accent: '#f59e0b' };
+      case 'PRESENT': return { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200', accent: '#10b981' };
+      case 'HALF_DAY':
+      case 'LATE': return { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', accent: '#f59e0b' };
+      case 'EARLY_DEPARTURE': return { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200', accent: '#f97316' };
+      case 'ABSENT': return { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200', accent: '#ef4444' };
       default: return { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200', accent: '#6b7280' };
     }
   };
 
-  const attendanceDates = Object.keys(groupedAttendance).map(dateStr => new Date(dateStr));
+  const attendanceDates = Object.keys(groupedAttendance).map(fromDateKey);
   const attendanceModifier = attendanceDates.reduce((acc: Record<string, Date>, date) => {
     const dateKey = format(date, 'yyyy-MM-dd');
     acc[dateKey] = date;
@@ -373,7 +387,7 @@ const AttendanceHistory = () => {
           <div className="lg:w-1/2 overflow-x-auto">
             <Accordion type="single" collapsible className="space-y-3 sm:space-y-4 min-w-full">
               {Object.entries(groupedAttendance)
-                .sort(([dateA], [dateB]) => new Date(dateB).getTime() - new Date(dateA).getTime())
+                .sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
                 .map(([date, sessions], index) => (
                   <motion.div
                     key={date}
@@ -387,10 +401,10 @@ const AttendanceHistory = () => {
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-2 sm:gap-4">
                             <h3 className="text-base sm:text-lg font-medium truncate flex items-center gap-2">
                               <span className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-                                {new Date(date).getDate()}
+                                {fromDateKey(date).getDate()}
                               </span>
                               <span>
-                                {format(new Date(date), 'EEEE, dd MMMM yyyy')}
+                                {format(fromDateKey(date), 'EEEE, dd MMMM yyyy')}
                               </span>
                             </h3>
                             <div className="flex flex-wrap items-center gap-2 sm:gap-3">

@@ -67,7 +67,7 @@ const AttendancePanel = () => {
   const { orgTimezone } = useDateTimeFormat();
 
   // TanStack Query hooks
-  const today = format(new Date(), 'yyyy-MM-dd');
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: orgTimezone });
   const { data: todaySessions = [] } = useTodaySessionsQuery(today);
   const { data: pastNotCheckedDays = [] } = usePastNotCheckedDaysQuery();
   const checkInMutation = useCheckInMutation();
@@ -129,12 +129,11 @@ const AttendancePanel = () => {
     }
 
     const currentDate = new Date();
-    const formattedDate = format(currentDate, 'yyyy-MM-dd');
 
     const checkInData = {
-      date: formattedDate,
+      date: today,
       checkInTime: getCurrentTimestamp(),
-      checkInLocation: location ? `${location?.latitude},${location?.longitude}` : '',
+      checkInLocation: location ? { latitude: location.latitude, longitude: location.longitude } : {},
       notes: "",
       ...createTimestampPayload()
     };
@@ -178,9 +177,9 @@ const AttendancePanel = () => {
     const currentDate = new Date();
     const checkOutData = {
       userId: user?.id,
-      date: format(currentDate, 'yyyy-MM-dd'),
+      date: today,
       checkOutTime: getCurrentTimestamp(),
-      checkOutLocation: location ? `${location?.latitude},${location?.longitude}` : '',
+      checkOutLocation: location ? { latitude: location.latitude, longitude: location.longitude } : {},
       notes: JSON.stringify(reportData),
       deviceInfo: JSON.stringify(deviceInfo),
       ipAddress,
