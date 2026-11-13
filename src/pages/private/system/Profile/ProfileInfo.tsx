@@ -292,8 +292,8 @@ const ProfileInfo = () => {
                                         <EnvelopeIcon className="w-4 h-4 text-primary" />
                                     </div>
                                     <div className="space-y-1">
-                                        <p className="text-sm text-muted-foreground font-medium">Email</p>
-                                        <p className="font-medium">{profileInfo?.email}</p>
+                                        <p className="text-sm text-muted-foreground font-medium">Personal Email</p>
+                                        <p className="font-medium">{profileInfo?.personalEmail || profileInfo?.email}</p>
                                     </div>
                                 </div>
                                 {profileInfo?.businessEmail && (
