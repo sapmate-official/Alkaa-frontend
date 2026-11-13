@@ -21,7 +21,7 @@ import { useUserDetailsQuery, useUpdateProfileMutation } from '@/hooks/queries/u
 interface FormDataType {
   firstName: string;
   lastName: string;
-  email: string;
+  personalEmail: string;
   businessEmail?: string;
   jobTitle?: string;
   terminationDate?: string;
@@ -87,7 +87,7 @@ const ProfileEdit = () => {
   const [formData, setFormData] = useState<FormDataType>({
     firstName: '',
     lastName: '',
-    email: '',
+    personalEmail: '',
     businessEmail: '',
     jobTitle: '',
     terminationDate: '',
@@ -146,7 +146,7 @@ const ProfileEdit = () => {
       setFormData({
         firstName: userData?.firstName || '',
         lastName: userData?.lastName || '',
-        email: userData?.email || '',
+        personalEmail: userData?.personalEmail || userData?.email || '',
         businessEmail: userData?.businessEmail || '',
         jobTitle: userData?.jobTitle || '',
         terminationDate: userData?.terminationDate ? String(userData.terminationDate).split('T')[0] : '',
@@ -317,6 +317,19 @@ const ProfileEdit = () => {
                     className="w-full"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="personalEmail">Personal Email *</Label>
+                <Input
+                  id="personalEmail"
+                  name="personalEmail"
+                  type="email"
+                  value={formData.personalEmail}
+                  onChange={handleChange}
+                  disabled={!canEditPersonalInfo && !canEditSubordinatesInfo && !canEditAllUserInfo}
+                  required
+                />
               </div>
 
               <div className="space-y-2">
