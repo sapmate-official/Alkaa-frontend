@@ -44,7 +44,7 @@ export const APIDictionary = {
     attendance: `${backendDomain}/api/v2/attendance`,
     payroll: `${legacyBackendDomain}/api/v2/payroll`,
     events: `${legacyBackendDomain}/api/v2/events`,
-    bank: `${legacyBackendDomain}/api/v2/bank-details`,
+    bank: `${backendDomain}/api/v2/bank-details`,
     payrollParameters: (userId: string) => `${legacyBackendDomain}/api/v2/payroll/parameters/${userId}`,
     notification: `${legacyBackendDomain}/api/v2/notification`,
     department: `${backendDomain}/api/v2/department`,
@@ -62,9 +62,9 @@ export const APIDictionary = {
     permissionPreset: `${legacyBackendDomain}/api/v3/permission-preset`,
 
     // Bank Endpoints
-    bankDetails: (userId: string) => `${legacyBackendDomain}/api/v2/bank-details/${userId}`,
-    bankDetailsByUserId: (userId: string) => `${legacyBackendDomain}/api/v2/bank-details/user/${userId}`,
-    allBankDetails: () => `${legacyBackendDomain}/api/v2/bank-details`,
+    bankDetails: (userId: string) => `${backendDomain}/api/v2/bank-details/${userId}`,
+    bankDetailsByUserId: (userId: string) => `${backendDomain}/api/v2/bank-details/user/${userId}`,
+    allBankDetails: () => `${backendDomain}/api/v2/bank-details`,
 
     // Activity Logs Endpoints
     activityLogs: `${legacyBackendDomain}/api/v2/activity-logs`,
