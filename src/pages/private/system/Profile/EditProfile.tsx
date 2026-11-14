@@ -19,6 +19,7 @@ import RouteDict from '@/routes/RouteDict';
 import { useUserDetailsQuery, useUpdateProfileMutation } from '@/hooks/queries/useProfile';
 
 interface FormDataType {
+  [key: string]: string | undefined;
   firstName: string;
   lastName: string;
   personalEmail: string;
