@@ -196,12 +196,38 @@ const ProfileEdit = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const userId = id || user?.id;
-      if (!userId) return;
+      const targetUserId = id || user?.id;
+      if (!targetUserId) return;
       
-      updateProfileMutation.mutate({ userId, data: formData });
-    } catch (error) {
-      console.error('Error in handleSubmit:', error);
+      const payload: Record<string, unknown> = {
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        personalEmail: formData.personalEmail?.trim() || undefined,
+        businessEmail: formData.businessEmail?.trim() || undefined,
+        jobTitle: formData.jobTitle?.trim() || undefined,
+        address: formData.address?.trim() || undefined,
+        adharNumber: formData.adharNumber?.trim() || undefined,
+        panNumber: formData.panNumber?.trim() || undefined,
+        mobileNumber: formData.mobileNumber?.trim() || undefined,
+        emergencyContact: formData.emergencyContact?.trim() || undefined,
+        dateOfBirth: formData.dateOfBirth?.trim() || undefined,
+        hiredDate: formData.hiredDate?.trim() || undefined,
+        terminationDate: formData.terminationDate?.trim() || undefined,
+        departmentId: formData.departmentId?.trim() || null,
+        managerId: formData.managerId?.trim() || null,
+        status: formData.status || 'active',
+      };
+
+      if (formData.annualPackage) {
+        payload.annualPackage = parseFloat(formData.annualPackage);
+      }
+      if (formData.monthlySalary) {
+        payload.monthlySalary = parseFloat(formData.monthlySalary);
+      }
+
+      updateProfileMutation.mutate({ userId: targetUserId, data: payload });
+    } catch (err) {
+      console.error('Error in handleSubmit:', err);
     }
   };
 
