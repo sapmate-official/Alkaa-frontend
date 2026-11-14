@@ -248,7 +248,14 @@ const ProfileInfo = () => {
                                         )}
                                         {profileInfo?.updatedAt && (
                                             <span className="text-xs text-muted-foreground">
-                                                • Last modified: {new Date(profileInfo.updatedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                                                • Last modified: {new Date(profileInfo.updatedAt).toLocaleString(undefined, {
+                                                    year: 'numeric',
+                                                    month: 'short',
+                                                    day: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit',
+                                                    hour12: true
+                                                })}
                                             </span>
                                         )}
                                     </div>
