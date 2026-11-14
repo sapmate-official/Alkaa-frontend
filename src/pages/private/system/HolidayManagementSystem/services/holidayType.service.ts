@@ -9,7 +9,7 @@ export const holidayTypeService = {
   async getAllHolidayTypes(orgId: string): Promise<HolidayType[]> {
     try {
       const response = await axios.get(`${API_URL}/api/v2/holiday-type/${orgId}`, { withCredentials: true });
-      return response.data.data;
+      return Array.isArray(response.data?.data) ? response.data.data : (Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Error fetching holiday types:', error);
       throw error;

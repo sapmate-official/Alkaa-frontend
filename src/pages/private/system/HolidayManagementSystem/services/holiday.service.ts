@@ -6,7 +6,7 @@ import { Holiday, HolidayType } from '../types/holiday.types';
 export const getHolidaysByOrg = async (orgId: string): Promise<Holiday[]> => {
   try {
     const response = await axios.get(APIDictionary.holiday_by_org(orgId), { withCredentials: true });
-    return response.data;
+    return Array.isArray(response.data) ? response.data : (Array.isArray(response.data?.data) ? response.data.data : []);
   } catch (error) {
     console.error('Error fetching holidays:', error);
     throw error;
@@ -60,7 +60,7 @@ export const deleteHoliday = async (id: string): Promise<void> => {
 export const getHolidayTypesByOrg = async (orgId: string): Promise<HolidayType[]> => {
   try {
     const response = await axios.get(APIDictionary.holiday_type_by_org(orgId), { withCredentials: true });
-    return response.data.data;
+    return Array.isArray(response.data?.data) ? response.data.data : (Array.isArray(response.data) ? response.data : []);
   } catch (error) {
     console.error('Error fetching holiday types:', error);
     throw error;
