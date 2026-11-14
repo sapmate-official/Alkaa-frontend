@@ -28,8 +28,8 @@ export const APIDictionary = {
     userProfile: (id: string) => `${backendDomain}/api/v2/user/${id}`,
     updateProfile: (id: string) => `${backendDomain}/api/v2/user/${id}`,
     Organization: `${backendDomain}/api/v2/organization`,
-    OrganizationChart: (orgId: string) => `${legacyBackendDomain}/api/v2/organization/${orgId}/chart`,
-    OrganizationManagerChart: (orgId: string, userId?: string) => `${legacyBackendDomain}/api/v2/organization/${orgId}/manager-chart${userId ? `?userId=${userId}` : ''}`,
+    OrganizationChart: (orgId: string) => `${backendDomain}/api/v2/organization/${orgId}/chart`,
+    OrganizationManagerChart: (orgId: string, userId?: string) => `${backendDomain}/api/v2/organization/${orgId}/manager-chart${userId ? `?userId=${userId}` : ''}`,
     Permission: `${backendDomain}/api/v2/permission`,
     role: `${backendDomain}/api/v2/role`,
     user: `${backendDomain}/api/v2/user`,
@@ -91,8 +91,8 @@ export const APIDictionary = {
     taskGroupById: (id: string) => `${legacyBackendDomain}/api/v2/task-group/${id}`,
 
     // Relationship Endpoints
-    relationshipWithUser: (targetUserId: string) => `${legacyBackendDomain}/api/v2/relationship/user/${targetUserId}`,
-    relationshipOrganization: `${legacyBackendDomain}/api/v2/relationship/organization`,
+    relationshipWithUser: (targetUserId: string) => `${backendDomain}/api/v2/relationship/user/${targetUserId}`,
+    relationshipOrganization: `${backendDomain}/api/v2/relationship/organization`,
 
     // Additional Leave Management Endpoints
     leave_request_user: (userId: string) => `${backendDomain}/api/v2/leave-request/user/${userId}`,
