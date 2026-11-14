@@ -107,7 +107,7 @@ export const useUpdateProfileMutation = () => {
   const { toast } = useToast()
 
   return useMutation({
-    mutationFn: async ({ userId, data }: { userId: string; data: any }) => {
+    mutationFn: async ({ userId, data }: { userId: string; data: Record<string, unknown> }) => {
       const response = await axios.put(APIDictionary.userProfile(userId), data, {
         withCredentials: true
       })

@@ -60,7 +60,7 @@ const BankDetails = ({ userId }: BankDetailsProps) => {
         variant: 'destructive',
       });
     }
-  }, [queryError]);
+  }, [queryError, canViewBankDetails, toast]);
 
   const formatAccountNumber = (accountNumber: string) => {
     if (showFullDetails) {

@@ -83,6 +83,17 @@ const ProfileInfo = () => {
             return null;
         }
     };
+
+    const extractRoleName = (r: unknown): string => {
+        if (!r || typeof r !== 'object') return 'Role';
+        const obj = r as Record<string, unknown>;
+        if (typeof obj.name === 'string') return obj.name;
+        if (obj.role && typeof obj.role === 'object') {
+            const nested = obj.role as Record<string, unknown>;
+            if (typeof nested.name === 'string') return nested.name;
+        }
+        return 'Role';
+    };
     
     const hasPermission = (permissionKey: string) => {
         return (permissionList ?? []).some(permission => permission.key === permissionKey);
@@ -279,7 +290,7 @@ const ProfileInfo = () => {
                                         </Badge>
                                         {(profileInfo?.jobTitle || (profileInfo?.roles && profileInfo.roles.length > 0)) && (
                                             <span className="text-sm font-medium text-muted-foreground">
-                                                {profileInfo?.jobTitle || profileInfo.roles?.[0]?.role?.name || (profileInfo.roles?.[0] as any)?.name}
+                                                {profileInfo?.jobTitle || extractRoleName(profileInfo.roles?.[0])}
                                             </span>
                                         )}
                                         {safeFormatDateTime(profileInfo?.updatedAt) && (
@@ -464,7 +475,7 @@ const ProfileInfo = () => {
                                             <div className="flex flex-wrap gap-2">
                                                 {profileInfo?.roles?.map((role, idx) => (
                                                     <Badge key={role?.id || idx} variant="secondary" className="px-3 py-1">
-                                                        {role?.role?.name || (role as any)?.name || 'Role'}
+                                                        {extractRoleName(role)}
                                                     </Badge>
                                                 ))}
                                             </div>

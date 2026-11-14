@@ -63,7 +63,7 @@ const ProfileEdit = () => {
   const updateProfileMutation = useUpdateProfileMutation()
   const submitting = updateProfileMutation.isPending
 
-  const userData = (userResponse as any)?.user ?? userResponse;
+  const userData = (userResponse as { user?: User } | undefined)?.user ?? (userResponse as User | undefined);
 
   const isOwnProfile = !id || id === user?.id;
   const canEditPersonalInfo = permissionList.some(p => p.key === 'update_personal_info') && isOwnProfile;
