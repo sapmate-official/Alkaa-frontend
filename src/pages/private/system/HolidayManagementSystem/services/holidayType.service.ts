@@ -1,13 +1,14 @@
 import axios from 'axios';
 import { HolidayType } from '../types/holiday.types';
-import { legacyBackendDomain } from '@/constants/Domain';
-const API_URL = legacyBackendDomain
+import { backendDomain } from '@/constants/Domain';
+
+const API_URL = backendDomain;
 
 export const holidayTypeService = {
   // Get all holiday types for an organization
   async getAllHolidayTypes(orgId: string): Promise<HolidayType[]> {
     try {
-      const response = await axios.get(`${API_URL}/api/v2/holiday-type/${orgId}`);
+      const response = await axios.get(`${API_URL}/api/v2/holiday-type/${orgId}`, { withCredentials: true });
       return response.data.data;
     } catch (error) {
       console.error('Error fetching holiday types:', error);
@@ -18,7 +19,7 @@ export const holidayTypeService = {
   // Create a new holiday type
   async createHolidayType(holidayType: Omit<HolidayType, 'id'>): Promise<HolidayType> {
     try {
-      const response = await axios.post(`${API_URL}/api/v2/holiday-type/`, holidayType);
+      const response = await axios.post(`${API_URL}/api/v2/holiday-type/`, holidayType, { withCredentials: true });
       return response.data.data;
     } catch (error) {
       console.error('Error creating holiday type:', error);
@@ -29,7 +30,7 @@ export const holidayTypeService = {
   // Update an existing holiday type
   async updateHolidayType(id: string, holidayType: Partial<HolidayType>): Promise<HolidayType> {
     try {
-      const response = await axios.put(`${API_URL}/api/v2/holiday-type/${id}`, holidayType);
+      const response = await axios.put(`${API_URL}/api/v2/holiday-type/${id}`, holidayType, { withCredentials: true });
       return response.data.data;
     } catch (error) {
       console.error('Error updating holiday type:', error);
@@ -40,7 +41,7 @@ export const holidayTypeService = {
   // Delete a holiday type
   async deleteHolidayType(id: string): Promise<void> {
     try {
-      await axios.delete(`${API_URL}/api/v2/holiday-type/${id}`);
+      await axios.delete(`${API_URL}/api/v2/holiday-type/${id}`, { withCredentials: true });
     } catch (error) {
       console.error('Error deleting holiday type:', error);
       throw error;

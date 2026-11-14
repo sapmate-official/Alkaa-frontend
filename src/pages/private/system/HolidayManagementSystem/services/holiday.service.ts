@@ -5,7 +5,7 @@ import { Holiday, HolidayType } from '../types/holiday.types';
 // Get all holidays for an organization
 export const getHolidaysByOrg = async (orgId: string): Promise<Holiday[]> => {
   try {
-    const response = await axios.get(APIDictionary.holiday_by_org(orgId));
+    const response = await axios.get(APIDictionary.holiday_by_org(orgId), { withCredentials: true });
     return response.data;
   } catch (error) {
     console.error('Error fetching holidays:', error);
@@ -16,7 +16,7 @@ export const getHolidaysByOrg = async (orgId: string): Promise<Holiday[]> => {
 // Get a holiday by ID
 export const getHolidayById = async (id: string): Promise<Holiday> => {
   try {
-    const response = await axios.get(`${APIDictionary.holiday}/${id}`);
+    const response = await axios.get(`${APIDictionary.holiday}/${id}`, { withCredentials: true });
     return response.data;
   } catch (error) {
     console.error('Error fetching holiday:', error);
@@ -27,7 +27,7 @@ export const getHolidayById = async (id: string): Promise<Holiday> => {
 // Create a new holiday
 export const createHoliday = async (holiday: Omit<Holiday, 'id'>): Promise<Holiday> => {
   try {
-    const response = await axios.post(APIDictionary.holiday, holiday);
+    const response = await axios.post(APIDictionary.holiday, holiday, { withCredentials: true });
     return response.data;
   } catch (error) {
     console.error('Error creating holiday:', error);
@@ -38,7 +38,7 @@ export const createHoliday = async (holiday: Omit<Holiday, 'id'>): Promise<Holid
 // Update a holiday
 export const updateHoliday = async (id: string, holiday: Partial<Holiday>): Promise<Holiday> => {
   try {
-    const response = await axios.put(`${APIDictionary.holiday}/${id}`, holiday);
+    const response = await axios.put(`${APIDictionary.holiday}/${id}`, holiday, { withCredentials: true });
     return response.data;
   } catch (error) {
     console.error('Error updating holiday:', error);
@@ -49,7 +49,7 @@ export const updateHoliday = async (id: string, holiday: Partial<Holiday>): Prom
 // Delete a holiday
 export const deleteHoliday = async (id: string): Promise<void> => {
   try {
-    await axios.delete(`${APIDictionary.holiday}/${id}`);
+    await axios.delete(`${APIDictionary.holiday}/${id}`, { withCredentials: true });
   } catch (error) {
     console.error('Error deleting holiday:', error);
     throw error;
@@ -59,7 +59,7 @@ export const deleteHoliday = async (id: string): Promise<void> => {
 // Get all holiday types for an organization
 export const getHolidayTypesByOrg = async (orgId: string): Promise<HolidayType[]> => {
   try {
-    const response = await axios.get(APIDictionary.holiday_type_by_org(orgId));
+    const response = await axios.get(APIDictionary.holiday_type_by_org(orgId), { withCredentials: true });
     return response.data.data;
   } catch (error) {
     console.error('Error fetching holiday types:', error);
@@ -71,7 +71,7 @@ export const getHolidayTypesByOrg = async (orgId: string): Promise<HolidayType[]
 export const createHolidayType = async (orgId: string, holidayType: Omit<HolidayType, 'id'>): Promise<HolidayType> => {
   try {
     const payload = { ...holidayType, orgId };
-    const response = await axios.post(APIDictionary.holiday_type, payload);
+    const response = await axios.post(APIDictionary.holiday_type, payload, { withCredentials: true });
     return response.data.data;
   } catch (error) {
     console.error('Error creating holiday type:', error);
