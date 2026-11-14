@@ -4,10 +4,11 @@ import type { CreateEmployeeRequest, UpdateEmployeeRequest } from '@/types/emplo
 import { employeeKeys } from './employeeKeys'
 
 // Query Hooks
-export function useEmployees(filters?: Record<string, any>) {
+export function useEmployees(filters?: Record<string, any>, enabled: boolean = true) {
   return useQuery({
     queryKey: employeeKeys.list(filters || {}),
     queryFn: () => employeesApi.getAllEmployees(filters),
+    enabled,
   })
 }
 

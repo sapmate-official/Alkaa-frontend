@@ -16,7 +16,8 @@ import {
   OrganizationChartTab 
 } from './components';
 import RouteDict from '@/routes/RouteDict';
-import { useLegacyOrganization, useOrganizationDepartments, useTeamMembers } from '@/hooks/queries'
+import { useLegacyOrganization, useOrganizationDepartments, useTeamMembers, useEmployees } from '@/hooks/queries'
+import { User } from './types';
 
 const SpecificOrganizationView = () => {
   const [permissions] = useAtom(permissionListAtom)
@@ -35,8 +36,20 @@ const SpecificOrganizationView = () => {
   }), [permissions]);
 
   // Use TanStack Query hooks
-  const orgId = user?.organization?.id
+  const orgId = user?.organization?.id || user?.orgId
   const { data: organization, isLoading: isLoadingOrg } = useLegacyOrganization(orgId, !!orgId)
+  const { data: employees = [], isLoading: isLoadingEmployees } = useEmployees(
+    undefined,
+    !!permissionChecks.canViewAllUsers
+  )
+
+  const organizationWithUsers = useMemo(() => {
+    if (!organization) return null;
+    return {
+      ...organization,
+      users: (organization.users && organization.users.length > 0) ? organization.users : (employees as unknown as User[])
+    };
+  }, [organization, employees])
   const { data: departments = [], isLoading: isLoadingDepartments } = useOrganizationDepartments(
     orgId,
     permissionChecks.canViewDepartmentList || permissionChecks.canViewAllDepartments || permissionChecks.canViewOwnDepartment
@@ -116,9 +129,10 @@ const SpecificOrganizationView = () => {
           {permissionChecks.canViewAllUsers && (
             <TabsContent value="all-users">
               <AllUsersTab 
-                organization={organization || null}
+                organization={organizationWithUsers}
                 canViewDetailedInfo={permissionChecks.canViewDetailedInfo}
                 onUserClick={handleUserClick}
+                isLoading={isLoadingEmployees}
               />
             </TabsContent>
           )}
@@ -164,7 +178,7 @@ const SpecificOrganizationView = () => {
           {permissionChecks.canViewDetailedInfo && (
             <TabsContent value="insights">
               <InsightsTab 
-                organization={organization || null}
+                organization={organizationWithUsers}
                 departments={departments}
               />
             </TabsContent>

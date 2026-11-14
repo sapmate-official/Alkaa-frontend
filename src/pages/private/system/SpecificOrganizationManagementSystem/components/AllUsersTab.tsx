@@ -13,6 +13,7 @@ import {
 import { Users, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useMemo } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { OrganizationType } from '../types';
 import RouteDict from '@/routes/RouteDict';
 
@@ -20,12 +21,14 @@ interface AllUsersTabProps {
   organization: OrganizationType | null;
   canViewDetailedInfo: boolean;
   onUserClick: (userId: string) => void;
+  isLoading?: boolean;
 }
 
 export const AllUsersTab = ({ 
   organization, 
   canViewDetailedInfo, 
-  onUserClick 
+  onUserClick,
+  isLoading = false
 }: AllUsersTabProps) => {
   const navigate = useNavigate();
 
@@ -167,7 +170,14 @@ export const AllUsersTab = ({
         </div>
       </CardHeader>
       <CardContent>
-        {filteredUsers.length === 0 ? (
+        {isLoading ? (
+          <div className="space-y-3 py-4">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        ) : filteredUsers.length === 0 ? (
           <div className="text-center py-8">
             <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium text-muted-foreground mb-2">
