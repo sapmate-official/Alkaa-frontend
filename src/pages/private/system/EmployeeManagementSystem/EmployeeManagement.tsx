@@ -644,7 +644,14 @@ const EmployeeManagement: React.FC = () => {
                                                     <div>
                                                         <Label>Last Modified</Label>
                                                         <p className="text-sm mt-1 text-muted-foreground">
-                                                            {new Date(selectedEmployee.updatedAt).toLocaleDateString()}
+                                                            {new Date(selectedEmployee.updatedAt).toLocaleString(undefined, {
+                                                                year: 'numeric',
+                                                                month: 'short',
+                                                                day: 'numeric',
+                                                                hour: '2-digit',
+                                                                minute: '2-digit',
+                                                                hour12: true
+                                                            })}
                                                         </p>
                                                     </div>
                                                 )}
