@@ -63,7 +63,7 @@ const ProfileEdit = () => {
   const updateProfileMutation = useUpdateProfileMutation()
   const submitting = updateProfileMutation.isPending
 
-  const userData = userResponse?.user
+  const userData = (userResponse as any)?.user ?? userResponse;
 
   const isOwnProfile = !id || id === user?.id;
   const canEditPersonalInfo = permissionList.some(p => p.key === 'update_personal_info') && isOwnProfile;
@@ -106,6 +106,17 @@ const ProfileEdit = () => {
     status: 'active',
   });
 
+  const safeDateStr = (dateVal?: string | Date | null) => {
+    if (!dateVal) return '';
+    try {
+      const d = new Date(dateVal);
+      if (isNaN(d.getTime())) return '';
+      return d.toISOString().split('T')[0];
+    } catch {
+      return '';
+    }
+  };
+
   useEffect(() => {
     const fetchDepartmentsAndManagers = async () => {
       if (!user?.orgId) return;
@@ -116,8 +127,15 @@ const ProfileEdit = () => {
           axios.get(`${APIDictionary.user}/fetch-managers/org/${user?.orgId}`, { withCredentials: true })
         ]);
         
-        setManagers(managerListResponse.data);
-        setDepartments(departmentResponse.data);
+        const deptList = Array.isArray(departmentResponse.data)
+          ? departmentResponse.data
+          : (departmentResponse.data?.departments ?? departmentResponse.data?.data ?? []);
+        const mgrList = Array.isArray(managerListResponse.data)
+          ? managerListResponse.data
+          : (managerListResponse.data?.managers ?? managerListResponse.data?.data ?? []);
+
+        setManagers(mgrList);
+        setDepartments(deptList);
       } catch (error) {
         console.error('Error fetching departments/managers:', error);
         setError('Failed to fetch departments and managers. Please try again later.');
@@ -149,14 +167,14 @@ const ProfileEdit = () => {
         personalEmail: userData?.personalEmail || userData?.email || '',
         businessEmail: userData?.businessEmail || '',
         jobTitle: userData?.jobTitle || '',
-        terminationDate: userData?.terminationDate ? String(userData.terminationDate).split('T')[0] : '',
+        terminationDate: safeDateStr(userData?.terminationDate),
         address: userData?.address || '',
         adharNumber: userData?.adharNumber || '',
         panNumber: userData?.panNumber || '',
         mobileNumber: userData?.mobileNumber || '',
         emergencyContact: userData?.emergencyContact || '',
-        dateOfBirth: userData?.dateOfBirth?.split('T')[0] || '',
-        hiredDate: userData?.hiredDate?.split('T')[0] || '',
+        dateOfBirth: safeDateStr(userData?.dateOfBirth),
+        hiredDate: safeDateStr(userData?.hiredDate),
         departmentId: userData?.departmentId || '',
         annualPackage: userData?.annualPackage?.toString() || '',
         monthlySalary: userData?.monthlySalary?.toString() || '',
@@ -168,9 +186,11 @@ const ProfileEdit = () => {
   }, [userData, user?.id, canEditAllUserInfo, canEditSubordinatesInfo]);
 
   // Handle errors
-  if (userError) {
-    setError('Failed to fetch profile data. Please try again later.');
-  }
+  useEffect(() => {
+    if (userError) {
+      setError('Failed to fetch profile data. Please try again later.');
+    }
+  }, [userError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
