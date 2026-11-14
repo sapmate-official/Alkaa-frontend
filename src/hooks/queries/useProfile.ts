@@ -27,7 +27,9 @@ export const useProfileQuery = (userId: string) => {
       const response = await axios.get(APIDictionary.userProfile(userId), {
         withCredentials: true
       })
-      return response.data.user as User
+      const raw = response.data
+      const user = (raw?.user ?? raw?.data ?? raw) as User
+      return user
     },
     enabled: !!userId,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -42,7 +44,8 @@ export const useUserDetailsQuery = (userId: string) => {
       const response = await axios.get(APIDictionary.userProfile(userId), {
         withCredentials: true
       })
-      return response.data
+      const raw = response.data
+      return raw?.user ?? raw?.data ?? raw
     },
     enabled: !!userId,
     staleTime: 5 * 60 * 1000,

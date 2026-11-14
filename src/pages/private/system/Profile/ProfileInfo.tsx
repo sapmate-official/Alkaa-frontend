@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { User, RelationshipData } from '@/types/general'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -40,16 +41,51 @@ const ProfileInfo = () => {
     const relationshipData = relationshipResponse?.data as RelationshipData
 
     // Show error toast if profile fetch fails
-    if (profileError) {
-        toast({
-            title: "Failed to fetch profile info",
-            description: "Please try again later",
-            variant: "destructive"
-        })
-    }
+    useEffect(() => {
+        if (profileError) {
+            toast({
+                title: "Failed to fetch profile info",
+                description: "Please try again later",
+                variant: "destructive"
+            })
+        }
+    }, [profileError, toast])
+
+    const safeFormatDateTime = (dateVal?: string | Date | null) => {
+        if (!dateVal) return null;
+        try {
+            const d = new Date(dateVal);
+            if (isNaN(d.getTime())) return null;
+            return d.toLocaleString(undefined, {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        } catch {
+            return null;
+        }
+    };
+
+    const safeFormatDate = (dateVal?: string | Date | null) => {
+        if (!dateVal) return null;
+        try {
+            const d = new Date(dateVal);
+            if (isNaN(d.getTime())) return null;
+            return d.toLocaleDateString(undefined, {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        } catch {
+            return null;
+        }
+    };
     
     const hasPermission = (permissionKey: string) => {
-        return permissionList.some(permission => permission.key === permissionKey);
+        return (permissionList ?? []).some(permission => permission.key === permissionKey);
     }
 
     const canDisplayFinancialInfo = () => {
@@ -241,21 +277,14 @@ const ProfileInfo = () => {
                                             className="px-3 py-1 text-xs font-medium uppercase tracking-wider">
                                             {profileInfo?.status}
                                         </Badge>
-                                        {(profileInfo?.jobTitle || (profileInfo?.roles && profileInfo.roles[0])) && (
+                                        {(profileInfo?.jobTitle || (profileInfo?.roles && profileInfo.roles.length > 0)) && (
                                             <span className="text-sm font-medium text-muted-foreground">
-                                                {profileInfo?.jobTitle || profileInfo.roles[0].role?.name}
+                                                {profileInfo?.jobTitle || profileInfo.roles?.[0]?.role?.name || (profileInfo.roles?.[0] as any)?.name}
                                             </span>
                                         )}
-                                        {profileInfo?.updatedAt && (
+                                        {safeFormatDateTime(profileInfo?.updatedAt) && (
                                             <span className="text-xs text-muted-foreground">
-                                                • Last modified: {new Date(profileInfo.updatedAt).toLocaleString(undefined, {
-                                                    year: 'numeric',
-                                                    month: 'short',
-                                                    day: 'numeric',
-                                                    hour: '2-digit',
-                                                    minute: '2-digit',
-                                                    hour12: true
-                                                })}
+                                                • Last modified: {safeFormatDateTime(profileInfo?.updatedAt)}
                                             </span>
                                         )}
                                     </div>
@@ -337,7 +366,7 @@ const ProfileInfo = () => {
                                         </div>
                                     </div>
                                 )}
-                                {profileInfo?.dateOfBirth && (
+                                {safeFormatDate(profileInfo?.dateOfBirth) && (
                                     <div className="flex items-start gap-3">
                                         <div className="rounded-full bg-primary/10 p-2 mt-1">
                                             <CalendarIcon className="w-4 h-4 text-primary" />
@@ -345,11 +374,7 @@ const ProfileInfo = () => {
                                         <div className="space-y-1">
                                             <p className="text-sm text-muted-foreground font-medium">Date of Birth</p>
                                             <p className="font-medium">
-                                                {new Date(profileInfo?.dateOfBirth).toLocaleDateString(undefined, {
-                                                    year: 'numeric',
-                                                    month: 'long',
-                                                    day: 'numeric'
-                                                })}
+                                                {safeFormatDate(profileInfo?.dateOfBirth)}
                                             </p>
                                         </div>
                                     </div>
@@ -405,7 +430,7 @@ const ProfileInfo = () => {
                                     </div>
                                 </div>
                                 
-                                {profileInfo?.hiredDate && (
+                                {safeFormatDate(profileInfo?.hiredDate) && (
                                     <div className="flex items-start gap-3">
                                         <div className="rounded-full bg-primary/10 p-2 mt-1">
                                             <CalendarIcon className="w-4 h-4 text-primary" />
@@ -413,16 +438,12 @@ const ProfileInfo = () => {
                                         <div className="space-y-1">
                                             <p className="text-sm text-muted-foreground font-medium">Hire Date</p>
                                             <p className="font-medium">
-                                                {new Date(profileInfo?.hiredDate).toLocaleDateString(undefined, {
-                                                    year: 'numeric',
-                                                    month: 'long',
-                                                    day: 'numeric'
-                                                })}
+                                                {safeFormatDate(profileInfo?.hiredDate)}
                                             </p>
                                         </div>
                                     </div>
                                 )}
-                                {profileInfo?.terminationDate && (
+                                {safeFormatDate(profileInfo?.terminationDate) && (
                                     <div className="flex items-start gap-3">
                                         <div className="rounded-full bg-red-100 dark:bg-red-950/40 p-2 mt-1">
                                             <CalendarIcon className="w-4 h-4 text-red-600 dark:text-red-400" />
@@ -430,11 +451,7 @@ const ProfileInfo = () => {
                                         <div className="space-y-1">
                                             <p className="text-sm text-red-600 dark:text-red-400 font-medium">Termination Date</p>
                                             <p className="font-medium text-red-700 dark:text-red-300">
-                                                {new Date(profileInfo.terminationDate).toLocaleDateString(undefined, {
-                                                    year: 'numeric',
-                                                    month: 'long',
-                                                    day: 'numeric'
-                                                })}
+                                                {safeFormatDate(profileInfo?.terminationDate)}
                                             </p>
                                         </div>
                                     </div>
@@ -445,9 +462,9 @@ const ProfileInfo = () => {
                                         <div className="space-y-3">
                                             <p className="text-sm text-muted-foreground font-medium">Roles</p>
                                             <div className="flex flex-wrap gap-2">
-                                                {profileInfo?.roles?.map((role) => (
-                                                    <Badge key={role?.id} variant="secondary" className="px-3 py-1">
-                                                        {role?.role?.name}
+                                                {profileInfo?.roles?.map((role, idx) => (
+                                                    <Badge key={role?.id || idx} variant="secondary" className="px-3 py-1">
+                                                        {role?.role?.name || (role as any)?.name || 'Role'}
                                                     </Badge>
                                                 ))}
                                             </div>
@@ -474,26 +491,26 @@ const ProfileInfo = () => {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="grid gap-6 sm:grid-cols-2">
-                                {(profileInfo?.annualPackage ?? 0) > 0 && (
+                                {(Number(profileInfo?.annualPackage) || 0) > 0 && (
                                     <div className="flex items-start gap-3">
                                         <div className="rounded-full bg-primary/10 p-2 mt-1">
                                             <BanknotesIcon className="w-4 h-4 text-primary" />
                                         </div>
                                         <div className="space-y-1">
                                             <p className="text-sm text-muted-foreground font-medium">Annual Package</p>
-                                            <p className="font-medium text-lg">₹{(profileInfo?.annualPackage ?? 0).toLocaleString()}</p>
+                                            <p className="font-medium text-lg">₹{(Number(profileInfo?.annualPackage) || 0).toLocaleString()}</p>
                                         </div>
                                     </div>
                                 )}
                                 
-                                {(profileInfo?.monthlySalary ?? 0) > 0 && (
+                                {(Number(profileInfo?.monthlySalary) || 0) > 0 && (
                                     <div className="flex items-start gap-3">
                                         <div className="rounded-full bg-primary/10 p-2 mt-1">
                                             <BanknotesIcon className="w-4 h-4 text-primary" />
                                         </div>
                                         <div className="space-y-1">
                                             <p className="text-sm text-muted-foreground font-medium">Monthly Salary</p>
-                                            <p className="font-medium text-lg">₹{(profileInfo?.monthlySalary ?? 0).toLocaleString()}</p>
+                                            <p className="font-medium text-lg">₹{(Number(profileInfo?.monthlySalary) || 0).toLocaleString()}</p>
                                         </div>
                                     </div>
                                 )}

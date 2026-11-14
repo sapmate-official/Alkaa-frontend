@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/providers/AuthContext';
 import { useAtom } from 'jotai';
@@ -23,11 +23,11 @@ const BankDetails = ({ userId }: BankDetailsProps) => {
   // Use TanStack Query hook instead of direct axios call
   const { data: bankData, isLoading: queryLoading, error: queryError } = useBankDetailsQuery(userId);
 
-  const hasPermission = (permissionKey: string) => {
-    return permissionList.some(permission => permission.key === permissionKey);
-  };
+  const hasPermission = useCallback((permissionKey: string) => {
+    return (permissionList ?? []).some(permission => permission.key === permissionKey);
+  }, [permissionList]);
 
-  const canViewBankDetails = () => {
+  const canViewBankDetails = useCallback(() => {
     const isOwnProfile = userId === user?.id;
     const isSubordinate = userId && user?.id && user.id !== userId 
       ? user.subordinates?.some(sub => sub.id === userId) 
@@ -40,7 +40,7 @@ const BankDetails = ({ userId }: BankDetailsProps) => {
     } else {
       return hasPermission('view_bank_all_user');
     }
-  };
+  }, [userId, user?.id, user?.subordinates, hasPermission]);
 
   const toggleDetailsVisibility = () => {
     setShowFullDetails(!showFullDetails);
@@ -60,7 +60,7 @@ const BankDetails = ({ userId }: BankDetailsProps) => {
         variant: 'destructive',
       });
     }
-  }, [queryError, canViewBankDetails, toast]);
+  }, [queryError]);
 
   const formatAccountNumber = (accountNumber: string) => {
     if (showFullDetails) {

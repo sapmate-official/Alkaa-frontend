@@ -41,6 +41,8 @@ const SystemModule = lazy(() => import('./pages/private/system/SystemManagement/
 // Individual components that don't fit into modules
 const Logout = lazy(() => import('./pages/private/Logout'));
 
+import ErrorBoundary from './components/ErrorBoundary';
+
 // Custom loading fallback
 const LoadingFallback = () => <div className="flex items-center justify-center min-h-screen"><Loader /></div>;
 
@@ -64,9 +66,11 @@ function App() {
               <AuthProvider>
                 <TimezoneProvider>
                   <MainLayout>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <ProtectedRoute />
-                    </Suspense>
+                    <ErrorBoundary>
+                      <Suspense fallback={<LoadingFallback />}>
+                        <ProtectedRoute />
+                      </Suspense>
+                    </ErrorBoundary>
                   </MainLayout>
                 </TimezoneProvider>
               </AuthProvider>
