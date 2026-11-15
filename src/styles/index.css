@@ -4,78 +4,77 @@
 
 @layer base {
   :root {
-    --background: 230 25% 98%; /* #F6F8FC - Light Blue-Grey */
-    --foreground: 224 71% 4%; /* #08091A - Nearly Black */
+    --background: 210 40% 98%; /* #F8FAFC - Crisp Slate White/Canvas */
+    --foreground: 222 47% 11%; /* #0F172A - Deep Slate Navy */
 
-    --card: 0 0% 100%; /* White */
-    --card-foreground: 224 71% 4%;
+    --card: 0 0% 100%; /* #FFFFFF - Pure Optical White */
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 224 71% 4%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 255 69% 53%; /* #5D5CFF - Claude Purple */
+    --primary: 221 83% 53%; /* #2563EB - Royal Enterprise Blue */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 227 47% 96%; /* #EEF1F9 - Light Purple */
-    --secondary-foreground: 224 71% 4%;
+    --secondary: 210 40% 96%; /* #F1F5F9 - Light Slate */
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 225 27% 51%; /* #7B86A7 - Muted Purple */
-    --muted-foreground: 224 71% 4%;
+    --muted: 210 40% 96%; /* #F1F5F9 */
+    --muted-foreground: 215 16% 47%; /* #64748B - Slate 500 */
 
-    --accent: 246 59% 63%; /* #7C76FF - Bright Purple */
+    --accent: 217 91% 60%; /* #3B82F6 - Electric Accent Blue */
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 227 47% 96%;
-    --input: 227 47% 96%;
-    --ring: 255 69% 53%;
+    --border: 214 32% 91%; /* #E2E8F0 - Crisp Slate 200 */
+    --input: 214 32% 91%;
+    --ring: 221 83% 53%; /* #2563EB */
 
     --radius: 0.5rem;
 
-    --chart-1: 255 69% 53%; /* Claude Purple */
-    --chart-2: 246 59% 63%; /* Bright Purple */
-    --chart-3: 225 27% 51%; /* Muted Purple */
-    --chart-4: 230 25% 98%; /* Light Blue-Grey */
-    --chart-5: 224 71% 4%; /* Nearly Black */
+    --chart-1: 221 83% 53%; /* Royal Blue */
+    --chart-2: 217 91% 60%; /* Electric Blue */
+    --chart-3: 199 89% 48%; /* Sky Blue */
+    --chart-4: 210 40% 96%; /* Light Slate */
+    --chart-5: 222 47% 11%; /* Deep Navy */
   }
 
   .dark {
-    --background: 224 71% 4%; /* #08091A - Nearly Black */
-    --foreground: 0 0% 100%; /* White */
+    --background: 222 47% 7%; /* #0B0F19 - Deep Navy Canvas */
+    --foreground: 210 40% 98%; /* #F8FAFC */
 
-    --card: 224 71% 8%;
-    --card-foreground: 0 0% 100%;
+    --card: 222 47% 11%; /* #0F172A */
+    --card-foreground: 210 40% 98%;
 
-    --popover: 224 71% 8%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 255 69% 53%; /* #5D5CFF - Claude Purple */
+    --primary: 217 91% 60%; /* #3B82F6 - Bright Enterprise Blue */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 246 59% 63%; /* #7C76FF - Bright Purple */
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 217 33% 17%; /* #1E293B */
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 225 27% 51%; /* #7B86A7 - Muted Purple */
-    --muted-foreground: 225 27% 85%;
+    --muted: 217 33% 17%; /* #1E293B */
+    --muted-foreground: 215 20% 65%; /* #94A3B8 */
 
-    --accent: 246 59% 63%;
+    --accent: 217 91% 60%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 225 27% 51%;
-    --input: 225 27% 51%;
-    --ring: 255 69% 53%;
+    --border: 217 33% 17%; /* #1E293B */
+    --input: 217 33% 17%;
+    --ring: 217 91% 60%;
 
-    /* Keeping the same chart colors for consistency */
-    --chart-1: 255 69% 53%;
-    --chart-2: 246 59% 63%;
-    --chart-3: 225 27% 51%;
-    --chart-4: 230 25% 98%;
-    --chart-5: 224 71% 4%;
+    --chart-1: 217 91% 60%;
+    --chart-2: 221 83% 53%;
+    --chart-3: 199 89% 48%;
+    --chart-4: 210 40% 96%;
+    --chart-5: 222 47% 11%;
   }
 }
 
