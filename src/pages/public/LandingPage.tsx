@@ -567,11 +567,11 @@ const AlkaaLandingPage: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-2.5 p-3 rounded-lg bg-card border border-border shadow-xs">
                     <div className="p-1.5 rounded-md bg-primary/10 text-primary">
-                      <Shield className="h-4 w-4" />
+                      <Clock className="h-4 w-4" />
                     </div>
                     <div>
-                      <div className="text-xs font-bold text-foreground">Bank-Grade</div>
-                      <div className="text-[11px] text-muted-foreground">SOC-2 Type II Certified</div>
+                      <div className="text-xs font-bold text-foreground">Real-Time Sync</div>
+                      <div className="text-[11px] text-muted-foreground">Live Shifts & Attendance</div>
                     </div>
                   </div>
                 </div>
@@ -1364,54 +1364,54 @@ const AlkaaLandingPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Security & Compliance Section */}
+        {/* Platform Architecture & Data Protection Section */}
         <section className="py-20">
           <div className="container max-w-screen-xl px-4 md:px-8">
             <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Enterprise Security & Compliance</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Enterprise Platform Architecture</h2>
               <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-                Bank-grade security with comprehensive compliance features to protect your data and meet regulatory requirements.
+                Built with multi-tenant organization isolation, granular role-based permissions, and comprehensive activity logging.
               </p>
             </div>
 
             <div className="grid md:grid-cols-3 gap-8">
               <SecurityFeature
                 title="Data Protection"
-                description="AES-256 encryption for data at rest, TLS 1.3 for data in transit, with secure key management and rotation."
+                description="Isolated organization data stores with secure transport and automatic scheduled backups."
                 icon={<Lock className="h-6 w-6" />}
-                compliance={["GDPR", "CCPA", "SOC 2"]}
+                compliance={["Tenant Isolation", "Automated Backups", "Encrypted Transport"]}
               />
               <SecurityFeature
                 title="Access Control"
-                description="Multi-factor authentication, role-based permissions, and session management with comprehensive audit trails."
+                description="Multi-factor authentication, granular role-based permissions, and secure session management."
                 icon={<Shield className="h-6 w-6" />}
-                compliance={["RBAC", "MFA", "SSO"]}
+                compliance={["RBAC", "MFA", "Session Control"]}
               />
               <SecurityFeature
-                title="Compliance Features"
-                description="Built-in compliance tools for various regulations with automated reporting and data governance."
+                title="Audit & Governance"
+                description="Complete event activity logging and operational controls across all organizational workflows."
                 icon={<Award className="h-6 w-6" />}
-                compliance={["SOX", "HIPAA", "ISO 27001"]}
+                compliance={["Activity Logs", "User Audits", "Event History"]}
               />
             </div>
 
-            {/* Security Stats */}
+            {/* Platform Stats */}
             <div className="grid sm:grid-cols-4 gap-6 mt-12">
               <div className="text-center p-6 bg-card rounded-lg border border-border">
                 <div className="text-2xl font-bold text-primary mb-2">99.9%</div>
-                <div className="text-sm text-muted-foreground">Uptime SLA</div>
+                <div className="text-sm text-muted-foreground">High Availability</div>
               </div>
               <div className="text-center p-6 bg-card rounded-lg border border-border">
-                <div className="text-2xl font-bold text-primary mb-2">256-bit</div>
-                <div className="text-sm text-muted-foreground">Encryption</div>
+                <div className="text-2xl font-bold text-primary mb-2">Multi-Tenant</div>
+                <div className="text-sm text-muted-foreground">Tenant Partitioning</div>
               </div>
               <div className="text-center p-6 bg-card rounded-lg border border-border">
-                <div className="text-2xl font-bold text-primary mb-2">24/7</div>
-                <div className="text-sm text-muted-foreground">Monitoring</div>
+                <div className="text-2xl font-bold text-primary mb-2">Real-Time</div>
+                <div className="text-sm text-muted-foreground">Audit Activity Logs</div>
               </div>
               <div className="text-center p-6 bg-card rounded-lg border border-border">
-                <div className="text-2xl font-bold text-primary mb-2">30 days</div>
-                <div className="text-sm text-muted-foreground">Backup Retention</div>
+                <div className="text-2xl font-bold text-primary mb-2">Daily</div>
+                <div className="text-sm text-muted-foreground">Automated Backups</div>
               </div>
             </div>
           </div>
@@ -1894,18 +1894,11 @@ const AlkaaLandingPage: React.FC = () => {
 
           {/* Additional Footer Content */}
           <div className="grid md:grid-cols-2 gap-8 mb-8 pt-8 border-t border-border">
-            {/* Security & Compliance */}
+            {/* Platform Security */}
             <div>
-              <h3 className="font-semibold mb-4">Security & Compliance</h3>
-              <div className="flex flex-wrap gap-2">
-                {["SOC 2", "GDPR", "HIPAA", "ISO 27001", "CCPA"].map((cert) => (
-                  <span key={cert} className="text-xs bg-secondary text-foreground px-2 py-1 rounded border border-border">
-                    {cert}
-                  </span>
-                ))}
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Your data is protected with enterprise-grade security measures.
+              <h3 className="font-semibold mb-4">Platform & Security</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                ALKAA protects your organization with isolated tenant databases, multi-factor authentication, and granular role permissions.
               </p>
             </div>
 

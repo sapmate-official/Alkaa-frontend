@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/providers/AuthContext";
-import { Eye, EyeOff, ArrowLeft, Mail, Lock, Shield, CheckCircle2, Sparkles, Building2 } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft, Mail, Lock, CheckCircle2, Sparkles, Building2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { OrganizationSelector } from "@/components/auth/OrganizationSelector";
 import { OTPVerification } from "@/components/auth/OTPVerification";
@@ -317,12 +317,6 @@ export function MultiTenantLoginForm({
                                 }
                             </Button>
                         </div>
-
-                        {/* Security Footer Notice */}
-                        <div className="pt-6 mt-4 border-t border-border/40 text-center text-[11px] text-muted-foreground flex items-center justify-center gap-1.5">
-                            <Shield className="h-3 w-3 text-primary" />
-                            <span>Bank-grade 256-bit encryption • SOC-2 Type II</span>
-                        </div>
                     </form>
                     
                     {/* Right Branded Feature & Trust Showcase Panel */}
@@ -381,17 +375,6 @@ export function MultiTenantLoginForm({
                                     <div className="text-[10px] text-muted-foreground">VP of People Operations</div>
                                 </div>
                             </div>
-                        </div>
-
-                        {/* Security Trust Badges */}
-                        <div className="pt-4 flex items-center justify-between text-[11px] text-muted-foreground border-t border-border/60">
-                            <span className="flex items-center gap-1">
-                                <Shield className="h-3.5 w-3.5 text-primary" /> SOC-2 Type II
-                            </span>
-                            <span>•</span>
-                            <span>ISO 27001</span>
-                            <span>•</span>
-                            <span>GDPR Compliant</span>
                         </div>
                     </div>
                 </CardContent>
