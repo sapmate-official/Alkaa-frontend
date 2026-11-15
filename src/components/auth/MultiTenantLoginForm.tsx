@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/providers/AuthContext";
 import { Eye, EyeOff, ArrowLeft, Mail, Lock, CheckCircle2, Sparkles, Building2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 import { OrganizationSelector } from "@/components/auth/OrganizationSelector";
 import { OTPVerification } from "@/components/auth/OTPVerification";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +25,7 @@ export function MultiTenantLoginForm({
 }: React.ComponentProps<"div">) {
     const { authStep, checkEmail, verifyPassword, verifyOtp, selectOrganization, resetAuthFlow } = useAuth();
     const navigate = useNavigate();
+    const { toast } = useToast();
     
     // Form states
     const [email, setEmail] = useState("");
@@ -266,16 +268,18 @@ export function MultiTenantLoginForm({
                                     <div className="grid gap-2">
                                         <div className="flex items-center justify-between">
                                             <Label htmlFor="password" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Password</Label>
-                                            <a
-                                                href="#"
+                                            <button
+                                                type="button"
                                                 className="text-xs text-primary hover:underline font-medium"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    // Add forgot password modal/toast trigger if needed
+                                                onClick={() => {
+                                                    toast({
+                                                        title: "Password Assistance",
+                                                        description: "Please reach out to your organization administrator or HR team to reset your account password.",
+                                                    });
                                                 }}
                                             >
                                                 Forgot password?
-                                            </a>
+                                            </button>
                                         </div>
                                         <div className="relative">
                                             <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -379,12 +383,8 @@ export function MultiTenantLoginForm({
                     </div>
                 </CardContent>
             </Card>
-            <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-primary">
+            <div className="text-balance text-center text-xs text-muted-foreground">
                 Owned by Shapenxt.
-            </div>
-            <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-primary">
-                By continuing, you agree to our <a href="#">Terms of Service</a>{" "}
-                and <a href="#">Privacy Policy</a>.
             </div>
         </div>
     );

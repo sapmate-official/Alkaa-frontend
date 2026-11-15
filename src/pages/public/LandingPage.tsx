@@ -12,34 +12,26 @@ import {
   ChartPie,
   Clock,
   Building2,
-  MessageCircle,
   ArrowRight,
   Loader2,
   Users,
   Shield,
   Zap,
-  Globe,
   CheckCircle,
   Star,
   PlayCircle,
   Database,
   Lock,
-  Smartphone,
   BarChart3,
   DollarSign,
   UserCheck,
   FileText,
-  Settings,
   Bell,
   Target,
   Award,
   Briefcase,
-  PieChart,
   Activity,
-  Cpu,
-  CloudLightning,
   Code2,
-  GitBranch,
   Server,
   Layers,
   Workflow,
@@ -845,174 +837,91 @@ const AlkaaLandingPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Multi-Platform Architecture */}
-        <section className="py-24">
+        {/* Core Architecture Section */}
+        <section className="py-20">
           <div className="container max-w-screen-xl px-4 md:px-8">
             <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold mb-6">
-                Three-Platform <span className="text-primary">Ecosystem</span>
+              <h2 className="text-3xl md:text-5xl font-bold mb-4 tracking-tight">
+                Architected for Modern <span className="text-primary">Enterprise Workforces</span>
               </h2>
-              <p className="text-xl text-muted-foreground max-w-4xl mx-auto">
-                Alkaa is architected as a modern SaaS platform with three specialized components 
-                working together to provide comprehensive HR management solutions.
+              <p className="text-base md:text-lg text-muted-foreground max-w-3xl mx-auto">
+                Alkaa provides a unified, multi-tenant workforce management suite connecting administrators, managers, and employees on a single secure platform.
               </p>
             </div>
 
-            {/* Platform Components */}
-            <div className="grid lg:grid-cols-3 gap-8 mb-16">
-              <Card className="p-8 border-2 border-primary/20 bg-gradient-to-br from-primary/5 via-background to-primary/10 hover:shadow-xl transition-all duration-500 group">
-                <div className="text-primary mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <Globe className="h-12 w-12" />
+            {/* Core Modules Grid */}
+            <div className="grid md:grid-cols-3 gap-8">
+              <Card className="p-8 border border-border bg-card hover:shadow-lg transition-all duration-300">
+                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-6">
+                  <Building2 className="h-6 w-6" />
                 </div>
-                <h3 className="text-2xl font-bold mb-4">Main Platform</h3>
-                <p className="text-muted-foreground mb-6 leading-relaxed">
-                  Core HR system for day-to-day operations including employee management, 
-                  attendance tracking, and payroll processing with comprehensive dashboards.
+                <h3 className="text-xl font-bold mb-3">Organization Command Center</h3>
+                <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
+                  Real-time visibility over your workforce. Monitor shift headcounts, pending onboarding reviews, and operational KPIs from an intuitive administrative dashboard.
                 </p>
-                <ul className="space-y-3">
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Employee self-service portal</span>
+                <ul className="space-y-2.5 text-sm">
+                  <li className="flex items-center gap-2.5">
+                    <CheckCircle className="h-4 w-4 text-primary shrink-0" />
+                    <span>Real-time workforce KPIs & telemetry</span>
                   </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Manager dashboards & workflows</span>
+                  <li className="flex items-center gap-2.5">
+                    <CheckCircle className="h-4 w-4 text-primary shrink-0" />
+                    <span>Multi-tenant organization oversight</span>
                   </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">HR admin comprehensive controls</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Real-time analytics & reporting</span>
+                  <li className="flex items-center gap-2.5">
+                    <CheckCircle className="h-4 w-4 text-primary shrink-0" />
+                    <span>Department & designation hierarchies</span>
                   </li>
                 </ul>
               </Card>
 
-              <Card className="p-8 border-2 border-blue-500/20 bg-gradient-to-br from-blue-500/5 via-background to-blue-500/10 hover:shadow-xl transition-all duration-500 group">
-                <div className="text-blue-500 mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <Settings className="h-12 w-12" />
+              <Card className="p-8 border border-border bg-card hover:shadow-lg transition-all duration-300">
+                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-6">
+                  <UserCheck className="h-6 w-6" />
                 </div>
-                <h3 className="text-2xl font-bold mb-4">Admin Platform</h3>
-                <p className="text-muted-foreground mb-6 leading-relaxed">
-                  Super administrator system for platform-level management and 
-                  multi-tenant organization control with comprehensive oversight.
+                <h3 className="text-xl font-bold mb-3">Employee Self-Service</h3>
+                <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
+                  Empower staff with an easy self-service portal. Employees can clock in shifts, view leave balances, submit requests, and manage personal tasks seamlessly.
                 </p>
-                <ul className="space-y-3">
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Multi-tenant organization management</span>
+                <ul className="space-y-2.5 text-sm">
+                  <li className="flex items-center gap-2.5">
+                    <CheckCircle className="h-4 w-4 text-primary shrink-0" />
+                    <span>One-click shift clock-in and punch history</span>
                   </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Subscription plan administration</span>
+                  <li className="flex items-center gap-2.5">
+                    <CheckCircle className="h-4 w-4 text-primary shrink-0" />
+                    <span>Live leave balance wallets & request flows</span>
                   </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Billing & payment processing</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">System-wide analytics & monitoring</span>
+                  <li className="flex items-center gap-2.5">
+                    <CheckCircle className="h-4 w-4 text-primary shrink-0" />
+                    <span>Interactive task board & work assignments</span>
                   </li>
                 </ul>
               </Card>
 
-              <Card className="p-8 border-2 border-green-500/20 bg-gradient-to-br from-green-500/5 via-background to-green-500/10 hover:shadow-xl transition-all duration-500 group">
-                <div className="text-green-500 mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <Smartphone className="h-12 w-12" />
+              <Card className="p-8 border border-border bg-card hover:shadow-lg transition-all duration-300">
+                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-6">
+                  <Shield className="h-6 w-6" />
                 </div>
-                <h3 className="text-2xl font-bold mb-4">Mobile PWA</h3>
-                <p className="text-muted-foreground mb-6 leading-relaxed">
-                  Progressive Web Application optimized for mobile workforce with 
-                  offline capabilities and native app-like experience.
+                <h3 className="text-xl font-bold mb-3">Tenant Isolation & Governance</h3>
+                <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
+                  Strict tenant isolation guarantees organizational data privacy. Includes granular role-based permissions and immutable activity audit logs across all actions.
                 </p>
-                <ul className="space-y-3">
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Check-in/check-out functionality</span>
+                <ul className="space-y-2.5 text-sm">
+                  <li className="flex items-center gap-2.5">
+                    <CheckCircle className="h-4 w-4 text-primary shrink-0" />
+                    <span>Tenant-isolated database partition</span>
                   </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Leave application & approval</span>
+                  <li className="flex items-center gap-2.5">
+                    <CheckCircle className="h-4 w-4 text-primary shrink-0" />
+                    <span>Granular RBAC (Admin, Manager, Staff)</span>
                   </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Push notifications & alerts</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Offline capability for critical functions</span>
+                  <li className="flex items-center gap-2.5">
+                    <CheckCircle className="h-4 w-4 text-primary shrink-0" />
+                    <span>Audit trail logging for all mutations</span>
                   </li>
                 </ul>
               </Card>
-            </div>
-
-            {/* Architecture Highlights */}
-            <div className="grid md:grid-cols-2 gap-8">
-              <div className="bg-card/50 rounded-2xl p-8 border border-border/50">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                    <Layers className="h-6 w-6 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-bold">Multi-Tenant Architecture</h3>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <Shield className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-sm">Data Isolation</p>
-                      <p className="text-xs text-muted-foreground">Complete separation of organizational data</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Zap className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-sm">Scalability</p>
-                      <p className="text-xs text-muted-foreground">Efficient resource utilization across tenants</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Settings className="h-5 w-5 text-orange-500 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-sm">Customization</p>
-                      <p className="text-xs text-muted-foreground">Organization-specific configurations</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-card/50 rounded-2xl p-8 border border-border/50">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                    <CloudLightning className="h-6 w-6 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-bold">Cloud-Native Design</h3>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <Server className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-sm">Microservices</p>
-                      <p className="text-xs text-muted-foreground">Scalable microservices architecture</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Activity className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-sm">Auto-scaling</p>
-                      <p className="text-xs text-muted-foreground">Dynamic resource allocation</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Globe className="h-5 w-5 text-orange-500 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-sm">Global CDN</p>
-                      <p className="text-xs text-muted-foreground">Worldwide performance optimization</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </section>
@@ -1277,35 +1186,35 @@ const AlkaaLandingPage: React.FC = () => {
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">Built for Scale & Performance</h2>
               <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-                Enterprise-grade architecture with modern technologies ensuring scalability, security, and performance.
+                Modern enterprise web architecture engineered for speed, type safety, and high-availability operations.
               </p>
             </div>
 
             {/* Tech Stack Overview */}
-            <div className="grid md:grid-cols-4 gap-6 mb-12">
+            <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6 mb-12">
               <TechStackItem
                 category="Frontend"
                 name="React + TypeScript"
-                description="Modern React 18 with TypeScript for type-safe development"
+                description="Modern React 18 with TypeScript and Tailwind CSS for responsive interfaces"
                 icon={<Code2 className="h-5 w-5" />}
               />
               <TechStackItem
                 category="Backend"
                 name="Node.js + Express"
-                description="High-performance Node.js backend with Express framework"
+                description="High-performance typed REST APIs with structured error boundaries"
                 icon={<Server className="h-5 w-5" />}
               />
               <TechStackItem
                 category="Database"
-                name="PostgreSQL + Redis"
-                description="ACID-compliant PostgreSQL with Redis caching layer"
+                name="PostgreSQL + Prisma"
+                description="Relational database with schema-backed type safety and transactional integrity"
                 icon={<Database className="h-5 w-5" />}
               />
               <TechStackItem
-                category="Infrastructure"
-                name="Cloud-Native"
-                description="Docker containers with Kubernetes orchestration"
-                icon={<CloudLightning className="h-5 w-5" />}
+                category="Security"
+                name="Tenant Partitioning"
+                description="Multi-tenant context isolation with role-based access control and audit logging"
+                icon={<Shield className="h-5 w-5" />}
               />
             </div>
 
@@ -1316,22 +1225,22 @@ const AlkaaLandingPage: React.FC = () => {
                   <Layers className="h-8 w-8" />
                 </div>
                 <h3 className="text-xl font-bold mb-4">Multi-Tenant Architecture</h3>
-                <ul className="space-y-3 text-muted-foreground">
+                <ul className="space-y-3 text-muted-foreground text-sm">
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    Complete data isolation between organizations
+                    <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                    Complete data isolation between client organizations
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    Scalable resource allocation
+                    <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                    Dedicated organization workspaces and subdomains
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    Organization-specific configurations
+                    <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                    Organization-specific policies and holiday schedules
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    Tenant-level security controls
+                    <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                    Scoped role permissions and administrative delegation
                   </li>
                 </ul>
               </Card>
@@ -1340,23 +1249,23 @@ const AlkaaLandingPage: React.FC = () => {
                 <div className="text-primary mb-4">
                   <Workflow className="h-8 w-8" />
                 </div>
-                <h3 className="text-xl font-bold mb-4">API-First Design</h3>
-                <ul className="space-y-3 text-muted-foreground">
+                <h3 className="text-xl font-bold mb-4">RESTful API Design</h3>
+                <ul className="space-y-3 text-muted-foreground text-sm">
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    RESTful APIs with OpenAPI 3.0 specification
+                    <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                    Clean RESTful endpoints for all workforce operations
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    Versioned APIs (v2, v3) for backward compatibility
+                    <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                    Structured request validation and clear error handling
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    Comprehensive third-party integrations
+                    <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                    Multi-tenant context injection and session tokens
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    Auto-generated documentation and SDKs
+                    <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                    Comprehensive activity event logging for audit compliance
                   </li>
                 </ul>
               </Card>
@@ -1627,7 +1536,7 @@ const AlkaaLandingPage: React.FC = () => {
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-center gap-2">
                       <CheckCircle className="h-4 w-4 text-green-500" />
-                      24/7 Support
+                      Dedicated Support
                     </li>
                     <li className="flex items-center gap-2">
                       <CheckCircle className="h-4 w-4 text-green-500" />
@@ -1635,11 +1544,11 @@ const AlkaaLandingPage: React.FC = () => {
                     </li>
                     <li className="flex items-center gap-2">
                       <CheckCircle className="h-4 w-4 text-green-500" />
-                      API Access
+                      RESTful API Access
                     </li>
                     <li className="flex items-center gap-2">
                       <CheckCircle className="h-4 w-4 text-green-500" />
-                      Mobile App
+                      Multi-Tenant Isolation
                     </li>
                   </ul>
                 </div>
@@ -1669,108 +1578,6 @@ const AlkaaLandingPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Future Roadmap Section */}
-        <section className="py-20">
-          <div className="container max-w-screen-xl px-4 md:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Innovation Roadmap</h2>
-              <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-                We're constantly evolving. Here's what's coming next to make your HR operations even more powerful.
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-8">
-              {/* Q1-Q2 2025 */}
-              <Card className="p-8 border-2 border-primary/20 bg-gradient-to-b from-primary/5 to-background">
-                <div className="text-primary mb-4">
-                  <Target className="h-8 w-8" />
-                </div>
-                <h3 className="text-xl font-bold mb-3">Q1-Q2 2025</h3>
-                <div className="space-y-3 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Smartphone className="h-4 w-4 text-green-500" />
-                    <span>Native Mobile Apps (iOS/Android)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <BarChart3 className="h-4 w-4 text-green-500" />
-                    <span>Advanced HR Analytics Dashboard</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <GitBranch className="h-4 w-4 text-green-500" />
-                    <span>SSO & Enterprise Integrations</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Activity className="h-4 w-4 text-green-500" />
-                    <span>Predictive Analytics</span>
-                  </div>
-                </div>
-              </Card>
-
-              {/* Q3-Q4 2025 */}
-              <Card className="p-8 border-2 border-blue-500/20 bg-gradient-to-b from-blue-500/5 to-background">
-                <div className="text-blue-500 mb-4">
-                  <Cpu className="h-8 w-8" />
-                </div>
-                <h3 className="text-xl font-bold mb-3">Q3-Q4 2025</h3>
-                <div className="space-y-3 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Zap className="h-4 w-4 text-blue-500" />
-                    <span>AI-Powered HR Assistant</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Award className="h-4 w-4 text-blue-500" />
-                    <span>Performance Management 2.0</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-blue-500" />
-                    <span>Recruitment & Applicant Tracking</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <PieChart className="h-4 w-4 text-blue-500" />
-                    <span>Learning Management System</span>
-                  </div>
-                </div>
-              </Card>
-
-              {/* 2026 & Beyond */}
-              <Card className="p-8 border-2 border-green-500/20 bg-gradient-to-b from-green-500/5 to-background">
-                <div className="text-green-500 mb-4">
-                  <Globe className="h-8 w-8" />
-                </div>
-                <h3 className="text-xl font-bold mb-3">2026 & Beyond</h3>
-                <div className="space-y-3 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Layers className="h-4 w-4 text-green-500" />
-                    <span>Microservices Architecture</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Shield className="h-4 w-4 text-green-500" />
-                    <span>Blockchain Credentials</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Globe className="h-4 w-4 text-green-500" />
-                    <span>Global Multi-Region Deployment</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Briefcase className="h-4 w-4 text-green-500" />
-                    <span>Industry-Specific Solutions</span>
-                  </div>
-                </div>
-              </Card>
-            </div>
-
-            <div className="text-center mt-12">
-              <p className="text-muted-foreground mb-6">
-                Want to influence our roadmap? We'd love to hear from you.
-              </p>
-              <Button variant="outline" onClick={() => setDemoDialogOpen(true)}>
-                Share Your Feedback
-                <MessageCircle className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </section>
-
         {/* Final Call to Action */}
         <section className="py-20 bg-gradient-to-r from-primary via-primary to-blue-600">
           <div className="container max-w-screen-xl px-4 md:px-8">
@@ -1779,8 +1586,8 @@ const AlkaaLandingPage: React.FC = () => {
                 Ready to Transform Your HR Operations?
               </h2>
               <p className="text-lg opacity-90 max-w-3xl mx-auto mb-8">
-                Join 10,000+ companies using Alkaa to streamline their workforce management, 
-                reduce administrative overhead, and focus on what matters most - their people.
+                Empower your organization with Alkaa to streamline your workforce management, 
+                reduce administrative overhead, and focus on what matters most - your people.
               </p>
               
               {/* Value Props */}
@@ -1835,120 +1642,50 @@ const AlkaaLandingPage: React.FC = () => {
         </section>
       </main>
 
-      {/* Enhanced Footer */}
-      <footer className="bg-secondary/50 border-t border-border py-16">
+      {/* Clean Modern Enterprise Footer */}
+      <footer className="bg-secondary/40 border-t border-border py-12">
         <div className="container max-w-screen-xl px-4 md:px-8">
-          <div className="grid sm:grid-cols-2 md:grid-cols-5 gap-8 mb-12">
-            {/* Company Info */}
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-2 mb-4">
-                <img src="/logo_icon.svg" alt="Alkaa Logo" className="h-8 w-8" />
-                <span className="text-xl font-bold">Alkaa</span>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-8 border-b border-border/60">
+            {/* Brand Info */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <img src="/logo_icon.svg" alt="Alkaa Logo" className="h-7 w-7" />
+                <span className="text-lg font-bold text-foreground">Alkaa</span>
               </div>
-              <p className="text-sm text-muted-foreground mb-4 max-w-sm">
-                Complete HR Management System designed for modern businesses. 
-                Streamline your workforce management with our cloud-native platform.
-              </p>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Shield className="h-4 w-4 text-green-500" />
-                <span>Enterprise-grade security & compliance</span>
-              </div>
-            </div>
-            
-            {/* Product */}
-            <div>
-              <h3 className="font-semibold mb-4">Product</h3>
-              <ul className="space-y-2">
-                <li><a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a></li>
-                <li><a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</a></li>
-                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">API Documentation</a></li>
-                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Integrations</a></li>
-                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Mobile App</a></li>
-              </ul>
-            </div>
-            
-            {/* Solutions */}
-            <div>
-              <h3 className="font-semibold mb-4">Solutions</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Small Business</a></li>
-                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Enterprise</a></li>
-                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Remote Teams</a></li>
-                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Healthcare</a></li>
-                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Technology</a></li>
-              </ul>
-            </div>
-            
-            {/* Company */}
-            <div>
-              <h3 className="font-semibold mb-4">Company</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">About Us</a></li>
-                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Careers</a></li>
-                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Blog</a></li>
-                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contact</a></li>
-                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Press Kit</a></li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Additional Footer Content */}
-          <div className="grid md:grid-cols-2 gap-8 mb-8 pt-8 border-t border-border">
-            {/* Platform Security */}
-            <div>
-              <h3 className="font-semibold mb-4">Platform & Security</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                ALKAA protects your organization with isolated tenant databases, multi-factor authentication, and granular role permissions.
+              <p className="text-xs text-muted-foreground max-w-md leading-relaxed">
+                Complete HR & Workforce Operating System for modern enterprises. Streamline onboarding, attendance, leave management, and multi-tenant operations.
               </p>
             </div>
 
-            {/* Support & Resources */}
-            <div>
-              <h3 className="font-semibold mb-4">Support & Resources</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Help Center</a></li>
-                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Documentation</a></li>
-                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Status Page</a></li>
-                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Community Forum</a></li>
-              </ul>
+            {/* Quick Working Navigation */}
+            <div className="flex flex-wrap items-center gap-6 text-sm">
+              <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</a>
+              <a href="#testimonials" className="text-muted-foreground hover:text-foreground transition-colors">Testimonials</a>
+              <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
+              <button 
+                type="button"
+                onClick={() => navigate(RouteDict.SignInPage)} 
+                className="text-muted-foreground hover:text-primary font-medium transition-colors"
+              >
+                Sign In
+              </button>
+              <Button 
+                size="sm"
+                onClick={() => setDemoDialogOpen(true)}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold px-4"
+              >
+                Request Demo
+              </Button>
             </div>
           </div>
-          
-          {/* Bottom Footer */}
-          <div className="border-t border-border pt-8 flex flex-col md:flex-row justify-between items-center">
-            <div className="flex flex-col md:flex-row items-center gap-4 mb-4 md:mb-0">
-              <p className="text-sm text-muted-foreground">
-                &copy; {new Date().getFullYear()} Alkaa. All rights reserved.
-              </p>
-              <div className="flex gap-4 text-sm">
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Privacy Policy</a>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Terms of Service</a>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Cookie Policy</a>
-              </div>
+
+          {/* Bottom Attribution */}
+          <div className="pt-6 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-muted-foreground">
+            <div>
+              &copy; {new Date().getFullYear()} Alkaa. All rights reserved.
             </div>
-            
-            {/* Social Links */}
-            <div className="flex gap-4">
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Twitter">
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
-                </svg>
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="LinkedIn">
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fillRule="evenodd" d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" clipRule="evenodd" />
-                </svg>
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="GitHub">
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
-                </svg>
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="YouTube">
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fillRule="evenodd" d="M19.812 5.418c.861.23 1.538.907 1.768 1.768C21.998 8.746 22 12 22 12s0 3.255-.418 4.814a2.504 2.504 0 0 1-1.768 1.768c-1.56.419-7.814.419-7.814.419s-6.255 0-7.814-.419a2.505 2.505 0 0 1-1.768-1.768C2 15.255 2 12 2 12s0-3.255.417-4.814a2.507 2.507 0 0 1 1.768-1.768C5.744 5 11.998 5 11.998 5s6.255 0 7.814.418ZM15.194 12 10 15V9l5.194 3Z" clipRule="evenodd" />
-                </svg>
-              </a>
+            <div>
+              Owned by Shapenxt.
             </div>
           </div>
         </div>
