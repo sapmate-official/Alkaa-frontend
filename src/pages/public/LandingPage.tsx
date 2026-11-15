@@ -14,7 +14,6 @@ import {
   Shield,
   Zap,
   CheckCircle,
-  Database,
   Lock,
   BarChart3,
   DollarSign,
@@ -25,10 +24,6 @@ import {
   Award,
   Briefcase,
   Activity,
-  Code2,
-  Server,
-  Layers,
-  Workflow,
   Sparkles,
   CheckCircle2,
   TrendingUp
@@ -76,28 +71,6 @@ import RouteDict from '@/routes/RouteDict';
 //     </CardContent>
 //   </Card>
 // );
-
-interface TechStackItemProps {
-  name: string;
-  description: string;
-  icon: React.ReactNode;
-  category: string;
-}
-
-const TechStackItem: React.FC<TechStackItemProps> = ({ name, description, icon, category }) => (
-  <Card className="border border-border bg-card hover:shadow-md transition-all duration-300 hover:border-primary/50">
-    <CardContent className="p-4">
-      <div className="flex items-start gap-3">
-        <div className="text-primary mt-1">{icon}</div>
-        <div className="flex-1">
-          <div className="text-xs text-primary font-medium mb-1">{category}</div>
-          <h4 className="font-semibold text-sm mb-1">{name}</h4>
-          <p className="text-xs text-muted-foreground">{description}</p>
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-);
 
 interface SecurityFeatureProps {
   title: string;
@@ -833,99 +806,6 @@ const AlkaaLandingPage: React.FC = () => {
                   </ul>
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Technology & Architecture Section */}
-        <section className="py-20 bg-secondary/30">
-          <div className="container max-w-screen-xl px-4 md:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Built for Scale & Performance</h2>
-              <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-                Modern enterprise web architecture engineered for speed, type safety, and high-availability operations.
-              </p>
-            </div>
-
-            {/* Tech Stack Overview */}
-            <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6 mb-12">
-              <TechStackItem
-                category="Frontend"
-                name="React + TypeScript"
-                description="Modern React 18 with TypeScript and Tailwind CSS for responsive interfaces"
-                icon={<Code2 className="h-5 w-5" />}
-              />
-              <TechStackItem
-                category="Backend"
-                name="Node.js + Express"
-                description="High-performance typed REST APIs with structured error boundaries"
-                icon={<Server className="h-5 w-5" />}
-              />
-              <TechStackItem
-                category="Database"
-                name="PostgreSQL + Prisma"
-                description="Relational database with schema-backed type safety and transactional integrity"
-                icon={<Database className="h-5 w-5" />}
-              />
-              <TechStackItem
-                category="Security"
-                name="Tenant Partitioning"
-                description="Multi-tenant context isolation with role-based access control and audit logging"
-                icon={<Shield className="h-5 w-5" />}
-              />
-            </div>
-
-            {/* Architecture Highlights */}
-            <div className="grid md:grid-cols-2 gap-8">
-              <Card className="p-8 border-border bg-card">
-                <div className="text-primary mb-4">
-                  <Layers className="h-8 w-8" />
-                </div>
-                <h3 className="text-xl font-bold mb-4">Multi-Tenant Architecture</h3>
-                <ul className="space-y-3 text-muted-foreground text-sm">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
-                    Complete data isolation between client organizations
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
-                    Dedicated organization workspaces and subdomains
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
-                    Organization-specific policies and holiday schedules
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
-                    Scoped role permissions and administrative delegation
-                  </li>
-                </ul>
-              </Card>
-
-              <Card className="p-8 border-border bg-card">
-                <div className="text-primary mb-4">
-                  <Workflow className="h-8 w-8" />
-                </div>
-                <h3 className="text-xl font-bold mb-4">RESTful API Design</h3>
-                <ul className="space-y-3 text-muted-foreground text-sm">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
-                    Clean RESTful endpoints for all workforce operations
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
-                    Structured request validation and clear error handling
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
-                    Multi-tenant context injection and session tokens
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
-                    Comprehensive activity event logging for audit compliance
-                  </li>
-                </ul>
-              </Card>
             </div>
           </div>
         </section>
