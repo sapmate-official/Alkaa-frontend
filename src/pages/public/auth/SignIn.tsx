@@ -25,8 +25,8 @@ export default function SignIn() {
   }
   
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center bg-background p-6 md:p-10">
-      <div className="w-full max-w-sm md:max-w-3xl">
+    <div className="flex min-h-svh flex-col items-center justify-center bg-gradient-to-b from-background via-background to-secondary/30 p-4 md:p-8">
+      <div className="w-full max-w-sm md:max-w-4xl">
         <MultiTenantLoginForm />
         
         {/* Debug panel - remove in production */}

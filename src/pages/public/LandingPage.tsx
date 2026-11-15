@@ -42,8 +42,12 @@ import {
   GitBranch,
   Server,
   Layers,
-  Workflow
+  Workflow,
+  Sparkles,
+  CheckCircle2,
+  TrendingUp
 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -513,94 +517,227 @@ const AlkaaLandingPage: React.FC = () => {
               </div>
             </nav>
           </div>        )}      </header>      <main className="flex-1">
-        {/* Hero Section - Enhanced with modern design */}
-        <section className="relative py-20 md:py-32 overflow-hidden">
-          {/* Background Elements */}
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-secondary/20"></div>
-          <div className="absolute top-20 right-20 w-72 h-72 bg-primary/20 rounded-full blur-3xl opacity-50"></div>
-          <div className="absolute bottom-20 left-20 w-64 h-64 bg-secondary/30 rounded-full blur-3xl opacity-50"></div>
+        {/* Modern Enterprise SaaS Hero Section */}
+        <section className="relative pt-12 pb-24 md:pt-20 md:pb-32 overflow-hidden bg-gradient-to-b from-background via-secondary/20 to-background border-b border-border/60">
+          {/* Subtle Ambient Glow */}
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-primary/10 rounded-full blur-[120px] pointer-events-none -z-10" />
           
           <div className="container max-w-screen-xl px-4 md:px-8 relative z-10">
             <div className="flex flex-col items-center text-center">
-              <div className="max-w-4xl space-y-8">
-                {/* Main Heading */}
-                <div className="space-y-4">
-                  <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold leading-tight bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
-                    From HR Chaos to{" "}
-                    <span className="text-primary relative">
-                      Perfect Harmony
-                      <div className="absolute -inset-1 bg-primary/20 rounded-lg blur opacity-30"></div>
-                    </span>
-                  </h1>
-                  <div className="text-xl md:text-2xl text-muted-foreground font-medium">
-                    Streamline Your Workforce with Alkaa
-                  </div>
+              <div className="max-w-4xl space-y-6">
+                {/* 1. Announcement Badge */}
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-primary transition-all hover:bg-primary/15">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>ALKAA 2.0 • Unified Enterprise Workforce Operating System</span>
+                  <ArrowRight className="h-3 w-3" />
                 </div>
 
-                {/* Description */}
-                <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-3xl">
-                  Streamline your workforce management with our <span className="text-primary font-semibold">cloud-native HR platform</span>. 
-                  From employee onboarding to payroll processing, manage everything in one comprehensive, secure system.
+                {/* 2. Main Heading */}
+                <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight leading-[1.1] text-foreground">
+                  From HR Chaos to{" "}
+                  <span className="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+                    Workforce Harmony
+                  </span>
+                </h1>
+
+                {/* 3. Description */}
+                <p className="text-base sm:text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
+                  Streamline your workforce with our enterprise cloud-native HR platform. From candidate invitation and KYC verification to shift attendance and automated multi-tenant payroll.
                 </p>
 
-                {/* Value Propositions */}
-                <div className="grid sm:grid-cols-3 gap-4 py-4 max-w-2xl mx-auto">
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-card/50 border border-border/50">
-                    <Zap className="h-5 w-5 text-primary" />
-                    <span className="text-sm font-medium">80% Time Saved</span>
+                {/* 4. Value Propositions Chips */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-2 max-w-2xl mx-auto text-left">
+                  <div className="flex items-center gap-2.5 p-3 rounded-lg bg-card border border-border shadow-xs">
+                    <div className="p-1.5 rounded-md bg-primary/10 text-primary">
+                      <Zap className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-foreground">85% Faster</div>
+                      <div className="text-[11px] text-muted-foreground">Automated Onboarding</div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-card/50 border border-border/50">
-                    <Globe className="h-5 w-5 text-primary" />
-                    <span className="text-sm font-medium">Multi-Tenant</span>
+                  <div className="flex items-center gap-2.5 p-3 rounded-lg bg-card border border-border shadow-xs">
+                    <div className="p-1.5 rounded-md bg-primary/10 text-primary">
+                      <Building2 className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-foreground">Multi-Tenant</div>
+                      <div className="text-[11px] text-muted-foreground">Isolated Workspaces</div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-card/50 border border-border/50">
-                    <Shield className="h-5 w-5 text-primary" />
-                    <span className="text-sm font-medium">Enterprise Security</span>
+                  <div className="flex items-center gap-2.5 p-3 rounded-lg bg-card border border-border shadow-xs">
+                    <div className="p-1.5 rounded-md bg-primary/10 text-primary">
+                      <Shield className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-foreground">Bank-Grade</div>
+                      <div className="text-[11px] text-muted-foreground">SOC-2 Type II Certified</div>
+                    </div>
                   </div>
                 </div>
 
-                {/* CTA Buttons */}
-                <div className="flex flex-col sm:flex-row gap-4 pt-6 justify-center">
+                {/* 5. CTA Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3 pt-3 justify-center items-center">
                   <Button 
-                    onClick={()=>navigate(RouteDict.SignUpPage)} 
-                    className="text-base px-8 py-6 bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                    onClick={() => navigate(RouteDict.SignUpPage)} 
+                    className="text-sm font-semibold px-7 py-5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md transition-all hover:shadow-lg"
                   >
-                    Start Free Trial
-                    <ArrowRight className="ml-2 h-5 w-5" />
+                    Start 14-Day Free Trial
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                   <Button 
                     variant="outline" 
-                    className="text-base px-8 py-6 border-2 hover:bg-secondary/50 transition-all duration-300"
+                    className="text-sm font-medium px-7 py-5 border-border bg-card hover:bg-secondary transition-all"
                     onClick={() => setDemoDialogOpen(true)}
                   >
-                    <PlayCircle className="mr-2 h-5 w-5" />
-                    Watch Demo
+                    <PlayCircle className="mr-2 h-4 w-4 text-primary" />
+                    Watch Interactive Demo
                   </Button>
                 </div>
 
-                {/* Trust Indicators */}
-                <div className="flex flex-wrap items-center justify-center gap-6 pt-4">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                    <span className="text-sm text-muted-foreground font-medium">14-day free trial</span>
+                {/* 6. Trust Indicators */}
+                <div className="flex flex-wrap items-center justify-center gap-5 pt-1 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
+                    14-day free trial
+                  </span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
+                    No credit card required
+                  </span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
+                    Setup in under 5 minutes
+                  </span>
+                </div>
+              </div>
+
+              {/* 7. Product Preview UI Centerpiece Mockup */}
+              <div className="mt-14 w-full max-w-5xl relative">
+                {/* Floating Telemetry Badge - Top Right */}
+                <div className="hidden lg:flex items-center gap-2.5 absolute -top-4 -right-4 z-20 px-3.5 py-2 rounded-xl bg-card border border-border shadow-lg animate-bounce duration-1000">
+                  <div className="p-1 rounded-full bg-emerald-500/10 text-emerald-600">
+                    <CheckCircle2 className="h-4 w-4" />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                    <span className="text-sm text-muted-foreground font-medium">No credit card required</span>
+                  <div className="text-left">
+                    <div className="text-xs font-bold text-foreground">Sarah Jenkins Verified</div>
+                    <div className="text-[10px] text-muted-foreground">DevOps Lead • Account Provisioned</div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                    <span className="text-sm text-muted-foreground font-medium">Setup in 24 hours</span>
+                </div>
+
+                {/* Floating Telemetry Badge - Bottom Left */}
+                <div className="hidden lg:flex items-center gap-2.5 absolute -bottom-5 -left-4 z-20 px-3.5 py-2 rounded-xl bg-card border border-border shadow-lg">
+                  <div className="p-1 rounded-full bg-primary/10 text-primary">
+                    <Sparkles className="h-4 w-4" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-xs font-bold text-foreground">Nov 2026 Payroll Executed</div>
+                    <div className="text-[10px] text-emerald-600 font-medium">100% Disbursed across 142 Staff</div>
+                  </div>
+                </div>
+
+                {/* Browser Shell Frame */}
+                <div className="rounded-2xl border border-border/80 bg-card shadow-2xl overflow-hidden text-left">
+                  {/* Browser Window Bar */}
+                  <div className="flex items-center justify-between px-4 py-3 bg-secondary/50 border-b border-border">
+                    <div className="flex items-center gap-2">
+                      <span className="w-3 h-3 rounded-full bg-red-400" />
+                      <span className="w-3 h-3 rounded-full bg-amber-400" />
+                      <span className="w-3 h-3 rounded-full bg-emerald-400" />
+                    </div>
+                    <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-card/80 border border-border/80 text-[11px] text-muted-foreground font-mono">
+                      <Lock className="h-3 w-3 text-emerald-500" />
+                      <span>https://app.alkaa.io/dashboard/command-center</span>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20">
+                      Acme Technologies
+                    </Badge>
+                  </div>
+
+                  {/* Mockup Dashboard Content */}
+                  <div className="p-5 md:p-6 space-y-5 bg-card">
+                    {/* Metric Cards Row */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+                      <div className="p-3.5 rounded-xl bg-secondary/30 border border-border/80">
+                        <div className="text-xs text-muted-foreground font-medium">Total Headcount</div>
+                        <div className="text-2xl font-bold text-foreground mt-1">142</div>
+                        <div className="text-[11px] text-emerald-600 font-medium mt-1 flex items-center gap-1">
+                          <TrendingUp className="h-3 w-3" /> +4 this cycle
+                        </div>
+                      </div>
+                      <div className="p-3.5 rounded-xl bg-secondary/30 border border-border/80">
+                        <div className="text-xs text-muted-foreground font-medium">Present Today</div>
+                        <div className="text-2xl font-bold text-foreground mt-1">94.2%</div>
+                        <div className="text-[11px] text-muted-foreground mt-1">134 Clocked In</div>
+                      </div>
+                      <div className="p-3.5 rounded-xl bg-secondary/30 border border-border/80">
+                        <div className="text-xs text-muted-foreground font-medium">Onboarding Pipeline</div>
+                        <div className="text-2xl font-bold text-primary mt-1">6</div>
+                        <div className="text-[11px] text-amber-600 font-medium mt-1">2 Pending Review</div>
+                      </div>
+                      <div className="p-3.5 rounded-xl bg-secondary/30 border border-border/80">
+                        <div className="text-xs text-muted-foreground font-medium">Leave Requests</div>
+                        <div className="text-2xl font-bold text-foreground mt-1">3</div>
+                        <div className="text-[11px] text-muted-foreground mt-1">1 Requires Approval</div>
+                      </div>
+                    </div>
+
+                    {/* Mini Data Table Snapshot */}
+                    <div className="rounded-xl border border-border overflow-hidden">
+                      <div className="px-4 py-2.5 bg-secondary/40 border-b border-border flex items-center justify-between text-xs font-semibold text-muted-foreground">
+                        <span>Recent Candidate Verification Queue</span>
+                        <span className="text-[11px] text-primary font-normal">View Pipeline →</span>
+                      </div>
+                      <div className="divide-y divide-border text-xs">
+                        <div className="px-4 py-2.5 flex items-center justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-full bg-primary/20 text-primary font-bold text-xs flex items-center justify-center">
+                              SJ
+                            </div>
+                            <div>
+                              <div className="font-semibold text-foreground">Sarah Jenkins</div>
+                              <div className="text-[11px] text-muted-foreground">Senior DevOps Engineer • Engineering</div>
+                            </div>
+                          </div>
+                          <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 border-amber-200 text-[10px]">
+                            Under Review
+                          </Badge>
+                        </div>
+                        <div className="px-4 py-2.5 flex items-center justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-700 font-bold text-xs flex items-center justify-center">
+                              DK
+                            </div>
+                            <div>
+                              <div className="font-semibold text-foreground">David Kim</div>
+                              <div className="text-[11px] text-muted-foreground">Senior UI/UX Designer • Product Design</div>
+                            </div>
+                          </div>
+                          <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-[10px]">
+                            Verified
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* Scroll Indicator */}
-          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-            <div className="w-6 h-10 border-2 border-muted-foreground/30 rounded-full p-1">
-              <div className="w-1 h-3 bg-muted-foreground/50 rounded-full mx-auto animate-pulse"></div>
+              {/* 8. Enterprise Social Proof Logo Bar */}
+              <div className="pt-16 pb-2 w-full max-w-4xl">
+                <div className="text-xs font-semibold tracking-wider text-muted-foreground uppercase mb-6">
+                  Trusted by Leading Enterprises & High-Growth Organizations
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-8 md:gap-14 opacity-70">
+                  <span className="font-bold tracking-widest text-sm text-foreground">VORTEX LABS</span>
+                  <span className="font-bold tracking-widest text-sm text-foreground">ACME DYNAMICS</span>
+                  <span className="font-bold tracking-widest text-sm text-foreground">NOVASOFT</span>
+                  <span className="font-bold tracking-widest text-sm text-foreground">SCALEFLOW</span>
+                  <span className="font-bold tracking-widest text-sm text-foreground">NEXUS ENTERPRISE</span>
+                </div>
+              </div>
             </div>
           </div>
         </section>
