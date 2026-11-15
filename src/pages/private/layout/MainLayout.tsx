@@ -66,15 +66,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
   const fetchLeaveRequests = async () => {
     try {
-      const response = await axios.get(`${APIDictionary.leave_request}/manager/${user?.id}`, { withCredentials: true })
-      if (response.status === 200) {
-        setLeaveRequestsNumber(response.data.some((request: any) => request.status === "Pending") ? response.data.length : 0);
+      const response = await axios.get(`${APIDictionary.leave_request}/manager/${user?.id}`, { withCredentials: true });
+      if (response.status === 200 && Array.isArray(response.data)) {
+        const pendingCount = response.data.filter(
+          (request: { status?: string }) => request.status?.toUpperCase() === 'PENDING'
+        ).length;
+        setLeaveRequestsNumber(pendingCount);
       }
     } catch (error) {
       console.log("Error fetching leave requests", error);
-
     }
-  }
+  };
   useEffect(() => {
     if (user && !isLoading && !isSuperAdmin) {
       fetchLeaveRequests()
