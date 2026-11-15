@@ -43,10 +43,10 @@ export const APIDictionary = {
     leave_balance: `${backendDomain}/api/v2/leave-balance`,
     attendance: `${backendDomain}/api/v2/attendance`,
     payroll: `${legacyBackendDomain}/api/v2/payroll`,
-    events: `${legacyBackendDomain}/api/v2/events`,
+    events: `${backendDomain}/api/v2/events`,
     bank: `${backendDomain}/api/v2/bank-details`,
     payrollParameters: (userId: string) => `${legacyBackendDomain}/api/v2/payroll/parameters/${userId}`,
-    notification: `${legacyBackendDomain}/api/v2/notification`,
+    notification: `${backendDomain}/api/v2/notification`,
     department: `${backendDomain}/api/v2/department`,
     dashboard: (userId: string) => `${backendDomain}/api/v2/screen/dashboard/${userId}`,
     dashboardSummary: `${backendDomain}/api/v1/dashboard/summary`,
@@ -67,9 +67,9 @@ export const APIDictionary = {
     allBankDetails: () => `${backendDomain}/api/v2/bank-details`,
 
     // Activity Logs Endpoints
-    activityLogs: `${legacyBackendDomain}/api/v2/activity-logs`,
-    activityStats: `${legacyBackendDomain}/api/v2/activity-logs/stats`,
-    userRecentActivities: (targetUserId: string) => `${legacyBackendDomain}/api/v2/activity-logs/user/${targetUserId}/recent`,
+    activityLogs: `${backendDomain}/api/v2/activity-logs`,
+    activityStats: `${backendDomain}/api/v2/activity-logs/stats`,
+    userRecentActivities: (targetUserId: string) => `${backendDomain}/api/v2/activity-logs/user/${targetUserId}/recent`,
 
     // Onboarding Endpoints
     onboarding: `${backendDomain}/api/v2/onboarding`,

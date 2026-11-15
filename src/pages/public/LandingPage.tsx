@@ -1,10 +1,7 @@
-import React, { useState, useCallback, memo } from 'react';
+import React, { useState } from 'react';
 import { 
   Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+  CardContent 
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -13,13 +10,10 @@ import {
   Clock,
   Building2,
   ArrowRight,
-  Loader2,
   Users,
   Shield,
   Zap,
   CheckCircle,
-  Star,
-  PlayCircle,
   Database,
   Lock,
   BarChart3,
@@ -41,11 +35,6 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { backendDomain } from '@/constants/Domain';
-import { useToast } from '@/hooks/use-toast';
 import RouteDict from '@/routes/RouteDict';
 
 // interface FeatureCardProps {
@@ -136,290 +125,9 @@ const SecurityFeature: React.FC<SecurityFeatureProps> = ({ title, description, i
   </Card>
 );
 
-interface PricingTierProps {
-  title: string;
-  price: string;
-  description: string;
-  billingInfo: string;
-  buttonText: string;
-  highlighted?: boolean;
-  popularTag?: boolean;
-  onButtonClick?: () => void;
-}
-
-const PricingTier: React.FC<PricingTierProps> = ({ 
-  title, 
-  price, 
-  description, 
-  billingInfo,
-  buttonText, 
-  highlighted = false,
-  popularTag = false,
-  onButtonClick
-}) => (
-  <Card className={`border ${highlighted ? 'border-primary bg-secondary/50' : 'border-border bg-card'} h-full flex flex-col relative`}>
-    {popularTag && (
-      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-white px-4 py-1 rounded-full text-sm font-medium">
-        Most Popular
-      </div>
-    )}
-    <CardHeader className="pb-2">
-      <CardTitle className="text-xl">{title}</CardTitle>
-      <CardDescription>{description}</CardDescription>
-    </CardHeader>
-    <CardContent className="flex-1 flex flex-col justify-between">
-      <div>
-        <div className="mb-6">
-          <span className="text-4xl font-bold">{price}</span>
-          {price !== 'Custom' && <span className="text-muted-foreground">/month</span>}
-          <p className="text-sm text-muted-foreground mt-1">{billingInfo}</p>
-        </div>
-        <div className="py-4">
-          <p className="text-center font-medium">All Features Included</p>
-        </div>
-      </div>      <Button 
-        onClick={onButtonClick}
-        className={`w-full mt-4 ${highlighted ? 'bg-primary hover:bg-primary/90 text-white' : 'bg-secondary text-foreground hover:bg-secondary/80'}`}
-      >
-        {buttonText}
-      </Button>
-    </CardContent>
-  </Card>
-);
-
-interface DemoDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  formData: {
-    name: string;
-    company: string;
-    phoneNumber: string;
-    email: string;
-  };
-  formErrors: {
-    name: string;
-    company: string;
-    phoneNumber: string;
-    email: string;
-  };
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleDemoRequest: (e: React.FormEvent) => void;
-  isSubmitting: boolean;
-}
-
-// Memoized dialog component to prevent unnecessary re-renders
-const DemoRequestDialog = memo(({
-  open,
-  onOpenChange,
-  formData,
-  formErrors,
-  handleInputChange,
-  handleDemoRequest,
-  isSubmitting
-}: DemoDialogProps) => (
-  <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent className="sm:max-w-[425px]">
-      <DialogHeader>
-        <DialogTitle>Request a Demo</DialogTitle>
-        <DialogDescription>
-          Fill out the form below and our team will contact you to schedule a personalized demo.
-        </DialogDescription>
-      </DialogHeader>
-      <form onSubmit={handleDemoRequest} className="space-y-4 mt-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Full Name</Label>
-          <Input 
-            id="name" 
-            name="name" 
-            placeholder="John Doe" 
-            value={formData.name}
-            onChange={handleInputChange}
-            className={formErrors.name ? "border-red-500" : ""}
-          />
-          {formErrors.name && <p className="text-sm text-red-500">{formErrors.name}</p>}
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="company">Company Name</Label>
-          <Input 
-            id="company" 
-            name="company" 
-            placeholder="Acme Inc." 
-            value={formData.company}
-            onChange={handleInputChange}
-            className={formErrors.company ? "border-red-500" : ""}
-          />
-          {formErrors.company && <p className="text-sm text-red-500">{formErrors.company}</p>}
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="phoneNumber">Phone Number</Label>
-          <Input 
-            id="phoneNumber" 
-            name="phoneNumber" 
-            placeholder="+91 98765 43210" 
-            value={formData.phoneNumber}
-            onChange={handleInputChange}
-            className={formErrors.phoneNumber ? "border-red-500" : ""}
-          />
-          {formErrors.phoneNumber && <p className="text-sm text-red-500">{formErrors.phoneNumber}</p>}
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input 
-            id="email" 
-            name="email" 
-            type="email" 
-            placeholder="john@example.com" 
-            value={formData.email}
-            onChange={handleInputChange}
-            className={formErrors.email ? "border-red-500" : ""}
-          />
-          {formErrors.email && <p className="text-sm text-red-500">{formErrors.email}</p>}
-        </div>
-        
-        <div className="pt-4 flex justify-end">
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Submitting...
-              </>
-            ) : 'Request Demo'}
-          </Button>
-        </div>
-      </form>
-    </DialogContent>
-  </Dialog>
-));
-
-DemoRequestDialog.displayName = "DemoRequestDialog";
-
 const AlkaaLandingPage: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [demoDialogOpen, setDemoDialogOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    company: '',
-    phoneNumber: '',
-    email: ''
-  });
-  const [formErrors, setFormErrors] = useState({
-    name: '',
-    company: '',
-    phoneNumber: '',
-    email: ''
-  });
-  
   const navigate = useNavigate();
-  const { toast } = useToast();
-  
-  // Use useCallback to memoize handlers so they don't cause re-renders
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prevData => ({
-      ...prevData,
-      [name]: value
-    }));
-    
-    setFormErrors(prevErrors => {
-      if (prevErrors[name as keyof typeof prevErrors]) {
-        return {
-          ...prevErrors,
-          [name]: ''
-        };
-      }
-      return prevErrors;
-    });
-  }, []);
-  
-  const validateForm = useCallback(() => {
-    let valid = true;
-    const newErrors = { ...formErrors };
-    
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-      valid = false;
-    }
-    
-    if (!formData.company.trim()) {
-      newErrors.company = 'Company name is required';
-      valid = false;
-    }
-    
-    if (!formData.phoneNumber.trim()) {
-      newErrors.phoneNumber = 'Phone number is required';
-      valid = false;
-    } else if (!/^\d{10}$/.test(formData.phoneNumber.replace(/\D/g, ''))) {
-      newErrors.phoneNumber = 'Please enter a valid phone number';
-      valid = false;
-    }
-    
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-      valid = false;
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-      valid = false;
-    }
-    
-    setFormErrors(newErrors);
-    return valid;
-  }, [formData, formErrors]);
-  
-  const handleDemoRequest = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
-    try {
-      const response = await fetch(`${backendDomain}/api/v2/public/demo-request`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
-      });
-      
-      const data = await response.json();
-      
-      if (response.ok) {
-        toast({
-          title: "Demo Request Submitted",
-          description: "We'll contact you soon to schedule your demo!",
-          variant: "default"
-        });
-        setDemoDialogOpen(false);
-        setFormData({
-          name: '',
-          company: '',
-          phoneNumber: '',
-          email: ''
-        });
-      } else {
-        toast({
-          title: "Submission Failed",
-          description: data.error || "Please try again later.",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      console.error("Error submitting demo request:", error);
-      toast({
-        title: "Submission Error",
-        description: "Unable to submit your request. Please try again later.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [formData, toast, validateForm]);
 
   return (
     <div className="min-h-screen flex flex-col" style={{ scrollBehavior: 'smooth' }}>
@@ -439,10 +147,8 @@ const AlkaaLandingPage: React.FC = () => {
           
           <nav className="hidden md:flex items-center gap-6">
             <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Features</a>
-            <a href="#testimonials" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Testimonials</a>
-            <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
-            <Button onClick={()=>navigate(RouteDict.SignInPage)} variant="outline">Log in</Button>
-            <Button onClick={()=>setDemoDialogOpen(true)}>Get Started</Button>
+            <Button onClick={()=>navigate(RouteDict.SignInPage)} variant="outline">Sign In</Button>
+            <Button onClick={()=>navigate(RouteDict.SignUpPage)}>Register</Button>
           </nav>
           
           <div className="md:hidden">
@@ -489,26 +195,14 @@ const AlkaaLandingPage: React.FC = () => {
               >
                 Features
               </a>
-              <a 
-                href="#testimonials" 
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Testimonials
-              </a>
-              <a 
-                href="#pricing" 
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Pricing
-              </a>
               <div className="flex flex-col gap-2 pt-2">
-                <Button onClick={()=>navigate(RouteDict.SignInPage)} variant="outline">Log in</Button>
-                <Button onClick={()=>navigate(RouteDict.SignUpPage)}>Get Started</Button>
+                <Button onClick={()=>navigate(RouteDict.SignInPage)} variant="outline">Sign In</Button>
+                <Button onClick={()=>navigate(RouteDict.SignUpPage)}>Register</Button>
               </div>
             </nav>
-          </div>        )}      </header>      <main className="flex-1">
+          </div>
+        )}
+      </header>      <main className="flex-1">
         {/* Modern Enterprise SaaS Hero Section */}
         <section className="relative pt-12 pb-24 md:pt-20 md:pb-32 overflow-hidden bg-gradient-to-b from-background via-secondary/20 to-background border-b border-border/60">
           {/* Subtle Ambient Glow */}
@@ -544,8 +238,8 @@ const AlkaaLandingPage: React.FC = () => {
                       <Zap className="h-4 w-4" />
                     </div>
                     <div>
-                      <div className="text-xs font-bold text-foreground">85% Faster</div>
-                      <div className="text-[11px] text-muted-foreground">Automated Onboarding</div>
+                      <div className="text-xs font-bold text-foreground">Digital Onboarding</div>
+                      <div className="text-[11px] text-muted-foreground">Candidate KYC & Reviews</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2.5 p-3 rounded-lg bg-card border border-border shadow-xs">
@@ -574,35 +268,16 @@ const AlkaaLandingPage: React.FC = () => {
                     onClick={() => navigate(RouteDict.SignUpPage)} 
                     className="text-sm font-semibold px-7 py-5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md transition-all hover:shadow-lg"
                   >
-                    Start 14-Day Free Trial
+                    Get Started
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                   <Button 
                     variant="outline" 
                     className="text-sm font-medium px-7 py-5 border-border bg-card hover:bg-secondary transition-all"
-                    onClick={() => setDemoDialogOpen(true)}
+                    onClick={() => navigate(RouteDict.SignInPage)}
                   >
-                    <PlayCircle className="mr-2 h-4 w-4 text-primary" />
-                    Watch Interactive Demo
+                    Sign In to Workspace
                   </Button>
-                </div>
-
-                {/* 6. Trust Indicators */}
-                <div className="flex flex-wrap items-center justify-center gap-5 pt-1 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1.5">
-                    <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
-                    14-day free trial
-                  </span>
-                  <span>•</span>
-                  <span className="flex items-center gap-1.5">
-                    <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
-                    No credit card required
-                  </span>
-                  <span>•</span>
-                  <span className="flex items-center gap-1.5">
-                    <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
-                    Setup in under 5 minutes
-                  </span>
                 </div>
               </div>
 
@@ -717,19 +392,6 @@ const AlkaaLandingPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* 8. Enterprise Social Proof Logo Bar */}
-              <div className="pt-16 pb-2 w-full max-w-4xl">
-                <div className="text-xs font-semibold tracking-wider text-muted-foreground uppercase mb-6">
-                  Trusted by Leading Enterprises & High-Growth Organizations
-                </div>
-                <div className="flex flex-wrap items-center justify-center gap-8 md:gap-14 opacity-70">
-                  <span className="font-bold tracking-widest text-sm text-foreground">VORTEX LABS</span>
-                  <span className="font-bold tracking-widest text-sm text-foreground">ACME DYNAMICS</span>
-                  <span className="font-bold tracking-widest text-sm text-foreground">NOVASOFT</span>
-                  <span className="font-bold tracking-widest text-sm text-foreground">SCALEFLOW</span>
-                  <span className="font-bold tracking-widest text-sm text-foreground">NEXUS ENTERPRISE</span>
-                </div>
-              </div>
             </div>
           </div>
         </section>
@@ -740,53 +402,48 @@ const AlkaaLandingPage: React.FC = () => {
             <div className="text-center mb-20">
               <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-6">
                 <Target className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium text-primary">Our Mission</span>
+                <span className="text-sm font-medium text-primary">Platform Capabilities</span>
               </div>
               <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-                Simplifying HR for the Digital Age
+                Modern HR & Workforce Operations
               </h2>
               <p className="text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
-                To simplify and digitize HR processes while providing organizations with powerful tools for 
-                workforce management, compliance tracking, and <span className="text-primary font-semibold">data-driven decision making</span>.
+                Empowering organizations with structured employee directories, verified KYC onboarding, attendance tracking, and reliable payroll management.
               </p>
             </div>
 
-            {/* Key Benefits Grid */}
+            {/* Key Pillars Grid */}
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
               <div className="text-center p-8 rounded-2xl bg-gradient-to-b from-card to-card/50 border border-border/50 hover:shadow-lg transition-all duration-300">
                 <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-2xl flex items-center justify-center">
                   <Zap className="h-8 w-8 text-primary" />
                 </div>
-                <h3 className="text-2xl font-bold text-primary mb-2">80%</h3>
-                <p className="text-sm font-medium mb-2">Automation</p>
-                <p className="text-xs text-muted-foreground">Reduce manual HR tasks</p>
+                <h3 className="text-lg font-bold text-foreground mb-2">Automated Flows</h3>
+                <p className="text-xs text-muted-foreground">Digital candidate onboarding, KYC submission, and document verification.</p>
               </div>
               
               <div className="text-center p-8 rounded-2xl bg-gradient-to-b from-card to-card/50 border border-border/50 hover:shadow-lg transition-all duration-300">
-                <div className="w-16 h-16 mx-auto mb-4 bg-green-500/10 rounded-2xl flex items-center justify-center">
-                  <Shield className="h-8 w-8 text-green-500" />
+                <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-2xl flex items-center justify-center">
+                  <Shield className="h-8 w-8 text-primary" />
                 </div>
-                <h3 className="text-2xl font-bold text-green-500 mb-2">100%</h3>
-                <p className="text-sm font-medium mb-2">Compliance</p>
-                <p className="text-xs text-muted-foreground">Built-in audit trails</p>
+                <h3 className="text-lg font-bold text-foreground mb-2">Role-Based Access</h3>
+                <p className="text-xs text-muted-foreground">Granular permissions with complete audit trails for every organizational action.</p>
               </div>
               
               <div className="text-center p-8 rounded-2xl bg-gradient-to-b from-card to-card/50 border border-border/50 hover:shadow-lg transition-all duration-300">
-                <div className="w-16 h-16 mx-auto mb-4 bg-blue-500/10 rounded-2xl flex items-center justify-center">
-                  <Users className="h-8 w-8 text-blue-500" />
+                <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-2xl flex items-center justify-center">
+                  <Building2 className="h-8 w-8 text-primary" />
                 </div>
-                <h3 className="text-2xl font-bold text-blue-500 mb-2">1000+</h3>
-                <p className="text-sm font-medium mb-2">Scalability</p>
-                <p className="text-xs text-muted-foreground">Support for large orgs</p>
+                <h3 className="text-lg font-bold text-foreground mb-2">Multi-Tenant</h3>
+                <p className="text-xs text-muted-foreground">Strict organizational data isolation across branches, departments, and roles.</p>
               </div>
               
               <div className="text-center p-8 rounded-2xl bg-gradient-to-b from-card to-card/50 border border-border/50 hover:shadow-lg transition-all duration-300">
-                <div className="w-16 h-16 mx-auto mb-4 bg-orange-500/10 rounded-2xl flex items-center justify-center">
-                  <BarChart3 className="h-8 w-8 text-orange-500" />
+                <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-2xl flex items-center justify-center">
+                  <BarChart3 className="h-8 w-8 text-primary" />
                 </div>
-                <h3 className="text-2xl font-bold text-orange-500 mb-2">Real-time</h3>
-                <p className="text-sm font-medium mb-2">Analytics</p>
-                <p className="text-xs text-muted-foreground">Insights & reporting</p>
+                <h3 className="text-lg font-bold text-foreground mb-2">Live Workforce KPIs</h3>
+                <p className="text-xs text-muted-foreground">Real-time attendance summaries, shift tracking, and salary analytics.</p>
               </div>
             </div>
 
@@ -1326,316 +983,31 @@ const AlkaaLandingPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Customer Success Stories */}
-        <section id="testimonials" className="py-20 bg-secondary/30">
+        {/* Streamlined Call to Action */}
+        <section className="py-20 bg-secondary/30 border-t border-border">
           <div className="container max-w-screen-xl px-4 md:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Trusted by Leading Organizations</h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                See how companies across industries are transforming their HR operations with Alkaa.
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-8">
-              <Card className="p-8 border-border bg-card">
-                <div className="flex items-center mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-                  ))}
-                </div>
-                <blockquote className="text-muted-foreground mb-4">
-                  "Alkaa transformed our HR operations completely. What used to take hours now takes minutes. 
-                  The automated payroll and attendance tracking have been game-changers for our 200+ employee organization."
-                </blockquote>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                    <Building2 className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <div className="font-semibold">Sarah Chen</div>
-                    <div className="text-sm text-muted-foreground">HR Director, TechFlow Solutions</div>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-8 border-border bg-card">
-                <div className="flex items-center mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-                  ))}
-                </div>
-                <blockquote className="text-muted-foreground mb-4">
-                  "The onboarding process is now seamless. New employees love the self-service portal, 
-                  and our HR team can focus on strategic initiatives instead of paperwork."
-                </blockquote>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                    <Users className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <div className="font-semibold">Michael Rodriguez</div>
-                    <div className="text-sm text-muted-foreground">People Operations, GrowthCorp</div>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-8 border-border bg-card">
-                <div className="flex items-center mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-                  ))}
-                </div>
-                <blockquote className="text-muted-foreground mb-4">
-                  "Security and compliance were our top concerns. Alkaa's enterprise-grade security 
-                  and audit features give us complete confidence in our data protection."
-                </blockquote>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                    <Shield className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <div className="font-semibold">Dr. Emily Watson</div>
-                    <div className="text-sm text-muted-foreground">CHRO, MedCare Systems</div>
-                  </div>
-                </div>
-              </Card>
-            </div>
-
-            {/* Success Metrics */}
-            <div className="mt-16 grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              <div className="text-center">
-                <div className="text-4xl font-bold text-primary mb-2">80%</div>
-                <div className="text-lg font-semibold mb-1">Time Reduction</div>
-                <div className="text-sm text-muted-foreground">in HR administrative tasks</div>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold text-primary mb-2">95%</div>
-                <div className="text-lg font-semibold mb-1">User Satisfaction</div>
-                <div className="text-sm text-muted-foreground">from employees and HR teams</div>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold text-primary mb-2">100%</div>
-                <div className="text-lg font-semibold mb-1">Data Accuracy</div>
-                <div className="text-sm text-muted-foreground">with automated calculations</div>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold text-primary mb-2">24hrs</div>
-                <div className="text-lg font-semibold mb-1">Implementation</div>
-                <div className="text-sm text-muted-foreground">average setup time</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Pricing Section - Enhanced */}
-        <section id="pricing" className="py-20 bg-secondary/30">
-          <div className="container max-w-screen-xl px-4 md:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple, Transparent Pricing</h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Choose the plan that scales with your organization. All plans include the complete HR suite.
-              </p>
-              
-              {/* Highlight the key pricing */}
-              <div className="bg-gradient-to-r from-primary/20 to-secondary/20 rounded-2xl p-8 mt-8 mb-8 border-2 border-primary/30">
-                <div className="text-center">
-                  <div className="inline-flex items-center gap-2 bg-primary/20 px-4 py-2 rounded-full mb-4">
-                    <Star className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-semibold text-primary">Special Offer</span>
-                  </div>
-                  <h3 className="text-3xl md:text-4xl font-bold mb-2">
-                    <span className="text-primary">₹1 per day</span> per employee
-                  </h3>
-                  <p className="text-lg text-muted-foreground mb-4">
-                    For complete HR management solution • Annual subscription
-                  </p>
-                  <div className="text-sm text-muted-foreground">
-                    <span className="font-medium">One-time implementation charge: ₹4,999</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-12">
-              <PricingTier
-                title="Small Team"
-                price="₹7,300"
-                description="Perfect for small teams"
-                billingInfo="20 employees • ₹1/day/employee • Annual billing"
-                buttonText="Start Free Trial"
-                onButtonClick={() => navigate(RouteDict.SignUpPage)}
-              />
-              <PricingTier
-                title="Growing Business"
-                price="₹18,250"
-                description="Ideal for growing companies"
-                billingInfo="50 employees • ₹1/day/employee • Annual billing"
-                buttonText="Start Free Trial"
-                highlighted={true}
-                popularTag={true}
-                onButtonClick={() => navigate(RouteDict.SignUpPage)}
-              />
-              <PricingTier
-                title="Enterprise"
-                price="Custom"
-                description="For large organizations"
-                billingInfo="50+ employees • Custom pricing • Dedicated support"
-                buttonText="Contact Sales"
-                onButtonClick={() => setDemoDialogOpen(true)}
-              />
-            </div>
-
-            {/* Feature Comparison */}
-            <div className="bg-card rounded-lg border border-border p-8 max-w-4xl mx-auto">
-              <h3 className="text-xl font-bold text-center mb-6">What's Included in Every Plan</h3>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-primary">Core HR Features</h4>
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      Employee Management
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      Attendance Tracking
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      Leave Management
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      Payroll Processing
-                    </li>
-                  </ul>
-                </div>
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-primary">Advanced Features</h4>
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      Performance Analytics
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      Role-Based Access
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      Document Management
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      Audit Trails
-                    </li>
-                  </ul>
-                </div>
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-primary">Support & Security</h4>
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      Dedicated Support
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      Enterprise Security
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      RESTful API Access
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      Multi-Tenant Isolation
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-            
-            <div className="text-center mt-12 max-w-2xl mx-auto">
-              <div className="bg-card/80 rounded-xl p-6 border border-border mb-6">
-                <h4 className="font-semibold mb-3">Implementation & Setup</h4>
-                <div className="text-2xl font-bold text-primary mb-2">₹4,999</div>
-                <p className="text-sm text-muted-foreground">
-                  One-time setup fee includes data migration, system configuration, and training
-                </p>
-              </div>
-              
-              <p className="text-muted-foreground mb-4">
-                Start with a <span className="font-medium text-foreground">14-day free trial</span> - 
-                no credit card required. Implementation begins after trial approval.
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Need custom features or integrations? 
-                <button onClick={() => setDemoDialogOpen(true)} className="text-primary hover:underline ml-1">
-                  Contact our sales team
-                </button> for personalized solutions.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Final Call to Action */}
-        <section className="py-20 bg-gradient-to-r from-primary via-primary to-blue-600">
-          <div className="container max-w-screen-xl px-4 md:px-8">
-            <div className="text-white text-center">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Ready to Transform Your HR Operations?
+            <div className="text-center max-w-3xl mx-auto">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">
+                Streamline Your Workforce Operations
               </h2>
-              <p className="text-lg opacity-90 max-w-3xl mx-auto mb-8">
-                Empower your organization with Alkaa to streamline your workforce management, 
-                reduce administrative overhead, and focus on what matters most - your people.
+              <p className="text-base md:text-lg text-muted-foreground mb-8">
+                Empower your organization with unified employee directories, verified KYC onboarding, attendance tracking, and reliable multi-tenant payroll.
               </p>
-              
-              {/* Value Props */}
-              <div className="grid sm:grid-cols-3 gap-6 max-w-3xl mx-auto mb-8">
-                <div className="text-center">
-                  <div className="text-2xl font-bold mb-1">80%</div>
-                  <div className="text-sm opacity-90">Time Saved</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold mb-1">24hrs</div>
-                  <div className="text-sm opacity-90">Quick Setup</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold mb-1">14 days</div>
-                  <div className="text-sm opacity-90">Free Trial</div>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button 
-                  onClick={()=>navigate(RouteDict.SignUpPage)} 
-                  className="bg-white text-primary hover:bg-white/90 text-base px-8 py-6 font-semibold"
+                  onClick={() => navigate(RouteDict.SignUpPage)} 
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground text-sm px-8 py-5 font-semibold shadow-md"
                 >
-                  Start Your Free Trial
+                  Register Organization
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
                 <Button 
-                  className="bg-transparent border-2 border-white hover:bg-white/10 text-base px-8 py-6"
-                  onClick={() => setDemoDialogOpen(true)}
+                  variant="outline"
+                  className="text-sm px-8 py-5 font-semibold bg-card hover:bg-secondary"
+                  onClick={() => navigate(RouteDict.SignInPage)}
                 >
-                  <PlayCircle className="mr-2 h-4 w-4" />
-                  Schedule a Demo
+                  Sign In
                 </Button>
-              </div>
-
-              <div className="flex items-center justify-center gap-4 text-sm opacity-90">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4" />
-                  <span>No credit card required</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4" />
-                  <span>Cancel anytime</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4" />
-                  <span>Full feature access</span>
-                </div>
               </div>
             </div>
           </div>
@@ -1653,15 +1025,13 @@ const AlkaaLandingPage: React.FC = () => {
                 <span className="text-lg font-bold text-foreground">Alkaa</span>
               </div>
               <p className="text-xs text-muted-foreground max-w-md leading-relaxed">
-                Complete HR & Workforce Operating System for modern enterprises. Streamline onboarding, attendance, leave management, and multi-tenant operations.
+                Complete HR & Workforce Operating System. Streamline onboarding, attendance, leave management, and multi-tenant operations.
               </p>
             </div>
 
             {/* Quick Working Navigation */}
             <div className="flex flex-wrap items-center gap-6 text-sm">
               <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</a>
-              <a href="#testimonials" className="text-muted-foreground hover:text-foreground transition-colors">Testimonials</a>
-              <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
               <button 
                 type="button"
                 onClick={() => navigate(RouteDict.SignInPage)} 
@@ -1669,13 +1039,13 @@ const AlkaaLandingPage: React.FC = () => {
               >
                 Sign In
               </button>
-              <Button 
-                size="sm"
-                onClick={() => setDemoDialogOpen(true)}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold px-4"
+              <button 
+                type="button"
+                onClick={() => navigate(RouteDict.SignUpPage)} 
+                className="text-muted-foreground hover:text-primary font-medium transition-colors"
               >
-                Request Demo
-              </Button>
+                Register
+              </button>
             </div>
           </div>
 
@@ -1690,16 +1060,6 @@ const AlkaaLandingPage: React.FC = () => {
           </div>
         </div>
       </footer>
-
-      <DemoRequestDialog 
-        open={demoDialogOpen}
-        onOpenChange={setDemoDialogOpen}
-        formData={formData}
-        formErrors={formErrors}
-        handleInputChange={handleInputChange}
-        handleDemoRequest={handleDemoRequest}
-        isSubmitting={isSubmitting}
-      />
     </div>
   );
 };

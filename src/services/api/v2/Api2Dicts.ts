@@ -1,12 +1,12 @@
-import { legacyBackendDomain } from '../../../constants/Domain';
+import { backendDomain, legacyBackendDomain } from '../../../constants/Domain';
 
 export const APIV2Dictionary = {
   user: {
-    getSubordinateList: () => `${legacyBackendDomain}/api/v2/user/subordinate-list`,
-    getUserList: () => `${legacyBackendDomain}/api/v2/user/user-list`,
-    getManagerList: (orgId: string) => `${legacyBackendDomain}/api/v2/user/fetch-managers/org/${orgId}`,
+    getSubordinateList: () => `${backendDomain}/api/v2/user/subordinate-list`,
+    getUserList: () => `${backendDomain}/api/v2/user/user-list`,
+    getManagerList: (orgId: string) => `${backendDomain}/api/v2/user/fetch-managers/org/${orgId}`,
     updateUserRole: (userId: string, prevRole: string, roleId: string) => 
-      `${legacyBackendDomain}/api/v2/user/${userId}/role/${prevRole}/${roleId}`
+      `${backendDomain}/api/v2/user/${userId}/role/${prevRole}/${roleId}`
   },
   billing: {
     // Dashboard
