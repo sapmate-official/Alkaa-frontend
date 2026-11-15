@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import axios from 'axios'
 import './styles/index.css'
 import App from './App.tsx'
 import { ThemeProvider } from './providers/ThemeProvider.tsx'
@@ -7,6 +8,9 @@ import { ToastProvider } from './components/ui/toast.tsx'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from './lib/queryClient.ts'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+
+// Global Axios configuration to ensure HTTP-only auth cookies are sent across all requests
+axios.defaults.withCredentials = true
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

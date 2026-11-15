@@ -106,11 +106,12 @@ const DashboardOfPayroll = () => {
             );
           setSpecialEvents(payrollEvents);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching payroll dashboard data:', error);
+        const errorMsg = error?.response?.data?.message || error?.response?.data?.error || error?.message || 'Failed to fetch payroll dashboard data. Please try again.';
         toast({
           title: 'Error',
-          description: 'Failed to fetch payroll dashboard data. Please try again.',
+          description: errorMsg,
           variant: 'destructive',
         });
       } finally {
@@ -255,9 +256,10 @@ const DashboardOfPayroll = () => {
           variant: 'destructive',
         });
       } else {
+        const errorMsg = error?.response?.data?.message || error?.response?.data?.error || error?.message || 'Failed to generate salary. Please try again.';
         toast({
           title: 'Error',
-          description: 'Failed to generate salary. Please try again.',
+          description: errorMsg,
           variant: 'destructive',
         });
       }
