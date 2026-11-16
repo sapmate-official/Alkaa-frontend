@@ -1,53 +1,16 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
 import { useAuth } from '@/providers/AuthContext';
-import { APIDictionary } from '@/services/api/v2/APIdict';
-import { AdminDashboardView, AdminDashboardViewProps } from './dashboard/AdminDashboardView';
-import { EmployeeDashboardView, EmployeeDashboardViewProps } from './dashboard/EmployeeDashboardView';
+import { useDashboardSummaryQuery } from '@/hooks/queries/useDashboardSummary';
+import { AdminDashboardView } from './dashboard/AdminDashboardView';
+import { EmployeeDashboardView } from './dashboard/EmployeeDashboardView';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Shield, User } from 'lucide-react';
 
-interface DashboardSummaryData {
-  roleType?: string;
-  adminStats?: AdminDashboardViewProps['stats'];
-  employeeStats?: EmployeeDashboardViewProps['stats'];
-  userProfile?: EmployeeDashboardViewProps['userProfile'];
-  [key: string]: unknown;
-}
-
 export const Home: React.FC = () => {
   const { user } = useAuth();
-  const [dashboardSummary, setDashboardSummary] = useState<DashboardSummaryData | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<'admin' | 'employee'>('admin');
-
-  const fetchDashboardData = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      if (!user?.id) return;
-
-      const response = await axios.get(
-        APIDictionary.dashboardSummary || APIDictionary.dashboard(user.id),
-        { withCredentials: true }
-      );
-
-      setDashboardSummary(response.data);
-      if (response.data.roleType === 'EMPLOYEE') {
-        setActiveTab('employee');
-      } else {
-        setActiveTab('admin');
-      }
-    } catch (error) {
-      console.error('Error fetching adaptive dashboard summary:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user?.id]);
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, [fetchDashboardData]);
+  const { data: dashboardSummary, isLoading, refetch, isFetching } = useDashboardSummaryQuery(user?.id);
+  const [activeTabOverride, setActiveTabOverride] = useState<'admin' | 'employee' | null>(null);
 
   const isAdminOrSuperAdmin = Boolean(
     user?.superAdmin ||
@@ -60,19 +23,24 @@ export const Home: React.FC = () => {
     )
   );
 
+  // If user has explicitly toggled tab, use it; otherwise infer from backend roleType
+  const activeTab: 'admin' | 'employee' =
+    activeTabOverride ??
+    (dashboardSummary?.roleType === 'EMPLOYEE' || !isAdminOrSuperAdmin ? 'employee' : 'admin');
+
   if (isLoading && !dashboardSummary) {
     return (
       <div className="p-4 md:p-6 space-y-6">
-        <Skeleton className="h-24 w-full rounded-xl" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Skeleton className="h-20 w-full rounded-xl" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Skeleton className="h-28 rounded-xl" />
           <Skeleton className="h-28 rounded-xl" />
           <Skeleton className="h-28 rounded-xl" />
           <Skeleton className="h-28 rounded-xl" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Skeleton className="h-72 rounded-xl" />
-          <Skeleton className="h-72 rounded-xl" />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <Skeleton className="lg:col-span-7 h-72 rounded-xl" />
+          <Skeleton className="lg:col-span-5 h-72 rounded-xl" />
         </div>
       </div>
     );
@@ -85,10 +53,10 @@ export const Home: React.FC = () => {
         <div className="flex justify-end">
           <Tabs
             value={activeTab}
-            onValueChange={(val) => setActiveTab(val as 'admin' | 'employee')}
+            onValueChange={(val) => setActiveTabOverride(val as 'admin' | 'employee')}
             className="w-auto"
           >
-            <TabsList className="grid grid-cols-2 h-9 p-1 bg-muted/60">
+            <TabsList className="grid grid-cols-2 h-9 p-1 bg-muted/60 border border-border">
               <TabsTrigger value="admin" className="text-xs flex items-center gap-1.5 px-3">
                 <Shield className="h-3.5 w-3.5" /> Executive View
               </TabsTrigger>
@@ -104,8 +72,8 @@ export const Home: React.FC = () => {
       {activeTab === 'admin' && dashboardSummary?.adminStats ? (
         <AdminDashboardView
           stats={dashboardSummary.adminStats}
-          onRefresh={fetchDashboardData}
-          isLoading={isLoading}
+          onRefresh={() => void refetch()}
+          isLoading={isFetching}
         />
       ) : (
         <EmployeeDashboardView
@@ -115,11 +83,11 @@ export const Home: React.FC = () => {
               leaveBalances: [],
               todayAttendance: null,
               recentLeaves: [],
-              upcomingHolidays: []
+              upcomingHolidays: [],
             }
           }
-          onRefresh={fetchDashboardData}
-          isLoading={isLoading}
+          onRefresh={() => void refetch()}
+          isLoading={isFetching}
         />
       )}
     </div>

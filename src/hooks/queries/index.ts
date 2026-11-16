@@ -225,3 +225,14 @@ export {
   type FieldDiff
 } from './useEmployeeAuditHistory'
 
+// Dashboard Summary
+export {
+  useDashboardSummaryQuery,
+  dashboardKeys,
+  type DashboardSummaryResponse,
+  type AdminStats,
+  type EmployeeStats,
+  type UserProfileSummary
+} from './useDashboardSummary'
+
+
