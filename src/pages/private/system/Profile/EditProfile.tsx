@@ -17,6 +17,9 @@ import { AlertCircle, ArrowLeft, Save } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import RouteDict from '@/routes/RouteDict';
 import { useUserDetailsQuery, useUpdateProfileMutation } from '@/hooks/queries/useProfile';
+import { useEmployeeAuditHistory } from '@/hooks/queries/useEmployeeAuditHistory';
+import { PreviousDetailPill } from '@/components/employee/PreviousDetailPill';
+import { EmployeeRevisionHistoryCard } from '@/components/employee/EmployeeRevisionHistoryCard';
 
 interface FormDataType {
   [key: string]: string | undefined;
@@ -60,6 +63,8 @@ const ProfileEdit = () => {
     isLoading: loading, 
     error: userError 
   } = useUserDetailsQuery(userId)
+  
+  const { data: auditLogs = [] } = useEmployeeAuditHistory(userId)
   
   const updateProfileMutation = useUpdateProfileMutation()
   const submitting = updateProfileMutation.isPending
@@ -367,7 +372,10 @@ const ProfileEdit = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="personalEmail">Personal Email *</Label>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="personalEmail">Personal Email *</Label>
+                  <PreviousDetailPill fieldKey="personalEmail" auditLogs={auditLogs} />
+                </div>
                 <Input
                   id="personalEmail"
                   name="personalEmail"
@@ -380,7 +388,10 @@ const ProfileEdit = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="address">Address *</Label>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="address">Address *</Label>
+                  <PreviousDetailPill fieldKey="address" auditLogs={auditLogs} />
+                </div>
                 <Input
                   id="address"
                   name="address"
@@ -413,7 +424,10 @@ const ProfileEdit = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="mobileNumber">Mobile Number *</Label>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="mobileNumber">Mobile Number *</Label>
+                  <PreviousDetailPill fieldKey="mobileNumber" auditLogs={auditLogs} />
+                </div>
                 <Input
                   id="mobileNumber"
                   name="mobileNumber"
@@ -423,7 +437,10 @@ const ProfileEdit = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="emergencyContact">Emergency Phone Number *</Label>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="emergencyContact">Emergency Phone Number *</Label>
+                  <PreviousDetailPill fieldKey="emergencyContact" auditLogs={auditLogs} />
+                </div>
                 <Input
                 required
                   id="emergencyContact"
@@ -448,7 +465,10 @@ const ProfileEdit = () => {
               
               {canEditStatus && (
                 <div className="space-y-2">
-                  <Label htmlFor="status">User Status</Label>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="status">User Status</Label>
+                    <PreviousDetailPill fieldKey="status" auditLogs={auditLogs} />
+                  </div>
                   <Select
                     value={formData.status || 'active'}
                     onValueChange={(value) => handleSelectChange('status', value)}
@@ -493,7 +513,10 @@ const ProfileEdit = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="jobTitle">Job Title / Designation</Label>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="jobTitle">Job Title / Designation</Label>
+                  <PreviousDetailPill fieldKey="jobTitle" auditLogs={auditLogs} />
+                </div>
                 <Input
                   type="text"
                   id="jobTitle"
@@ -521,7 +544,10 @@ const ProfileEdit = () => {
               
 
               <div className="space-y-2">
-                <Label htmlFor="departmentId">Department *</Label>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="departmentId">Department *</Label>
+                  <PreviousDetailPill fieldKey="departmentId" auditLogs={auditLogs} />
+                </div>
                 <Select
                   value={formData.departmentId || ''}
                   onValueChange={(value) => handleSelectChange('departmentId', value)}
@@ -539,7 +565,10 @@ const ProfileEdit = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="managerId">Manager *</Label>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="managerId">Manager *</Label>
+                  <PreviousDetailPill fieldKey="managerId" auditLogs={auditLogs} />
+                </div>
                 <Select
                   value={formData.managerId || ''}
                   onValueChange={(value) => handleSelectChange('managerId', value)}
@@ -561,7 +590,10 @@ const ProfileEdit = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="annualPackage">Annual Package *</Label>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="annualPackage">Annual Package *</Label>
+                  <PreviousDetailPill fieldKey="annualPackage" auditLogs={auditLogs} />
+                </div>
                 <Input
                   type="number"
                   id="annualPackage"
@@ -573,7 +605,10 @@ const ProfileEdit = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="monthlySalary">Monthly Salary *</Label>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="monthlySalary">Monthly Salary *</Label>
+                  <PreviousDetailPill fieldKey="monthlySalary" auditLogs={auditLogs} />
+                </div>
                 <Input
                   type="number"
                   id="monthlySalary"
@@ -610,6 +645,13 @@ const ProfileEdit = () => {
             </Button>
           </div>
         </form>
+
+        {/* Revision History & Change Audit (Option 1) */}
+        <EmployeeRevisionHistoryCard
+          userId={userId}
+          isOwnProfile={isOwnProfile}
+          className="mt-8"
+        />
       </CardContent>
     </Card>
   );

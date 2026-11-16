@@ -65,6 +65,7 @@ export function useUpdateEmployee() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: employeeKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: employeeKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: ['employee-audit-history'] })
     },
   })
 }
@@ -130,6 +131,7 @@ export function useUpdateEmployeeStatus() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: employeeKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: employeeKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: ['employee-audit-history'] })
     },
   })
 }

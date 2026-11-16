@@ -114,12 +114,15 @@ export const useUpdateProfileMutation = () => {
       return response.data
     },
     onSuccess: (_, variables) => {
-      // Invalidate and refetch profile queries
+      // Invalidate and refetch profile queries and audit revision history
       queryClient.invalidateQueries({
         queryKey: profileQueryKeys.user(variables.userId)
       })
       queryClient.invalidateQueries({
         queryKey: profileQueryKeys.userDetails(variables.userId)
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['employee-audit-history']
       })
       
       toast({

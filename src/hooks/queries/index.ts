@@ -216,3 +216,12 @@ export {
   type Department, type TeamMember, type User,
   organizationKeys
 } from './useOrganizations'
+
+// Employee Audit History
+export {
+  useEmployeeAuditHistory,
+  auditHistoryKeys,
+  type EmployeeAuditLog,
+  type FieldDiff
+} from './useEmployeeAuditHistory'
+

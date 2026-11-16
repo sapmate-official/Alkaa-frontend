@@ -15,6 +15,9 @@ import { motion } from 'framer-motion'
 import BankDetails from '@/components/BankDetails'
 import RouteDict from '@/routes/RouteDict'
 import { useProfileQuery, useRelationshipQuery } from '@/hooks/queries/useProfile'
+import { useEmployeeAuditHistory } from '@/hooks/queries/useEmployeeAuditHistory'
+import { PreviousDetailPill } from '@/components/employee/PreviousDetailPill'
+import { EmployeeRevisionHistoryCard } from '@/components/employee/EmployeeRevisionHistoryCard'
 
 const ProfileInfo = () => {
     const { id } = useParams()
@@ -37,6 +40,10 @@ const ProfileInfo = () => {
     const { 
         data: relationshipResponse 
     } = useRelationshipQuery(id && id !== user?.id ? id : undefined)
+
+    const {
+        data: auditLogs = []
+    } = useEmployeeAuditHistory(profileId)
     
     const relationshipData = relationshipResponse?.data as RelationshipData
 
@@ -339,7 +346,10 @@ const ProfileInfo = () => {
                                         <EnvelopeIcon className="w-4 h-4 text-primary" />
                                     </div>
                                     <div className="space-y-1">
-                                        <p className="text-sm text-muted-foreground font-medium">Personal Email</p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-sm text-muted-foreground font-medium">Personal Email</p>
+                                            <PreviousDetailPill fieldKey="personalEmail" auditLogs={auditLogs} />
+                                        </div>
                                         <p className="font-medium">{profileInfo?.personalEmail || profileInfo?.email}</p>
                                     </div>
                                 </div>
@@ -349,7 +359,10 @@ const ProfileInfo = () => {
                                             <EnvelopeIcon className="w-4 h-4 text-primary" />
                                         </div>
                                         <div className="space-y-1">
-                                            <p className="text-sm text-muted-foreground font-medium">Business Email</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm text-muted-foreground font-medium">Business Email</p>
+                                                <PreviousDetailPill fieldKey="businessEmail" auditLogs={auditLogs} />
+                                            </div>
                                             <p className="font-medium">{profileInfo.businessEmail}</p>
                                         </div>
                                     </div>
@@ -361,7 +374,10 @@ const ProfileInfo = () => {
                                             <PhoneIcon className="w-4 h-4 text-primary" />
                                         </div>
                                         <div className="space-y-1">
-                                            <p className="text-sm text-muted-foreground font-medium">Phone</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm text-muted-foreground font-medium">Phone</p>
+                                                <PreviousDetailPill fieldKey="mobileNumber" auditLogs={auditLogs} />
+                                            </div>
                                             <p className="font-medium">{profileInfo?.mobileNumber}</p>
                                         </div>
                                     </div>
@@ -372,7 +388,10 @@ const ProfileInfo = () => {
                                             <PhoneIcon className="w-4 h-4 text-primary" />
                                         </div>
                                         <div className="space-y-1">
-                                            <p className="text-sm text-muted-foreground font-medium">Emergency Phone Number</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm text-muted-foreground font-medium">Emergency Phone Number</p>
+                                                <PreviousDetailPill fieldKey="emergencyContact" auditLogs={auditLogs} />
+                                            </div>
                                             <p className="font-medium">{profileInfo?.emergencyContact}</p>
                                         </div>
                                     </div>
@@ -397,7 +416,10 @@ const ProfileInfo = () => {
                                             <MapPinIcon className="w-4 h-4 text-primary" />
                                         </div>
                                         <div className="space-y-1">
-                                            <p className="text-sm text-muted-foreground font-medium">Address</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm text-muted-foreground font-medium">Address</p>
+                                                <PreviousDetailPill fieldKey="address" auditLogs={auditLogs} />
+                                            </div>
                                             <p className="font-medium">{profileInfo?.address}</p>
                                         </div>
                                     </div>
@@ -427,7 +449,10 @@ const ProfileInfo = () => {
                                         <BriefcaseIcon className="w-4 h-4 text-primary" />
                                     </div>
                                     <div className="space-y-1">
-                                        <p className="text-sm text-muted-foreground font-medium">Job Title</p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-sm text-muted-foreground font-medium">Job Title</p>
+                                            <PreviousDetailPill fieldKey="jobTitle" auditLogs={auditLogs} />
+                                        </div>
                                         <p className="font-medium">{profileInfo?.jobTitle || 'Not Specified'}</p>
                                     </div>
                                 </div>
@@ -508,7 +533,10 @@ const ProfileInfo = () => {
                                             <BanknotesIcon className="w-4 h-4 text-primary" />
                                         </div>
                                         <div className="space-y-1">
-                                            <p className="text-sm text-muted-foreground font-medium">Annual Package</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm text-muted-foreground font-medium">Annual Package</p>
+                                                <PreviousDetailPill fieldKey="annualPackage" auditLogs={auditLogs} />
+                                            </div>
                                             <p className="font-medium text-lg">₹{(Number(profileInfo?.annualPackage) || 0).toLocaleString()}</p>
                                         </div>
                                     </div>
@@ -520,7 +548,10 @@ const ProfileInfo = () => {
                                             <BanknotesIcon className="w-4 h-4 text-primary" />
                                         </div>
                                         <div className="space-y-1">
-                                            <p className="text-sm text-muted-foreground font-medium">Monthly Salary</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm text-muted-foreground font-medium">Monthly Salary</p>
+                                                <PreviousDetailPill fieldKey="monthlySalary" auditLogs={auditLogs} />
+                                            </div>
                                             <p className="font-medium text-lg">₹{(Number(profileInfo?.monthlySalary) || 0).toLocaleString()}</p>
                                         </div>
                                     </div>
@@ -533,6 +564,19 @@ const ProfileInfo = () => {
                 {canDisplayBankInfo() && (
                     <BankDetails userId={id || user?.id || ''} />
                 )}
+
+                {/* Revision History & Change Audit (Option 1 + Option 2) */}
+                <motion.div 
+                    initial="hidden"
+                    animate="visible"
+                    variants={cardVariants}
+                    transition={{ duration: 0.3, delay: 0.4 }}
+                >
+                    <EmployeeRevisionHistoryCard
+                        userId={profileId}
+                        isOwnProfile={isOwnProfile}
+                    />
+                </motion.div>
             </div>
         </div>
     )
