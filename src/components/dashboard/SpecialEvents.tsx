@@ -88,7 +88,7 @@ export const SpecialEvents: React.FC<SpecialEventsProps> = ({ events, isLoading 
         // No action needed for birthdays
         break
       case 'BILL':
-        navigate(RouteDict.Dynamic.BillDetails(event.entity.id))
+        navigate(RouteDict.Dynamic.BillDetails(String(event.entity?.id || '')))
         break
       case 'LEAVE_REQUEST':
         navigate(RouteDict.Leave.Requests.Approval)

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { MapPin, Clock, XCircle, History } from "lucide-react";
 import LazyLocationViewer from "./LazyLocationViewer";
 import { useTodaySessionsQuery, useCheckInMutation, useCheckOutMutation } from '@/hooks/queries/useAttendance';
+import { AttendanceRecord } from '@/types/general';
 
 interface Location {
   lat: number | null;
@@ -22,7 +23,7 @@ const LocationComponent = () => {
   // Calculate derived state from query data
   const activeSession = todaySessions?.find(s => !s.checkOutTime) || null;
   const totalHoursToday = todaySessions ? 
-    todaySessions.reduce((total: number, session: any) => {
+    todaySessions.reduce((total: number, session: AttendanceRecord) => {
       if (session.checkOutTime) {
         const checkIn = new Date(session.checkInTime).getTime();
         const checkOut = new Date(session.checkOutTime).getTime();
@@ -83,8 +84,9 @@ const LocationComponent = () => {
       // Refetch sessions after successful check-in/out
       refetchSessions();
 
-    } catch (err:any) {
-      setError(err.response?.data?.message || err.message || "An error occurred");
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
+      setError(axiosErr.response?.data?.message || axiosErr.message || "An error occurred");
     } finally {
       setLoading(false);
     }
@@ -136,7 +138,7 @@ const LocationComponent = () => {
         {todaySessions && todaySessions.length > 0 && (
           <div className="mt-2 space-y-2">
             <h3 className="text-sm font-medium text-muted-foreground">Today's Sessions:</h3>
-            {todaySessions.map((session: any, index: number) => (
+            {todaySessions.map((session: AttendanceRecord, index: number) => (
               <div key={session.id} className="p-2 rounded bg-accent/20 text-sm">
                 <div>Session {index + 1}:</div>
                 <div>In: {new Date(session.checkInTime).toLocaleTimeString()}</div>

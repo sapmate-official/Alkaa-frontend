@@ -48,6 +48,16 @@ interface reportData {
   [key: string]: string;
 }
 
+const getDurationHours = (duration: unknown): number => {
+  if (typeof duration === 'object' && duration !== null && 'hours' in duration) {
+    return Number((duration as { hours: unknown }).hours) || 0;
+  }
+  if (typeof duration === 'number') {
+    return Math.floor(duration / 60);
+  }
+  return 0;
+};
+
 const AttendancePanel = () => {
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const { deviceInfo } = useDeviceInfo();
@@ -109,7 +119,7 @@ const AttendancePanel = () => {
       setIsCheckedIn(!lastSession.checkOutTime);
       setSessionInfo({
         sessionNumber: lastSession.sessionNumber,
-        totalHours: lastSession.duration?.hours || 0,
+        totalHours: getDurationHours(lastSession.duration),
         status: lastSession.status
       });
     } else {
@@ -153,11 +163,12 @@ const AttendancePanel = () => {
           variant: "default"
         });
       },
-      onError: (error: any) => {
+      onError: (error: unknown) => {
         console.error('Check-in failed:', error);
+        const err = error as { response?: { data?: { message?: string } } };
         toast({
           title: "Check-in failed",
-          description: error.response?.data?.message || "Please try again",
+          description: err.response?.data?.message || "Please try again",
           variant: "destructive"
         });
       }
@@ -207,10 +218,11 @@ const AttendancePanel = () => {
           variant: "default"
         });
       },
-      onError: (error: any) => {
+      onError: (error: unknown) => {
         console.error("Checkout error details:", error);
+        const err = error as { response?: { data?: { message?: string } } };
         toast({
-          title: error?.response?.data?.message || "Checkout failed",
+          title: err?.response?.data?.message || "Checkout failed",
           description: "Please try again",
           variant: "destructive"
         });
@@ -273,7 +285,7 @@ const AttendancePanel = () => {
 
   const getTotalHoursToday = () => {
     return todaySessions.reduce((total, session) =>
-      total + (session.duration?.hours || 0), 0);
+      total + getDurationHours(session.duration), 0);
   };
 
   return (
@@ -672,7 +684,7 @@ const AttendancePanel = () => {
                             }
                           </TableCell>
                           <TableCell>
-                            {session?.duration?.hours || 0}h
+                            {getDurationHours(session?.duration)}h
                           </TableCell>
                           <TableCell>
                             <Badge className={getStatusColor(session?.status)}>

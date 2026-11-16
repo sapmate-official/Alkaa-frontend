@@ -2,15 +2,23 @@ import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { useAuth } from '@/providers/AuthContext';
 import { APIDictionary } from '@/services/api/v2/APIdict';
-import { AdminDashboardView } from './dashboard/AdminDashboardView';
-import { EmployeeDashboardView } from './dashboard/EmployeeDashboardView';
+import { AdminDashboardView, AdminDashboardViewProps } from './dashboard/AdminDashboardView';
+import { EmployeeDashboardView, EmployeeDashboardViewProps } from './dashboard/EmployeeDashboardView';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Shield, User } from 'lucide-react';
 
+interface DashboardSummaryData {
+  roleType?: string;
+  adminStats?: AdminDashboardViewProps['stats'];
+  employeeStats?: EmployeeDashboardViewProps['stats'];
+  userProfile?: EmployeeDashboardViewProps['userProfile'];
+  [key: string]: unknown;
+}
+
 export const Home: React.FC = () => {
   const { user } = useAuth();
-  const [dashboardSummary, setDashboardSummary] = useState<any>(null);
+  const [dashboardSummary, setDashboardSummary] = useState<DashboardSummaryData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<'admin' | 'employee'>('admin');
 
@@ -45,7 +53,7 @@ export const Home: React.FC = () => {
     user?.superAdmin ||
     user?.isSuperAdmin ||
     dashboardSummary?.roleType === 'ADMIN' ||
-    user?.roles?.some((r: any) =>
+    user?.roles?.some((r: string | { role?: { name?: string } }) =>
       typeof r === 'string'
         ? ['SUPER_ADMIN', 'Org_Admin', 'Admin'].includes(r)
         : ['SUPER_ADMIN', 'Org_Admin', 'Admin'].includes(r?.role?.name || '')

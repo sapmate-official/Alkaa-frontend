@@ -70,6 +70,8 @@ const editCandidateSchema = z.object({
   accountHolderName: z.string().optional(),
 });
 
+type EditCandidateFormValues = z.infer<typeof editCandidateSchema>;
+
 interface EditCandidateDialogProps {
   candidateId: string;
   isOpen: boolean;
@@ -125,10 +127,10 @@ const EditCandidateDialog = ({ candidateId, isOpen, onClose, onSuccess }: EditCa
         address: candidate.address || '',
         adharNumber: candidate.adharNumber || '',
         panNumber: candidate.panNumber || '',
-        bankAccountNumber: (candidate as any).bankAccountNumber || '',
-        bankIFSC: (candidate as any).bankIFSC || '',
-        bankName: (candidate as any).bankName || '',
-        accountHolderName: (candidate as any).accountHolderName || '',
+        bankAccountNumber: (candidate as unknown as Record<string, string | undefined>).bankAccountNumber || '',
+        bankIFSC: (candidate as unknown as Record<string, string | undefined>).bankIFSC || '',
+        bankName: (candidate as unknown as Record<string, string | undefined>).bankName || '',
+        accountHolderName: (candidate as unknown as Record<string, string | undefined>).accountHolderName || '',
       });
     } else if (!isOpen) {
       // Reset form and states when dialog closes
@@ -136,7 +138,7 @@ const EditCandidateDialog = ({ candidateId, isOpen, onClose, onSuccess }: EditCa
     }
   }, [candidate, isOpen, form]);
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: EditCandidateFormValues) => {
     try {
       setSaving(true);
       await updateCandidateMutation.mutateAsync({ id: candidateId, data });
@@ -148,11 +150,12 @@ const EditCandidateDialog = ({ candidateId, isOpen, onClose, onSuccess }: EditCa
 
       onSuccess?.();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating candidate:', error);
+      const err = error as { response?: { data?: { error?: string } } };
       toast({
         title: 'Error',
-        description: error.response?.data?.error || 'Failed to update candidate',
+        description: err?.response?.data?.error || 'Failed to update candidate',
         variant: 'destructive',
       });
     } finally {
@@ -306,9 +309,9 @@ const EditCandidateDialog = ({ candidateId, isOpen, onClose, onSuccess }: EditCa
                           <SelectContent>
                             <SelectItem value="none">No Department</SelectItem>
                             {departments && departments.length > 0 ? (
-                              departments.map((dept: any) => (
-                                <SelectItem key={dept.id} value={dept.id}>
-                                  {dept.name}
+                              departments.map((dept: { id?: string; name?: string }) => (
+                                <SelectItem key={dept.id || 'dept'} value={dept.id || 'none'}>
+                                  {dept.name || 'Unnamed'}
                                 </SelectItem>
                               ))
                             ) : (

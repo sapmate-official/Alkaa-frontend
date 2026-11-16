@@ -24,13 +24,6 @@ import {
 } from '@/hooks/queries/useTasks';
 import { useEmployees } from '@/hooks/queries/useEmployees';
 
-interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-}
-
 interface EditTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -142,7 +135,7 @@ export const EditTaskDialog: React.FC<EditTaskDialogProps> = ({
     // Apply search filter
     if (debouncedSearchQuery.trim()) {
       const searchTerm = debouncedSearchQuery.toLowerCase();
-      filtered = allUsers.filter((user: User) => {
+      filtered = allUsers.filter((user) => {
         const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
         return fullName.includes(searchTerm) || 
                user.email.toLowerCase().includes(searchTerm);
@@ -442,7 +435,7 @@ export const EditTaskDialog: React.FC<EditTaskDialogProps> = ({
                     <div className="max-h-60 overflow-y-auto">
                       {filteredUsers.length > 0 ? (
                         <>
-                          {filteredUsers.map((user: User) => {
+                          {filteredUsers.map((user) => {
                             const isAssigned = task?.assignments?.some(assignment => assignment.assignedTo?.id === user.id) || false;
                             
                             return (

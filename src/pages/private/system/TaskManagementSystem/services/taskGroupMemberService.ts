@@ -40,6 +40,37 @@ interface RemoveMembersResponse {
   };
 }
 
+export interface GroupMemberItem {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role?: string;
+  addedAt?: string;
+  addedBy?: string;
+  [key: string]: unknown;
+}
+
+export interface TaskAssignmentItem {
+  assignedTo?: { id?: string; firstName?: string; lastName?: string; email?: string } | null;
+  [key: string]: unknown;
+}
+
+export interface TaskItem {
+  title?: string;
+  assignments?: TaskAssignmentItem[];
+  [key: string]: unknown;
+}
+
+export interface TaskGroupRecord {
+  id?: string;
+  name?: string;
+  description?: string;
+  createdBy?: User | { id?: string; firstName?: string; lastName?: string; email?: string } | null;
+  members?: unknown[];
+  tasks?: unknown[];
+}
+
 export class TaskGroupMemberService {
   /**
    * Add members to a task group
@@ -95,7 +126,7 @@ export class TaskGroupMemberService {
    * @param role - The new role ('ADMIN' or 'MEMBER')
    * @returns Promise with the response data
    */
-  static async updateMemberRole(groupId: string, userId: string, role: 'ADMIN' | 'MEMBER'): Promise<any> {
+  static async updateMemberRole(groupId: string, userId: string, role: 'ADMIN' | 'MEMBER'): Promise<Record<string, unknown>> {
     try {
       const response = await axios.put(`${APIDictionary.taskGroup}/${groupId}/members/role`, {
         userId,
@@ -162,17 +193,17 @@ export class TaskGroupMemberService {
    * @param group - The task group object with members or tasks and assignments
    * @returns Array of unique users who are members of the group
    */
-  static extractGroupMembers(group: any): User[] {
+  static extractGroupMembers(group: TaskGroupRecord | null | undefined): User[] {
     // Use the new members array if available
     if (group?.members && Array.isArray(group.members)) {
-      return group.members.map((member: any) => ({
-        id: member.id,
-        firstName: member.firstName,
-        lastName: member.lastName,
-        email: member.email,
-        role: member.role,
-        addedAt: member.addedAt,
-        addedBy: member.addedBy
+      return (group.members as Array<Record<string, unknown>>).map((member) => ({
+        id: String(member.id || ''),
+        firstName: String(member.firstName || ''),
+        lastName: String(member.lastName || ''),
+        email: String(member.email || ''),
+        role: member.role ? String(member.role) : undefined,
+        addedAt: member.addedAt ? String(member.addedAt) : undefined,
+        addedBy: member.addedBy ? String(member.addedBy) : undefined
       }));
     }
     
@@ -180,14 +211,20 @@ export class TaskGroupMemberService {
     if (!group?.tasks) return [];
 
     const memberMap = new Map<string, User>();
-    group.tasks.forEach((task: any) => {
+    (group.tasks as Array<Record<string, unknown>>).forEach((task) => {
       // Skip placeholder tasks
-      if (task.title?.startsWith('[GROUP_PLACEHOLDER]')) return;
+      if (typeof task.title === 'string' && task.title.startsWith('[GROUP_PLACEHOLDER]')) return;
       
-      task.assignments?.forEach((assignment: any) => {
-        const user = assignment.assignedTo;
-        if (user && !memberMap.has(user.id)) {
-          memberMap.set(user.id, user);
+      const assignments = Array.isArray(task.assignments) ? (task.assignments as Array<Record<string, unknown>>) : [];
+      assignments.forEach((assignment) => {
+        const user = assignment.assignedTo as Record<string, unknown> | undefined;
+        if (user && user.id && typeof user.id === 'string' && !memberMap.has(user.id)) {
+          memberMap.set(user.id, {
+            id: user.id,
+            firstName: String(user.firstName || ''),
+            lastName: String(user.lastName || ''),
+            email: String(user.email || ''),
+          });
         }
       });
     });
@@ -239,7 +276,7 @@ export class TaskGroupMemberService {
    * @param group - The task group object
    * @returns Number of unique members in the group
    */
-  static getMemberCount(group: any): number {
+  static getMemberCount(group: TaskGroupRecord): number {
     return this.extractGroupMembers(group).length;
   }
 
@@ -249,7 +286,7 @@ export class TaskGroupMemberService {
    * @param group - The task group object
    * @returns Boolean indicating if the user is a member
    */
-  static isGroupMember(userId: string, group: any): boolean {
+  static isGroupMember(userId: string, group: TaskGroupRecord): boolean {
     const members = this.extractGroupMembers(group);
     return members.some(member => member.id === userId);
   }
@@ -259,10 +296,15 @@ export class TaskGroupMemberService {
    * @param group - The task group object
    * @returns Object with owner and members arrays
    */
-  static getMembersByRole(group: any): { owner: User | null; members: User[] } {
+  static getMembersByRole(group: TaskGroupRecord): { owner: User | null; members: User[] } {
     const members = this.extractGroupMembers(group);
-    const owner = group.createdBy;
-    const regularMembers = members.filter(member => member.id !== owner.id);
+    const owner = group.createdBy ? {
+      id: group.createdBy.id || '',
+      firstName: group.createdBy.firstName || '',
+      lastName: group.createdBy.lastName || '',
+      email: group.createdBy.email || '',
+    } : null;
+    const regularMembers = members.filter(member => member.id !== owner?.id);
     
     return {
       owner: owner,
@@ -276,13 +318,17 @@ export class TaskGroupMemberService {
    * @param group - The task group object
    * @returns Number of tasks assigned to the user in this group
    */
-  static getMemberTaskCount(userId: string, group: any): number {
+  static getMemberTaskCount(userId: string, group: TaskGroupRecord): number {
     if (!group?.tasks) return 0;
     
-    return group.tasks.filter((task: any) => {
+    return (group.tasks as Array<Record<string, unknown>>).filter((task) => {
       // Skip placeholder tasks
-      if (task.title?.startsWith('[GROUP_PLACEHOLDER]')) return false;
-      return task.assignments?.some((assignment: any) => assignment.assignedTo.id === userId);
+      if (typeof task.title === 'string' && task.title.startsWith('[GROUP_PLACEHOLDER]')) return false;
+      const assignments = Array.isArray(task.assignments) ? (task.assignments as Array<Record<string, unknown>>) : [];
+      return assignments.some((assignment) => {
+        const assignedTo = assignment.assignedTo as { id?: string } | undefined;
+        return assignedTo?.id === userId;
+      });
     }).length;
   }
 
@@ -331,7 +377,7 @@ export class TaskGroupMemberService {
     userIds: string[], 
     allUsers: User[], 
     currentMembers: User[]
-  ): Promise<AddMembersResponse & { validation: any }> {
+  ): Promise<AddMembersResponse & { validation: { valid: string[]; invalid: string[]; alreadyMembers: string[] } }> {
     const validation = this.validateUsersForAddition(userIds, allUsers, currentMembers);
     
     if (validation.valid.length === 0) {
@@ -350,7 +396,7 @@ export class TaskGroupMemberService {
    * @param group - The task group object
    * @returns Summary object with member statistics
    */
-  static getGroupMembershipSummary(group: any): {
+  static getGroupMembershipSummary(group: TaskGroupRecord): {
     totalMembers: number;
     owner: User;
     activeMembers: User[];
@@ -358,7 +404,12 @@ export class TaskGroupMemberService {
     membersWithoutTasks: number;
   } {
     const members = this.extractGroupMembers(group);
-    const owner = group.createdBy;
+    const owner = group.createdBy ? {
+      id: group.createdBy.id || '',
+      firstName: group.createdBy.firstName || '',
+      lastName: group.createdBy.lastName || '',
+      email: group.createdBy.email || '',
+    } : { id: '', firstName: '', lastName: '', email: '' };
     
     const membersWithTasks = members.filter(member => 
       this.getMemberTaskCount(member.id, group) > 0

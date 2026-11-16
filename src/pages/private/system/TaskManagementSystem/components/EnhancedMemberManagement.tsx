@@ -40,12 +40,24 @@ interface TaskGroupMember {
   user: User;
 }
 
+interface AssignmentItem {
+  assignedToId?: string;
+  assignedTo?: { id: string; [key: string]: unknown };
+  [key: string]: unknown;
+}
+
+interface TaskItem {
+  assignments?: AssignmentItem[];
+  status?: string;
+  [key: string]: unknown;
+}
+
 interface TaskGroup {
   id: string;
   name: string;
   description?: string;
   createdBy: User;
-  tasks: any[];
+  tasks: TaskItem[];
   members: TaskGroupMember[];
 }
 
@@ -79,7 +91,7 @@ const EnhancedGroupCard: React.FC<EnhancedGroupCardProps> = ({
     const totalMembers = group.members.length;
     const membersWithTasks = group.members.filter(member => 
       group.tasks?.some(task => 
-        task.assignments?.some((assignment: any) => assignment.assignedToId === member.userId)
+        task.assignments?.some((assignment: AssignmentItem) => assignment.assignedToId === member.userId)
       )
     ).length;
     
@@ -123,12 +135,12 @@ const EnhancedGroupCard: React.FC<EnhancedGroupCardProps> = ({
     
     return group.members.map(member => {
       const taskCount = group.tasks?.filter(task => 
-        task.assignments?.some((assignment: any) => assignment.assignedToId === member.userId)
+        task.assignments?.some((assignment: AssignmentItem) => assignment.assignedToId === member.userId)
       ).length || 0;
       
       const completedTasks = group.tasks?.filter(task => 
         task.status === 'COMPLETED' && 
-        task.assignments?.some((assignment: any) => assignment.assignedToId === member.userId)
+        task.assignments?.some((assignment: AssignmentItem) => assignment.assignedToId === member.userId)
       ).length || 0;
       
       const completionRate = taskCount > 0 ? (completedTasks / taskCount) * 100 : 0;
@@ -218,7 +230,7 @@ const EnhancedGroupCard: React.FC<EnhancedGroupCardProps> = ({
       // Find members with no tasks
       const inactiveMembers = group.members?.filter(member => 
         group.tasks?.filter(task => 
-          task.assignments?.some((assignment: any) => assignment.assignedTo.id === member.user.id)
+          task.assignments?.some((assignment: AssignmentItem) => (assignment.assignedTo?.id || assignment.assignedToId) === member.user.id)
         ).length === 0 &&
         member.user.id !== group.createdBy.id // Don't remove the owner
       ) || [];
@@ -331,7 +343,7 @@ const EnhancedGroupCard: React.FC<EnhancedGroupCardProps> = ({
                 <div className="text-lg font-bold">
                   {group.members?.find(member => member.userId === currentUser.id) ? 
                     group.tasks?.filter(task => 
-                      task.assignments?.some((assignment: any) => assignment.assignedToId === currentUser.id)
+                      task.assignments?.some((assignment: AssignmentItem) => assignment.assignedToId === currentUser.id)
                     ).length || 0 : 0}
                 </div>
                 <div className="text-xs text-muted-foreground">Your Tasks</div>
@@ -452,16 +464,16 @@ const EnhancedMemberSearch: React.FC<{
         break;
       case 'active':
         filtered = filtered.filter(user => 
-          group.tasks?.filter(task => 
-            task.assignments?.some((assignment: any) => assignment.assignedToId === user.id)
-          ).length > 0
+          (group.tasks?.filter(task => 
+            task.assignments?.some((assignment: AssignmentItem) => assignment.assignedToId === user.id)
+          ).length || 0) > 0
         );
         break;
       case 'inactive':
         filtered = currentMembers.filter(user => 
-          group.tasks?.filter(task => 
-            task.assignments?.some((assignment: any) => assignment.assignedToId === user.id)
-          ).length === 0
+          (group.tasks?.filter(task => 
+            task.assignments?.some((assignment: AssignmentItem) => assignment.assignedToId === user.id)
+          ).length || 0) === 0
         );
         break;
     }
@@ -481,7 +493,7 @@ const EnhancedMemberSearch: React.FC<{
         />
         <select
           value={filterType}
-          onChange={(e) => setFilterType(e.target.value as any)}
+          onChange={(e) => setFilterType(e.target.value as 'available' | 'members' | 'active' | 'inactive')}
           className="px-3 py-2 border rounded-md"
         >
           <option value="available">Available Users</option>
@@ -498,7 +510,7 @@ const EnhancedMemberSearch: React.FC<{
       <div className="space-y-2 max-h-60 overflow-y-auto">
         {filteredUsers.map(user => {
           const taskCount = group.tasks?.filter(task => 
-            task.assignments?.some((assignment: any) => assignment.assignedToId === user.id)
+            task.assignments?.some((assignment: AssignmentItem) => assignment.assignedToId === user.id)
           ).length || 0;
           const isMember = group.members?.some(member => member.userId === user.id) || false;
           

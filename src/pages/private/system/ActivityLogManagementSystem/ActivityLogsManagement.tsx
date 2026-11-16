@@ -32,7 +32,7 @@ interface ActivityLogEntry {
   entity: string;
   entityId: string;
   description: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   createdAt: string;
   ipAddress?: string;
   userAgent?: string;
@@ -168,9 +168,10 @@ const ActivityLogsManagement: React.FC = () => {
       } else {
         setError('Failed to fetch activity logs');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching activity logs:', error);
-      setError(error.response?.data?.error || 'Failed to fetch activity logs');
+      const err = error as { response?: { data?: { error?: string } } };
+      setError(err.response?.data?.error || 'Failed to fetch activity logs');
     } finally {
       setLoading(false);
     }

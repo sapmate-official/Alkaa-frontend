@@ -394,7 +394,7 @@ export class PayslipPDFGenerator {
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#ffffff'
-    }).then((canvas: any) => {
+    }).then((canvas: HTMLCanvasElement) => {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF('p', 'mm', 'a4');
       
@@ -417,7 +417,7 @@ export class PayslipPDFGenerator {
       }
       
       doc.save(filename);
-    }).catch((error: any) => {
+    }).catch((error: unknown) => {
       console.error('Error generating PDF:', error);
       alert('Error generating PDF. Please try again.');
     });
@@ -454,7 +454,27 @@ export class PayslipPDFGenerator {
 // Global type declarations for external libraries
 declare global {
   interface Window {
-    html2canvas: any;
-    jspdf: any;
+    html2canvas: (
+      element: HTMLElement,
+      options?: Record<string, unknown>
+    ) => Promise<HTMLCanvasElement>;
+    jspdf: {
+      jsPDF: new (
+        orientation?: string,
+        unit?: string,
+        format?: string
+      ) => {
+        addImage: (
+          imgData: string,
+          format: string,
+          x: number,
+          y: number,
+          width: number,
+          height: number
+        ) => void;
+        addPage: () => void;
+        save: (filename: string) => void;
+      };
+    };
   }
 }

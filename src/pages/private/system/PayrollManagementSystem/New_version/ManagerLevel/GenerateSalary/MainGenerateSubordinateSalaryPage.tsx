@@ -100,7 +100,7 @@ const MainGenerateSubordinateSalaryPage = () => {
           );
           // If payslip exists for this month/year, mark as generated
           subordinate.salaryGenerated = response.data.data && response.data.data.length > 0;
-        } catch (error) {
+        } catch {
           // If error is 404, it means no salary record found
           subordinate.salaryGenerated = false;
         }

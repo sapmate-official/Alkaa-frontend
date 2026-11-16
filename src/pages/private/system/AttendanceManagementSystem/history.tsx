@@ -63,9 +63,9 @@ const AttendanceHistory = () => {
       }
 
       const response = await axios.get(endpoint, { withCredentials: true });
-      const fetchedUsers = response.data
-        .filter((u: any) => u.id !== user.id)
-        .map((u: any) => ({
+      const fetchedUsers = (response.data as Array<{ id: string; firstName?: string; lastName?: string; email: string; department?: { name?: string } }>)
+        .filter((u) => u.id !== user.id)
+        .map((u) => ({
           id: u.id,
           name: `${u.firstName || ''} ${u.lastName || ''}`.trim(),
           email: u.email,
@@ -265,7 +265,7 @@ const AttendanceHistory = () => {
                             <span className="truncate max-w-[200px]">
                               {typeof session.checkInLocation === 'string' 
                                 ? session.checkInLocation 
-                                : (session.checkInLocation as any)?.address || 'Location data unavailable'}
+                                : (session.checkInLocation as { address?: string } | null)?.address || 'Location data unavailable'}
                             </span>
                           </div>
                         )}
@@ -282,7 +282,7 @@ const AttendanceHistory = () => {
                             <span className="truncate max-w-[200px]">
                               {typeof session.checkOutLocation === 'string' 
                                 ? session.checkOutLocation 
-                                : (session.checkOutLocation as any)?.address || 'Location data unavailable'}
+                                : (session.checkOutLocation as { address?: string } | null)?.address || 'Location data unavailable'}
                             </span>
                           </div>
                         )}

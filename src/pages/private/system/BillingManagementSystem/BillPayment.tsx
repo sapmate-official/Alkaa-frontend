@@ -61,9 +61,10 @@ const BillPayment = () => {
         const response = await axios.get(APIV2Dictionary.billing.getPublicBill(billId || ''));
         const billData = response.data.data || response.data;
         setBill(billData);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Error fetching bill details:', err);
-        setError(err.response?.data?.message || 'Failed to load bill details');
+        const error = err as { response?: { data?: { message?: string } } };
+        setError(error.response?.data?.message || 'Failed to load bill details');
       } finally {
         setLoading(false);
       }
@@ -87,9 +88,10 @@ const BillPayment = () => {
       
       setPaymentSuccess(true);
       setBill(prev => prev ? { ...prev, status: 'PAID', paidDate: new Date().toISOString() } : null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error processing payment:', err);
-      setPaymentError(err.response?.data?.message || 'Failed to process payment');
+      const error = err as { response?: { data?: { message?: string } } };
+      setPaymentError(error.response?.data?.message || 'Failed to process payment');
     } finally {
       setProcessing(false);
     }

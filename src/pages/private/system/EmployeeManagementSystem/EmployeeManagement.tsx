@@ -128,10 +128,11 @@ const EmployeeManagement: React.FC = () => {
                 title: targetStatus === 'inactive' ? "Employee Deactivated" : "Employee Activated",
                 description: `${selectedEmployee.firstName} ${selectedEmployee.lastName} is now marked ${targetStatus}.`
             });
-        } catch (err: any) {
+        } catch (err: unknown) {
+            const error = err as { response?: { data?: { error?: string } } };
             toast({
                 title: "Error",
-                description: err?.response?.data?.error || "Failed to update employee status",
+                description: error?.response?.data?.error || "Failed to update employee status",
                 variant: "destructive"
             });
         } finally {
@@ -159,7 +160,7 @@ const EmployeeManagement: React.FC = () => {
             employee.lastName?.toLowerCase().includes(query) ||
             employee.email.toLowerCase().includes(query) ||
             employee.employeeId?.toLowerCase().includes(query) ||
-            employee.department?.name.toLowerCase().includes(query)
+            employee.department?.name?.toLowerCase().includes(query)
         )
         setFilteredEmployees(filtered)
     }, [searchQuery, employees])

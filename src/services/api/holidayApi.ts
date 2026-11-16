@@ -11,8 +11,10 @@ import type {
 } from '@/types/holiday.types'
 
 export const holidaysApi = {
-  async getAllHolidays(filters?: Record<string, any>): Promise<Holiday[]> {
-    const params = new URLSearchParams(filters)
+  async getAllHolidays(filters?: Record<string, string | number | boolean>): Promise<Holiday[]> {
+    const params = new URLSearchParams(
+      filters ? Object.fromEntries(Object.entries(filters).map(([k, v]) => [k, String(v)])) : undefined
+    )
     const response = await axios.get(`${APIDictionary.holiday}?${params}`, { withCredentials: true })
     return response.data.data || response.data
   },

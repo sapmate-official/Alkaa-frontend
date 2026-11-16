@@ -20,28 +20,8 @@ interface CreateTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onTaskCreated: () => void;
-  preselectedUser?: User | null;
-  preselectedGroup?: TaskGroup | null;
-}
-
-interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-}
-
-interface TaskGroup {
-  id: string;
-  name: string;
-  description?: string;
-}
-
-interface TaskGroup {
-  id: string;
-  name: string;
-  description?: string;
-  members?: Array<{ user: User }>;
+  preselectedUser?: { id: string; firstName?: string; lastName?: string; email?: string } | null;
+  preselectedGroup?: { id: string; name: string; description?: string } | null;
 }
 
 const CreateTaskDialog = ({ open, onOpenChange, onTaskCreated, preselectedUser, preselectedGroup }: CreateTaskDialogProps) => {
@@ -145,13 +125,13 @@ const CreateTaskDialog = ({ open, onOpenChange, onTaskCreated, preselectedUser, 
   };
 
   // Filter functions
-  const filteredUsers = users.filter((user: User) => {
+  const filteredUsers = users.filter((user) => {
     const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
     return fullName.includes(userSearchQuery.toLowerCase()) || 
            user.email.toLowerCase().includes(userSearchQuery.toLowerCase());
   });
 
-  const filteredGroups = taskGroups.filter((group: TaskGroup) => 
+  const filteredGroups = taskGroups.filter((group) => 
     group.name.toLowerCase().includes(groupSearchQuery.toLowerCase())
   );
 
@@ -259,7 +239,7 @@ const CreateTaskDialog = ({ open, onOpenChange, onTaskCreated, preselectedUser, 
               {selectedUsers.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-3">
                   {selectedUsers.map(userId => {
-                    const user = users.find((u: User) => u.id === userId);
+                    const user = users.find((u) => u.id === userId);
                     return user ? (
                       <Badge key={userId} variant="secondary" className="flex items-center gap-1">
                         {user.firstName} {user.lastName}
@@ -283,7 +263,7 @@ const CreateTaskDialog = ({ open, onOpenChange, onTaskCreated, preselectedUser, 
                 
                 <div className="h-32 overflow-y-auto border rounded-md p-2 space-y-2">
                   {filteredUsers.length > 0 ? (
-                    filteredUsers.map((user: User) => (
+                    filteredUsers.map((user) => (
                       <div key={user.id} className="flex items-center space-x-2">
                         <Checkbox
                           id={`user-${user.id}`}
@@ -310,7 +290,7 @@ const CreateTaskDialog = ({ open, onOpenChange, onTaskCreated, preselectedUser, 
               {selectedGroups.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-3">
                   {selectedGroups.map(groupId => {
-                    const group = taskGroups.find((g: TaskGroup) => g.id === groupId);
+                    const group = taskGroups.find((g) => g.id === groupId);
                     return group ? (
                       <Badge key={groupId} variant="outline" className="flex items-center gap-1">
                         {group.name}
@@ -334,7 +314,7 @@ const CreateTaskDialog = ({ open, onOpenChange, onTaskCreated, preselectedUser, 
                 
                 <div className="h-32 overflow-y-auto border rounded-md p-2 space-y-2">
                   {filteredGroups.length > 0 ? (
-                    filteredGroups.map((group: TaskGroup) => (
+                    filteredGroups.map((group) => (
                       <div key={group.id} className="flex items-center space-x-2">
                         <Checkbox
                           id={`group-${group.id}`}

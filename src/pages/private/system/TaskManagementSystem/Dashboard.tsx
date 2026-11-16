@@ -27,7 +27,8 @@ import {
   useManagerTasks, 
   useUserTasks, 
   useTaskGroups,
-  Task
+  Task,
+  TaskGroup
 } from '@/hooks/queries/useTasks';
 
 interface TaskStats {
@@ -68,7 +69,7 @@ const Dashboard = () => {
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [showGroupDetails, setShowGroupDetails] = useState(false);
-  const [selectedGroup, setSelectedGroup] = useState<any>(null);
+  const [selectedGroup, setSelectedGroup] = useState<TaskGroup | null>(null);
 
   // Check if user has permission to create tasks
   const canCreateTasks = permissionList.some(p => p.key === 'task_create');
@@ -132,7 +133,7 @@ const Dashboard = () => {
     });
   };
 
-  const openGroupDetails = (group: any) => {
+  const openGroupDetails = (group: TaskGroup) => {
     setSelectedGroup(group);
     setShowGroupDetails(true);
   };
@@ -449,7 +450,7 @@ const Dashboard = () => {
                 </div>
               ) : (
                 <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {taskGroups.map((group: any) => (
+                  {taskGroups.map((group: TaskGroup) => (
                     <div 
                       key={group.id} 
                       className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-all duration-200 hover:shadow-md border-l-4 border-l-purple-500"
@@ -476,15 +477,15 @@ const Dashboard = () => {
                               {group.tasks?.length || 0} tasks
                             </Badge>
                             <Badge variant="secondary" className="text-xs">
-                              {group.tasks?.filter((t: any) => t.status === 'COMPLETED').length || 0} completed
+                              {group.tasks?.filter((t: Task) => t.status === 'COMPLETED').length || 0} completed
                             </Badge>
-                            {group.memberCount !== undefined && (
+                            {(group as unknown as { memberCount?: number }).memberCount !== undefined && (
                               <Badge variant="default" className="text-xs bg-blue-100 text-blue-800">
-                                {group.memberCount} members
+                                {(group as unknown as { memberCount?: number }).memberCount} members
                               </Badge>
                             )}
                             <Badge variant="default" className="text-xs bg-green-100 text-green-800">
-                              {group.tasks?.filter((t: any) => t.status === 'IN_PROGRESS').length || 0} active
+                              {group.tasks?.filter((t: Task) => t.status === 'IN_PROGRESS').length || 0} active
                             </Badge>
                           </div>
                         </div>

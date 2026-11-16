@@ -69,7 +69,7 @@ const LeaveDashboard = () => {
         title: "Success",
         description: "Leave request approved successfully",
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to approve leave request",
@@ -88,7 +88,7 @@ const LeaveDashboard = () => {
         title: "Success",
         description: "Leave request rejected",
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to reject leave request",

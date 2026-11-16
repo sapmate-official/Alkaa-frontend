@@ -281,7 +281,7 @@ const ManageMembersDialog: React.FC<ManageMembersDialogProps> = ({
                         {searchTerm ? 'No users found matching your search' : 'All organization members are already in this group'}
                       </p>
                     ) : (
-                      availableUsers.map((user: any) => (
+                      availableUsers.map((user: User) => (
                         <div key={user.id} className="flex items-center space-x-3 p-2 hover:bg-muted rounded-lg">
                           <Checkbox
                             id={`add-user-${user.id}`}
@@ -351,7 +351,7 @@ const ManageMembersDialog: React.FC<ManageMembersDialogProps> = ({
                         {searchTerm ? 'No members found matching your search' : 'No members in this group'}
                       </p>
                     ) : (
-                      removableMembers.map((member: any) => (
+                      removableMembers.map((member: User) => (
                         <div key={member.id} className="flex items-center space-x-3 p-2 hover:bg-muted rounded-lg">
                           <Checkbox
                             id={`remove-user-${member.id}`}

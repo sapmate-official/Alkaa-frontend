@@ -90,6 +90,6 @@ export const authTestUtils = {
 
 // Make utilities available globally in development
 if (import.meta.env.DEV) {
-  (window as any).authTestUtils = authTestUtils;
+  (window as unknown as { authTestUtils?: typeof authTestUtils }).authTestUtils = authTestUtils;
   console.log('🔧 Auth test utilities available at window.authTestUtils');
 }

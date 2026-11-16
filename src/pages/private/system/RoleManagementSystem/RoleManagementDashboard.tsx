@@ -36,6 +36,7 @@ import { useAuth } from '@/providers/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/useDebounce';
 import { User } from '@/types/general';
+import type { Employee } from '@/types/employees';
 import PermissionPresetManager from './PermissionPresetManager';
 
 // Import TanStack Query hooks
@@ -432,11 +433,11 @@ const RolesPermissionsManagement = () => {
   };
 
   // Filter permissions based on search query
-  const getUserRoleName = (user: User) => {
-    return user.roles?.[0]?.role.name ?? 'No Role';
+  const getUserRoleName = (user: User | Employee) => {
+    return user.roles?.[0]?.role?.name ?? 'No Role';
   };
 
-  const getCurrentRoleId = (user: User) => {
+  const getCurrentRoleId = (user: User | Employee) => {
     return user.roles?.[0]?.roleId ?? '';
   };
   // Update the create role dialog content

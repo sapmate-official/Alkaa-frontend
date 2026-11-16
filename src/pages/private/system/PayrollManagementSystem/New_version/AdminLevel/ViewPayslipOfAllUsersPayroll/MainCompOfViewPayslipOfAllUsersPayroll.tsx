@@ -270,9 +270,10 @@ const MainCompOfViewPayslipOfAllUsersPayroll = () => {
 
 
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error generating salary:', error)
-      const message = error?.response?.data?.message || error?.response?.data?.error || error?.message || 'Failed to generate salary. Please try again.'
+      const err = error as { response?: { data?: { message?: string; error?: string } }; message?: string };
+      const message = err?.response?.data?.message || err?.response?.data?.error || err?.message || 'Failed to generate salary. Please try again.'
       alert(`Failed to generate salary: ${message}`)
     } finally {
       setLoading(false)

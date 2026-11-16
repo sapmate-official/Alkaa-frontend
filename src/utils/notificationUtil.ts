@@ -10,9 +10,9 @@ import { APIDictionary } from "@/services/api/v2/APIdict";
 export const sendNotification = async (
   userId: string,
   templateId: string,
-  variables: Record<string, any> = {},
-  metadata: Record<string, any> = {}
-): Promise<any> => {
+  variables: Record<string, unknown> = {},
+  metadata: Record<string, unknown> = {}
+): Promise<Record<string, unknown>> => {
   try {
     const token = localStorage.getItem("accessToken");
     
@@ -56,9 +56,9 @@ export const scheduleNotification = async (
   userId: string,
   templateId: string,
   scheduledTime: Date,
-  variables: Record<string, any> = {},
-  metadata: Record<string, any> = {}
-): Promise<any> => {
+  variables: Record<string, unknown> = {},
+  metadata: Record<string, unknown> = {}
+): Promise<Record<string, unknown>> => {
   try {
     const token = localStorage.getItem("accessToken");
     

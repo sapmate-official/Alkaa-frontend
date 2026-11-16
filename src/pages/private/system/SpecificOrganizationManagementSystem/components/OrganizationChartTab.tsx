@@ -174,7 +174,7 @@ const nodeTypes = {
 };
 
 interface OrganizationChartTabProps {
-  organization: any;
+  organization: { id?: string } | null;
   canViewDetailedInfo: boolean;
   canViewAllDepartments: boolean;
   canViewDepartmentList: boolean;
@@ -183,6 +183,25 @@ interface OrganizationChartTabProps {
 
 interface OrganizationChartFlowProps extends OrganizationChartTabProps {
   onAdminStatusChange?: (isAdmin: boolean) => void;
+}
+
+interface ManagerChartNode {
+  type?: string;
+  id?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  employeeId?: string;
+  position?: string;
+  role?: string;
+  departmentName?: string;
+  department?: { name?: string };
+  managerId?: string;
+  manager?: { id: string; firstName: string; lastName: string };
+  subordinates?: Array<{ id: string; firstName: string; lastName: string }>;
+  isHead?: boolean;
+  isManager?: boolean;
+  children?: ManagerChartNode[];
 }
 
 const OrganizationChartFlow = ({ 
@@ -207,8 +226,8 @@ const OrganizationChartFlow = ({
     if (!chartData?.chart) return [];
     
     const extractedUsers: UserData[] = [];
-    const extractFromManagerNode = (node: any) => {
-      if (node.type === 'user') {
+    const extractFromManagerNode = (node: ManagerChartNode) => {
+      if (node.type === 'user' && node.id && node.firstName && node.lastName && node.email) {
         extractedUsers.push({
           id: node.id,
           firstName: node.firstName,
@@ -227,11 +246,11 @@ const OrganizationChartFlow = ({
       }
       
       if (node.children && node.children.length > 0) {
-        node.children.forEach(extractFromManagerNode);
+        node.children.forEach((child) => extractFromManagerNode(child));
       }
     };
 
-    chartData.chart.forEach(extractFromManagerNode);
+    (chartData.chart as ManagerChartNode[]).forEach(extractFromManagerNode);
     return extractedUsers;
   }, [chartData]);
 

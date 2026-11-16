@@ -33,7 +33,7 @@ interface Permission {
   key?: string
 }
 
-interface Department {
+export interface RoleDepartment {
   id: string
   name: string
   description?: string
@@ -49,14 +49,14 @@ interface RolePreset {
 
 interface RoleAssignmentProps {
   setRoleId?: (roleId: string) => void
-  onDepartmentCreated?: (departments: Department[]) => void
+  onDepartmentCreated?: (departments: RoleDepartment[]) => void
 }
 
 const RoleAssignment: React.FC<RoleAssignmentProps> = ({ setRoleId, onDepartmentCreated }) => {
   const { user } = useAuth()
   const [roles, setRoles] = useState<Role[]>([])
   const [permissions, setPermissions] = useState<Permission[]>([])
-  const [, setDepartments] = useState<Department[]>([])
+  const [, setDepartments] = useState<RoleDepartment[]>([])
   const [selectedRole, setSelectedRole] = useState<string>('')
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([])
   const [newRoleName, setNewRoleName] = useState('')
@@ -234,11 +234,12 @@ const RoleAssignment: React.FC<RoleAssignmentProps> = ({ setRoleId, onDepartment
           setTimeout(() => setOpenRoleSelector(false), 1000)
         }, 500)
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating role:', error)
+      const err = error as { response?: { data?: { message?: string } } };
       toast({
         title: 'Error',
-        description: error?.response?.data?.message || 'Failed to create role',
+        description: err?.response?.data?.message || 'Failed to create role',
         variant: 'destructive'
       })
     } finally {

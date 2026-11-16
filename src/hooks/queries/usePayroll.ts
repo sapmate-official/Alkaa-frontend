@@ -147,7 +147,7 @@ export interface UpdatePayrollParametersRequest {
 export const payrollKeys = {
   all: ['payroll'] as const,
   lists: () => [...payrollKeys.all, 'list'] as const,
-  list: (filters: Record<string, any>) => [...payrollKeys.lists(), { filters }] as const,
+  list: (filters: Record<string, unknown>) => [...payrollKeys.lists(), { filters }] as const,
   details: () => [...payrollKeys.all, 'detail'] as const,
   detail: (id: string) => [...payrollKeys.details(), id] as const,
   userPayrolls: (userId: string) => [...payrollKeys.all, 'user', userId] as const,
@@ -161,8 +161,10 @@ export const payrollKeys = {
 
 // API Functions
 const payrollApi = {
-  async getAllPayrolls(filters?: Record<string, any>): Promise<PayrollRecord[]> {
-    const params = new URLSearchParams(filters)
+  async getAllPayrolls(filters?: Record<string, unknown>): Promise<PayrollRecord[]> {
+    const params = new URLSearchParams(
+      filters ? Object.fromEntries(Object.entries(filters).map(([k, v]) => [k, String(v)])) : undefined
+    )
     const response = await axios.get(`${APIDictionary.payroll}?${params}`, { withCredentials: true })
     return response.data.data || response.data
   },
@@ -245,8 +247,10 @@ const payrollApi = {
     return response.data.data || response.data
   },
 
-  async getPaymentTransactions(filters?: Record<string, any>): Promise<PaymentTransaction[]> {
-    const params = new URLSearchParams(filters)
+  async getPaymentTransactions(filters?: Record<string, unknown>): Promise<PaymentTransaction[]> {
+    const params = new URLSearchParams(
+      filters ? Object.fromEntries(Object.entries(filters).map(([k, v]) => [k, String(v)])) : undefined
+    )
     const response = await axios.get(`${APIDictionary.payroll}/transactions?${params}`, { withCredentials: true })
     return response.data.data || response.data
   },
@@ -283,7 +287,7 @@ const payrollApi = {
 }
 
 // Query Hooks
-export function usePayrolls(filters?: Record<string, any>) {
+export function usePayrolls(filters?: Record<string, unknown>) {
   return useQuery<PayrollRecord[]>({
     queryKey: payrollKeys.list(filters || {}),
     queryFn: () => payrollApi.getAllPayrolls(filters),
@@ -335,7 +339,7 @@ export function useSalaryRecordExistence(userId: string, month: number, year: nu
   })
 }
 
-export function usePaymentTransactions(filters?: Record<string, any>) {
+export function usePaymentTransactions(filters?: Record<string, unknown>) {
   return useQuery<PaymentTransaction[]>({
     queryKey: payrollKeys.transactions(),
     queryFn: () => payrollApi.getPaymentTransactions(filters),

@@ -12,7 +12,15 @@ export interface Department {
   location: string
   budget: number
   status: boolean
+  orgId?: string
   headId?: string
+  createdAt?: string | Date
+  updatedAt?: string | Date
+  parentDepartmentId?: string | null
+  parentDepartment?: {
+    id: string
+    name: string
+  } | null
   departmentHead?: {
     firstName: string
     lastName: string
@@ -21,7 +29,7 @@ export interface Department {
     id?: string
   }
   users?: User[]
-  [key: string]: any
+  [key: string]: unknown
 }
 
 // Query Keys

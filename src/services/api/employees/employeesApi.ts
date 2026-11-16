@@ -1,9 +1,11 @@
 import axios from 'axios'
 import { APIDictionary } from '@/services/api/v2/APIdict'
+import type { User, Role } from '@/types/general'
+import type { Employee, UpdateEmployeeRequest } from '@/types/employees'
 
 export const employeesApi = {
   // Employee CRUD
-  async getAllEmployees(filters?: Record<string, any>): Promise<any[]> {
+  async getAllEmployees(filters?: Record<string, unknown>): Promise<Employee[]> {
     // Use the correct endpoint for fetching users by organization
     if (filters?.orgId) {
       const response = await axios.get(`${APIDictionary.user}/org/${filters.orgId}`, { withCredentials: true })
@@ -14,17 +16,17 @@ export const employeesApi = {
     return response.data.data || response.data
   },
 
-  async getEmployeeById(id: string): Promise<any> {
+  async getEmployeeById(id: string): Promise<Employee> {
     const response = await axios.get(`${APIDictionary.user}/${id}`, { withCredentials: true })
     return response.data.data || response.data
   },
 
-  async createEmployee(data: any): Promise<any> {
+  async createEmployee(data: Partial<User> | Record<string, unknown>): Promise<User> {
     const response = await axios.post(APIDictionary.user, data, { withCredentials: true })
     return response.data.data || response.data
   },
 
-  async updateEmployee(id: string, data: any): Promise<any> {
+  async updateEmployee(id: string, data: Partial<User> | UpdateEmployeeRequest | Record<string, unknown>): Promise<User> {
     const response = await axios.put(`${APIDictionary.user}/${id}`, data, { withCredentials: true })
     return response.data.data || response.data
   },
@@ -34,18 +36,18 @@ export const employeesApi = {
   },
 
   // Department-based queries
-  async getEmployeesByDepartment(departmentId: string): Promise<any[]> {
+  async getEmployeesByDepartment(departmentId: string): Promise<Employee[]> {
     const response = await axios.get(`${APIDictionary.user}?departmentId=${departmentId}`, { withCredentials: true })
     return response.data.data || response.data
   },
 
-  async getEmployeesByManager(managerId: string): Promise<any[]> {
+  async getEmployeesByManager(managerId: string): Promise<Employee[]> {
     const response = await axios.get(`${APIDictionary.employee_list}?managerId=${managerId}`, { withCredentials: true })
     return response.data.data || response.data
   },
 
   // Role management
-  async getEmployeeRoles(employeeId: string): Promise<any[]> {
+  async getEmployeeRoles(employeeId: string): Promise<Role[] | Record<string, unknown>[]> {
     const response = await axios.get(`${APIDictionary.user_role}/user/${employeeId}`, { withCredentials: true })
     return response.data.data || response.data
   },
@@ -66,7 +68,7 @@ export const employeesApi = {
   },
 
   // Status management
-  async updateEmployeeStatus(id: string, status: string): Promise<any> {
+  async updateEmployeeStatus(id: string, status: string): Promise<User> {
     const response = await axios.put(`${APIDictionary.user}/${id}`, { status }, { withCredentials: true })
     return response.data.data || response.data
   },

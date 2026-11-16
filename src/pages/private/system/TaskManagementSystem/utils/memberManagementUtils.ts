@@ -14,12 +14,23 @@ interface User {
   email: string;
 }
 
+interface AssignmentItem {
+  assignedTo: { id: string; [key: string]: unknown };
+  [key: string]: unknown;
+}
+
+interface TaskItem {
+  assignments?: AssignmentItem[];
+  status?: string;
+  [key: string]: unknown;
+}
+
 interface TaskGroup {
   id: string;
   name: string;
   description?: string;
   createdBy: User;
-  tasks: any[];
+  tasks: TaskItem[];
 }
 
 /**
@@ -124,7 +135,7 @@ export const memberAnalytics = {
     const analysis = members.map(member => {
       const taskCount = TaskGroupMemberService.getMemberTaskCount(member.id, group);
       const assignedTasks = group.tasks.filter(task =>
-        task.assignments?.some((assignment: any) => assignment.assignedTo.id === member.id)
+        task.assignments?.some((assignment: AssignmentItem) => assignment.assignedTo.id === member.id)
       );
       
       const completedTasks = assignedTasks.filter(task => task.status === 'COMPLETED');
@@ -191,7 +202,7 @@ export const memberRecommendations = {
       member,
       workload: TaskGroupMemberService.getMemberTaskCount(member.id, group),
       activeTasks: group.tasks.filter(task =>
-        task.assignments?.some((assignment: any) => 
+        task.assignments?.some((assignment: AssignmentItem) => 
           assignment.assignedTo.id === member.id && task.status !== 'COMPLETED'
         )
       ).length

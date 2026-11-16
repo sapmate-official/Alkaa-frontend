@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -47,7 +47,7 @@ interface ReviewData {
     annualPackage: number;
     hiredDate: string;
     departmentId: string;
-    department: any;
+    department: { id: string; name: string; [key: string]: unknown } | null;
   };
   submittedData: {
     personalInfo: {
@@ -79,13 +79,13 @@ interface ReviewData {
     mobileNumber: { initial: string; submitted: string; changed: boolean };
   };
   reviewHistory: {
-    reviewedBy: any;
+    reviewedBy: { id: string; firstName?: string; lastName?: string; email?: string } | null;
     reviewedAt: string;
     rejectionReason: string;
   };
   metadata: {
-    createdBy: any;
-    organization: any;
+    createdBy: { id: string; firstName?: string; lastName?: string; email?: string } | null;
+    organization: { id: string; name: string; [key: string]: unknown } | null;
     tokenExpiry: string;
   };
 }
@@ -109,13 +109,7 @@ const CandidateReview = ({ candidateId, isOpen, onClose, onActionComplete }: Can
   const [showChangeRequestDialog, setShowChangeRequestDialog] = useState(false);
   const [feedback, setFeedback] = useState('');
 
-  useEffect(() => {
-    if (isOpen && candidateId) {
-      fetchReviewData();
-    }
-  }, [candidateId, isOpen]);
-
-  const fetchReviewData = async () => {
+  const fetchReviewData = useCallback(async () => {
     try {
       setLoading(true);
       const response = await axios.get(
@@ -123,7 +117,7 @@ const CandidateReview = ({ candidateId, isOpen, onClose, onActionComplete }: Can
         { withCredentials: true }
       );
       setReviewData(response.data.data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
         description: 'Failed to load candidate review data',
@@ -133,7 +127,13 @@ const CandidateReview = ({ candidateId, isOpen, onClose, onActionComplete }: Can
     } finally {
       setLoading(false);
     }
-  };
+  }, [candidateId]);
+
+  useEffect(() => {
+    if (isOpen && candidateId) {
+      fetchReviewData();
+    }
+  }, [candidateId, isOpen, fetchReviewData]);
 
   const handleApprove = async () => {
     try {
@@ -152,10 +152,11 @@ const CandidateReview = ({ candidateId, isOpen, onClose, onActionComplete }: Can
       setShowApproveDialog(false);
       onActionComplete?.();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string } } };
       toast({
         title: 'Error',
-        description: error?.response?.data?.error || 'Failed to approve candidate',
+        description: err?.response?.data?.error || 'Failed to approve candidate',
         variant: 'destructive',
       });
     } finally {
@@ -190,10 +191,11 @@ const CandidateReview = ({ candidateId, isOpen, onClose, onActionComplete }: Can
       setFeedback('');
       onActionComplete?.();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string } } };
       toast({
         title: 'Error',
-        description: error?.response?.data?.error || 'Failed to reject candidate',
+        description: err?.response?.data?.error || 'Failed to reject candidate',
         variant: 'destructive',
       });
     } finally {
@@ -228,10 +230,11 @@ const CandidateReview = ({ candidateId, isOpen, onClose, onActionComplete }: Can
       setFeedback('');
       onActionComplete?.();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string } } };
       toast({
         title: 'Error',
-        description: error?.response?.data?.error || 'Failed to request changes',
+        description: err?.response?.data?.error || 'Failed to request changes',
         variant: 'destructive',
       });
     } finally {
@@ -240,7 +243,7 @@ const CandidateReview = ({ candidateId, isOpen, onClose, onActionComplete }: Can
   };
 
   const getStatusBadge = (status: string) => {
-    const statusConfig = {
+    const statusConfig: Record<string, { variant: 'default' | 'secondary' | 'outline' | 'destructive'; label: string; icon: typeof Clock }> = {
       INVITED: { variant: 'secondary', label: 'Invited', icon: Clock },
       FORM_SUBMITTED: { variant: 'default', label: 'Submitted', icon: FileText },
       UNDER_REVIEW: { variant: 'outline', label: 'Under Review', icon: Eye },
@@ -249,11 +252,11 @@ const CandidateReview = ({ candidateId, isOpen, onClose, onActionComplete }: Can
       ONBOARDED: { variant: 'default', label: 'Onboarded', icon: UserCheck }
     };
 
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.INVITED;
+    const config = statusConfig[status] || statusConfig.INVITED;
     const IconComponent = config.icon;
 
     return (
-      <Badge variant={config.variant as any} className="flex items-center gap-1">
+      <Badge variant={config.variant} className="flex items-center gap-1">
         <IconComponent className="h-3 w-3" />
         {config.label}
       </Badge>
@@ -402,7 +405,7 @@ const CandidateReview = ({ candidateId, isOpen, onClose, onActionComplete }: Can
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-muted-foreground" />
                       <span className="font-medium">Created by:</span>
-                      <span>{metadata.createdBy.firstName} {metadata.createdBy.lastName}</span>
+                      <span>{metadata.createdBy ? `${metadata.createdBy.firstName} ${metadata.createdBy.lastName}` : 'N/A'}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />

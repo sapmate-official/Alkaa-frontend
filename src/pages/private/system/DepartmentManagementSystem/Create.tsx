@@ -160,7 +160,7 @@ const CreateDepartment = () => {
       
       // Navigate to the new department
       navigate(RouteDict.Department.Details(result.id))
-    } catch (error) {
+    } catch {
       // Error handling is done in the mutation hook
     }
   }

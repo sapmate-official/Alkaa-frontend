@@ -159,13 +159,14 @@ const HolidayManagementSystem = () => {
         title: 'Success',
         description: 'Holiday type deleted successfully'
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error deleting holiday type:', err);
-      if (err.response && err.response.status === 400) {
+      const error = err as { response?: { status?: number; data?: { error?: string } } };
+      if (error.response && error.response.status === 400) {
         // This likely means the holiday type is in use
         toast({
             title: 'Error',
-            description: err.response.data.error || 'This holiday type is in use and cannot be deleted'
+            description: error.response.data?.error || 'This holiday type is in use and cannot be deleted'
         });
       } else {
         toast({

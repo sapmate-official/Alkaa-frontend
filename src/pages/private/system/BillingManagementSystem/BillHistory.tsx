@@ -111,13 +111,15 @@ const BillHistory = () => {
       } else {
         setError(response.data.message || 'Failed to load bills');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching bills:', error);
-      setError(error.response?.data?.message || 'Failed to load bills');
+      const err = error as { response?: { data?: { message?: string } } };
+      const msg = err.response?.data?.message || 'Failed to load bills';
+      setError(msg);
       
       toast({
         title: 'Error loading data',
-        description: error.response?.data?.message || 'Failed to load bills',
+        description: msg,
         variant: 'destructive',
       });
     } finally {

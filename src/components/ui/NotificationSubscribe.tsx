@@ -35,7 +35,7 @@ export function NotificationSubscribe() {
           variant: "destructive"
         });
       }
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Something went wrong",

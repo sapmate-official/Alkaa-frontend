@@ -30,8 +30,9 @@ export function LoginForm({
       if(message) {
         setError(message);
       }
-    } catch (err:any) {
-      setError(err.message || err.error || "Invalid email or password");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : (err as { error?: string })?.error || "Invalid email or password";
+      setError(msg);
     } finally {
       setIsLoadingg(false);
     }

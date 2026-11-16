@@ -18,7 +18,7 @@ interface TaskGroup {
   name: string;
   description?: string;
   createdBy: User;
-  tasks: any[];
+  tasks: Array<Record<string, unknown>>;
 }
 
 interface GroupMembershipCardProps {

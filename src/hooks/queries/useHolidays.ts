@@ -18,7 +18,7 @@ export type { Holiday, HolidayType, CreateHolidayRequest, UpdateHolidayRequest, 
 export { holidayKeys, holidayTypeKeys }
 
 // Query Hooks - Holidays
-export function useHolidays(filters?: Record<string, any>) {
+export function useHolidays(filters?: Record<string, string | number | boolean>) {
   return useQuery<Holiday[]>({
     queryKey: holidayKeys.list(filters || {}),
     queryFn: () => holidaysApi.getAllHolidays(filters),

@@ -90,7 +90,7 @@ interface AttendanceRecord {
   user: User;
   UserDailyReport?: { 
     id: string;
-    reportContent: any;
+    reportContent: Record<string, unknown> | string | null;
   }[];
 }
 
@@ -101,7 +101,7 @@ const AttendanceVerificationComponent: React.FC = () => {
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [, setLoading] = useState<boolean>(false);
   const [selectedRecord, setSelectedRecord] = useState<AttendanceRecord | null>(null);
-  const [selectedReport, setSelectedReport] = useState<any>(null);
+  const [selectedReport, setSelectedReport] = useState<Record<string, unknown> | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [startDate, setStartDate] = useState<Date>(() => {
     const date = new Date();

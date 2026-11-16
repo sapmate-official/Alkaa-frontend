@@ -53,8 +53,9 @@ import RouteDict from '@/routes/RouteDict'
 import { useDepartmentQuery, useChangeDepartmentHeadMutation } from '@/hooks/queries/useDepartments'
 import { useEmployees } from '@/hooks/queries/useEmployees'
 import { User } from '@/types/general'
+import type { Employee } from '@/types/employees'
 
-const MemberAvatar = ({ user }: { user: User }) => (
+const MemberAvatar = ({ user }: { user: User | Employee }) => (
   <TooltipProvider>
     <Tooltip>
       <TooltipTrigger asChild>
@@ -80,7 +81,7 @@ const SpecificDepartmentView = () => {
   const { toast } = useToast()
   const [permissions] = useAtom(permissionListAtom)
   const [searchQuery, setSearchQuery] = useState('')
-  const [confirmHeadChange, setConfirmHeadChange] = useState<User | null>(null)
+  const [confirmHeadChange, setConfirmHeadChange] = useState<User | Employee | null>(null)
 
   // TanStack Query hooks
   const { data: department, isLoading, error } = useDepartmentQuery(id || user?.Department?.[0]?.id || '')
@@ -117,7 +118,7 @@ const SpecificDepartmentView = () => {
     try {
       await changeHeadMutation.mutateAsync({ departmentId: department.id, userId })
       setConfirmHeadChange(null)
-    } catch (error) {
+    } catch {
       // Error handling is done in the mutation hook
     }
   }
@@ -126,7 +127,7 @@ const SpecificDepartmentView = () => {
     ? employeeList.filter(emp =>
       `${emp.firstName} ${emp.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
       emp.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      emp.employeeId.toLowerCase().includes(searchQuery.toLowerCase())
+      (emp.employeeId && emp.employeeId.toLowerCase().includes(searchQuery.toLowerCase()))
     )
     : employeeList
 
@@ -134,7 +135,7 @@ const SpecificDepartmentView = () => {
 
   // Format dates if available
   const createdAt = department.createdAt
-    ? new Date(department.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    ? new Date(department.createdAt as string | number | Date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
     : null;
 
   return (

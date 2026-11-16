@@ -36,6 +36,29 @@ interface CustomPayslipData {
   };
 }
 
+interface CustomPayslipPreview {
+  employee: {
+    name: string;
+    employeeId: string;
+    department: string;
+    email?: string;
+  };
+  company: {
+    name: string;
+    address: string;
+    email: string;
+    phone: string;
+  };
+  period: string;
+  summary: {
+    basicSalary: number;
+    totalAllowances: number;
+    grossPay: number;
+    totalDeductions: number;
+    netSalary: number;
+  };
+}
+
 export const CustomPayslipGenerator: React.FC = () => {
   const [formData, setFormData] = useState<CustomPayslipData>({
     month: new Date().getMonth() + 1,
@@ -75,28 +98,32 @@ export const CustomPayslipGenerator: React.FC = () => {
   ]);
 
   const [isLoading, setIsLoading] = useState(false);
-  const [previewData, setPreviewData] = useState<any>(null);
+  const [previewData, setPreviewData] = useState<CustomPayslipPreview | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: unknown) => {
     const fields = field.split('.');
     if (fields.length === 1) {
       setFormData({ ...formData, [field]: value });
     } else if (fields.length === 2) {
+      const parent = formData[fields[0] as keyof CustomPayslipData];
       setFormData({
         ...formData,
         [fields[0]]: {
-          ...(formData[fields[0] as keyof CustomPayslipData] as any),
+          ...(typeof parent === 'object' && parent !== null ? parent : {}),
           [fields[1]]: value,
         },
       });
     } else if (fields.length === 3) {
+      const parent = formData[fields[0] as keyof CustomPayslipData];
+      const parentObj = typeof parent === 'object' && parent !== null ? (parent as Record<string, unknown>) : {};
+      const subParent = parentObj[fields[1]];
       setFormData({
         ...formData,
         [fields[0]]: {
-          ...(formData[fields[0] as keyof CustomPayslipData] as any),
+          ...parentObj,
           [fields[1]]: {
-            ...((formData[fields[0] as keyof CustomPayslipData] as any)[fields[1]]),
+            ...(typeof subParent === 'object' && subParent !== null ? (subParent as Record<string, unknown>) : {}),
             [fields[2]]: value,
           },
         },
@@ -209,8 +236,9 @@ export const CustomPayslipGenerator: React.FC = () => {
           netSalary: formData.netSalary,
         },
       });
-    } catch (err: any) {
-      setError(err.message || 'Error generating preview');
+    } catch (err: unknown) {
+      const errorObj = err as Error;
+      setError(errorObj.message || 'Error generating preview');
       console.error('Preview error:', err);
     } finally {
       setIsLoading(false);
@@ -328,8 +356,9 @@ export const CustomPayslipGenerator: React.FC = () => {
       PayslipPDFGenerator.generatePDF(payslipData);
 
       alert('Payslip generated successfully!');
-    } catch (err: any) {
-      setError(err.message || 'Error generating payslip');
+    } catch (err: unknown) {
+      const errorObj = err as Error;
+      setError(errorObj.message || 'Error generating payslip');
       console.error('Generation error:', err);
     } finally {
       setIsLoading(false);

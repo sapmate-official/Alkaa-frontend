@@ -88,7 +88,7 @@ const PermissionCreate = () => {
         try {
             const response = await axios.get(APIDictionary.Permission);
             setPermissions(response?.data ?? []);
-        } catch (err) {
+        } catch {
             setError('Failed to fetch permissions');
         }
     };
@@ -115,7 +115,7 @@ const PermissionCreate = () => {
                 setFormData({ name: '', description: '', module: '', action: '' });
                 fetchPermissions(); // Refresh the list
             }
-        } catch (err) {
+        } catch {
             setError('Failed to create permission');
         } finally {
             setLoading(false);

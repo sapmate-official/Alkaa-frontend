@@ -159,10 +159,11 @@ const LeaveRequestList = () => {
         variant: "default"
       })
       refetch() // Refetch the leave requests after deletion
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string } } };
       toast({
         title: "Error",
-        description: error.response?.data?.error || "Failed to delete leave request",
+        description: err.response?.data?.error || "Failed to delete leave request",
         variant: "destructive"
       })
       console.error("Error deleting leave request:", error)

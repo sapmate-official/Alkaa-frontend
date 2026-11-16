@@ -5,9 +5,10 @@ import { ChevronsUpDown } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import type { User } from "@/types/general";
 
 export interface SidebarFooterProps {
-    user: any;
+    user: User | null;
     theme: 'light' | 'dark';
     setTheme: (theme: 'light' | 'dark') => void;
     open: boolean;
@@ -28,11 +29,14 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({ user, theme, setTheme, op
         navigate('/p/logout');
     };
 
+    const displayName = user?.firstName || user?.lastName ? `${user?.firstName || ''} ${user?.lastName || ''}`.trim() : (user?.email || 'User');
+    const initial = displayName[0]?.toUpperCase() ?? 'U';
+
     if (!open) {
         return (
             <button className="flex w-full items-center justify-center rounded-lg px-2 py-2 bg-muted">
                 <Avatar className="h-8 w-8">
-                    <AvatarFallback>{user?.name?.[0] ?? 'U'}</AvatarFallback>
+                    <AvatarFallback>{initial}</AvatarFallback>
                 </Avatar>
             </button>
         );
@@ -48,10 +52,10 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({ user, theme, setTheme, op
                 >
                     <div className="flex items-center gap-2">
                         <Avatar className="h-8 w-8">
-                            <AvatarFallback>{user?.name?.[0] ?? 'U'}</AvatarFallback>
+                            <AvatarFallback>{initial}</AvatarFallback>
                         </Avatar>
                         <div className="grid flex-1 text-left text-sm leading-tight">
-                            <span className="font-semibold">{user?.name ?? 'User'}</span>
+                            <span className="font-semibold">{displayName}</span>
                             <span className="text-xs text-muted-foreground">{user?.email ?? ''}</span>
                         </div>
                     </div>

@@ -9,6 +9,9 @@ export interface Bill {
   organizationId: string
   planId: string
   amount: number
+  totalAmount?: number
+  month?: number
+  year?: number
   currency: string
   billingCycle: 'MONTHLY' | 'QUARTERLY' | 'YEARLY'
   status: 'PENDING' | 'PAID' | 'OVERDUE' | 'CANCELLED' | 'REFUNDED'
@@ -91,7 +94,7 @@ export interface Payment {
   paymentMethod: 'CREDIT_CARD' | 'DEBIT_CARD' | 'BANK_TRANSFER' | 'UPI' | 'WALLET' | 'CASH'
   status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'CANCELLED' | 'REFUNDED'
   transactionId?: string
-  gatewayResponse?: any
+  gatewayResponse?: Record<string, unknown>
   failureReason?: string
   processedAt?: string
   createdAt: string
@@ -150,7 +153,7 @@ export interface CreatePaymentRequest {
 export interface ProcessPaymentRequest {
   paymentId: string
   transactionId?: string
-  gatewayResponse?: any
+  gatewayResponse?: Record<string, unknown>
   status: 'COMPLETED' | 'FAILED'
   failureReason?: string
 }
@@ -182,7 +185,7 @@ export interface BillingDashboardData {
     subscriptionStatus: string;
   };
   billing: {
-    latestBill: any;
+    latestBill: Bill | null;
     totalBilledThisYear: number;
     totalUnpaid: number;
     unpaidCount: number;
@@ -193,7 +196,7 @@ export interface BillingDashboardData {
     overdue: number;
     total: number;
   };
-  recentBills: any[];
+  recentBills: Bill[];
 }
 
 // Query Keys
@@ -201,9 +204,9 @@ export const billingKeys = {
   all: ['billing'] as const,
   bills: () => [...billingKeys.all, 'bills'] as const,
   bill: (id: string) => [...billingKeys.bills(), id] as const,
-  billsList: (filters: Record<string, any>) => [...billingKeys.bills(), 'list', { filters }] as const,
+  billsList: (filters: Record<string, unknown>) => [...billingKeys.bills(), 'list', { filters }] as const,
   orgBills: (orgId: string) => [...billingKeys.bills(), 'organization', orgId] as const,
-  billingHistory: (filters: Record<string, any>) => [...billingKeys.bills(), 'history', { filters }] as const,
+  billingHistory: (filters: Record<string, unknown>) => [...billingKeys.bills(), 'history', { filters }] as const,
   invoice: (billId: string) => [...billingKeys.all, 'invoice', billId] as const,
   billInvoice: (billId: string) => [...billingKeys.all, 'bill-invoice', billId] as const,
   invoices: () => [...billingKeys.all, 'invoices'] as const,
@@ -220,9 +223,11 @@ export const billingKeys = {
 // API Functions
 const billingApi = {
   // Bills
-  async getAllBills(filters?: Record<string, any>): Promise<Bill[]> {
+  async getAllBills(filters?: Record<string, unknown>): Promise<Bill[]> {
     // Use history endpoint as list source (backend exposes /api/v2/billing/history)
-    const params = new URLSearchParams(filters)
+    const params = new URLSearchParams(
+      filters ? Object.fromEntries(Object.entries(filters).map(([k, v]) => [k, String(v)])) : undefined
+    )
     const url = `${APIV2Dictionary.billing.getHistory()}${params.toString() ? `?${params}` : ''}`
     const response = await axios.get(url, { withCredentials: true })
     return response.data.data || response.data
@@ -344,7 +349,7 @@ const billingApi = {
   },
 
   // Utility functions
-  async markBillAsPaid(billId: string, paymentDetails?: any): Promise<Bill> {
+  async markBillAsPaid(billId: string, paymentDetails?: Record<string, unknown>): Promise<Bill> {
     // Align with backend: POST /api/v2/billing/bill/:id/pay
     const response = await axios.post(APIV2Dictionary.billing.payBill(billId), paymentDetails || {}, { withCredentials: true })
     return response.data.data || response.data
@@ -361,7 +366,7 @@ const billingApi = {
 }
 
 // Query Hooks
-export function useBills(filters?: Record<string, any>) {
+export function useBills(filters?: Record<string, unknown>) {
   return useQuery<Bill[]>({
     queryKey: billingKeys.billsList(filters || {}),
     queryFn: () => billingApi.getAllBills(filters),
@@ -576,7 +581,7 @@ export function useMarkBillAsPaid() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ billId, paymentDetails }: { billId: string; paymentDetails?: any }) =>
+    mutationFn: ({ billId, paymentDetails }: { billId: string; paymentDetails?: Record<string, unknown> }) =>
       billingApi.markBillAsPaid(billId, paymentDetails),
     onSuccess: (_updatedBill, { billId }) => {
       queryClient.invalidateQueries({ queryKey: billingKeys.bill(billId) })

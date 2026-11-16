@@ -1,4 +1,5 @@
 import { permissionListAtom, userIdAtom } from "../store/atom";
+import { useAuthStore } from "../store/useAuthStore";
 import axios, { AxiosError } from "axios";
 import { useAtom } from "jotai";
 import React, { createContext, useState, useContext, useEffect } from "react";
@@ -14,9 +15,20 @@ interface Organization {
     userStatus: string;
 }
 
+export interface AuthStepData {
+    email?: string;
+    orgId?: string;
+    sessionToken?: string;
+    organizationName?: string;
+    organization?: Organization;
+    organizations?: Organization[];
+    otpExpiresIn?: number;
+    [key: string]: unknown;
+}
+
 interface AuthStep {
     step: 'email' | 'organization' | 'password' | 'otp' | 'complete';
-    data?: any;
+    data?: AuthStepData;
 }
 
 interface AuthContextType {
@@ -28,7 +40,7 @@ interface AuthContextType {
     signIn: (email: string, password: string) => Promise<string | undefined>;
     // New multi-tenant auth methods
     checkEmail: (email: string) => Promise<{ singleOrganization?: boolean; multipleOrganizations?: boolean; organizations?: Organization[]; organization?: Organization }>;
-    verifyPassword: (email: string, password: string, orgId?: string) => Promise<{ sessionToken?: string; organizationName?: string; otpExpiresIn?: number; [key: string]: any }>;
+    verifyPassword: (email: string, password: string, orgId?: string) => Promise<{ sessionToken?: string; organizationName?: string; otpExpiresIn?: number; [key: string]: unknown }>;
     verifyOtp: (sessionToken: string, otpCode: string) => Promise<void>;
     selectOrganization: (organization: Organization, email: string) => void;
     resetAuthFlow: () => void;
@@ -61,7 +73,7 @@ export const tokenStorage = {
         try {
             const payload = JSON.parse(atob(token.split('.')[1]));
             return payload.exp * 1000 < Date.now();
-        } catch (e) {
+        } catch {
             return true;
         }
     }
@@ -146,7 +158,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [authStep, setAuthStep] = useState<AuthStep>({ step: 'email' });
-    const [, setUser_id] = useAtom<string | null>(userIdAtom);
+    const [, setUser_id] = useAtom(userIdAtom);
     const [, setPermissionList] = useAtom(permissionListAtom);
     const navigate = useNavigate();
     const [isInitialized, setIsInitialized] = useState(false);
@@ -173,17 +185,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             });
             
             if (response.status === 200 && response.data.user) {
+                const perms = toPermissionList(response.data.user.permissions);
                 setUser(response.data.user);
                 setUser_id(response.data.user.id ?? null);
-                setPermissionList(toPermissionList(response.data.user.permissions));
+                setPermissionList(perms);
+                useAuthStore.getState().setUser(response.data.user);
+                useAuthStore.getState().setPermissions(perms);
                 return response.data.user;
             } else {
                 throw new Error("Invalid token response");
             }
-        } catch (error) {
-            // Don't need explicit error handling here as axios interceptor will handle 401s
-            // Just rethrow for the caller to handle other errors
-            throw error;
         } finally {
             setIsLoading(false);
         }
@@ -217,7 +228,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                         } else {
                             throw new Error("Invalid refresh response");
                         }
-                    } catch (refreshError) {
+                    } catch {
                         tokenStorage.clearTokens();
                         setUser(null);
                     }
@@ -468,6 +479,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             setUser(null);
             setUser_id(null);
             setPermissionList([]);
+            useAuthStore.getState().clearAuth();
             tokenStorage.clearTokens();
             setIsLoading(false);
             setAuthStep({ step: 'email' });

@@ -1,59 +1,77 @@
-import { Permission, User } from '@/types/general'
-import {atom} from 'jotai'
+import { Permission, User } from '@/types/general';
+import { atom } from 'jotai';
+import {
+  BillingDashboardData,
+  DashboardData,
+  SpecialEvent,
+  useAppStore,
+} from './useAppStore';
+import { useAuthStore } from './useAuthStore';
 
-interface DashboardData {
-  totalEmployees: number;
-  presentToday: number;
-  pendingLeaves: number;
-  recentActivities: Array<{
-    title: string;
-    timestamp: string;
-  }>;
-  attendanceStats: Array<{
-    date: string;
-    present: number;
-    absent: number;
-  }>;
-}
+export type { DashboardData, BillingDashboardData, SpecialEvent };
 
-interface BillingDashboardData {
-  organization: {
-    name: string;
-    subscriptionPlan: string;
-    activeUsers: number;
-    subscriptionStart: string;
-    subscriptionEnd: string | null;
-    daysRemaining: number | null;
-    subscriptionStatus: string;
-  };
-  billing: {
-    latestBill: any;
-    totalBilledThisYear: number;
-    totalUnpaid: number;
-    unpaidCount: number;
-  };
-  billStatus: {
-    unpaid: number;
-    paid: number;
-    overdue: number;
-    total: number;
-  };
-  recentBills: any[];
-}
+// Atoms synchronized with Zustand stores to ensure zero regressions across legacy consumers
+export const userIdAtom = atom<string | null, [string | null], void>(
+  () => useAuthStore.getState().userId,
+  (_get, _set, newUserId: string | null) => {
+    useAuthStore.getState().setUserId(newUserId);
+  }
+);
 
-export interface SpecialEvent {
-  type: 'BIRTHDAY' | 'BILL' | 'LEAVE_REQUEST' | 'MONTH_END_VERIFICATION' | 'INCOMPLETE_ATTENDANCE';
-  title: string;
-  description: string;
-  date: Date | string;
-  priority: 'high' | 'medium' | 'low';
-  entity: Record<string, any>;
-}
+export const userAtom = atom<User | null, [User | null], void>(
+  () => useAuthStore.getState().user,
+  (_get, _set, newUser: User | null) => {
+    useAuthStore.getState().setUser(newUser);
+  }
+);
 
-export const userIdAtom = atom<string | null>(null)
-export const userAtom = atom<User | null>(null)
-export const permissionListAtom = atom<Permission[]>([])
-export const dashboardDataAtom = atom<DashboardData | null>(null)
-export const billingDashboardDataAtom = atom<BillingDashboardData | null>(null)
-export const specialEventsAtom = atom<SpecialEvent[]>([])
-export const specialEventsLoadingAtom = atom<boolean>(false)
+export const permissionListAtom = atom<Permission[], [Permission[]], void>(
+  () => useAuthStore.getState().permissions,
+  (_get, _set, newPerms: Permission[]) => {
+    useAuthStore.getState().setPermissions(newPerms);
+  }
+);
+
+export const dashboardDataAtom = atom<
+  DashboardData | null,
+  [DashboardData | null],
+  void
+>(
+  () => useAppStore.getState().dashboardData,
+  (_get, _set, newData: DashboardData | null) => {
+    useAppStore.getState().setDashboardData(newData);
+  }
+);
+
+export const billingDashboardDataAtom = atom<
+  BillingDashboardData | null,
+  [BillingDashboardData | null],
+  void
+>(
+  () => useAppStore.getState().billingDashboardData,
+  (_get, _set, newData: BillingDashboardData | null) => {
+    useAppStore.getState().setBillingDashboardData(newData);
+  }
+);
+
+export const specialEventsAtom = atom<
+  SpecialEvent[],
+  [SpecialEvent[]],
+  void
+>(
+  () => useAppStore.getState().specialEvents,
+  (_get, _set, newEvents: SpecialEvent[]) => {
+    useAppStore.getState().setSpecialEvents(newEvents);
+  }
+);
+
+export const specialEventsLoadingAtom = atom<
+  boolean,
+  [boolean],
+  void
+>(
+  () => useAppStore.getState().specialEventsLoading,
+  (_get, _set, isLoading: boolean) => {
+    useAppStore.getState().setSpecialEventsLoading(isLoading);
+  }
+);

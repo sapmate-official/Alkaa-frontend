@@ -98,13 +98,15 @@ const BillDetails = () => {
       } else {
         setError(response.data.message || 'Failed to load bill details');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching bill details:', error);
-      setError(error.response?.data?.message || 'Failed to load bill details');
+      const err = error as { response?: { data?: { message?: string } } };
+      const msg = err.response?.data?.message || 'Failed to load bill details';
+      setError(msg);
       
       toast({
         title: 'Error loading data',
-        description: error.response?.data?.message || 'Failed to load bill details',
+        description: msg,
         variant: 'destructive',
       });
     } finally {
@@ -148,12 +150,13 @@ const BillDetails = () => {
           variant: 'destructive',
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error processing payment:', error);
+      const err = error as { response?: { data?: { message?: string } } };
       
       toast({
         title: 'Payment failed',
-        description: error.response?.data?.message || 'Failed to process payment',
+        description: err.response?.data?.message || 'Failed to process payment',
         variant: 'destructive',
       });
     } finally {

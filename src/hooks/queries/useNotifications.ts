@@ -19,7 +19,7 @@ export interface Notification {
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
   actionUrl?: string
   actionText?: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
   createdAt: string
   updatedAt: string
   sender?: {
@@ -98,7 +98,7 @@ export interface CreateNotificationRequest {
   actionText?: string
   scheduledAt?: string
   expiresAt?: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 export interface UpdateNotificationRequest {
@@ -111,7 +111,7 @@ export interface UpdateNotificationRequest {
   actionText?: string
   scheduledAt?: string
   expiresAt?: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 export interface CreateNotificationTemplateRequest {
@@ -147,14 +147,14 @@ export interface SendBulkNotificationRequest {
   recipientIds: string[]
   priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
   scheduledAt?: string
-  variables?: Record<string, any>
+  variables?: Record<string, unknown>
 }
 
 // Query Keys
 export const notificationKeys = {
   all: ['notifications'] as const,
   lists: () => [...notificationKeys.all, 'list'] as const,
-  list: (filters: Record<string, any>) => [...notificationKeys.lists(), { filters }] as const,
+  list: (filters: Record<string, unknown>) => [...notificationKeys.lists(), { filters }] as const,
   details: () => [...notificationKeys.all, 'detail'] as const,
   detail: (id: string) => [...notificationKeys.details(), id] as const,
   userNotifications: (userId: string) => [...notificationKeys.all, 'user', userId] as const,
@@ -168,8 +168,10 @@ export const notificationKeys = {
 // API Functions
 const notificationsApi = {
   // Notifications CRUD
-  async getAllNotifications(filters?: Record<string, any>): Promise<Notification[]> {
-    const params = new URLSearchParams(filters)
+  async getAllNotifications(filters?: Record<string, unknown>): Promise<Notification[]> {
+    const params = new URLSearchParams(
+      filters ? Object.fromEntries(Object.entries(filters).map(([k, v]) => [k, String(v)])) : undefined
+    )
     const response = await axios.get(`${APIDictionary.notification}?${params}`, { withCredentials: true })
     return response.data.data || response.data
   },
@@ -179,8 +181,10 @@ const notificationsApi = {
     return response.data.data || response.data
   },
 
-  async getUserNotifications(userId: string, filters?: Record<string, any>): Promise<Notification[]> {
-    const params = new URLSearchParams(filters)
+  async getUserNotifications(userId: string, filters?: Record<string, unknown>): Promise<Notification[]> {
+    const params = new URLSearchParams(
+      filters ? Object.fromEntries(Object.entries(filters).map(([k, v]) => [k, String(v)])) : undefined
+    )
     const response = await axios.get(`${APIDictionary.notification}/user/${userId}?${params}`, { withCredentials: true })
     return response.data.data || response.data
   },
@@ -282,14 +286,14 @@ const notificationsApi = {
   },
 
   // WhatsApp notifications (if integrated)
-  async sendWhatsAppNotification(data: { phoneNumber: string; message: string; templateName?: string }): Promise<any> {
+  async sendWhatsAppNotification(data: { phoneNumber: string; message: string; templateName?: string }): Promise<Record<string, unknown>> {
     const response = await axios.post(APIDictionary.whatsappNotification, data, { withCredentials: true })
     return response.data.data || response.data
   }
 }
 
 // Query Hooks
-export function useNotifications(filters?: Record<string, any>) {
+export function useNotifications(filters?: Record<string, unknown>) {
   return useQuery<Notification[]>({
     queryKey: notificationKeys.list(filters || {}),
     queryFn: () => notificationsApi.getAllNotifications(filters),
@@ -306,7 +310,7 @@ export function useNotification(id: string) {
   })
 }
 
-export function useUserNotifications(userId: string, filters?: Record<string, any>) {
+export function useUserNotifications(userId: string, filters?: Record<string, unknown>) {
   return useQuery<Notification[]>({
     queryKey: notificationKeys.userNotifications(userId),
     queryFn: () => notificationsApi.getUserNotifications(userId, filters),

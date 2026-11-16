@@ -101,7 +101,7 @@ const BillingDashboard = () => {
         {dashboardData?.billing?.latestBill && (
           <Button 
             className="flex items-center"
-            onClick={() => navigate(RouteDict.Billing.Details(dashboardData.billing.latestBill.id))}
+            onClick={() => navigate(RouteDict.Billing.Details(dashboardData.billing.latestBill?.id || ''))}
           >
             <Receipt className="mr-2 h-4 w-4" />
             Latest Bill
@@ -250,7 +250,10 @@ const BillingDashboard = () => {
         <CardContent>
           <div className="space-y-4">
             {recentBills.map(bill => {
-              const monthName = new Date(bill.year, bill.month - 1).toLocaleString('default', { month: 'long' });
+              const billDate = bill.dueDate ? new Date(bill.dueDate) : new Date(bill.createdAt);
+              const monthName = bill.month !== undefined ? new Date(bill.year || billDate.getFullYear(), bill.month - 1).toLocaleString('default', { month: 'long' }) : billDate.toLocaleString('default', { month: 'long' });
+              const billYear = bill.year || billDate.getFullYear();
+              const billAmount = bill.totalAmount ?? bill.amount ?? 0;
               
               return (
                 <div key={bill.id} className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0">
@@ -263,7 +266,7 @@ const BillingDashboard = () => {
                       <Clock className="h-5 w-5 text-gray-500 mr-2" />
                     )}
                     <div>
-                      <div className="font-medium">{monthName} {bill.year} Bill</div>
+                      <div className="font-medium">{monthName} {billYear} Bill</div>
                       <div className="text-sm text-gray-500">
                         Due: {formatDate(bill.dueDate)}
                       </div>
@@ -271,7 +274,7 @@ const BillingDashboard = () => {
                   </div>
                   <div className="flex items-center gap-4">
                     <div>
-                      <div className="font-medium text-right">₹{bill.totalAmount.toFixed(2)}</div>
+                      <div className="font-medium text-right">₹{billAmount.toFixed(2)}</div>
                       <div className="text-right">
                         {getBillStatusBadge(bill.status)}
                       </div>

@@ -14,6 +14,14 @@ import { ChevronDown, ChevronRight, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useAttendanceHistoryQuery } from '@/hooks/queries/useAttendance'
+import type { AttendanceRecord } from '@/types/general'
+
+interface UserAttendanceGroup {
+  id: string;
+  name: string;
+  email: string;
+  attendanceRecords: AttendanceRecord[];
+}
 
 const AttendanceList = () => {
     const [expandedUser, setExpandedUser] = useState<string | null>(null)
@@ -21,8 +29,18 @@ const AttendanceList = () => {
     // Use TanStack Query hook instead of manual fetch
     const { data: attendanceList } = useAttendanceHistoryQuery()
 
-    const formatDuration = (duration: { hours: number, minutes: number }) => {
-        return `${Math.floor(duration.hours)}h ${duration.minutes}m`
+    const formatDuration = (duration: unknown) => {
+        if (!duration) return '-'
+        if (typeof duration === 'object' && duration !== null && 'hours' in duration && 'minutes' in duration) {
+            const d = duration as { hours: number; minutes: number }
+            return `${Math.floor(d.hours)}h ${d.minutes}m`
+        }
+        if (typeof duration === 'number') {
+            const hours = Math.floor(duration / 60)
+            const minutes = Math.floor(duration % 60)
+            return `${hours}h ${minutes}m`
+        }
+        return String(duration)
     }
 
     const getStatusBadge = (status: string) => {
@@ -45,7 +63,7 @@ const AttendanceList = () => {
 
     return (
         <div className="space-y-4 w-full p-4">
-            {attendanceList.map((user: any) => (
+            {(attendanceList as unknown as UserAttendanceGroup[] | undefined)?.map((user: UserAttendanceGroup) => (
                 <Card key={user.id} className="w-full">
                     <CardHeader className="p-4">
                         <Button 
@@ -79,12 +97,12 @@ const AttendanceList = () => {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {user.attendanceRecords.map((record: any) => (
+                                        {user.attendanceRecords.map((record: AttendanceRecord) => (
                                             <TableRow key={record.id}>
                                                 <TableCell>{format(new Date(record.date), 'dd MMM yyyy')}</TableCell>
                                                 <TableCell>{record.sessionNumber}</TableCell>
                                                 <TableCell>{format(new Date(record.checkInTime), 'hh:mm a')}</TableCell>
-                                                <TableCell>{format(new Date(record.checkOutTime), 'hh:mm a')}</TableCell>
+                                                <TableCell>{record.checkOutTime ? format(new Date(record.checkOutTime), 'hh:mm a') : '-'}</TableCell>
                                                 <TableCell>{formatDuration(record.duration)}</TableCell>
                                                 <TableCell>{getStatusBadge(record.status)}</TableCell>
                                             </TableRow>

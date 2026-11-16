@@ -302,8 +302,7 @@ export const isOnDateInOrgTimezone = (
  */
 export const convertOrgDateToUTC = (
   dateString: string, // YYYY-MM-DD format
-  timeString: string, // HH:MM format
-  _orgTimezone: string = 'Asia/Kolkata' // Prefixed with _ to indicate unused
+  timeString: string // HH:MM format
 ): string => {
   // Create a date in the organization timezone
   const dateTimeString = `${dateString}T${timeString}:00`;

@@ -225,9 +225,16 @@ const MainSubordinateSalaryTransactionPage: React.FC = () => {
       );
       
       if (response.data && response.data.length > 0) {
+        interface SubordinateRaw {
+          id: string;
+          firstName: string;
+          lastName: string;
+          employeeId: string;
+          department?: { name?: string };
+        }
         // Transform to include unpaid salaries
         const subordinatesWithSalaryInfo = await Promise.all(
-          response.data.map(async (subordinate: any) => {
+          (response.data as SubordinateRaw[]).map(async (subordinate) => {
             // Get unpaid salaries count
             const salaryResponse = await axios.get(
               APIV3Dictionary.payroll.getPayslip(selectedMonth, selectedYear, subordinate.id),
@@ -235,14 +242,14 @@ const MainSubordinateSalaryTransactionPage: React.FC = () => {
             );
             
             const unpaidSalaries = salaryResponse.data.success ? 
-              salaryResponse.data.data.filter((record: any) => record.status === 'PENDING').length : 0;
+              (salaryResponse.data.data as Array<{ status: string }>).filter((record) => record.status === 'PENDING').length : 0;
             
             return {
               id: subordinate.id,
               firstName: subordinate.firstName,
               lastName: subordinate.lastName,
               employeeId: subordinate.employeeId,
-              department: subordinate.department,
+              department: subordinate.department?.name ? { name: subordinate.department.name } : undefined,
               unpaidSalaries
             };
           })
@@ -632,7 +639,6 @@ const MainSubordinateSalaryTransactionPage: React.FC = () => {
     doc.setFontSize(14);
     doc.text("Payment Summary", 20, 60);
     
-    // @ts-ignore - jsPDF-autotable extension
     doc.autoTable({
       startY: 65,
       head: [["Description", "Value"]],
@@ -654,7 +660,6 @@ const MainSubordinateSalaryTransactionPage: React.FC = () => {
       
       const unpaidSubordinates = subordinates.filter(sub => sub.unpaidSalaries > 0);
       
-      // @ts-ignore - jsPDF-autotable extension
       doc.autoTable({
         startY: doc.autoTable.previous.finalY + 25,
         head: [["Employee ID", "Name", "Department", "Unpaid Salaries"]],

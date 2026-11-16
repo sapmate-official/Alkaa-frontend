@@ -118,7 +118,7 @@ export const CandidateReviewDialog: React.FC<CandidateReviewDialogProps> = ({
         if (response.data.success) {
           // setReviewData(response.data.data);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error fetching review data:', error);
         toast({
           title: 'Error',
@@ -136,7 +136,7 @@ export const CandidateReviewDialog: React.FC<CandidateReviewDialogProps> = ({
   }, [candidate?.id, open, toast]);
 
   // Handle review submission using TanStack Query mutations
-  const handleReview = async (data: any) => {
+  const handleReview = async (data: { action: 'approve' | 'request_changes' | 'reject'; feedback?: string }) => {
     if (!candidate?.id) return;
 
     try {
@@ -147,10 +147,10 @@ export const CandidateReviewDialog: React.FC<CandidateReviewDialogProps> = ({
           await approveMutation.mutateAsync(candidate.id);
           break;
         case 'request_changes':
-          await requestChangesMutation.mutateAsync({ id: candidate.id, feedback: data.feedback });
+          await requestChangesMutation.mutateAsync({ id: candidate.id, feedback: data.feedback || '' });
           break;
         case 'reject':
-          await rejectMutation.mutateAsync({ id: candidate.id, reason: data.feedback });
+          await rejectMutation.mutateAsync({ id: candidate.id, reason: data.feedback || '' });
           break;
         default:
           throw new Error('Invalid action');
@@ -163,11 +163,12 @@ export const CandidateReviewDialog: React.FC<CandidateReviewDialogProps> = ({
 
       onReviewComplete();
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error processing review:', error);
+      const err = error as { response?: { data?: { error?: string } } };
       toast({
         title: 'Error',
-        description: error.response?.data?.error || 'Failed to process review',
+        description: err?.response?.data?.error || 'Failed to process review',
         variant: 'destructive',
       });
     } finally {
@@ -189,7 +190,7 @@ export const CandidateReviewDialog: React.FC<CandidateReviewDialogProps> = ({
       });
 
       onReviewComplete();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error marking under review:', error);
       toast({
         title: 'Error',

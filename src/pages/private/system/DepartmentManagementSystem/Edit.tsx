@@ -142,7 +142,7 @@ const SpecificDepartmentEdit = () => {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    const { name, value } = e?.target
+    const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
       [name]: name === 'budget' ? parseFloat(value) || 0 : value
@@ -163,7 +163,7 @@ const SpecificDepartmentEdit = () => {
       await deleteMutation.mutateAsync(id)
       navigate(RouteDict.Department.List)
       setIsDeleteDialogOpen(false)
-    } catch (error) {
+    } catch {
       // Error handling is done in the mutation hook
     }
   }
@@ -177,7 +177,7 @@ const SpecificDepartmentEdit = () => {
       setInitialFormData(formData) // Update initial data to reflect saved state
       setHasChanges(false)
       navigate(RouteDict.Department.Edit(id))
-    } catch (error) {
+    } catch {
       // Error handling is done in the mutation hook
     }
   }

@@ -86,7 +86,7 @@ const LeaveRequestCreate = () => {
         withCredentials: true
       })
       setLeaveBalance(response?.data?.remainingDays ?? null)
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to fetch leave balance",
@@ -142,7 +142,7 @@ const LeaveRequestCreate = () => {
         isSameDayLeave: false
       })
       navigate(RouteDict.Leave.Requests.List);
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to submit leave request",

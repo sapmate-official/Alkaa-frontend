@@ -307,11 +307,12 @@ const MainCompOfViewPayslipOfAllSubordinatesPayroll = () => {
           variant: "destructive"
         })
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error generating salary:", error)
+      const err = error as { response?: { data?: { message?: string } } };
       toast({
         title: "Error",
-        description: error.response?.data?.message || "Failed to generate salary",
+        description: err.response?.data?.message || "Failed to generate salary",
         variant: "destructive"
       })
     } finally {

@@ -76,7 +76,6 @@ import {
 } from '@/hooks/queries/useRoles';
 import { usePermissions as usePermissionsQuery, usePermissionPresets } from '@/hooks/queries/usePermissions';
 import { useEmployees } from '@/hooks/queries/useEmployees';
-import type { Employee } from '@/types/employees';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -199,7 +198,7 @@ const ModernRolePermissionManager = () => {
 
   // Get user count for a role
   const getUserCountForRole = (roleId: string) => {
-    return users.filter((user: Employee) =>
+    return users.filter((user) =>
       user.roles?.some((userRole) => userRole.roleId === roleId)
     ).length;
   };
@@ -642,7 +641,7 @@ const ModernRolePermissionManager = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {users.map((user: Employee) => (
+                        {users.map((user) => (
                           <TableRow key={user.id} className="border-slate-100 hover:bg-slate-50">
                             <TableCell className="font-medium">
                               {user.firstName} {user.lastName}

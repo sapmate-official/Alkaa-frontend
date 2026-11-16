@@ -1,3 +1,5 @@
+import type { QueryClient } from '@tanstack/react-query'
+
 // Central query keys file for better organization and consistency
 // This file exports all query keys from different modules
 
@@ -37,27 +39,28 @@ export const globalKeys = {
 // Helper functions for query invalidation patterns
 export const invalidationHelpers = {
   // Invalidate all data for a specific user
-  invalidateUserData: (queryClient: any, userId: string) => {
+  invalidateUserData: (queryClient: QueryClient, userId: string) => {
     queryClient.invalidateQueries({ queryKey: globalKeys.user(userId) })
   },
   
   // Invalidate all data for a specific organization
-  invalidateOrgData: (queryClient: any, orgId: string) => {
+  invalidateOrgData: (queryClient: QueryClient, orgId: string) => {
     queryClient.invalidateQueries({ queryKey: globalKeys.organization(orgId) })
   },
   
   // Invalidate all stats across the application
-  invalidateAllStats: (queryClient: any) => {
+  invalidateAllStats: (queryClient: QueryClient, orgId?: string) => {
+    void orgId;
     queryClient.invalidateQueries({ queryKey: globalKeys.stats() })
   },
   
   // Invalidate all list views
-  invalidateAllLists: (queryClient: any) => {
+  invalidateAllLists: (queryClient: QueryClient) => {
     queryClient.invalidateQueries({ queryKey: globalKeys.lists() })
   },
   
   // Common pattern for invalidating after user actions
-  invalidateAfterUserAction: (queryClient: any, userId: string, orgId: string) => {
+  invalidateAfterUserAction: (queryClient: QueryClient, userId: string, orgId: string) => {
     queryClient.invalidateQueries({ queryKey: globalKeys.user(userId) })
     queryClient.invalidateQueries({ queryKey: globalKeys.organization(orgId) })
     queryClient.invalidateQueries({ queryKey: globalKeys.stats() })

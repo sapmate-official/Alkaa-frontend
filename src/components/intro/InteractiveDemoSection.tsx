@@ -129,16 +129,16 @@ export const InteractiveDemoSection: React.FC<InteractiveDemoSectionProps> = ({ 
             {/* Device Toggle */}
             <div className="flex justify-center mb-6">
               <div className="flex items-center gap-2 bg-secondary rounded-lg p-1">
-                {[
+                {([
                   { key: 'desktop', icon: <Monitor className="h-4 w-4" />, label: 'Desktop' },
                   { key: 'tablet', icon: <Tablet className="h-4 w-4" />, label: 'Tablet' },
                   { key: 'mobile', icon: <Smartphone className="h-4 w-4" />, label: 'Mobile' }
-                ].map((device) => (
+                ] as const).map((device) => (
                   <Button
                     key={device.key}
                     variant={deviceView === device.key ? 'default' : 'ghost'}
                     size="sm"
-                    onClick={() => setDeviceView(device.key as any)}
+                    onClick={() => setDeviceView(device.key)}
                     className="flex items-center gap-2"
                   >
                     {device.icon}

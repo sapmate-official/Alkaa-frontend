@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardHeader } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { PayrollStatistics, PayslipData } from '@/types/general';
+import { PayrollStatistics, PayslipData, User } from '@/types/general';
 import { getStatusBadgeVariant } from '../utils/Badgevariant';
 import PayslipDetailsTab from './PayslipDetailsTab';
 import PayslipSummaryTab from './PayslipSummaryTab';
@@ -11,7 +11,7 @@ import PayslipAttendanceTab from './PayslipAttendanceTab';
 interface PayslipViewerProps {
   selectedPayslip: PayslipData;
   payslipStatistics: PayrollStatistics | null;
-  user: any; // Replace with proper user type
+  user: User | null;
   months: { value: number; label: string }[];
   formatCurrency: (amount: number) => string;
   downloadPayslip: () => void;

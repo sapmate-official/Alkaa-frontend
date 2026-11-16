@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, useEffect } from 'react'
-import { attendanceApi } from '@/services/api/attendanceApi'
+import { attendanceApi, AttendanceHistoryFilters } from '@/services/api/attendanceApi'
 import { format } from 'date-fns'
 import type { AttendanceRecord } from '@/types/general'
 import { attendanceKeys } from './attendanceKeys'
@@ -18,7 +18,7 @@ export const useTodaySessionsQuery = (date?: string) => {
 
 // Past Not Checked Days Query
 export const usePastNotCheckedDaysQuery = () => {
-  return useQuery<any[]>({
+  return useQuery<Record<string, unknown>[]>({
     queryKey: attendanceKeys.pastDays(),
     queryFn: attendanceApi.getPastNotCheckedDays,
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -26,7 +26,7 @@ export const usePastNotCheckedDaysQuery = () => {
 }
 
 // Attendance History Query
-export const useAttendanceHistoryQuery = (filters?: any) => {
+export const useAttendanceHistoryQuery = (filters?: AttendanceHistoryFilters) => {
   return useQuery({
     queryKey: attendanceKeys.history(filters),
     queryFn: () => attendanceApi.getAttendanceHistory(filters),
@@ -63,8 +63,13 @@ export const useAttendanceUpdateMutation = () => {
   const queryClient = useQueryClient()
   
   return useMutation({
-    mutationFn: ({ attendanceId, updateData }: { attendanceId: string, updateData: any }) =>
-      attendanceApi.updateAttendance(attendanceId, updateData),
+    mutationFn: ({
+      attendanceId,
+      updateData,
+    }: {
+      attendanceId: string;
+      updateData: Partial<AttendanceRecord> | Record<string, unknown>;
+    }) => attendanceApi.updateAttendance(attendanceId, updateData),
     onSuccess: () => {
       // Invalidate all attendance-related queries
       queryClient.invalidateQueries({ queryKey: attendanceKeys.all })

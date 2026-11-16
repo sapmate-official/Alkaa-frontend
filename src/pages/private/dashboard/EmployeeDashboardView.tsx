@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import RouteDict from '@/routes/RouteDict';
 
-interface EmployeeDashboardViewProps {
+export interface EmployeeDashboardViewProps {
   userProfile?: {
     firstName?: string;
     lastName?: string;

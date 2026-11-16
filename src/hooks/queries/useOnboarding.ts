@@ -13,6 +13,36 @@ export const onboardingKeys = {
 }
 
 // Types
+export interface CandidatePersonalInfo {
+  firstName?: string;
+  lastName?: string;
+  mobileNumber?: string;
+  dateOfBirth?: string;
+  emergencyContact?: string;
+  address?: string;
+  adharNumber?: string;
+  panNumber?: string;
+  [key: string]: unknown;
+}
+
+export interface CandidateBankDetails {
+  accountNumber?: string;
+  ifscCode?: string;
+  bankName?: string;
+  accountHolderName?: string;
+  [key: string]: unknown;
+}
+
+export interface CandidateReviewMetadata {
+  createdBy?: {
+    id?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+  } | null;
+  [key: string]: unknown;
+}
+
 export interface CandidateReviewData {
   candidateInfo: {
     id: string;
@@ -29,20 +59,20 @@ export interface CandidateReviewData {
     annualPackage?: number;
     hiredDate?: string;
     departmentId?: string;
-    department?: any;
+    department?: { id: string; name: string; [key: string]: unknown } | null;
   };
   submittedData: {
-    personalInfo: any;
-    bankDetails: any;
-    documents?: any;
-    additionalInfo?: any;
+    personalInfo: CandidatePersonalInfo;
+    bankDetails: CandidateBankDetails;
+    documents?: Record<string, unknown>[] | Record<string, unknown> | null;
+    additionalInfo?: Record<string, unknown> | null;
   };
   reviewHistory: {
-    reviewedBy?: any;
+    reviewedBy?: { id: string; firstName?: string; lastName?: string; email?: string } | null;
     reviewedAt?: string;
     rejectionReason?: string;
   };
-  metadata: any;
+  metadata: CandidateReviewMetadata;
 }
 
 export interface UpdateCandidateRequest {
@@ -125,7 +155,7 @@ const onboardingApi = {
   },
 
   // Get departments for organization
-  async getDepartments(orgId: string): Promise<any[]> {
+  async getDepartments(orgId: string): Promise<Record<string, unknown>[]> {
     const response = await axios.get(`${APIDictionary.department}/org/${orgId}`, {
       withCredentials: true
     })

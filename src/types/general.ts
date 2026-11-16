@@ -19,7 +19,7 @@ export interface Organization {
   subscriptionStart: Date;
   subscriptionEnd?: Date;
   isActive: boolean;
-  settings?: any;
+  settings?: Record<string, unknown> | null;
   createdAt: Date;
   updatedAt: Date;
   departments: Department[];
@@ -205,7 +205,7 @@ export interface LeaveRequest {
   approvedBy?: string;
   approvedAt?: Date;
   rejectedReason?: string;
-  attachments?: any;
+  attachments?: Array<{ name: string; url: string; [key: string]: unknown }> | unknown;
   createdAt: Date;
   updatedAt: Date;
   user: User;
@@ -219,11 +219,11 @@ export interface AttendanceRecord {
   sessionNumber: number;
   checkInTime: Date;
   checkOutTime?: Date;
-  checkInLocation: any;
-  checkOutLocation?: any;
+  checkInLocation: { latitude?: number; longitude?: number; address?: string; [key: string]: unknown } | string | null;
+  checkOutLocation?: { latitude?: number; longitude?: number; address?: string; [key: string]: unknown } | string | null;
   status: AttendanceStatus;
   notes?: string;
-  duration?: any;
+  duration?: number | string | { hours: number; minutes: number } | null;
   ipAddress?: string;
   deviceInfo?: string;
   createdAt: Date;
@@ -258,7 +258,7 @@ export interface NotificationTemplate {
   type: NotificationType;
   subject: string;
   content: string;
-  variables?: any;
+  variables?: Record<string, unknown> | string[] | null;
   createdAt: Date;
   updatedAt: Date;
   organization: Organization;
@@ -272,7 +272,7 @@ export interface Notification {
   content: string;
   isRead: boolean;
   readAt?: Date;
-  metadata?: any;
+  metadata?: Record<string, unknown> | null;
   createdAt: Date;
   user: User;
   template: NotificationTemplate;
@@ -282,7 +282,7 @@ export interface BackgroundJob {
   id: string;
   type: JobType;
   status: JobStatus;
-  payload: any;
+  payload: Record<string, unknown> | null;
   scheduledFor: Date;
   priority: number;
   attempts: number;
@@ -331,7 +331,7 @@ export interface OrganizationAdmin {
 export interface OrganizationSettings {
   id: string;
   orgId: string;
-  settings: any;
+  settings: Record<string, unknown>;
   createdAt: Date;
   updatedAt: Date;
   organization: Organization;
@@ -344,7 +344,7 @@ export interface SubscriptionPlan {
   monthlyPrice: number;
   annualPrice: number;
   maxUsers: number;
-  features?: any;
+  features?: Record<string, unknown> | string[] | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -374,7 +374,7 @@ export interface PushSubscription {
   id: string;
   userId: string;
   endpoint: string;
-  keys: any;
+  keys: { p256dh: string; auth: string; [key: string]: unknown } | Record<string, unknown>;
   expirationTime?: number;
   createdAt: Date;
   updatedAt: Date;
@@ -406,7 +406,7 @@ export interface SalaryTransactionTable {
 export interface UserDailyReport {
   id: string;
   attendanceId: string;
-  reportContent: any;
+  reportContent: Record<string, unknown> | string;
   attendance: AttendanceRecord;
 }
 
@@ -441,8 +441,8 @@ export interface SalaryParameter {
   pfPercentage: number;
   taxPercentage: number;
   insuranceFixed: number;
-  additionalAllowances?: any;
-  additionalDeductions?: any;
+  additionalAllowances?: Record<string, unknown> | Array<Record<string, unknown>> | null;
+  additionalDeductions?: Record<string, unknown> | Array<Record<string, unknown>> | null;
   user: User;
 }
 
@@ -654,7 +654,7 @@ export interface OnboardingCandidate {
   notes?: string;
   verificationToken?: string;
   tokenExpiry?: Date;
-  formData?: any;
+  formData?: Record<string, unknown> | null;
   orgId: string;
   createdById: string;
   reviewedById?: string;

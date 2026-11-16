@@ -193,13 +193,31 @@ const MainSalaryUsersTransactionPage: React.FC = () => {
       );
       
       if (response.data && response.data.employeePayrollData) {
-        const userData = response.data.employeePayrollData.map((item: any) => ({
+        interface PayrollRecordItem {
+          status: string;
+          month: number;
+          year: number;
+        }
+        interface EmployeePayrollDataResponse {
+          employee: {
+            id: string;
+            name: string;
+            employeeId: string;
+            department?: { name?: string } | string;
+          };
+          salaryRecords: PayrollRecordItem[];
+        }
+        const userData: User[] = (response.data.employeePayrollData as EmployeePayrollDataResponse[]).map((item) => ({
           id: item.employee.id,
           firstName: item.employee.name.split(' ')[0],
           lastName: item.employee.name.split(' ').slice(1).join(' '),
           employeeId: item.employee.employeeId,
-          department: item.employee.department,
-          unpaidSalaries: item.salaryRecords.filter((rec: any) => 
+          department: typeof item.employee.department === 'string'
+            ? { name: item.employee.department }
+            : item.employee.department?.name
+              ? { name: item.employee.department.name }
+              : undefined,
+          unpaidSalaries: item.salaryRecords.filter((rec) => 
             rec.status === 'PENDING' && rec.month === selectedMonth && rec.year === selectedYear
           ).length
         }));
@@ -543,7 +561,6 @@ const MainSalaryUsersTransactionPage: React.FC = () => {
     doc.setFontSize(14);
     doc.text("Payment Summary", 20, 60);
     
-    // @ts-ignore - jsPDF-autotable extension
     doc.autoTable({
       startY: 65,
       head: [["Description", "Value"]],
@@ -565,7 +582,6 @@ const MainSalaryUsersTransactionPage: React.FC = () => {
       
       const unpaidUsers = users.filter(user => user.unpaidSalaries > 0);
       
-      // @ts-ignore - jsPDF-autotable extension
       doc.autoTable({
         startY: doc.autoTable.previous.finalY + 25,
         head: [["Employee ID", "Name", "Department", "Unpaid Salaries"]],

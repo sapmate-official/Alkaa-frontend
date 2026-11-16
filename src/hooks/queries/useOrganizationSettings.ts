@@ -9,7 +9,7 @@ export interface RawOrganizationSettingsType {
     weekoff?: number[]
     timezone?: string
     workingHours?: string
-    [key: string]: any
+    [key: string]: unknown
   }
   weekoff?: number[] // fallback legacy shape
   timezone?: string

@@ -209,11 +209,12 @@ const PastNotCheckedDays = () => {
             setIsAddNewDialogOpen(false);
             fetchData();
             
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Failed to create past attendance:', error);
+            const err = error as { response?: { data?: { message?: string } } };
             toast({
                 title: "Error",
-                description: error?.response?.data?.message || "Failed to create past attendance",
+                description: err?.response?.data?.message || "Failed to create past attendance",
                 variant: "destructive",
             });
         } finally {

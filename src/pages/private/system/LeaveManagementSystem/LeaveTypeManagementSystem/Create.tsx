@@ -27,13 +27,23 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
+interface LeaveTypeFormData {
+    name: string;
+    description: string;
+    annualLimit: number;
+    requiresApproval: boolean;
+    isPaid: boolean;
+    carryForward: boolean;
+    maxCarryForward: number;
+}
+
 const CreateLeaveType = () => {
     const { user } = useAuth();
     const { toast } = useToast();
     const navigate = useNavigate();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const form = useForm({
+    const form = useForm<LeaveTypeFormData>({
         defaultValues: {
             name: '',
             description: '',
@@ -45,7 +55,7 @@ const CreateLeaveType = () => {
         },
     })
 
-    const onSubmit = async (data: any) => {
+    const onSubmit = async (data: LeaveTypeFormData) => {
         try {
             setIsSubmitting(true);
             if(!user?.orgId) return null;

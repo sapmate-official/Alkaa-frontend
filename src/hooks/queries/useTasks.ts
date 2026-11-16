@@ -144,7 +144,7 @@ export interface AssignTaskRequest {
 export const taskKeys = {
   all: ['tasks'] as const,
   lists: () => [...taskKeys.all, 'list'] as const,
-  list: (filters: Record<string, any>) => [...taskKeys.lists(), { filters }] as const,
+  list: (filters: Record<string, unknown>) => [...taskKeys.lists(), { filters }] as const,
   details: () => [...taskKeys.all, 'detail'] as const,
   detail: (id: string) => [...taskKeys.details(), id] as const,
   userTasks: (userId: string) => [...taskKeys.all, 'user', userId] as const,
@@ -157,7 +157,7 @@ export const taskKeys = {
 export const taskGroupKeys = {
   all: ['taskGroups'] as const,
   lists: () => [...taskGroupKeys.all, 'list'] as const,
-  list: (filters: Record<string, any>) => [...taskGroupKeys.lists(), { filters }] as const,
+  list: (filters: Record<string, unknown>) => [...taskGroupKeys.lists(), { filters }] as const,
   details: () => [...taskGroupKeys.all, 'detail'] as const,
   detail: (id: string) => [...taskGroupKeys.details(), id] as const,
   members: (groupId: string) => [...taskGroupKeys.all, 'members', groupId] as const,
@@ -166,8 +166,10 @@ export const taskGroupKeys = {
 // API Functions
 const tasksApi = {
   // Task CRUD
-  async getAllTasks(filters?: Record<string, any>): Promise<Task[]> {
-    const params = new URLSearchParams(filters)
+  async getAllTasks(filters?: Record<string, unknown>): Promise<Task[]> {
+    const params = new URLSearchParams(
+      filters ? Object.fromEntries(Object.entries(filters).map(([k, v]) => [k, String(v)])) : undefined
+    )
     const response = await axios.get(`${APIDictionary.task}?${params}`, { withCredentials: true })
     return response.data.data || response.data
   },
@@ -294,7 +296,7 @@ const taskGroupsApi = {
 }
 
 // Query Hooks - Tasks
-export function useTasks(filters?: Record<string, any>) {
+export function useTasks(filters?: Record<string, unknown>) {
   return useQuery<Task[]>({
     queryKey: taskKeys.list(filters || {}),
     queryFn: () => tasksApi.getAllTasks(filters),

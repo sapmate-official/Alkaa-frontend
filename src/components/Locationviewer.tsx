@@ -1,37 +1,52 @@
 import { useState, useEffect, useRef } from "react";
 import { MapPin } from "lucide-react";
 
+interface OlaMapInstance {
+  on: (event: string, callback: () => void) => void;
+  setCenter: (coords: [number, number]) => void;
+  remove?: () => void;
+  [key: string]: unknown;
+}
+
+interface OlaMarkerInstance {
+  setLngLat: (coords: [number, number]) => OlaMarkerInstance;
+  addTo: (map: OlaMapInstance) => OlaMarkerInstance;
+  remove?: () => void;
+  [key: string]: unknown;
+}
+
 const LocationViewer = ({ lat, lon }: { lat: string, lon: string }) => {
   const [address, setAddress] = useState("");
-  const mapRef = useRef(null);
-  const mapInstanceRef = useRef<any>(null);
-  const markerRef = useRef<any>(null);
+  const mapRef = useRef<HTMLDivElement | null>(null);
+  const mapInstanceRef = useRef<OlaMapInstance | null>(null);
+  const markerRef = useRef<OlaMarkerInstance | null>(null);
   
   useEffect(() => {
     if (lat && lon && mapRef.current && !mapInstanceRef.current) {
       // Load both the map library and create the instance only when needed
-      import("../services/OlaMap").then(({ createOlaMaps }) => {
+      import("../services/OlaMap").then(async ({ createOlaMaps }) => {
         const olaMaps = createOlaMaps();
         
         // Initialize map
-        mapInstanceRef.current = olaMaps.init({
+        const map = await olaMaps.init({
           style: "https://api.olamaps.io/tiles/vector/v1/styles/default-light-standard/style.json",
           container: 'map',
           center: [parseFloat(lon), parseFloat(lat)],
           zoom: 15,
         });
+        mapInstanceRef.current = map as unknown as OlaMapInstance;
 
         // Add a marker after map is initialized
-        mapInstanceRef.current.on('load', () => {
+        mapInstanceRef.current?.on('load', () => {
           if (!markerRef.current && mapInstanceRef.current) {
-            markerRef.current = olaMaps
+            markerRef.current = (olaMaps
               .addMarker({ 
                 offset: [0, -15], 
                 anchor: 'bottom', 
                 color: '#FF5733' 
               })
               .setLngLat([parseFloat(lon), parseFloat(lat)])
-              .addTo(mapInstanceRef.current);
+              .addTo(mapInstanceRef.current)) as unknown as OlaMarkerInstance;
           }
         });
       });
@@ -41,7 +56,7 @@ const LocationViewer = ({ lat, lon }: { lat: string, lon: string }) => {
   // Update map center and marker position when coordinates change
   useEffect(() => {
     if (mapInstanceRef.current && lat && lon) {
-      const coords = [parseFloat(lon), parseFloat(lat)];
+      const coords: [number, number] = [parseFloat(lon), parseFloat(lat)];
       mapInstanceRef.current.setCenter(coords);
       
       // Update marker position if it exists

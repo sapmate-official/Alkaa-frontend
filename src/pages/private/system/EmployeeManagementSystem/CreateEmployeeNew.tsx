@@ -25,8 +25,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/providers/AuthContext';
 import { APIDictionary } from '@/services/api/v2/APIdict';
 import axios from 'axios';
-import { Department, User } from '@/types/general';
-import RoleAssignment from './RoleAssignment';
+import { User } from '@/types/general';
+import RoleAssignment, { RoleDepartment } from './RoleAssignment';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { 
@@ -108,7 +108,7 @@ const CreateEmployeeNew = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const { toast } = useToast();
   const { user } = useAuth();
-  const [departments, setDepartments] = useState<Department[]>([]);
+  const [departments, setDepartments] = useState<RoleDepartment[]>([]);
   const [employees, setEmployees] = useState<User[]>([]);
   const [useHeadAsManager, setUseHeadAsManager] = useState(false);
   const [employeeIdExists, setEmployeeIdExists] = useState(false);
@@ -354,7 +354,7 @@ const CreateEmployeeNew = () => {
   //         description: 'Your progress has been saved. You can resume later.',
   //       });
   //     }
-  //   } catch (error: any) {
+  //   } catch {
   //     toast({
   //       title: 'Error',
   //       description: error?.response?.data?.error || 'Failed to save draft',
@@ -365,7 +365,7 @@ const CreateEmployeeNew = () => {
   //   }
   // };
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: Record<string, unknown>) => {
     try {
       if (currentStep < steps.length - 1) {
         setCurrentStep(prev => prev + 1);
@@ -383,13 +383,13 @@ const CreateEmployeeNew = () => {
       }
       console.log(form.getValues());
       console.log(data);
-      data = form.getValues();
-      if (data.employeeId === '' || data.employeeId === null || data.employeeId === undefined) {
-        data.employeeId = user?.id;
+      const formDataValues = form.getValues() as Record<string, unknown>;
+      if (!formDataValues.employeeId) {
+        formDataValues.employeeId = user?.id;
       }
       setLoading(true);
       const response = await axios.post(`${APIDictionary.Organization}/employees`, {
-        data,
+        data: formDataValues,
         orgId: user.orgId,
       });
       if (response.status == 201) {
@@ -406,10 +406,11 @@ const CreateEmployeeNew = () => {
           variant: 'destructive',
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string; message?: string } } };
       toast({
         title: 'Error',
-        description: error?.response?.data?.error || error?.response?.data?.message || 'Failed to create employee',
+        description: err?.response?.data?.error || err?.response?.data?.message || 'Failed to create employee',
         variant: 'destructive',
       });
     } finally {
@@ -423,9 +424,9 @@ const CreateEmployeeNew = () => {
     }
   };
 
-  const handleDepartmentsUpdated = (updatedDepartments: any[]) => {
+  const handleDepartmentsUpdated = (updatedDepartments: RoleDepartment[]) => {
     // Use the properly typed Department interface from your import
-    setDepartments(updatedDepartments as Department[]);
+    setDepartments(updatedDepartments);
     
     // If there are departments and none is currently selected, select the first one
     if (updatedDepartments.length > 0 && !form.getValues('departmentId')) {

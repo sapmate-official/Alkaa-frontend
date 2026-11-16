@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -55,6 +55,8 @@ const onboardingSchema = z.object({
   accountHolderName: z.string().min(2, 'Account holder name is required'),
 });
 
+type OnboardingFormValues = z.infer<typeof onboardingSchema>;
+
 const OnboardingForm = () => {
   const { toast } = useToast();
   const { token } = useParams<{ token: string }>();
@@ -86,15 +88,8 @@ const OnboardingForm = () => {
   });
 
   // Verify token and load candidate data
-  useEffect(() => {
-    if (!token) {
-      setError('Invalid or missing invitation token');
-      return;
-    }
-    verifyToken();
-  }, [token]);
-
-  const verifyToken = async () => {
+  const verifyToken = useCallback(async () => {
+    if (!token) return;
     try {
       setLoading(true);
       const response = await axios.get(`${APIDictionary.onboarding}/verify/${token}`);
@@ -124,8 +119,8 @@ const OnboardingForm = () => {
       if (candidateData.status !== OnboardingStatus.INVITED) {
         setIsSubmitted(true);
       }
-    } catch (error: any) {
-      const errorResponse = error?.response?.data;
+    } catch (error: unknown) {
+      const errorResponse = (error as { response?: { data?: { aborted?: boolean; expired?: boolean; error?: string } } })?.response?.data;
       
       // Handle aborted process specifically
       if (errorResponse?.aborted) {
@@ -138,17 +133,25 @@ const OnboardingForm = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, form]);
+
+  useEffect(() => {
+    if (!token) {
+      setError('Invalid or missing invitation token');
+      return;
+    }
+    verifyToken();
+  }, [token, verifyToken]);
 
   // Submit form
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: OnboardingFormValues) => {
     if (!token || !candidate) return;
 
     try {
       setLoading(true);
       
       // Clean and sanitize phone and bank inputs
-      const cleanPhone = (val?: string) => (val ? val.replace(/[\s\-\(\)]/g, '') : '');
+      const cleanPhone = (val?: string) => (val ? val.replace(/[\s\-()]/g, '') : '');
       const cleanBankNumber = (val?: string) => (val ? val.replace(/\s+/g, '') : '');
       const cleanIFSC = (val?: string) => (val ? val.replace(/\s+/g, '').toUpperCase() : '');
 
@@ -181,8 +184,18 @@ const OnboardingForm = () => {
       });
       setIsSubmitted(true);
       setCandidate(prev => prev ? { ...prev, status: OnboardingStatus.FORM_SUBMITTED } : null);
-    } catch (error: any) {
-      const errorResponse = error?.response?.data;
+    } catch (error: unknown) {
+      const errorResponse = (error as {
+        response?: {
+          data?: {
+            aborted?: boolean;
+            expired?: boolean;
+            error?: string;
+            message?: string;
+            details?: Array<{ path?: string; msg?: string }>;
+          };
+        };
+      })?.response?.data;
       
       // Handle aborted process specifically
       if (errorResponse?.aborted) {
@@ -201,12 +214,12 @@ const OnboardingForm = () => {
         });
       } else {
         const detailMessages = Array.isArray(errorResponse?.details)
-          ? errorResponse.details.map((d: any) => d.msg).filter(Boolean).join(' • ')
+          ? errorResponse.details.map((d: { msg?: string }) => d.msg).filter(Boolean).join(' • ')
           : null;
 
         // Map field errors to form fields if available
         if (Array.isArray(errorResponse?.details)) {
-          errorResponse.details.forEach((d: any) => {
+          errorResponse.details.forEach((d: { path?: string; msg?: string }) => {
             const fieldPath = d.path;
             if (fieldPath === 'bankDetails.accountNumber') {
               form.setError('bankAccountNumber', { message: d.msg });
@@ -216,8 +229,8 @@ const OnboardingForm = () => {
               form.setError('bankName', { message: d.msg });
             } else if (fieldPath === 'bankDetails.accountHolderName') {
               form.setError('accountHolderName', { message: d.msg });
-            } else if (fieldPath in form.getValues()) {
-              form.setError(fieldPath as any, { message: d.msg });
+            } else if (fieldPath && fieldPath in form.getValues()) {
+              form.setError(fieldPath as keyof OnboardingFormValues, { message: d.msg });
             }
           });
         }

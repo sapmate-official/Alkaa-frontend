@@ -173,7 +173,7 @@ const CreateGroupDialog = ({ open, onOpenChange, onGroupCreated }: CreateGroupDi
                     />
                     <Avatar className="h-8 w-8">
                       <AvatarFallback className="bg-blue-100 text-blue-600">
-                        {user.firstName[0]}{user.lastName[0]}
+                        {user.firstName?.[0] || ''}{user.lastName?.[0] || ''}
                       </AvatarFallback>
                     </Avatar>
                     <Label htmlFor={`user-${user.id}`} className="text-sm cursor-pointer flex-1">

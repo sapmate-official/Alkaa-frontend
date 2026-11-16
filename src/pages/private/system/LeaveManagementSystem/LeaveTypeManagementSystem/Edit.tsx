@@ -71,7 +71,7 @@ const EditLeaveType = () => {
                     { withCredentials: true }
                 );
                 form.reset(response.data);
-            } catch (error) {
+            } catch {
                 toast({
                     title: "Error",
                     description: "Failed to fetch leave type",
@@ -105,7 +105,7 @@ const EditLeaveType = () => {
                 description: "Leave type updated successfully",
             });
             navigate(RouteDict.Leave.Types.List);
-        } catch (error) {
+        } catch {
             toast({
                 title: "Error",
                 description: "Failed to update leave type",

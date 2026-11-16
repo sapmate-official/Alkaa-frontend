@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import RouteDict from '@/routes/RouteDict';
 
-interface AdminDashboardViewProps {
+export interface AdminDashboardViewProps {
   stats: {
     totalEmployees: number;
     activeEmployees: number;

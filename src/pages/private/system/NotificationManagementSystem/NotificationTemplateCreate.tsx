@@ -80,10 +80,11 @@ const NotificationTemplateCreate = () => {
         description: "Notification template created successfully",
       });
       form.reset();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { message?: string };
       toast({
         title: "Error",
-        description: error?.message || "Something went wrong",
+        description: err?.message || "Something went wrong",
         variant: "destructive",
       });
     }

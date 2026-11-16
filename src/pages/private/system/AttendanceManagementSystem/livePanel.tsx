@@ -155,11 +155,12 @@ const EmployeeAttendanceDashboard: React.FC = () => {
                 });
             }
         }
-        catch (error: any) {
+        catch (error: unknown) {
             console.error('Failed to fetch data:', error);
+            const err = error as { response?: { data?: { message?: string } } };
             toast({
                 title: 'Failed to fetch data',
-                description: error.response?.data?.message || 'An error occurred while fetching attendance data',
+                description: err.response?.data?.message || 'An error occurred while fetching attendance data',
                 variant: 'destructive'
             });
         } finally {

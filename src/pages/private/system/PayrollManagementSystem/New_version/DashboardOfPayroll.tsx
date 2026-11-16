@@ -106,9 +106,10 @@ const DashboardOfPayroll = () => {
             );
           setSpecialEvents(payrollEvents);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error fetching payroll dashboard data:', error);
-        const errorMsg = error?.response?.data?.message || error?.response?.data?.error || error?.message || 'Failed to fetch payroll dashboard data. Please try again.';
+        const err = error as { response?: { data?: { message?: string; error?: string } }; message?: string };
+        const errorMsg = err?.response?.data?.message || err?.response?.data?.error || err?.message || 'Failed to fetch payroll dashboard data. Please try again.';
         toast({
           title: 'Error',
           description: errorMsg,
@@ -239,24 +240,25 @@ const DashboardOfPayroll = () => {
         // Refresh payslip data
         window.location.reload();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error generating salary:', error);
+      const err = error as { response?: { status?: number; data?: { message?: string; error?: string } }; message?: string };
 
       // Handle specific error cases
-      if (error.response?.status === 409) {
+      if (err.response?.status === 409) {
         toast({
           title: 'Error',
           description: 'Salary already exists for this month.',
           variant: 'destructive',
         });
-      } else if (error.response?.status === 403) {
+      } else if (err.response?.status === 403) {
         toast({
           title: 'Error',
           description: 'You do not have permission to generate salary.',
           variant: 'destructive',
         });
       } else {
-        const errorMsg = error?.response?.data?.message || error?.response?.data?.error || error?.message || 'Failed to generate salary. Please try again.';
+        const errorMsg = err.response?.data?.message || err.response?.data?.error || err.message || 'Failed to generate salary. Please try again.';
         toast({
           title: 'Error',
           description: errorMsg,

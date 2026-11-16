@@ -209,7 +209,7 @@ const ModernRolePermissionPage = () => {
         lastModified: new Date().toISOString(),
         isDefault: role.isDefault || false
       })));
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to fetch roles',
@@ -242,7 +242,7 @@ const ModernRolePermissionPage = () => {
       // Group permissions by category (mock categorization)
       const groups = groupPermissionsByCategory(response.data);
       setPermissionGroups(groups);
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to fetch permissions',
@@ -304,10 +304,11 @@ const ModernRolePermissionPage = () => {
       
       // Refresh data
       fetchRoles();
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Enhanced error handling for new backend validation
-      const errorMessage = error?.response?.data?.message || 'Failed to create role';
-      const invalidIds = error?.response?.data?.invalidIds;
+      const err = error as { response?: { data?: { message?: string; invalidIds?: string[] } } };
+      const errorMessage = err?.response?.data?.message || 'Failed to create role';
+      const invalidIds = err?.response?.data?.invalidIds;
       
       toast({
         title: 'Error',
@@ -331,7 +332,7 @@ const ModernRolePermissionPage = () => {
         variant: 'default'
       });
       fetchRoles();
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to delete role',
@@ -404,8 +405,9 @@ const ModernRolePermissionPage = () => {
       
       // Refresh data
       fetchRoles();
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Failed to update role';
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      const errorMessage = err?.response?.data?.message || 'Failed to update role';
       
       toast({
         title: 'Error',
@@ -437,8 +439,9 @@ const ModernRolePermissionPage = () => {
       });
       
       fetchRoles();
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Failed to duplicate role';
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      const errorMessage = err?.response?.data?.message || 'Failed to duplicate role';
       
       toast({
         title: 'Error',
@@ -484,8 +487,9 @@ const ModernRolePermissionPage = () => {
           await fetchUsers();
 
           return;
-        } catch (error: any) {
-          const errorMessage = error?.response?.data?.message || 'Failed to remove user role';
+        } catch (error: unknown) {
+          const err = error as { response?: { data?: { message?: string } } };
+          const errorMessage = err?.response?.data?.message || 'Failed to remove user role';
           
           toast({
             title: 'Error',
@@ -538,8 +542,9 @@ const ModernRolePermissionPage = () => {
       // Refresh data efficiently
       await fetchUsers();
 
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Failed to update user role';
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      const errorMessage = err?.response?.data?.message || 'Failed to update user role';
       
       toast({
         title: 'Error',
@@ -583,7 +588,7 @@ const ModernRolePermissionPage = () => {
         description: 'Roles exported successfully',
         variant: 'default'
       });
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to export roles',
@@ -610,7 +615,7 @@ const ModernRolePermissionPage = () => {
               description: 'Import functionality will be implemented based on requirements',
               variant: 'default'
             });
-          } catch (error) {
+          } catch {
             toast({
               title: 'Error',
               description: 'Invalid JSON file format',

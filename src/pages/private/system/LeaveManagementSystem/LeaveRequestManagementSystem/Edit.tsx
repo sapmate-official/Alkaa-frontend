@@ -72,7 +72,7 @@ const EditLeaveRequest = () => {
           startDate: new Date(response.data.startDate),
           endDate: new Date(response.data.endDate)
         })
-      } catch (error) {
+      } catch {
         toast({
           title: "Error",
           description: "Failed to fetch leave request details",
@@ -164,10 +164,11 @@ const EditLeaveRequest = () => {
         })
         navigate(RouteDict.Leave.Requests.List)
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string } } };
       toast({
         title: "Error",
-        description: error.response?.data?.error || "Failed to update leave request",
+        description: err.response?.data?.error || "Failed to update leave request",
         variant: "destructive"
       })
     } finally {

@@ -54,12 +54,13 @@ export default function LeaveTypeList() {
         try {
             setIsDeleting(true)
             await deleteMutation.mutateAsync(id)
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Error deleting leave type:", error);
+            const err = error as { response?: { data?: { error?: string } } };
             
             toast({
                 title: "Cannot Delete Leave Type",
-                description: error.response?.data?.error || 
+                description: err.response?.data?.error || 
                     "This leave type is in use. Please ensure no employees have this leave type allocated before deleting.",
                 variant: "destructive"
             });
