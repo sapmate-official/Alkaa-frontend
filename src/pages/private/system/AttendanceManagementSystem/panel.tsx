@@ -289,7 +289,7 @@ const AttendancePanel = () => {
   };
 
   return (
-    <div className="p-6 w-full h-full overflow-y-auto bg-slate-50 dark:bg-slate-900">
+    <div className="p-6 w-full bg-background">
       {fallbackDialogVisible && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={(e) => {
           if (e.target === e.currentTarget) setFallbackDialogVisible(false);

@@ -14,7 +14,7 @@ const OrganizationHome = () => {
 
     if (isLoading) {
         return (
-            <div className="container mx-auto py-6 overflow-y-auto">
+            <div className="container mx-auto py-6">
                 <div className="flex justify-between items-center mb-6">
                     <div>
                         <Skeleton className="h-8 w-64 mb-2" />
@@ -56,7 +56,7 @@ const OrganizationHome = () => {
     }
 
     return (
-        <div className="container mx-auto py-6 overflow-y-auto ">
+        <div className="container mx-auto py-6">
             <div className="flex justify-between items-center mb-6">
                 <div>
                     <h1 className="text-3xl font-bold">Organizations</h1>

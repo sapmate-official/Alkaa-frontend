@@ -352,7 +352,7 @@ const AttendanceVerificationComponent: React.FC = () => {
   };
 
   return (
-    <div className="w-full px-6 py-8 overflow-y-auto h-full">
+    <div className="w-full px-6 py-8">
       <Card>
         <CardHeader>
           <CardTitle>Employee Attendance Verification</CardTitle>

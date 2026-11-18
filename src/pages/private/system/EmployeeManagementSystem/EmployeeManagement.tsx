@@ -372,7 +372,7 @@ const EmployeeManagement: React.FC = () => {
     };
 
     return (
-        <div className="container mx-auto p-4 h-full overflow-y-auto">
+        <div className="container mx-auto p-4">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold">Employee Management</h1>
             </div>

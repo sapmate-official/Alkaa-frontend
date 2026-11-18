@@ -289,7 +289,7 @@ const PastNotCheckedDays = () => {
     };
 
     return (
-        <div className="w-full p-4 bg-background shadow-md overflow-y-auto h-screen">
+        <div className="w-full p-4 bg-background">
             <div className="flex justify-between mb-4">
                 <h2 className="text-2xl font-bold">Past Unchecked Sessions</h2>
                 <Button onClick={() => setIsAddNewDialogOpen(true)} variant="default">

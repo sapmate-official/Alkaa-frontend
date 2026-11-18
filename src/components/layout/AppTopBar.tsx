@@ -73,9 +73,9 @@ export const AppTopBar: React.FC<AppTopBarProps> = ({
         {onToggleSidebar && (
           <button
             onClick={onToggleSidebar}
-            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            className="md:hidden p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
             aria-label="Toggle Navigation"
-            title="Toggle sidebar ([)"
+            title="Toggle mobile menu"
           >
             <Menu className="h-5 w-5" />
           </button>
