@@ -6,12 +6,13 @@ import type { AttendanceRecord } from '@/types/general'
 import { attendanceKeys } from './attendanceKeys'
 
 // Today's Sessions Query
-export const useTodaySessionsQuery = (date?: string) => {
+export const useTodaySessionsQuery = (date?: string, enabled = true) => {
   const queryDate = date || format(new Date(), 'yyyy-MM-dd')
   
   return useQuery<AttendanceRecord[]>({
     queryKey: attendanceKeys.sessions(queryDate),
     queryFn: () => attendanceApi.getTodaySessions(queryDate),
+    enabled,
     staleTime: 1000 * 60, // 1 minute
   })
 }

@@ -58,21 +58,12 @@ function App() {
           <Route path="/onboarding/:token" element={<OnboardingForm />} />
           <Route path="/onboarding" element={<OnboardingForm />} />
           
-          {/* Protected Routes - Wrapped in AuthProvider */}
+          {/* Protected Routes - Wrapped in AuthProvider with Auth Gate */}
           <Route
             path="/p/*"
             element={
-              
               <AuthProvider>
-                <TimezoneProvider>
-                  <MainLayout>
-                    <ErrorBoundary>
-                      <Suspense fallback={<LoadingFallback />}>
-                        <ProtectedRoute />
-                      </Suspense>
-                    </ErrorBoundary>
-                  </MainLayout>
-                </TimezoneProvider>
+                <ProtectedLayout />
               </AuthProvider>
             }
           />
@@ -83,7 +74,7 @@ function App() {
   )
 }
 
-const ProtectedRoute: React.FC = () => {
+const ProtectedLayout: React.FC = () => {
   const { user, isLoading, reinitializeAuth } = useAuth();
   const location = useLocation();
   const [previousPath, setPreviousPath] = useState<string | null>(null);
@@ -96,16 +87,35 @@ const ProtectedRoute: React.FC = () => {
     setPreviousPath(location.pathname);
   }, [location.pathname, previousPath, reinitializeAuth]);
 
+  // Auth Initialization Gate: Do NOT mount MainLayout, AppTopBar, or Sidebar until session is verified
   if (isLoading) {
-    return <Loader />;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground gap-3">
+        <Loader />
+        <span className="text-xs font-mono text-muted-foreground animate-pulse tracking-wide">
+          Verifying session...
+        </span>
+      </div>
+    );
   }
 
   if (!user) {
     return <Navigate to={RouteDict.SignInPage} replace />;
   }
 
-  return isSuperAdmin ? <SuperAdminRoute /> : <ClientRoute />;
-}
+  // Shell and child queries mount ONLY after auth is confirmed valid
+  return (
+    <TimezoneProvider>
+      <MainLayout>
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            {isSuperAdmin ? <SuperAdminRoute /> : <ClientRoute />}
+          </Suspense>
+        </ErrorBoundary>
+      </MainLayout>
+    </TimezoneProvider>
+  );
+};
 
 const ClientRoute = () => {
   return (

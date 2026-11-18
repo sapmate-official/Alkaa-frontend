@@ -34,7 +34,7 @@ export const AppTopBar: React.FC<AppTopBarProps> = ({
 }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { data: todaySessions = [] } = useTodaySessionsQuery();
+  const { data: todaySessions = [] } = useTodaySessionsQuery(undefined, Boolean(user?.id));
 
   const isSuperAdmin = Boolean(user?.superAdmin || user?.isSuperAdmin);
   const isOrgAdmin = Boolean(
