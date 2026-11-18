@@ -73,20 +73,25 @@ const ProfileEdit = () => {
 
   const isOwnProfile = !id || id === user?.id;
   const isSuperAdmin = Boolean(user?.superAdmin || user?.isSuperAdmin);
-  const isOrgAdmin = permissionList.some(p => p.key === 'org_admin') ||
-    user?.roles?.some((r) => r.role?.name === 'Org_Admin');
+  const isOrgAdmin = Boolean(
+    permissionList.some(p => p.key === 'org_admin') ||
+    (user as { roles?: (string | { role?: { name?: string }; name?: string })[] })?.roles?.some(
+      (r) =>
+        typeof r === 'string'
+          ? ['Org_Admin', 'Admin', 'SUPER_ADMIN'].includes(r)
+          : ['Org_Admin', 'Admin', 'SUPER_ADMIN'].includes(r?.role?.name || r?.name || '')
+    )
+  );
 
   // Personal fields: every employee can always edit their own — no permission required.
   const canEditPersonalInfo = isOwnProfile;
 
   // Employment / salary: require explicit permissions OR admin
-  const canEditEmployeeInfo = isOwnProfile && (
-    isSuperAdmin || isOrgAdmin ||
-    permissionList.some(p => p.key === 'update_employee_own')
+  const canEditEmployeeInfo = isSuperAdmin || isOrgAdmin || (
+    isOwnProfile && permissionList.some(p => p.key === 'update_employee_own')
   );
-  const canEditSalary = isOwnProfile && (
-    isSuperAdmin || isOrgAdmin ||
-    permissionList.some(p => p.key === 'update_salary_own')
+  const canEditSalary = isSuperAdmin || isOrgAdmin || (
+    isOwnProfile && permissionList.some(p => p.key === 'update_salary_own')
   );
 
   // Non-self editing (admin/manager editing another employee)
@@ -98,8 +103,8 @@ const ProfileEdit = () => {
   const canEditAllUserSalary = isSuperAdmin || isOrgAdmin || permissionList.some(p => p.key === 'update_salary_all_user');
 
   const canEditProfile = isOwnProfile
-    ? canEditPersonalInfo || canEditEmployeeInfo || canEditSalary
-    : canEditAllUserInfo || canEditSubordinatesInfo || canEditAllUserEmployeeInfo ||
+    ? true
+    : isSuperAdmin || isOrgAdmin || canEditAllUserInfo || canEditSubordinatesInfo || canEditAllUserEmployeeInfo ||
       canEditSubordinatesEmployeeInfo || canEditAllUserSalary || canEditSubordinatesSalary;
 
   const [formData, setFormData] = useState<FormDataType>({
@@ -136,6 +141,9 @@ const ProfileEdit = () => {
   };
 
   useEffect(() => {
+    // If auth state or user profile data is still resolving, wait before gating permissions
+    if (loading || !user) return;
+
     const fetchDepartmentsAndManagers = async () => {
       if (!user?.orgId) return;
       
@@ -171,7 +179,7 @@ const ProfileEdit = () => {
     }
     
     fetchDepartmentsAndManagers();
-  }, [user?.orgId, canEditProfile, navigate, toast]);
+  }, [user?.orgId, canEditProfile, navigate, toast, loading, user]);
 
   // Update form data when user data loads
   useEffect(() => {

@@ -180,6 +180,17 @@ const ProfileInfo = () => {
         }
     };
 
+    const isSuperAdmin = Boolean(user?.superAdmin || user?.isSuperAdmin);
+    const isOrgAdmin = Boolean(
+      relationshipData?.isOrgAdmin ||
+      (user as { roles?: (string | { role?: { name?: string }; name?: string })[] })?.roles?.some(
+        (r) =>
+          typeof r === 'string'
+            ? ['Org_Admin', 'Admin', 'SUPER_ADMIN'].includes(r)
+            : ['Org_Admin', 'Admin', 'SUPER_ADMIN'].includes(r?.role?.name || r?.name || '')
+      )
+    );
+
     const canEditProfile = () => {
         // Use relationship API data if available, otherwise fallback to manual checks
         if (relationshipData?.relationship) {
@@ -187,9 +198,9 @@ const ProfileInfo = () => {
         }
         
         // Fallback to manual checks
-        const isOwnProfile = !id || id === user?.id;
-        const isManager = user?.id && profileInfo?.managerId && profileInfo?.managerId === user?.id;
-        return isOwnProfile || isManager;
+        const isOwn = !id || id === user?.id;
+        const isMgr = Boolean(user?.id && profileInfo?.managerId && profileInfo?.managerId === user?.id);
+        return isOwn || isMgr || isSuperAdmin || isOrgAdmin;
     };
     
     if (isLoading) {
@@ -245,9 +256,10 @@ const ProfileInfo = () => {
     }
 
     const isOwnProfile = !id || id === user?.id;
-    const isManager = relationshipData?.relationship?.isDirectManager || 
-                     (user?.id && profileInfo?.managerId && profileInfo?.managerId === user?.id);
-    const isOrgAdmin = relationshipData?.isOrgAdmin;
+    const isManager = Boolean(
+      relationshipData?.relationship?.isDirectManager || 
+      (user?.id && profileInfo?.managerId && profileInfo?.managerId === user?.id)
+    );
     const hasFinancialInfo = (info?: User) => {
         return (info?.annualPackage ?? 0) > 0 || (info?.monthlySalary ?? 0) > 0;
     };
@@ -314,7 +326,7 @@ const ProfileInfo = () => {
                                     size="sm"
                                     className="flex items-center gap-2 hover:bg-primary/10"
                                     onClick={() => {
-                                        const link = isManager ? RouteDict.Profile.Edit(id ?? null) : RouteDict.Profile.Edit(null);
+                                        const link = RouteDict.Profile.Edit(id ?? null);
                                         navigate(link)
                                     }}
                                 >

@@ -52,9 +52,19 @@ const BankDetails = () => {
 
   // Permission checks
   const isOwnProfile = !id || id === user?.id;
-  const canEditOwnBank = permissionList.some(p => p.key === 'update_bank_own') && isOwnProfile;
+  const isSuperAdmin = Boolean(user?.superAdmin || user?.isSuperAdmin);
+  const isOrgAdmin = Boolean(
+    permissionList.some(p => p.key === 'org_admin') ||
+    (user as { roles?: (string | { role?: { name?: string }; name?: string })[] })?.roles?.some(
+      (r) =>
+        typeof r === 'string'
+          ? ['Org_Admin', 'Admin', 'SUPER_ADMIN'].includes(r)
+          : ['Org_Admin', 'Admin', 'SUPER_ADMIN'].includes(r?.role?.name || r?.name || '')
+    )
+  );
+  const canEditOwnBank = (isSuperAdmin || isOrgAdmin || permissionList.some(p => p.key === 'update_bank_own')) && isOwnProfile;
   const canEditSubordinatesBank = permissionList.some(p => p.key === 'update_bank_subordinates');
-  const canEditAllUserBank = permissionList.some(p => p.key === 'update_bank_all_user');
+  const canEditAllUserBank = isSuperAdmin || isOrgAdmin || permissionList.some(p => p.key === 'update_bank_all_user');
   
   // Check if user is the manager of the viewed profile
   const [isManager, setIsManager] = useState(false);
@@ -70,6 +80,8 @@ const BankDetails = () => {
   }, [bankDetails, form]);
 
   useEffect(() => {
+    if (!user) return;
+
     const checkManagerRelationship = async () => {
       if (id && id !== user?.id) {
         try {

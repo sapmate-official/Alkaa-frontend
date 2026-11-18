@@ -32,15 +32,24 @@ const BankDetails = ({ userId }: BankDetailsProps) => {
     const isSubordinate = userId && user?.id && user.id !== userId 
       ? user.subordinates?.some(sub => sub.id === userId) 
       : false;
+    const isSuperAdmin = Boolean(user?.superAdmin || user?.isSuperAdmin);
+    const isOrgAdmin = Boolean(
+      (user as { roles?: (string | { role?: { name?: string }; name?: string })[] })?.roles?.some(
+        (r) =>
+          typeof r === 'string'
+            ? ['Org_Admin', 'Admin', 'SUPER_ADMIN'].includes(r)
+            : ['Org_Admin', 'Admin', 'SUPER_ADMIN'].includes(r?.role?.name || r?.name || '')
+      )
+    );
 
-    if (isOwnProfile) {
-      return true; // Users can always view their own bank details
+    if (isOwnProfile || isSuperAdmin || isOrgAdmin) {
+      return true; // Users can always view their own bank details; admins can view
     } else if (isSubordinate) {
       return hasPermission('view_bank_subordinates');
     } else {
       return hasPermission('view_bank_all_user');
     }
-  }, [userId, user?.id, user?.subordinates, hasPermission]);
+  }, [userId, user, hasPermission]);
 
   const toggleDetailsVisibility = () => {
     setShowFullDetails(!showFullDetails);
