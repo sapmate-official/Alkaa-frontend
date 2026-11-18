@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react'
+import { cn } from '@/lib/utils'
 import { useAuth } from '@/providers/AuthContext'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -458,13 +459,15 @@ const EmployeeManagement: React.FC = () => {
                                                 {employee.roles?.[0]?.role?.name || 'No Role'}
                                             </TableCell>
                                             <TableCell>
-                                                <Badge variant={
-                                                    employee.status === 'active' ? 'default' :
-                                                        employee.status === 'inactive' ? 'secondary' :
-                                                            'destructive'
-                                                }>
+                                                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground font-medium capitalize">
+                                                    <span className={cn(
+                                                        "h-1.5 w-1.5 rounded-full",
+                                                        employee.status === 'active' ? "bg-emerald-500" :
+                                                        employee.status === 'inactive' ? "bg-zinc-500" :
+                                                        "bg-rose-500"
+                                                    )} />
                                                     {employee.status}
-                                                </Badge>
+                                                </span>
                                                 {employee.status === 'inactive' && employee.terminationDate && (
                                                     <div className="text-[11px] text-destructive mt-0.5 font-medium">
                                                         Terminated: {new Date(employee.terminationDate).toLocaleDateString()}

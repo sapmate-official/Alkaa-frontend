@@ -18,7 +18,6 @@ import {
   AlertCircle,
   Timer,
   UserCheck,
-  Zap,
   TrendingUp,
   Activity
 } from 'lucide-react';
@@ -137,20 +136,19 @@ const LeaveDashboard = () => {
       {/* Approval Section - Only show if user has approval permissions and there are pending requests */}
       {canApproveLeaveRequests && pendingApprovals.length > 0 && (
         <div className="mb-8">
-          <Card className="border-l-4 border-l-orange-500 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950 dark:to-amber-950 shadow-lg">
+          <Card className="bg-card border border-border rounded-lg">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-orange-500 rounded-full">
-                    <UserCheck className="h-6 w-6 text-white" />
+                  <div className="p-2 bg-secondary rounded-lg text-amber-400">
+                    <UserCheck className="h-5 w-5" />
                   </div>
                   <div>
-                    <CardTitle className="text-xl flex items-center gap-2">
-                      <Zap className="h-5 w-5 text-orange-500" />
+                    <CardTitle className="text-base font-semibold flex items-center gap-2 text-foreground">
                       Pending Approvals
-                      <Badge className="bg-orange-500 text-white">{pendingApprovals.length}</Badge>
+                      <Badge variant="warning">{pendingApprovals.length}</Badge>
                     </CardTitle>
-                    <CardDescription className="text-orange-700 dark:text-orange-300">
+                    <CardDescription className="text-xs text-muted-foreground">
                       {pendingApprovals.length === 1 
                         ? "1 leave request needs your attention" 
                         : `${pendingApprovals.length} leave requests need your attention`
@@ -160,9 +158,11 @@ const LeaveDashboard = () => {
                 </div>
                 <Button
                   onClick={() => navigate(RouteDict.Leave.Requests.Approval)}
-                  className="bg-orange-500 hover:bg-orange-600 text-white"
+                  variant="outline"
+                  size="sm"
+                  className="hover:bg-secondary text-xs"
                 >
-                  <Activity className="h-4 w-4 mr-2" />
+                  <Activity className="h-3.5 w-3.5 mr-1.5" />
                   Manage All
                 </Button>
               </div>
@@ -172,24 +172,24 @@ const LeaveDashboard = () => {
                 {pendingApprovals.slice(0, 3).map((request) => (
                   <div
                     key={request.id}
-                    className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg border border-orange-200 dark:border-orange-800 hover:shadow-md transition-shadow"
+                    className="flex items-center justify-between p-3.5 bg-secondary/30 rounded-lg border border-border hover:bg-secondary/50 transition-colors"
                   >
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="font-medium text-gray-900 dark:text-gray-100">
+                      <div className="flex items-center gap-2.5 mb-1.5">
+                        <div className="text-sm font-medium text-foreground">
                           {request.user?.firstName} {request.user?.lastName}
                         </div>
-                        <Badge variant="outline" className="text-orange-600 border-orange-300">
+                        <Badge variant="outline" className="text-xs">
                           {request.leaveType?.name || 'Unknown'}
                         </Badge>
-                        <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                        <Badge variant="secondary" className="text-xs font-mono">
                           {request.numberOfDays} {request.numberOfDays === 1 ? 'day' : 'days'}
                         </Badge>
                       </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                      <div className="text-xs text-muted-foreground font-mono">
                         {format(new Date(request.startDate), 'MMM dd')} - {format(new Date(request.endDate), 'MMM dd, yyyy')}
                       </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-1">
+                      <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
                         {request.reason}
                       </div>
                     </div>
@@ -197,27 +197,27 @@ const LeaveDashboard = () => {
                       <Button
                         size="sm"
                         onClick={() => handleQuickApprove(request.id)}
-                        className="bg-green-500 hover:bg-green-600 text-white"
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs h-8"
                       >
-                        <CheckCircle className="h-4 w-4 mr-1" />
+                        <CheckCircle className="h-3.5 w-3.5 mr-1" />
                         Approve
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handleQuickReject(request.id)}
-                        className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
+                        className="border-border text-rose-400 hover:bg-rose-500/10 text-xs h-8"
                       >
-                        <XCircle className="h-4 w-4 mr-1" />
+                        <XCircle className="h-3.5 w-3.5 mr-1" />
                         Reject
                       </Button>
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={() => navigate(RouteDict.Leave.Requests.Approval)}
-                        className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                        className="text-muted-foreground hover:text-foreground text-xs h-8"
                       >
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   </div>
@@ -242,13 +242,13 @@ const LeaveDashboard = () => {
 
       {/* Enhanced Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card className={canApproveLeaveRequests && pendingApprovals.length > 0 ? "border-orange-200" : ""}>
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               {canApproveLeaveRequests ? "Pending Approvals" : "Total Leave Types"}
             </CardTitle>
             {canApproveLeaveRequests ? (
-              <UserCheck className="h-4 w-4 text-orange-500" />
+              <UserCheck className="h-4 w-4 text-amber-400" />
             ) : (
               <FileText className="h-4 w-4 text-muted-foreground" />
             )}

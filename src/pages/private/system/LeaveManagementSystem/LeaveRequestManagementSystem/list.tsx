@@ -189,12 +189,12 @@ const LeaveRequestList = () => {
             transition={{ delay: index * 0.1 }}
             whileHover={{ y: -4 }}
           >
-            <Card className="h-full shadow-sm hover:shadow-md transition-all duration-200 border-l-4 border-l-blue-400">
+            <Card className="h-full border border-border bg-card rounded-lg hover:bg-secondary/20 transition-colors">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <FileText className="h-4 w-4 text-blue-500" />
-                    <CardTitle className="text-lg">{request.leaveType?.name || 'Unknown'}</CardTitle>
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    <CardTitle className="text-base font-semibold text-foreground">{request.leaveType?.name || 'Unknown'}</CardTitle>
                   </div>
                   {getStatusBadge(request.status)}
                 </div>

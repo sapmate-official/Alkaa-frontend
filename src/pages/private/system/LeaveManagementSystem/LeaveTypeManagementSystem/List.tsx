@@ -322,11 +322,11 @@ export default function LeaveTypeList() {
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
                                 >
-                                    <Card className="h-full shadow-lg hover:shadow-xl transition-all duration-200 border-l-4 border-l-primary bg-card backdrop-blur">
+                                    <Card className="h-full border border-border bg-card rounded-lg hover:bg-secondary/20 transition-colors">
                                         <CardHeader className="pb-3">
                                             <div className="flex justify-between items-start">
-                                                <CardTitle className="text-lg text-foreground flex items-center gap-2">
-                                                    <CalendarDays className="h-5 w-5 text-primary" />
+                                                <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
+                                                    <CalendarDays className="h-4 w-4 text-muted-foreground" />
                                                     {leaveType.name}
                                                 </CardTitle>
                                                 <div className="flex gap-1">

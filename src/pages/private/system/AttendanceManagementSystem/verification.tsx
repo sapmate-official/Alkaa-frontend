@@ -326,28 +326,28 @@ const AttendanceVerificationComponent: React.FC = () => {
   const getStatusBadge = (status: AttendanceStatus) => {
     switch (status) {
       case "PRESENT":
-        return <Badge className="bg-green-500">Present</Badge>;
+        return <Badge variant="success">Present</Badge>;
       case "ABSENT":
-        return <Badge className="bg-red-500">Absent</Badge>;
+        return <Badge variant="destructive">Absent</Badge>;
       case "LATE":
-        return <Badge className="bg-yellow-500">Late</Badge>;
+        return <Badge variant="warning">Late</Badge>;
       case "HALF_DAY":
-        return <Badge className="bg-blue-500">Half Day</Badge>;
+        return <Badge variant="secondary">Half Day</Badge>;
       default:
-        return <Badge>Unknown</Badge>;
+        return <Badge variant="outline">Unknown</Badge>;
     }
   };
 
   const getVerificationBadge = (status: AttendanceVerificationStatus) => {
     switch (status) {
       case "VERIFIED":
-        return <Badge className="bg-green-500">Verified</Badge>;
+        return <Badge variant="success">Verified</Badge>;
       case "REJECTED":
-        return <Badge className="bg-red-500">Rejected</Badge>;
+        return <Badge variant="destructive">Rejected</Badge>;
       case "UNVERIFIED":
-        return <Badge className="bg-gray-500">Unverified</Badge>;
+        return <Badge variant="secondary">Unverified</Badge>;
       default:
-        return <Badge>Unknown</Badge>;
+        return <Badge variant="outline">Unknown</Badge>;
     }
   };
 
@@ -603,7 +603,7 @@ const AttendanceVerificationComponent: React.FC = () => {
                                       <div>{record.user.name}</div>
                                       <div className="text-xs text-gray-500">
                                         {record.user.department}
-                                        {index > 0 && <span className="ml-1 text-blue-500">(Session {record.sessionNumber})</span>}
+                                        {index > 0 && <span className="ml-1 text-muted-foreground font-mono text-xs">(Session {record.sessionNumber})</span>}
                                       </div>
                                     </TableCell>
                                     <TableCell>
@@ -613,7 +613,7 @@ const AttendanceVerificationComponent: React.FC = () => {
                                     </TableCell>
                                     <TableCell>
                                       <div>{format(new Date(record.checkInTime), "h:mm a")}</div>
-                                      <div className="text-xs text-gray-500">
+                                      <div className="text-xs text-muted-foreground">
                                         {record.checkOutTime
                                           ? format(new Date(record.checkOutTime), "h:mm a")
                                           : "Not checked out"}
@@ -634,9 +634,9 @@ const AttendanceVerificationComponent: React.FC = () => {
                                           onClick={() => verifyAttendance(record.id, "VERIFIED", record.notes || "")}
                                           title={isVerificationDisabled(record.verificationStatus) ? "Already verified/rejected" : "Quick Verify"}
                                           disabled={isVerificationDisabled(record.verificationStatus)}
-                                          className={isVerificationDisabled(record.verificationStatus) ? "opacity-50 cursor-not-allowed" : ""}
+                                          className={isVerificationDisabled(record.verificationStatus) ? "opacity-50 cursor-not-allowed" : "hover:bg-emerald-500/10 text-emerald-400"}
                                         >
-                                          <CheckCircle className="h-4 w-4 text-green-500" />
+                                          <CheckCircle className="h-4 w-4" />
                                         </Button>
                                         <Button
                                           variant="ghost"
@@ -644,9 +644,9 @@ const AttendanceVerificationComponent: React.FC = () => {
                                           onClick={() => verifyAttendance(record.id, "REJECTED", record.notes || "")}
                                           title={isVerificationDisabled(record.verificationStatus) ? "Already verified/rejected" : "Quick Reject"}
                                           disabled={isVerificationDisabled(record.verificationStatus)}
-                                          className={isVerificationDisabled(record.verificationStatus) ? "opacity-50 cursor-not-allowed" : ""}
+                                          className={isVerificationDisabled(record.verificationStatus) ? "opacity-50 cursor-not-allowed" : "hover:bg-rose-500/10 text-rose-400"}
                                         >
-                                          <XCircle className="h-4 w-4 text-red-500" />
+                                          <XCircle className="h-4 w-4" />
                                         </Button>
                                         <Button
                                           variant="outline"
@@ -774,18 +774,18 @@ const AttendanceVerificationComponent: React.FC = () => {
             {selectedReport && (
               <div className="mt-6 border-t pt-4">
                 <h3 className="text-lg font-medium mb-2">Daily Task Report</h3>
-                <div className="bg-gray-50 p-4 rounded-md">
+                <div className="bg-secondary/40 p-4 rounded-lg border border-border">
                   {Object.keys(selectedReport).length > 0 ? (
                     <div className="space-y-3">
                       {Object.entries(selectedReport).map(([key, value], index) => (
-                        <div key={index} className="p-3 bg-white rounded-md border">
-                          <div className="font-medium text-blue-600 mb-1">{key}</div>
-                          <div className="text-gray-700">{String(value)}</div>
+                        <div key={index} className="p-3 bg-card rounded-lg border border-border">
+                          <div className="font-medium text-foreground mb-1">{key}</div>
+                          <div className="text-sm text-muted-foreground">{String(value)}</div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-gray-500">No report data available.</p>
+                    <p className="text-sm text-muted-foreground">No report data available.</p>
                   )}
                 </div>
               </div>

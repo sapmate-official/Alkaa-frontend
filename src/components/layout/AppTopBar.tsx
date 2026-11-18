@@ -67,7 +67,7 @@ export const AppTopBar: React.FC<AppTopBarProps> = ({
   };
 
   return (
-    <header className="h-14 w-full bg-card/80 backdrop-blur-md border-b border-border sticky top-0 z-40 px-3 sm:px-6 flex items-center justify-between transition-colors">
+    <header className="h-14 w-full bg-card border-b border-border sticky top-0 z-40 px-3 sm:px-6 flex items-center justify-between transition-colors">
       {/* Left: Mobile Toggle, Brand & Tenant Selector */}
       <div className="flex items-center gap-3">
         {onToggleSidebar && (
@@ -157,14 +157,14 @@ export const AppTopBar: React.FC<AppTopBarProps> = ({
 
         {/* User Clearance & Profile Dropdown */}
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex items-center gap-2 p-1 rounded-lg hover:bg-muted/60 transition-colors outline-none">
+          <DropdownMenuTrigger className="flex items-center gap-2 p-1 rounded-lg hover:bg-secondary/60 transition-colors outline-none">
             <div className="relative">
-              <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center font-mono text-xs font-bold text-primary">
+              <div className="w-8 h-8 rounded-full bg-secondary border border-border flex items-center justify-center font-mono text-xs font-semibold text-foreground">
                 {userInitials}
               </div>
               <span
                 className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-background ${
-                  isClockedIn ? 'bg-emerald-500' : 'bg-slate-400'
+                  isClockedIn ? 'bg-emerald-500' : 'bg-zinc-500'
                 }`}
               />
             </div>
@@ -179,14 +179,14 @@ export const AppTopBar: React.FC<AppTopBarProps> = ({
             </div>
           </DropdownMenuTrigger>
 
-          <DropdownMenuContent align="end" className="w-56 p-1">
+          <DropdownMenuContent align="end" className="w-56 p-1 bg-popover border border-border shadow-lg">
             <DropdownMenuLabel className="p-2">
               <div className="text-xs font-semibold text-foreground truncate">
                 {user?.firstName ? `${user.firstName} ${user?.lastName || ''}`.trim() : 'Account'}
               </div>
               <div className="text-[11px] text-muted-foreground truncate">{user?.email}</div>
               {orgName && (
-                <div className="mt-1 flex items-center gap-1 text-[10px] text-primary font-mono truncate">
+                <div className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground font-mono truncate">
                   <Building2 className="h-3 w-3" /> {orgName}
                 </div>
               )}
@@ -196,27 +196,27 @@ export const AppTopBar: React.FC<AppTopBarProps> = ({
             {!isSuperAdmin && user?.id && (
               <DropdownMenuItem
                 onClick={() => navigate(RouteDict.Profile.Info(user.id))}
-                className="cursor-pointer text-xs flex items-center gap-2"
+                className="cursor-pointer text-xs flex items-center gap-2 text-foreground focus:bg-secondary"
               >
-                <UserIcon className="h-3.5 w-3.5 text-teal-400" />
+                <UserIcon className="h-3.5 w-3.5 text-muted-foreground" />
                 <span>My Profile & Revision History</span>
               </DropdownMenuItem>
             )}
 
             <DropdownMenuItem
               onClick={() => navigate(RouteDict.Attendance.Base)}
-              className="cursor-pointer text-xs flex items-center gap-2"
+              className="cursor-pointer text-xs flex items-center gap-2 text-foreground focus:bg-secondary"
             >
-              <Clock className="h-3.5 w-3.5 text-amber-400" />
+              <Clock className="h-3.5 w-3.5 text-muted-foreground" />
               <span>Timesheet & Attendance</span>
             </DropdownMenuItem>
 
             {isSuperAdmin && (
               <DropdownMenuItem
                 onClick={() => navigate(RouteDict.Organization.Base)}
-                className="cursor-pointer text-xs flex items-center gap-2"
+                className="cursor-pointer text-xs flex items-center gap-2 text-foreground focus:bg-secondary"
               >
-                <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+                <ShieldCheck className="h-3.5 w-3.5 text-muted-foreground" />
                 <span>Super Admin Panel</span>
               </DropdownMenuItem>
             )}
@@ -225,7 +225,7 @@ export const AppTopBar: React.FC<AppTopBarProps> = ({
 
             <DropdownMenuItem
               onClick={() => navigate(RouteDict.Logout)}
-              className="cursor-pointer text-xs text-rose-500 focus:text-rose-500 flex items-center gap-2"
+              className="cursor-pointer text-xs text-muted-foreground hover:text-rose-400 focus:text-rose-400 focus:bg-rose-500/10 flex items-center gap-2"
             >
               <LogOut className="h-3.5 w-3.5" />
               <span>Sign Out</span>

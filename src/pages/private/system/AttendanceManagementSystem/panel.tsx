@@ -485,64 +485,65 @@ const AttendancePanel = () => {
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="overflow-hidden border-l-4 border-l-blue-500">
+            <Card className="bg-card border border-border rounded-lg">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Current Status</CardTitle>
+                <CardTitle className="text-xs font-medium text-muted-foreground">Current Status</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-2xl font-bold">
+                    <p className="text-2xl font-bold tracking-tight text-foreground">
                       {isCheckedIn ? 'Checked In' : 'Checked Out'}
                     </p>
                     {sessionInfo && (
-                      <Badge className={`mt-2 ${getStatusColor(sessionInfo.status)}`}>
+                      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground mt-2 font-medium">
+                        <span className={`h-2 w-2 rounded-full ${isCheckedIn ? 'bg-emerald-500' : 'bg-zinc-500'}`} />
                         {sessionInfo.status}
-                      </Badge>
+                      </span>
                     )}
                   </div>
                   {isCheckedIn ?
-                    <CheckCircle className="h-8 w-8 text-green-500" /> :
-                    <XCircle className="h-8 w-8 text-gray-400" />
+                    <CheckCircle className="h-6 w-6 text-emerald-500" /> :
+                    <XCircle className="h-6 w-6 text-muted-foreground" />
                   }
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="overflow-hidden border-l-4 border-l-green-500">
+            <Card className="bg-card border border-border rounded-lg">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Hours Today</CardTitle>
+                <CardTitle className="text-xs font-medium text-muted-foreground">Hours Today</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-2xl font-bold">
+                    <p className="text-2xl font-bold tracking-tight text-foreground">
                       {sessionInfo?.totalHours || getTotalHoursToday() || 0}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
                       {todaySessions.length} session{todaySessions.length !== 1 ? 's' : ''}
                     </p>
                   </div>
-                  <Clock className="h-8 w-8 text-green-500" />
+                  <Clock className="h-6 w-6 text-muted-foreground" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="overflow-hidden border-l-4 border-l-purple-500">
+            <Card className="bg-card border border-border rounded-lg">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Session</CardTitle>
+                <CardTitle className="text-xs font-medium text-muted-foreground">Session</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-2xl font-bold">
+                    <p className="text-2xl font-bold tracking-tight text-foreground font-mono">
                       #{sessionInfo?.sessionNumber || 0}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
                       {format(new Date(), 'MMM dd, yyyy')}
                     </p>
                   </div>
-                  <Calendar className="h-8 w-8 text-purple-500" />
+                  <Calendar className="h-6 w-6 text-muted-foreground" />
                 </div>
               </CardContent>
             </Card>

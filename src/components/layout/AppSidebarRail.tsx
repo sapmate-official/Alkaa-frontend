@@ -268,8 +268,8 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
                             ? 'w-9 h-9 mx-auto justify-center rounded-lg text-xs'
                             : 'justify-between px-2.5 py-1.5 rounded-lg text-sm',
                           isActive
-                            ? 'bg-muted text-foreground font-medium shadow-2xs'
-                            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                            ? 'bg-secondary text-foreground font-medium'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
                         )
                       }
                     >
@@ -339,7 +339,7 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
             collapsed ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="w-9 h-9 mx-auto rounded-lg bg-muted/40 hover:bg-muted/70 flex flex-col items-center justify-center cursor-default transition-colors">
+                  <div className="w-9 h-9 mx-auto rounded-lg hover:bg-secondary flex flex-col items-center justify-center cursor-default transition-colors">
                     <span className="text-[10px] font-mono font-bold text-foreground">{seatPercentage}%</span>
                     <span className="h-1 w-1 rounded-full bg-emerald-400 mt-0.5" />
                   </div>
@@ -352,7 +352,7 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
                 </TooltipContent>
               </Tooltip>
             ) : (
-              <div className="p-2.5 rounded-lg bg-muted/40 border border-border/60 flex flex-col gap-1.5">
+              <div className="p-2.5 rounded-lg bg-secondary/30 border border-border/50 flex flex-col gap-1.5">
                 <div className="flex justify-between items-center text-[10px] font-mono">
                   <span className="text-muted-foreground uppercase font-semibold">SEAT QUOTA</span>
                   <span className="text-foreground font-bold">{seatPercentage}%</span>
@@ -392,7 +392,7 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
       {/* Desktop Fixed Collapsible Sidebar */}
       <aside
         className={cn(
-          'hidden md:flex shrink-0 h-[calc(100vh-3.5rem)] sticky top-14 bg-card/95 border-r border-border/80 flex-col transition-all duration-200 ease-out z-30 select-none',
+          'hidden md:flex shrink-0 h-[calc(100vh-3.5rem)] sticky top-14 bg-card border-r border-border flex-col transition-all duration-200 ease-out z-30 select-none',
           isCollapsed ? 'w-[56px]' : 'w-[230px]'
         )}
       >

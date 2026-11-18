@@ -16,7 +16,6 @@ import {
   Check,
   X,
   RefreshCw,
-  TrendingUp,
   FileCheck
 } from 'lucide-react';
 import RouteDict from '@/routes/RouteDict';
@@ -148,20 +147,20 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {/* Metric 1: Total Active Workforce */}
         <Card
-          className="hover:border-primary/50 transition-all cursor-pointer shadow-sm bg-card rounded-2xl group"
+          className="hover:bg-secondary/20 border border-border transition-colors cursor-pointer bg-card rounded-lg group"
           onClick={() => navigate(RouteDict.Employee.Base)}
         >
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Total Workforce
             </span>
-            <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-105 transition-transform">
+            <div className="w-8 h-8 rounded-lg bg-secondary text-muted-foreground flex items-center justify-center">
               <Users className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-extrabold text-foreground tracking-tight">
+              <span className="text-3xl font-bold text-foreground tracking-tight">
                 {stats.totalEmployees}
               </span>
               <span className="text-xs text-muted-foreground font-medium">team members</span>
@@ -169,7 +168,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
 
             {/* Active ratio bar */}
             <div className="space-y-1.5">
-              <div className="h-2 w-full bg-muted rounded-full overflow-hidden flex">
+              <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden flex">
                 <div
                   className="h-full bg-primary rounded-full transition-all duration-500"
                   style={{
@@ -178,7 +177,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                 />
               </div>
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{stats.activeEmployees} Active</span>
+                <span className="font-medium text-foreground">{stats.activeEmployees} Active</span>
                 <span>{Math.max(0, stats.totalEmployees - stats.activeEmployees)} Inactive</span>
               </div>
             </div>
@@ -187,20 +186,20 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
 
         {/* Metric 2: Today's Shift Attendance */}
         <Card
-          className="hover:border-emerald-500/50 transition-all cursor-pointer shadow-sm bg-card rounded-2xl group"
+          className="hover:bg-secondary/20 border border-border transition-colors cursor-pointer bg-card rounded-lg group"
           onClick={() => navigate(RouteDict.Attendance.Base)}
         >
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Today's Attendance
             </span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <div className="w-8 h-8 rounded-lg bg-secondary text-muted-foreground flex items-center justify-center">
               <Clock className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 tracking-tight">
+              <span className="text-3xl font-bold text-foreground tracking-tight">
                 {stats.presentToday}
               </span>
               <span className="text-xs text-muted-foreground font-medium">
@@ -209,11 +208,11 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             </div>
 
             <div className="flex justify-between items-center text-xs border-t border-border pt-2 text-muted-foreground">
-              <span className="flex items-center gap-1 font-medium">
-                <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
+              <span className="flex items-center gap-1.5 font-medium text-foreground">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 {stats.attendanceRate}% Presence
               </span>
-              <span className="font-semibold text-rose-500">
+              <span>
                 {Math.max(0, stats.totalEmployees - stats.presentToday)} Absent
               </span>
             </div>
@@ -222,27 +221,30 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
 
         {/* Metric 3: Pending Approvals & Requests */}
         <Card
-          className="hover:border-amber-500/50 transition-all cursor-pointer shadow-sm bg-card rounded-2xl group"
+          className="hover:bg-secondary/20 border border-border transition-colors cursor-pointer bg-card rounded-lg group"
           onClick={() => navigate(RouteDict.Leave.Requests.Base)}
         >
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Pending Approvals
             </span>
-            <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <div className="w-8 h-8 rounded-lg bg-secondary text-muted-foreground flex items-center justify-center">
               <Calendar className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-extrabold text-amber-600 dark:text-amber-400 tracking-tight">
+              <span className="text-3xl font-bold text-foreground tracking-tight">
                 {String(totalPendingActions).padStart(2, '0')}
               </span>
               <span className="text-xs text-muted-foreground font-medium">awaiting review</span>
             </div>
 
             <div className="flex justify-between items-center text-xs border-t border-border pt-2 text-muted-foreground">
-              <span>{stats.pendingLeaves} Leave Requests</span>
+              <span className="flex items-center gap-1.5">
+                {stats.pendingLeaves > 0 && <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />}
+                {stats.pendingLeaves} Leave Requests
+              </span>
               <span>{stats.onboardingPending} Candidates</span>
             </div>
           </CardContent>
@@ -250,27 +252,27 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
 
         {/* Metric 4: Onboarding & Hiring Pipeline */}
         <Card
-          className="hover:border-blue-500/50 transition-all cursor-pointer shadow-sm bg-card rounded-2xl group"
+          className="hover:bg-secondary/20 border border-border transition-colors cursor-pointer bg-card rounded-lg group"
           onClick={() => navigate(RouteDict.Onboarding.Base)}
         >
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Onboarding Pipeline
             </span>
-            <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <div className="w-8 h-8 rounded-lg bg-secondary text-muted-foreground flex items-center justify-center">
               <UserPlus className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-extrabold text-blue-600 dark:text-blue-400 tracking-tight">
+              <span className="text-3xl font-bold text-foreground tracking-tight">
                 {stats.onboardingPending}
               </span>
               <span className="text-xs text-muted-foreground font-medium">in verification</span>
             </div>
 
             <div className="flex justify-between items-center text-xs border-t border-border pt-2 text-muted-foreground">
-              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{stats.onboardingApproved} Approved</span>
+              <span className="font-medium text-foreground">{stats.onboardingApproved} Approved</span>
               <span>Ready to start</span>
             </div>
           </CardContent>

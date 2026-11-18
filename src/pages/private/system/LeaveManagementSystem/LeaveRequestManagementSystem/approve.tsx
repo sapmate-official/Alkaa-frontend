@@ -366,10 +366,10 @@ const LeaveRequestApprove = () => {
                             whileTap={{ scale: 0.98 }}
                           >
                             <Card
-                              className={`mb-3 cursor-pointer transition-all duration-200 hover:shadow-md border-l-4 border-l-orange-400 ${
+                              className={`mb-3 cursor-pointer transition-colors border border-border bg-card rounded-lg ${
                                 selectedRequest?.id === request.id
-                                  ? "ring-2 ring-blue-500 shadow-lg"
-                                  : "hover:border-l-orange-500"
+                                  ? "ring-1 ring-primary bg-secondary/30"
+                                  : "hover:bg-secondary/20"
                               }`}
                               onClick={() => setSelectedRequest(request)}
                             >
@@ -461,14 +461,10 @@ const LeaveRequestApprove = () => {
                             whileTap={{ scale: 0.98 }}
                           >
                             <Card
-                              className={`mb-3 cursor-pointer transition-all duration-200 hover:shadow-md border-l-4 ${
-                                request.status === "APPROVED"
-                                  ? "border-l-green-400"
-                                  : "border-l-red-400"
-                              } ${
+                              className={`mb-3 cursor-pointer transition-colors border border-border bg-card rounded-lg ${
                                 selectedRequest?.id === request.id
-                                  ? "ring-2 ring-blue-500 shadow-lg"
-                                  : ""
+                                  ? "ring-1 ring-primary bg-secondary/30"
+                                  : "hover:bg-secondary/20"
                               }`}
                               onClick={() => setSelectedRequest(request)}
                             >

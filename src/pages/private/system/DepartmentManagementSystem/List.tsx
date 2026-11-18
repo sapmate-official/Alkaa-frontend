@@ -111,25 +111,19 @@ const DepartmentCard = ({ dept, onClick, isUserHead = false }: DepartmentCardPro
     
     return (
         <Card
-            className={`cursor-pointer hover:bg-accent transition-all border-l-4 ${
-                dept.status 
-                    ? isUserHead 
-                        ? 'border-l-blue-500' 
-                        : 'border-l-green-500' 
-                    : 'border-l-gray-300 opacity-70'
-            }`}
+            className="cursor-pointer hover:bg-secondary/40 border border-border transition-all rounded-lg"
             onClick={onClick}
         >
             <CardHeader className="pb-2">
                 <div className="flex justify-between items-start">
                     <div>
-                        <CardTitle className="flex items-center gap-2 text-lg">
+                        <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
                             {dept.name}
                             {isUserHead && (
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                            <Badge variant="outline" className="bg-blue-50">Head</Badge>
+                                            <Badge variant="secondary" className="text-[10px] font-mono">Head</Badge>
                                         </TooltipTrigger>
                                         <TooltipContent>
                                             <p>You are the department head</p>
@@ -139,44 +133,45 @@ const DepartmentCard = ({ dept, onClick, isUserHead = false }: DepartmentCardPro
                             )}
                         </CardTitle>
                         <CardDescription className="flex items-center gap-1 mt-1">
-                            <code className="text-xs font-mono">{dept.code}</code>
+                            <code className="text-xs font-mono text-muted-foreground">{dept.code}</code>
                         </CardDescription>
                     </div>
-                    <Badge variant={dept?.status ? "default" : "outline"} className={dept.status ? "bg-green-100 hover:bg-green-200 text-green-800 border-none" : "text-gray-500"}>
+                    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+                        <span className={`h-2 w-2 rounded-full ${dept?.status ? 'bg-emerald-500' : 'bg-zinc-500'}`} />
                         {dept?.status ? 'Active' : 'Inactive'}
-                    </Badge>
+                    </span>
                 </div>
             </CardHeader>
             <CardContent className="pb-2 space-y-2">
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                     <Building2 className="h-3.5 w-3.5" />
                     <span>{dept.location || 'No location specified'}</span>
                 </div>
                 {dept.departmentHead ? (
-                    <div className="flex items-center gap-1 text-sm">
-                        <User className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span>{dept.departmentHead?.firstName} {dept.departmentHead?.lastName}</span>
+                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <User className="h-3.5 w-3.5" />
+                        <span className="text-foreground">{dept.departmentHead?.firstName} {dept.departmentHead?.lastName}</span>
                     </div>
                 ) : (
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                         <User className="h-3.5 w-3.5" />
                         <span>No department head</span>
                     </div>
                 )}
                 <p className="text-sm line-clamp-2 text-muted-foreground">{dept.description || 'No description'}</p>
             </CardContent>
-            <CardFooter className="flex justify-between items-center pt-2">
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <CardFooter className="flex justify-between items-center pt-2 border-t border-border/50">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Users className="h-3.5 w-3.5" />
                     <span>{userCount} member{userCount !== 1 ? 's' : ''}</span>
                 </div>
-                <div className="text-sm font-semibold">
-                    ₹{dept.budget?.toLocaleString() || 0}
+                <div className="text-xs font-mono text-muted-foreground">
+                    Budget: <span className="font-semibold text-foreground">₹{dept.budget?.toLocaleString() || 0}</span>
                 </div>
             </CardFooter>
         </Card>
-    )
-}
+    );
+};
 
 const EmptyState = ({ message = "No departments found", canCreate = false, onCreateClick }: {
     message: string,

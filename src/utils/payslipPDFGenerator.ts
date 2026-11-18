@@ -68,6 +68,10 @@ export interface PayslipData {
     netSalary: number;
   };
 }
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
+
+
 
 export class PayslipPDFGenerator {
   private static formatCurrency(amount: number): string {
@@ -382,20 +386,15 @@ export class PayslipPDFGenerator {
    * Generate PDF from preview element
    */
   private static generatePDFFromPreview(element: HTMLElement, data: PayslipData): void {
-    // Check if html2canvas and jsPDF are available
-    if (!window.html2canvas || !window.jspdf) {
-      throw new Error('PDF generation libraries not loaded. Please include html2canvas and jsPDF.');
-    }
-
+    // html2canvas and jsPDF are bundled from npm (see index.html)
     const filename = `payslip_${data.employee.name.replace(/\s+/g, '_')}_${data.period}.pdf`;
 
-    window.html2canvas(element, {
+    html2canvas(element, {
       scale: 2,
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#ffffff'
     }).then((canvas: HTMLCanvasElement) => {
-      const { jsPDF } = window.jspdf;
       const doc = new jsPDF('p', 'mm', 'a4');
       
       const imgData = canvas.toDataURL('image/png');
@@ -451,30 +450,4 @@ export class PayslipPDFGenerator {
   }
 }
 
-// Global type declarations for external libraries
-declare global {
-  interface Window {
-    html2canvas: (
-      element: HTMLElement,
-      options?: Record<string, unknown>
-    ) => Promise<HTMLCanvasElement>;
-    jspdf: {
-      jsPDF: new (
-        orientation?: string,
-        unit?: string,
-        format?: string
-      ) => {
-        addImage: (
-          imgData: string,
-          format: string,
-          x: number,
-          y: number,
-          width: number,
-          height: number
-        ) => void;
-        addPage: () => void;
-        save: (filename: string) => void;
-      };
-    };
-  }
-}
+

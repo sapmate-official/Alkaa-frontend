@@ -2,7 +2,6 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Building2, Users } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import RouteDict from '@/routes/RouteDict';
 import { useOrganizations } from '@/hooks/queries';
@@ -71,35 +70,36 @@ const OrganizationHome = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {organizationList?.map((org) => (
-                    <Card key={org?.id} className="hover:shadow-lg transition-shadow">
+                    <Card key={org?.id} className="bg-card border border-border hover:bg-secondary/20 transition-colors rounded-lg">
                         <CardHeader>
                             <div className="flex justify-between items-start">
-                                <CardTitle className="text-xl">{org?.name}</CardTitle>
-                                <Badge variant={org?.isActive ? "default" : "destructive"}>
+                                <CardTitle className="text-lg font-semibold text-foreground">{org?.name}</CardTitle>
+                                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+                                    <span className={`h-2 w-2 rounded-full ${org?.isActive ? 'bg-emerald-500' : 'bg-zinc-500'}`} />
                                     {org?.isActive ? "Active" : "Inactive"}
-                                </Badge>
+                                </span>
                             </div>
-                            <CardDescription>{org?.industry || "No industry specified"}</CardDescription>
+                            <CardDescription className="text-xs text-muted-foreground">{org?.industry || "No industry specified"}</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div className="space-y-4">
-                                <div className="flex items-center text-sm">
-                                    <Building2 className="mr-2 h-4 w-4" />
+                            <div className="space-y-3">
+                                <div className="flex items-center text-xs text-muted-foreground">
+                                    <Building2 className="mr-2 h-3.5 w-3.5" />
                                     <span>
-                                        Plan: {org?.subscriptionPlan?.name || org?.subscriptionPlanId || 'Not configured'}
+                                        Plan: <span className="text-foreground font-medium">{org?.subscriptionPlan?.name || org?.subscriptionPlanId || 'Not configured'}</span>
                                     </span>
                                 </div>
-                                <div className="flex items-center text-sm">
-                                    <Users className="mr-2 h-4 w-4" />
-                                    <span>{org?.counts?.users ?? org?.users?.length ?? 0} Users</span>
+                                <div className="flex items-center text-xs text-muted-foreground">
+                                    <Users className="mr-2 h-3.5 w-3.5" />
+                                    <span><span className="text-foreground font-medium">{org?.counts?.users ?? org?.users?.length ?? 0}</span> Users</span>
                                 </div>
-                                <div className="flex items-center text-sm">
-                                    <Users className="mr-2 h-4 w-4" />
-                                    <span>{org?.counts?.admins ?? 0} Admins</span>
+                                <div className="flex items-center text-xs text-muted-foreground">
+                                    <Users className="mr-2 h-3.5 w-3.5" />
+                                    <span><span className="text-foreground font-medium">{org?.counts?.admins ?? 0}</span> Admins</span>
                                 </div>
                                 <Button
                                     variant="outline"
-                                    className="w-full mt-4"
+                                    className="w-full mt-2 hover:bg-secondary hover:text-foreground text-xs"
                                     onClick={() => navigate(RouteDict.SuperAdmin.OrganizationDetails(org?.id))}
                                 >
                                     View Details

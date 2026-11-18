@@ -3,80 +3,81 @@
 @tailwind utilities;
 
 @layer base {
+  /*
+   * ALKAA Professional Color Profile
+   * Implementation of color-styling-guide.md
+   * Neutral temperature: Consistent pure neutral ramp (never tint everything blue)
+   * The 60-30-10 rule: 60% neutral surfaces, 30% text/dividers, 10% constrained accent
+   */
   :root {
-    --background: 0 0% 100%; /* Pure Clean White */
-    --foreground: 240 10% 10%; /* #18181B - Charcoal */
-
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 10%;
-
+    --background: 0 0% 98%; /* #FAFAFA */
+    --card: 0 0% 100%; /* #FFFFFF */
     --popover: 0 0% 100%;
+    --secondary: 240 5% 96%; /* #F4F4F5 */
+    --muted: 240 5% 96%; /* #F4F4F5 */
+
+    --foreground: 240 10% 10%; /* #18181B - never pure #000 */
+    --card-foreground: 240 10% 10%;
     --popover-foreground: 240 10% 10%;
-
-    --primary: 240 6% 10%; /* Rich Graphite Black */
-    --primary-foreground: 0 0% 98%;
-
-    --secondary: 240 5% 96%; /* Neutral Stone 100 */
     --secondary-foreground: 240 10% 10%;
+    --muted-foreground: 240 4% 46%; /* #71717A */
 
-    --muted: 240 5% 96%;
-    --muted-foreground: 240 4% 46%; /* #71717A - Zinc 500 */
+    --border: 240 6% 90%; /* #E4E4E7 */
+    --input: 240 6% 90%;
 
+    --primary: 217 75% 50%; /* Single Brand Accent */
+    --primary-foreground: 0 0% 100%;
     --accent: 240 5% 96%;
     --accent-foreground: 240 10% 10%;
+    --ring: 217 75% 50%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 51%; /* #DC2626 */
     --destructive-foreground: 0 0% 98%;
+    --success: 142 71% 36%; /* #16A34A */
+    --warning: 38 92% 44%; /* #D97706 */
 
-    --border: 240 6% 90%; /* #E4E4E7 - Clean Hairline */
-    --input: 240 6% 90%;
-    --ring: 240 5% 65%;
+    --radius: 0.5rem; /* 8px consistent radius */
 
-    --radius: 0.625rem;
-
-    --chart-1: 221 83% 53%;
-    --chart-2: 160 84% 39%;
-    --chart-3: 38 92% 50%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 0 84% 60%;
+    --chart-1: 217 75% 50%;
+    --chart-2: 0 0% 30%;
+    --chart-3: 0 0% 50%;
+    --chart-4: 0 0% 70%;
+    --chart-5: 0 0% 85%;
   }
 
   .dark {
-    /* Pure Obsidian Carbon Canvas (Claude/Linear/Vercel palette - Zero oversaturated neon blue) */
-    --background: 240 5% 8%; /* #141416 - Deep Neutral Carbon */
-    --foreground: 0 0% 98%; /* #FAFAFA - Crisp Pure White Text */
+    /* Exact Drop-in CSS Variables from color-styling-guide.md (Section 9) */
+    --background: 0 0% 6%; /* #0F0F0F */
+    --card: 0 0% 8.5%; /* #161616 */
+    --popover: 0 0% 10%; /* #1A1A1A */
+    --secondary: 0 0% 12%; /* #1F1F1F */
+    --muted: 0 0% 12%; /* #1F1F1F */
 
-    --card: 240 5% 11%; /* #1A1A1E - Elevated Matte Surface */
-    --card-foreground: 0 0% 98%;
+    --foreground: 0 0% 93%; /* #EDEDED - never pure #FFF */
+    --card-foreground: 0 0% 93%;
+    --popover-foreground: 0 0% 93%;
+    --secondary-foreground: 0 0% 93%;
+    --muted-foreground: 0 0% 60%; /* #999999 */
 
-    --popover: 240 5% 11%;
-    --popover-foreground: 0 0% 98%;
+    --border: 0 0% 15%; /* #262626 - barely visible hairline border */
+    --input: 0 0% 15%;
 
-    /* Confident, Understated Primary Accent */
-    --primary: 217 91% 60%; /* #3B82F6 - Focused Indigo/Blue */
+    --primary: 217 75% 60%; /* Single Brand Accent - muted indigo/blue */
     --primary-foreground: 0 0% 100%;
+    --accent: 0 0% 14%;
+    --accent-foreground: 0 0% 93%;
+    --ring: 217 75% 60%;
 
-    --secondary: 240 4% 16%; /* #26262B - Soft Neutral Surface */
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 240 4% 15%; /* #242428 - Muted Pill Surfaces */
-    --muted-foreground: 240 5% 65%; /* #A1A1AA - High-contrast Neutral Gray */
-
-    --accent: 240 4% 16%;
-    --accent-foreground: 0 0% 98%;
-
-    --destructive: 0 72% 51%; /* Clean Crimson */
+    --destructive: 0 70% 58%; /* #E5584F */
     --destructive-foreground: 0 0% 98%;
+    --success: 150 55% 48%; /* #34B27B */
+    --warning: 38 85% 55%; /* #E5A23B */
 
-    --border: 240 5% 18%; /* #2B2B30 - Subtle Hairline Border */
-    --input: 240 5% 18%;
-    --ring: 240 5% 35%; /* Quiet Focus Ring */
-
-    --chart-1: 217 91% 60%;
-    --chart-2: 160 84% 39%;
-    --chart-3: 38 92% 50%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 0 84% 60%;
+    --chart-1: 217 75% 60%;
+    --chart-2: 0 0% 70%;
+    --chart-3: 0 0% 50%;
+    --chart-4: 0 0% 35%;
+    --chart-5: 0 0% 22%;
   }
 }
 
@@ -91,24 +92,27 @@
 }
 
 @layer utilities {
-  /* Executive Ambience & Modern Matte Tokens */
+  /*
+   * Elevation without borders (Section 7):
+   * On dark UIs, depth comes from lighter surfaces, not shadows or glows.
+   */
   .glass-card {
-    @apply bg-card/90 backdrop-blur-md border border-border/70 shadow-xs;
+    @apply rounded-lg border border-border bg-card shadow-none;
   }
   .glass-card-elevated {
-    @apply bg-card/95 backdrop-blur-lg border border-border/80 shadow-md shadow-black/10 dark:shadow-black/40;
+    @apply rounded-lg border border-border bg-popover shadow-sm;
   }
   .metric-card {
-    @apply rounded-xl border border-border/60 bg-card/90 p-4 transition-all duration-200 hover:border-border hover:shadow-xs;
+    @apply rounded-lg border border-border bg-card p-4 transition-colors hover:bg-secondary/40;
   }
   .metric-value {
-    @apply font-mono text-2xl font-bold tracking-tight text-foreground;
+    @apply font-mono text-2xl font-bold tracking-tight text-foreground tabular-nums;
   }
   .metric-label {
-    @apply text-xs font-medium uppercase tracking-wider text-muted-foreground;
+    @apply text-xs font-medium text-muted-foreground uppercase tracking-wider;
   }
   .table-row-hover {
-    @apply transition-colors duration-150 hover:bg-muted/40;
+    @apply transition-colors duration-150 hover:bg-secondary/50;
   }
 }
 
