@@ -72,23 +72,35 @@ const ProfileEdit = () => {
   const userData = (userResponse as { user?: User } | undefined)?.user ?? (userResponse as User | undefined);
 
   const isOwnProfile = !id || id === user?.id;
-  const canEditPersonalInfo = permissionList.some(p => p.key === 'update_personal_info') && isOwnProfile;
+  const isSuperAdmin = Boolean(user?.superAdmin || user?.isSuperAdmin);
+  const isOrgAdmin = permissionList.some(p => p.key === 'org_admin') ||
+    user?.roles?.some((r) => r.role?.name === 'Org_Admin');
+
+  // Personal fields: every employee can always edit their own — no permission required.
+  const canEditPersonalInfo = isOwnProfile;
+
+  // Employment / salary: require explicit permissions OR admin
+  const canEditEmployeeInfo = isOwnProfile && (
+    isSuperAdmin || isOrgAdmin ||
+    permissionList.some(p => p.key === 'update_employee_own')
+  );
+  const canEditSalary = isOwnProfile && (
+    isSuperAdmin || isOrgAdmin ||
+    permissionList.some(p => p.key === 'update_salary_own')
+  );
+
+  // Non-self editing (admin/manager editing another employee)
   const canEditSubordinatesInfo = permissionList.some(p => p.key === 'update_personal_info_subordinates');
-  const canEditAllUserInfo = permissionList.some(p => p.key === 'update_personal_info_all_user');
-  
-  const canEditEmployeeInfo = permissionList.some(p => p.key === 'update_employee_own') && isOwnProfile;
+  const canEditAllUserInfo = isSuperAdmin || isOrgAdmin || permissionList.some(p => p.key === 'update_personal_info_all_user');
   const canEditSubordinatesEmployeeInfo = permissionList.some(p => p.key === 'update_personal_info_subordinates');
-  const canEditAllUserEmployeeInfo = permissionList.some(p => p.key === 'update_employee_info_all_user');
-  
-  const canEditSalary = permissionList.some(p => p.key === 'update_salary_own') && isOwnProfile;
+  const canEditAllUserEmployeeInfo = isSuperAdmin || isOrgAdmin || permissionList.some(p => p.key === 'update_employee_info_all_user');
   const canEditSubordinatesSalary = permissionList.some(p => p.key === 'update_salary_subordinates');
-  const canEditAllUserSalary = permissionList.some(p => p.key === 'update_salary_all_user');
+  const canEditAllUserSalary = isSuperAdmin || isOrgAdmin || permissionList.some(p => p.key === 'update_salary_all_user');
 
-
-  const canEditProfile = isOwnProfile ? 
-    canEditPersonalInfo || canEditEmployeeInfo || canEditSalary : 
-    canEditAllUserInfo || canEditSubordinatesInfo || canEditAllUserEmployeeInfo || 
-    canEditSubordinatesEmployeeInfo || canEditAllUserSalary || canEditSubordinatesSalary;
+  const canEditProfile = isOwnProfile
+    ? canEditPersonalInfo || canEditEmployeeInfo || canEditSalary
+    : canEditAllUserInfo || canEditSubordinatesInfo || canEditAllUserEmployeeInfo ||
+      canEditSubordinatesEmployeeInfo || canEditAllUserSalary || canEditSubordinatesSalary;
 
   const [formData, setFormData] = useState<FormDataType>({
     firstName: '',
