@@ -25,9 +25,7 @@ import {
   Building2,
   ShieldCheck,
   X,
-  Sparkles,
-  PanelLeftClose,
-  PanelLeftOpen,
+  PanelLeft,
 } from 'lucide-react';
 
 interface AppSidebarRailProps {
@@ -79,22 +77,22 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
             {
               label: 'Command Center',
               href: RouteDict.Home,
-              icon: <LayoutGrid className="h-[18px] w-[18px]" strokeWidth={1.75} />,
+              icon: <LayoutGrid className="h-4 w-4" strokeWidth={1.75} />,
             },
             {
               label: 'Organizations',
               href: RouteDict.Organization.Base,
-              icon: <Building2 className="h-[18px] w-[18px]" strokeWidth={1.75} />,
+              icon: <Building2 className="h-4 w-4" strokeWidth={1.75} />,
             },
             {
               label: 'Permissions Matrix',
               href: RouteDict.Permission.Base,
-              icon: <ShieldCheck className="h-[18px] w-[18px]" strokeWidth={1.75} />,
+              icon: <ShieldCheck className="h-4 w-4" strokeWidth={1.75} />,
             },
             {
               label: 'Billing & Subscriptions',
               href: RouteDict.Billing.Base,
-              icon: <CreditCard className="h-[18px] w-[18px]" strokeWidth={1.75} />,
+              icon: <CreditCard className="h-4 w-4" strokeWidth={1.75} />,
             },
           ],
         },
@@ -106,7 +104,7 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
             {
               label: 'Command Center',
               href: RouteDict.Home,
-              icon: <LayoutGrid className="h-[18px] w-[18px]" strokeWidth={1.75} />,
+              icon: <LayoutGrid className="h-4 w-4" strokeWidth={1.75} />,
             },
           ],
         },
@@ -116,19 +114,19 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
             {
               label: 'Workforce Directory',
               href: RouteDict.Employee.Base,
-              icon: <Users2 className="h-[18px] w-[18px]" strokeWidth={1.75} />,
+              icon: <Users2 className="h-4 w-4" strokeWidth={1.75} />,
             },
             {
               label: 'Onboarding Pipeline',
               href: RouteDict.Onboarding.Base,
-              icon: <UserPlus className="h-[18px] w-[18px]" strokeWidth={1.75} />,
+              icon: <UserPlus className="h-4 w-4" strokeWidth={1.75} />,
               badge: pendingCandidates > 0 ? pendingCandidates : null,
               badgeVariant: 'warning',
             },
             {
               label: 'Departments',
               href: RouteDict.Department.Base,
-              icon: <Network className="h-[18px] w-[18px]" strokeWidth={1.75} />,
+              icon: <Network className="h-4 w-4" strokeWidth={1.75} />,
             },
           ],
         },
@@ -138,19 +136,19 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
             {
               label: 'Attendance & Clock',
               href: RouteDict.Attendance.Base,
-              icon: <Clock className="h-[18px] w-[18px]" strokeWidth={1.75} />,
+              icon: <Clock className="h-4 w-4" strokeWidth={1.75} />,
             },
             {
               label: 'Leaves & Balances',
               href: RouteDict.Leave.Requests.Base,
-              icon: <CalendarCheck className="h-[18px] w-[18px]" strokeWidth={1.75} />,
+              icon: <CalendarCheck className="h-4 w-4" strokeWidth={1.75} />,
               badge: pendingLeaves > 0 ? pendingLeaves : null,
               badgeVariant: 'warning',
             },
             {
               label: 'Tasks & Ops',
               href: RouteDict.Task.Base,
-              icon: <ListTodo className="h-[18px] w-[18px]" strokeWidth={1.75} />,
+              icon: <ListTodo className="h-4 w-4" strokeWidth={1.75} />,
             },
           ],
         },
@@ -160,12 +158,12 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
             {
               label: 'Activity & Audit Logs',
               href: RouteDict.System.ActivityLogs,
-              icon: <History className="h-[18px] w-[18px]" strokeWidth={1.75} />,
+              icon: <History className="h-4 w-4" strokeWidth={1.75} />,
             },
             {
               label: 'Roles & Access',
               href: RouteDict.Role.Base,
-              icon: <KeyRound className="h-[18px] w-[18px]" strokeWidth={1.75} />,
+              icon: <KeyRound className="h-4 w-4" strokeWidth={1.75} />,
             },
           ],
         },
@@ -175,12 +173,12 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
             {
               label: 'Payroll & Slips',
               href: RouteDict.Payroll.Base,
-              icon: <Wallet className="h-[18px] w-[18px]" strokeWidth={1.75} />,
+              icon: <Wallet className="h-4 w-4" strokeWidth={1.75} />,
             },
             {
               label: 'Billing & Plans',
               href: RouteDict.Billing.Base,
-              icon: <CreditCard className="h-[18px] w-[18px]" strokeWidth={1.75} />,
+              icon: <CreditCard className="h-4 w-4" strokeWidth={1.75} />,
             },
           ],
         },
@@ -188,59 +186,70 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
 
   const renderSidebarContent = (collapsed: boolean) => (
     <TooltipProvider delayDuration={100}>
-      <div className="flex flex-col h-full justify-between py-3 px-2 select-none">
-        <div className="flex flex-col gap-2 min-h-0 flex-1">
+      <div className="flex flex-col h-full justify-between py-2 px-2 select-none">
+        <div className="flex flex-col min-h-0 flex-1">
           {/* Mobile Header with close button */}
-          <div className="md:hidden flex items-center justify-between pb-2 border-b border-border px-2">
-            <span className="font-bold text-sm tracking-tight text-foreground">ALKAA OS</span>
+          <div className="md:hidden flex items-center justify-between pb-2 mb-2 border-b border-border/80 px-2">
+            <span className="font-semibold text-sm tracking-tight text-foreground">ALKAA OS</span>
             {onMobileClose && (
               <button
                 onClick={onMobileClose}
-                className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"
+                className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground"
               >
                 <X className="h-4 w-4" />
               </button>
             )}
           </div>
 
-          {/* Tenant Crest Header */}
-          {collapsed ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="w-10 h-10 mx-auto rounded-xl bg-gradient-to-br from-indigo-500/20 via-primary/15 to-emerald-400/20 border border-primary/25 flex items-center justify-center cursor-default shrink-0 shadow-xs group transition-transform hover:scale-105">
-                  <span className="font-mono text-xs font-bold text-primary">
-                    {orgName.slice(0, 2).toUpperCase()}
+          {/* Claude-style Top Header: [PanelLeft] + Org Name */}
+          <div className="flex items-center justify-between px-1.5 py-1 mb-2 shrink-0">
+            {collapsed ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={onToggleCollapse}
+                    className="w-9 h-9 mx-auto rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors"
+                    aria-label="Expand sidebar"
+                  >
+                    <PanelLeft className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p className="font-medium text-xs">Expand sidebar ( [ )</p>
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-2 min-w-0">
+                  {onToggleCollapse && (
+                    <button
+                      onClick={onToggleCollapse}
+                      className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                      title="Collapse sidebar ([)"
+                    >
+                      <PanelLeft className="h-4 w-4" />
+                    </button>
+                  )}
+                  <span className="font-semibold text-sm text-foreground truncate tracking-tight">
+                    {orgName}
                   </span>
                 </div>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="font-sans">
-                <p className="font-bold">{orgName}</p>
-                <p className="text-[10px] text-muted-foreground font-mono">
-                  {isSuperAdmin ? 'Platform Root' : 'Production Tenant'}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          ) : (
-            <div className="px-2.5 py-2 rounded-xl bg-muted/40 border border-border flex items-center justify-between shrink-0">
-              <div className="flex flex-col overflow-hidden pr-1">
-                <span className="font-bold text-xs text-foreground truncate">{orgName}</span>
-                <span className="font-mono text-[10px] text-muted-foreground truncate">
-                  {isSuperAdmin ? 'Platform Root' : 'Production Tenant'}
+                <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-muted/70 text-muted-foreground uppercase border border-border/50 shrink-0">
+                  {isSuperAdmin ? 'Root' : 'Tenant'}
                 </span>
               </div>
-              <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Navigation Groups */}
-          <nav className="flex-1 min-h-0 overflow-y-auto custom-scrollbar flex flex-col gap-2 pt-1 pr-0.5">
+          <nav className="flex-1 min-h-0 overflow-y-auto custom-scrollbar flex flex-col gap-1.5 pt-0.5 pr-0.5">
             {navGroups.map((group, gIdx) => (
               <div key={gIdx} className="flex flex-col gap-0.5">
                 {group.groupTitle && (
                   collapsed ? (
-                    <div className="my-1.5 mx-3 border-t border-border/40" />
+                    <div className="my-1 mx-3 border-t border-border/40" />
                   ) : (
-                    <span className="px-2.5 py-1 font-mono text-[9px] font-semibold text-muted-foreground tracking-wider uppercase">
+                    <span className="px-2.5 pt-2 pb-1 font-mono text-[9px] font-semibold text-muted-foreground/80 tracking-wider uppercase">
                       {group.groupTitle}
                     </span>
                   )
@@ -254,19 +263,18 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
                       onClick={() => onMobileClose?.()}
                       className={({ isActive }) =>
                         cn(
-                          'relative flex items-center rounded-xl transition-all duration-150 group font-medium',
+                          'relative flex items-center transition-colors font-medium',
                           collapsed
-                            ? 'w-10 h-10 mx-auto justify-center text-xs'
-                            : 'justify-between px-3 py-2 text-xs',
+                            ? 'w-9 h-9 mx-auto justify-center rounded-lg text-xs'
+                            : 'justify-between px-2.5 py-1.5 rounded-lg text-sm',
                           isActive
-                            ? 'bg-primary/15 text-primary font-semibold shadow-xs ring-1 ring-primary/25' +
-                                (!collapsed ? ' border-l-2 border-primary' : '')
-                            : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
+                            ? 'bg-muted text-foreground font-medium shadow-2xs'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                         )
                       }
                     >
                       <div className="flex items-center gap-2.5 truncate">
-                        <span className="shrink-0 transition-colors group-hover:text-foreground">
+                        <span className="shrink-0">
                           {item.icon}
                         </span>
                         {!collapsed && <span className="truncate">{item.label}</span>}
@@ -276,9 +284,9 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
                         collapsed ? (
                           <span
                             className={cn(
-                              'absolute top-1.5 right-1.5 h-2 w-2 rounded-full ring-2 ring-card',
+                              'absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full ring-2 ring-card',
                               item.badgeVariant === 'warning'
-                                ? 'bg-amber-500'
+                                ? 'bg-amber-400'
                                 : 'bg-primary'
                             )}
                           />
@@ -287,8 +295,8 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
                             className={cn(
                               'font-mono text-[10px] px-1.5 py-0.2 rounded-full border',
                               item.badgeVariant === 'warning'
-                                ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
-                                : 'bg-primary/10 text-primary border-primary/20'
+                                ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                : 'bg-muted text-muted-foreground border-border/60'
                             )}
                           >
                             {item.badge}
@@ -325,33 +333,33 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
           </nav>
         </div>
 
-        {/* Bottom Section: Quota & Collapse Controller */}
-        <div className="flex flex-col gap-2 pt-2 border-t border-border shrink-0">
+        {/* Bottom Section: Quota & Version */}
+        <div className="flex flex-col gap-2 pt-2 border-t border-border/80 shrink-0">
           {!isSuperAdmin && (
             collapsed ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="w-10 h-10 mx-auto rounded-xl bg-muted/40 border border-border/80 flex flex-col items-center justify-center cursor-default shadow-xs hover:border-primary/30 transition-colors">
-                    <span className="text-[10px] font-mono font-bold text-primary">{seatPercentage}%</span>
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 mt-0.5 animate-pulse" />
+                  <div className="w-9 h-9 mx-auto rounded-lg bg-muted/40 hover:bg-muted/70 flex flex-col items-center justify-center cursor-default transition-colors">
+                    <span className="text-[10px] font-mono font-bold text-foreground">{seatPercentage}%</span>
+                    <span className="h-1 w-1 rounded-full bg-emerald-400 mt-0.5" />
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="right" className="font-sans">
-                  <p className="font-bold">Seat Quota: {seatPercentage}%</p>
+                  <p className="font-medium text-xs">Seat Quota: {seatPercentage}%</p>
                   <p className="text-[10px] text-muted-foreground font-mono">
-                    {activeEmployees} / {totalEmployees} active • Healthy
+                    {activeEmployees} / {totalEmployees} active
                   </p>
                 </TooltipContent>
               </Tooltip>
             ) : (
-              <div className="p-2.5 rounded-xl bg-muted/30 border border-border flex flex-col gap-1.5">
+              <div className="p-2.5 rounded-lg bg-muted/40 border border-border/60 flex flex-col gap-1.5">
                 <div className="flex justify-between items-center text-[10px] font-mono">
                   <span className="text-muted-foreground uppercase font-semibold">SEAT QUOTA</span>
-                  <span className="text-primary font-bold">{seatPercentage}%</span>
+                  <span className="text-foreground font-bold">{seatPercentage}%</span>
                 </div>
-                <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                <div className="w-full bg-muted rounded-full h-1 overflow-hidden">
                   <div
-                    className="bg-primary h-full rounded-full transition-all duration-500"
+                    className="bg-foreground/70 h-full rounded-full transition-all duration-300"
                     style={{ width: `${seatPercentage}%` }}
                   />
                 </div>
@@ -359,52 +367,18 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
                   <span>
                     {activeEmployees} / {totalEmployees} active
                   </span>
-                  <span className="text-emerald-500 font-medium">● Healthy</span>
+                  <span className="text-emerald-400 font-medium flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 inline-block" />
+                    Healthy
+                  </span>
                 </div>
               </div>
             )
           )}
 
-          {/* Desktop Toggle Button */}
-          {onToggleCollapse && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={onToggleCollapse}
-                  className={cn(
-                    'hidden md:flex items-center rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-150',
-                    collapsed
-                      ? 'w-10 h-10 mx-auto justify-center'
-                      : 'w-full justify-between px-3 py-2 text-xs'
-                  )}
-                  aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-                >
-                  <div className="flex items-center gap-2 truncate">
-                    {collapsed ? (
-                      <PanelLeftOpen className="h-[18px] w-[18px] text-primary" />
-                    ) : (
-                      <PanelLeftClose className="h-[18px] w-[18px]" />
-                    )}
-                    {!collapsed && <span className="font-medium">Collapse</span>}
-                  </div>
-                  {!collapsed && (
-                    <kbd className="font-mono text-[9px] bg-muted/80 px-1.5 py-0.5 rounded border border-border text-muted-foreground">
-                      [
-                    </kbd>
-                  )}
-                </button>
-              </TooltipTrigger>
-              {collapsed && (
-                <TooltipContent side="right" className="font-sans">
-                  <span>Expand sidebar ( [ )</span>
-                </TooltipContent>
-              )}
-            </Tooltip>
-          )}
-
           {!collapsed && (
             <div className="flex items-center justify-between px-2 text-[10px] font-mono text-muted-foreground">
-              <span>ALKAA Enterprise</span>
+              <span>ALKAA OS</span>
               <span>v2.5</span>
             </div>
           )}
@@ -418,8 +392,8 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
       {/* Desktop Fixed Collapsible Sidebar */}
       <aside
         className={cn(
-          'hidden md:flex shrink-0 h-[calc(100vh-3.5rem)] sticky top-14 bg-card/40 backdrop-blur-md border-r border-border flex-col transition-all duration-300 ease-in-out z-30 select-none',
-          isCollapsed ? 'w-[68px]' : 'w-[240px]'
+          'hidden md:flex shrink-0 h-[calc(100vh-3.5rem)] sticky top-14 bg-card/95 border-r border-border/80 flex-col transition-all duration-200 ease-out z-30 select-none',
+          isCollapsed ? 'w-[56px]' : 'w-[230px]'
         )}
       >
         {renderSidebarContent(isCollapsed)}

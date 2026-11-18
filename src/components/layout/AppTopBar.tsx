@@ -82,15 +82,13 @@ export const AppTopBar: React.FC<AppTopBarProps> = ({
         )}
 
         <Link to={RouteDict.Home} className="flex items-center gap-2.5 group">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 via-primary to-emerald-400 p-[1px] shadow-sm">
-            <div className="w-full h-full bg-card rounded-[7px] flex items-center justify-center">
-              <span className="font-mono text-xs font-bold text-primary group-hover:scale-105 transition-transform">
-                AL
-              </span>
-            </div>
+          <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-700/80 flex items-center justify-center shadow-xs">
+            <span className="font-mono text-xs font-bold text-zinc-100 tracking-wider">
+              AL
+            </span>
           </div>
           <div className="hidden sm:flex flex-col">
-            <span className="text-sm font-bold tracking-tight text-foreground leading-tight">
+            <span className="text-sm font-semibold tracking-tight text-foreground leading-tight">
               ALKAA <span className="text-xs font-normal text-muted-foreground font-mono">OS</span>
             </span>
           </div>
@@ -99,13 +97,10 @@ export const AppTopBar: React.FC<AppTopBarProps> = ({
         <div className="h-4 w-px bg-border hidden sm:block mx-1" />
 
         {/* Tenant Selector Tag */}
-        <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/50 border border-border text-xs">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-          </span>
+        <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-md bg-muted/40 border border-border/80 text-xs">
+          <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
           <span className="font-medium text-foreground max-w-[140px] truncate">{orgName}</span>
-          <span className="font-mono text-[10px] px-1 py-0.2 rounded bg-background border border-border text-muted-foreground uppercase">
+          <span className="font-mono text-[10px] px-1 py-0.2 rounded bg-muted border border-border/60 text-muted-foreground uppercase">
             PROD
           </span>
         </div>

@@ -4,77 +4,79 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%; /* #F8FAFC - Crisp Slate White/Canvas */
-    --foreground: 222 47% 11%; /* #0F172A - Deep Slate Navy */
+    --background: 0 0% 100%; /* Pure Clean White */
+    --foreground: 240 10% 10%; /* #18181B - Charcoal */
 
-    --card: 0 0% 100%; /* #FFFFFF - Pure Optical White */
-    --card-foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 240 10% 10%;
 
-    --primary: 221 83% 53%; /* #2563EB - Royal Enterprise Blue */
-    --primary-foreground: 0 0% 100%;
+    --primary: 240 6% 10%; /* Rich Graphite Black */
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 210 40% 96%; /* #F1F5F9 - Light Slate */
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 240 5% 96%; /* Neutral Stone 100 */
+    --secondary-foreground: 240 10% 10%;
 
-    --muted: 210 40% 96%; /* #F1F5F9 */
-    --muted-foreground: 215 16% 47%; /* #64748B - Slate 500 */
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%; /* #71717A - Zinc 500 */
 
-    --accent: 217 91% 60%; /* #3B82F6 - Electric Accent Blue */
-    --accent-foreground: 0 0% 100%;
+    --accent: 240 5% 96%;
+    --accent-foreground: 240 10% 10%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 214 32% 91%; /* #E2E8F0 - Crisp Slate 200 */
-    --input: 214 32% 91%;
-    --ring: 221 83% 53%; /* #2563EB */
+    --border: 240 6% 90%; /* #E4E4E7 - Clean Hairline */
+    --input: 240 6% 90%;
+    --ring: 240 5% 65%;
 
-    --radius: 0.5rem;
+    --radius: 0.625rem;
 
-    --chart-1: 221 83% 53%; /* Royal Blue */
-    --chart-2: 217 91% 60%; /* Electric Blue */
-    --chart-3: 199 89% 48%; /* Sky Blue */
-    --chart-4: 210 40% 96%; /* Light Slate */
-    --chart-5: 222 47% 11%; /* Deep Navy */
+    --chart-1: 221 83% 53%;
+    --chart-2: 160 84% 39%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 0 84% 60%;
   }
 
   .dark {
-    --background: 222 47% 7%; /* #0B0F19 - Deep Navy Canvas */
-    --foreground: 210 40% 98%; /* #F8FAFC */
+    /* Pure Obsidian Carbon Canvas (Claude/Linear/Vercel palette - Zero oversaturated neon blue) */
+    --background: 240 5% 8%; /* #141416 - Deep Neutral Carbon */
+    --foreground: 0 0% 98%; /* #FAFAFA - Crisp Pure White Text */
 
-    --card: 222 47% 11%; /* #0F172A */
-    --card-foreground: 210 40% 98%;
+    --card: 240 5% 11%; /* #1A1A1E - Elevated Matte Surface */
+    --card-foreground: 0 0% 98%;
 
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 240 5% 11%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 217 91% 60%; /* #3B82F6 - Bright Enterprise Blue */
+    /* Confident, Understated Primary Accent */
+    --primary: 217 91% 60%; /* #3B82F6 - Focused Indigo/Blue */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 217 33% 17%; /* #1E293B */
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 240 4% 16%; /* #26262B - Soft Neutral Surface */
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 217 33% 17%; /* #1E293B */
-    --muted-foreground: 215 20% 65%; /* #94A3B8 */
+    --muted: 240 4% 15%; /* #242428 - Muted Pill Surfaces */
+    --muted-foreground: 240 5% 65%; /* #A1A1AA - High-contrast Neutral Gray */
 
-    --accent: 217 91% 60%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 240 4% 16%;
+    --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 72% 51%; /* Clean Crimson */
     --destructive-foreground: 0 0% 98%;
 
-    --border: 217 33% 17%; /* #1E293B */
-    --input: 217 33% 17%;
-    --ring: 217 91% 60%;
+    --border: 240 5% 18%; /* #2B2B30 - Subtle Hairline Border */
+    --input: 240 5% 18%;
+    --ring: 240 5% 35%; /* Quiet Focus Ring */
 
     --chart-1: 217 91% 60%;
-    --chart-2: 221 83% 53%;
-    --chart-3: 199 89% 48%;
-    --chart-4: 210 40% 96%;
-    --chart-5: 222 47% 11%;
+    --chart-2: 160 84% 39%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 0 84% 60%;
   }
 }
 
@@ -83,20 +85,21 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-sans antialiased selection:bg-primary/20 selection:text-primary;
+    @apply bg-background text-foreground font-sans antialiased selection:bg-muted selection:text-foreground;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
+
 @layer utilities {
-  /* Executive Ambience & Glassmorphism Tokens */
+  /* Executive Ambience & Modern Matte Tokens */
   .glass-card {
-    @apply bg-card/80 backdrop-blur-md border border-border/70 shadow-xs;
+    @apply bg-card/90 backdrop-blur-md border border-border/70 shadow-xs;
   }
   .glass-card-elevated {
-    @apply bg-card/90 backdrop-blur-lg border border-border/80 shadow-md shadow-black/5 dark:shadow-black/20;
+    @apply bg-card/95 backdrop-blur-lg border border-border/80 shadow-md shadow-black/10 dark:shadow-black/40;
   }
   .metric-card {
-    @apply rounded-xl border border-border/70 bg-card p-4 transition-all duration-200 hover:border-primary/40 hover:shadow-xs;
+    @apply rounded-xl border border-border/60 bg-card/90 p-4 transition-all duration-200 hover:border-border hover:shadow-xs;
   }
   .metric-value {
     @apply font-mono text-2xl font-bold tracking-tight text-foreground;
@@ -107,56 +110,12 @@
   .table-row-hover {
     @apply transition-colors duration-150 hover:bg-muted/40;
   }
-
-  .scrollbar-thin {
-    scrollbar-width: thin;
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: #d1d5db;
-    border-radius: 3px;
-  }
-  
-  .dark .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: #404040;
-  }
 }
 
-/* Mobile optimizations for task management */
-@media (max-width: 640px) {
-  .mobile-task-grid {
-    min-height: 0;
-    overflow: hidden;
-  }
-  
-  .mobile-touch-friendly {
-    min-height: 44px; /* Apple's recommended minimum touch target */
-  }
-  
-  .mobile-scroll-momentum {
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-  }
-}
-
-/* Improved scrolling on mobile */
-.custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(155, 155, 155, 0.5) transparent;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-}
-
+/* Minimalist Clean Scrollbars */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
+  width: 5px;
+  height: 5px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -164,19 +123,10 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgba(155, 155, 155, 0.5);
-  border-radius: 20px;
-  border: transparent;
-}
-
-.dark .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.2);
+  background: hsl(var(--border));
+  border-radius: 9999px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(155, 155, 155, 0.7);
-}
-
-.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.3);
+  background: hsl(var(--muted-foreground) / 0.5);
 }
