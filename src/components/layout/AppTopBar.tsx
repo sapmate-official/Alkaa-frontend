@@ -37,6 +37,15 @@ export const AppTopBar: React.FC<AppTopBarProps> = ({
   const { data: todaySessions = [] } = useTodaySessionsQuery();
 
   const isSuperAdmin = Boolean(user?.superAdmin || user?.isSuperAdmin);
+  const isOrgAdmin = Boolean(
+    (user as { roles?: (string | { role?: { name?: string }; name?: string })[] })?.roles?.some(
+      (r) =>
+        typeof r === 'string'
+          ? ['Org_Admin', 'Admin', 'SUPER_ADMIN'].includes(r)
+          : ['Org_Admin', 'Admin', 'SUPER_ADMIN'].includes(r?.role?.name || r?.name || '')
+    )
+  );
+  const roleLabel = isSuperAdmin ? 'Super Admin' : isOrgAdmin ? 'Org Admin' : 'Staff';
   const activeSession = todaySessions.find((s) => s.checkInTime && !s.checkOutTime);
   const isClockedIn = Boolean(activeSession);
 
@@ -168,7 +177,7 @@ export const AppTopBar: React.FC<AppTopBarProps> = ({
                 {user?.firstName ? `${user.firstName} ${user?.lastName || ''}`.trim() : 'User'}
               </span>
               <span className="text-[10px] font-mono text-muted-foreground leading-tight flex items-center gap-1">
-                {isSuperAdmin ? 'Super Admin' : 'Staff'}
+                {roleLabel}
                 <ChevronDown className="h-2.5 w-2.5" />
               </span>
             </div>
