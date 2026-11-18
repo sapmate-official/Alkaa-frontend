@@ -11,18 +11,19 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
-  LayoutDashboard,
-  Users,
-  UserCheck,
+  LayoutGrid,
+  Users2,
+  UserPlus,
+  Network,
   Clock,
-  CalendarDays,
-  CheckSquare,
-  ShieldAlert,
-  Coins,
-  Receipt,
-  UserCog,
-  ShieldCheck,
+  CalendarCheck,
+  ListTodo,
+  History,
+  KeyRound,
+  Wallet,
+  CreditCard,
   Building2,
+  ShieldCheck,
   X,
   Sparkles,
   PanelLeftClose,
@@ -78,22 +79,22 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
             {
               label: 'Command Center',
               href: RouteDict.Home,
-              icon: <LayoutDashboard className="h-4 w-4" />,
+              icon: <LayoutGrid className="h-[18px] w-[18px]" strokeWidth={1.75} />,
             },
             {
               label: 'Organizations',
               href: RouteDict.Organization.Base,
-              icon: <Building2 className="h-4 w-4" />,
+              icon: <Building2 className="h-[18px] w-[18px]" strokeWidth={1.75} />,
             },
             {
               label: 'Permissions Matrix',
               href: RouteDict.Permission.Base,
-              icon: <ShieldCheck className="h-4 w-4" />,
+              icon: <ShieldCheck className="h-[18px] w-[18px]" strokeWidth={1.75} />,
             },
             {
               label: 'Billing & Subscriptions',
               href: RouteDict.Billing.Base,
-              icon: <Receipt className="h-4 w-4" />,
+              icon: <CreditCard className="h-[18px] w-[18px]" strokeWidth={1.75} />,
             },
           ],
         },
@@ -105,7 +106,7 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
             {
               label: 'Command Center',
               href: RouteDict.Home,
-              icon: <LayoutDashboard className="h-4 w-4" />,
+              icon: <LayoutGrid className="h-[18px] w-[18px]" strokeWidth={1.75} />,
             },
           ],
         },
@@ -115,19 +116,19 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
             {
               label: 'Workforce Directory',
               href: RouteDict.Employee.Base,
-              icon: <Users className="h-4 w-4" />,
+              icon: <Users2 className="h-[18px] w-[18px]" strokeWidth={1.75} />,
             },
             {
               label: 'Onboarding Pipeline',
               href: RouteDict.Onboarding.Base,
-              icon: <UserCheck className="h-4 w-4" />,
+              icon: <UserPlus className="h-[18px] w-[18px]" strokeWidth={1.75} />,
               badge: pendingCandidates > 0 ? pendingCandidates : null,
               badgeVariant: 'warning',
             },
             {
               label: 'Departments',
               href: RouteDict.Department.Base,
-              icon: <Building2 className="h-4 w-4" />,
+              icon: <Network className="h-[18px] w-[18px]" strokeWidth={1.75} />,
             },
           ],
         },
@@ -137,19 +138,19 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
             {
               label: 'Attendance & Clock',
               href: RouteDict.Attendance.Base,
-              icon: <Clock className="h-4 w-4" />,
+              icon: <Clock className="h-[18px] w-[18px]" strokeWidth={1.75} />,
             },
             {
               label: 'Leaves & Balances',
               href: RouteDict.Leave.Requests.Base,
-              icon: <CalendarDays className="h-4 w-4" />,
+              icon: <CalendarCheck className="h-[18px] w-[18px]" strokeWidth={1.75} />,
               badge: pendingLeaves > 0 ? pendingLeaves : null,
               badgeVariant: 'warning',
             },
             {
               label: 'Tasks & Ops',
               href: RouteDict.Task.Base,
-              icon: <CheckSquare className="h-4 w-4" />,
+              icon: <ListTodo className="h-[18px] w-[18px]" strokeWidth={1.75} />,
             },
           ],
         },
@@ -159,12 +160,12 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
             {
               label: 'Activity & Audit Logs',
               href: RouteDict.System.ActivityLogs,
-              icon: <ShieldAlert className="h-4 w-4" />,
+              icon: <History className="h-[18px] w-[18px]" strokeWidth={1.75} />,
             },
             {
               label: 'Roles & Access',
               href: RouteDict.Role.Base,
-              icon: <UserCog className="h-4 w-4" />,
+              icon: <KeyRound className="h-[18px] w-[18px]" strokeWidth={1.75} />,
             },
           ],
         },
@@ -174,12 +175,12 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
             {
               label: 'Payroll & Slips',
               href: RouteDict.Payroll.Base,
-              icon: <Coins className="h-4 w-4" />,
+              icon: <Wallet className="h-[18px] w-[18px]" strokeWidth={1.75} />,
             },
             {
               label: 'Billing & Plans',
               href: RouteDict.Billing.Base,
-              icon: <Receipt className="h-4 w-4" />,
+              icon: <CreditCard className="h-[18px] w-[18px]" strokeWidth={1.75} />,
             },
           ],
         },
@@ -195,7 +196,7 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
             {onMobileClose && (
               <button
                 onClick={onMobileClose}
-                className="p-1 rounded-md hover:bg-muted text-muted-foreground"
+                className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -206,8 +207,8 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
           {collapsed ? (
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="w-10 h-10 mx-auto rounded-xl bg-gradient-to-br from-primary/15 via-primary/5 to-muted/30 border border-primary/20 flex items-center justify-center cursor-default shrink-0 group">
-                  <span className="font-mono text-xs font-bold text-primary group-hover:scale-105 transition-transform">
+                <div className="w-10 h-10 mx-auto rounded-xl bg-gradient-to-br from-indigo-500/20 via-primary/15 to-emerald-400/20 border border-primary/25 flex items-center justify-center cursor-default shrink-0 shadow-xs group transition-transform hover:scale-105">
+                  <span className="font-mono text-xs font-bold text-primary">
                     {orgName.slice(0, 2).toUpperCase()}
                   </span>
                 </div>
@@ -232,12 +233,12 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
           )}
 
           {/* Navigation Groups */}
-          <nav className="flex-1 min-h-0 overflow-y-auto custom-scrollbar flex flex-col gap-2.5 pt-1 pr-0.5">
+          <nav className="flex-1 min-h-0 overflow-y-auto custom-scrollbar flex flex-col gap-2 pt-1 pr-0.5">
             {navGroups.map((group, gIdx) => (
               <div key={gIdx} className="flex flex-col gap-0.5">
                 {group.groupTitle && (
                   collapsed ? (
-                    <div className="my-1 mx-2 border-t border-border/40" />
+                    <div className="my-1.5 mx-3 border-t border-border/40" />
                   ) : (
                     <span className="px-2.5 py-1 font-mono text-[9px] font-semibold text-muted-foreground tracking-wider uppercase">
                       {group.groupTitle}
@@ -253,14 +254,14 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
                       onClick={() => onMobileClose?.()}
                       className={({ isActive }) =>
                         cn(
-                          'relative flex items-center rounded-lg transition-all group font-medium',
+                          'relative flex items-center rounded-xl transition-all duration-150 group font-medium',
                           collapsed
                             ? 'w-10 h-10 mx-auto justify-center text-xs'
-                            : 'justify-between px-2.5 py-1.5 text-xs',
+                            : 'justify-between px-3 py-2 text-xs',
                           isActive
-                            ? 'bg-primary/10 text-primary font-semibold shadow-xs' +
-                                (!collapsed ? ' border-l-2 border-primary' : ' ring-1 ring-primary/30')
-                            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                            ? 'bg-primary/15 text-primary font-semibold shadow-xs ring-1 ring-primary/25' +
+                                (!collapsed ? ' border-l-2 border-primary' : '')
+                            : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                         )
                       }
                     >
@@ -275,7 +276,7 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
                         collapsed ? (
                           <span
                             className={cn(
-                              'absolute top-1 right-1 h-2 w-2 rounded-full ring-2 ring-card',
+                              'absolute top-1.5 right-1.5 h-2 w-2 rounded-full ring-2 ring-card',
                               item.badgeVariant === 'warning'
                                 ? 'bg-amber-500'
                                 : 'bg-primary'
@@ -330,7 +331,7 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
             collapsed ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="w-10 h-10 mx-auto rounded-xl bg-muted/30 border border-border flex flex-col items-center justify-center cursor-default">
+                  <div className="w-10 h-10 mx-auto rounded-xl bg-muted/40 border border-border/80 flex flex-col items-center justify-center cursor-default shadow-xs hover:border-primary/30 transition-colors">
                     <span className="text-[10px] font-mono font-bold text-primary">{seatPercentage}%</span>
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 mt-0.5 animate-pulse" />
                   </div>
@@ -371,18 +372,18 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
                 <button
                   onClick={onToggleCollapse}
                   className={cn(
-                    'hidden md:flex items-center rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-150',
+                    'hidden md:flex items-center rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-150',
                     collapsed
                       ? 'w-10 h-10 mx-auto justify-center'
-                      : 'w-full justify-between px-2.5 py-1.5 text-xs'
+                      : 'w-full justify-between px-3 py-2 text-xs'
                   )}
                   aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                 >
                   <div className="flex items-center gap-2 truncate">
                     {collapsed ? (
-                      <PanelLeftOpen className="h-4 w-4 text-primary" />
+                      <PanelLeftOpen className="h-[18px] w-[18px] text-primary" />
                     ) : (
-                      <PanelLeftClose className="h-4 w-4" />
+                      <PanelLeftClose className="h-[18px] w-[18px]" />
                     )}
                     {!collapsed && <span className="font-medium">Collapse</span>}
                   </div>
