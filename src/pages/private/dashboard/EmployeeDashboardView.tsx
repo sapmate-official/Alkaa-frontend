@@ -12,11 +12,12 @@ import {
   Sparkles,
   ArrowRight,
   PlusCircle,
-  Coins,
+  CreditCard,
   ShieldCheck,
   CheckCircle,
   LogIn,
   LogOut,
+  ChevronRight
 } from 'lucide-react';
 import RouteDict from '@/routes/RouteDict';
 import { useCheckInMutation, useCheckOutMutation } from '@/hooks/queries/useAttendance';
@@ -59,12 +60,12 @@ export const EmployeeDashboardView: React.FC<EmployeeDashboardViewProps> = ({
     const updateTime = () => {
       const now = new Date();
       setCurrentClock(
-        now.toLocaleTimeString('en-IN', {
+        now.toLocaleTimeString('en-US', {
           hour: '2-digit',
           minute: '2-digit',
           second: '2-digit',
-          hour12: false,
-        }) + ' IST'
+          hour12: true,
+        })
       );
     };
     updateTime();
@@ -83,39 +84,39 @@ export const EmployeeDashboardView: React.FC<EmployeeDashboardViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* 1. Welcome Banner & Action Cluster */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-card/60 backdrop-blur border border-border rounded-xl p-5 shadow-xs">
-        <div>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-mono mb-1">
+      {/* 1. Welcome Banner & Active Shift Status */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-card border border-border rounded-2xl p-6 shadow-sm">
+        <div className="text-left">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium mb-1.5">
             <span>Workspace</span>
             <span>/</span>
-            <span className="text-foreground font-medium">My Cockpit</span>
+            <span className="text-foreground font-semibold">Employee Self-Service (ESS)</span>
           </div>
           <div className="flex flex-wrap items-center gap-2.5">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
               Welcome back, {userProfile?.firstName || 'Colleague'}
             </h1>
-            <Badge variant="outline" className="font-mono text-xs">
-              ID: {userProfile?.employeeId || 'STAFF'}
+            <Badge variant="outline" className="text-xs font-semibold px-2.5 py-0.5 rounded-lg border-border">
+              {userProfile?.employeeId ? `ID: ${userProfile.employeeId}` : 'Active Staff'}
             </Badge>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             {userProfile?.jobTitle || 'Team Member'}{' '}
             {userProfile?.department ? `• ${userProfile.department.name}` : ''}
           </p>
         </div>
 
-        {/* Quick Actions Cluster */}
-        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border border-border text-xs font-mono">
+        {/* Live Punch Status & Quick Apply Button */}
+        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
+          <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-muted/60 border border-border text-xs font-medium">
             <span
-              className={`w-2 h-2 rounded-full ${
+              className={`w-2.5 h-2.5 rounded-full ${
                 isCheckedIn ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
               }`}
             />
-            <span className="font-medium text-foreground">
+            <span className="text-foreground font-semibold">
               {isCheckedIn
-                ? `Active Session • ${formatTime(stats.todayAttendance?.checkInTime)}`
+                ? `Clocked In • ${formatTime(stats.todayAttendance?.checkInTime)}`
                 : 'Not Checked In'}
             </span>
           </div>
@@ -123,7 +124,7 @@ export const EmployeeDashboardView: React.FC<EmployeeDashboardViewProps> = ({
           <Button
             size="sm"
             onClick={() => navigate(RouteDict.Leave.Requests.Base)}
-            className="text-xs h-9 gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs"
+            className="text-xs h-9 gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 font-medium rounded-xl shadow-xs"
           >
             <PlusCircle className="h-3.5 w-3.5" />
             <span>Apply for Time Off</span>
@@ -131,40 +132,39 @@ export const EmployeeDashboardView: React.FC<EmployeeDashboardViewProps> = ({
         </div>
       </div>
 
-      {/* 2. Hero Cards Grid: Active Shift Tracker + Compensation (7:5 ratio) */}
+      {/* 2. Hero Cards: Active Shift Punch & Compensation Summary */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-        {/* Left (7 Columns): Active Shift Tracker Card */}
-        <Card className="xl:col-span-7 bg-card/60 backdrop-blur border border-border shadow-xs flex flex-col justify-between">
+        {/* Left (7 Columns): Shift Attendance & Punch Card */}
+        <Card className="xl:col-span-7 bg-card border border-border shadow-sm rounded-2xl flex flex-col justify-between text-left">
           <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-border">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-primary" />
-              <CardTitle className="text-sm font-mono uppercase tracking-wider text-foreground">
-                Active Shift Tracker
-              </CardTitle>
-              <Badge
-                variant="outline"
-                className={`font-mono text-[10px] ${
-                  isCheckedIn
-                    ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-                    : 'bg-muted text-muted-foreground'
-                }`}
-              >
-                {isCheckedIn ? 'IN_SESSION' : 'OFFLINE'}
-              </Badge>
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                <Clock className="h-4 w-4" />
+              </div>
+              <div>
+                <CardTitle className="text-sm font-bold text-foreground">
+                  Today's Shift Attendance
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  GPS Geofenced punch-in &amp; work hours
+                </CardDescription>
+              </div>
             </div>
-            <div className="font-mono text-xs font-bold text-primary">{currentClock}</div>
+            <div className="text-xs font-bold text-primary px-2.5 py-1 rounded-lg bg-primary/10">
+              {currentClock}
+            </div>
           </CardHeader>
 
-          <CardContent className="pt-4 space-y-4">
-            {/* Shift Session Stats */}
+          <CardContent className="pt-5 space-y-4">
+            {/* Shift Progress Indicator */}
             <div>
-              <div className="flex justify-between items-baseline mb-1 text-xs">
-                <span className="font-mono text-foreground font-semibold">Standard Shift: 8h 00m</span>
-                <span className="font-mono text-primary font-medium">
-                  {isCheckedIn ? 'Clocked In' : 'Ready'}
+              <div className="flex justify-between items-baseline mb-1.5 text-xs">
+                <span className="text-foreground font-semibold">Standard Shift: 8 Hours</span>
+                <span className="text-primary font-bold">
+                  {isCheckedIn ? 'Session In Progress' : 'Shift Not Started'}
                 </span>
               </div>
-              <div className="w-full bg-muted rounded-full h-2 overflow-hidden border border-border p-[1px]">
+              <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-500 ${
                     isCheckedIn ? 'bg-emerald-500 w-[65%]' : 'bg-muted-foreground/30 w-0'
@@ -173,36 +173,36 @@ export const EmployeeDashboardView: React.FC<EmployeeDashboardViewProps> = ({
               </div>
             </div>
 
-            {/* Key Meta Grid */}
-            <div className="grid grid-cols-3 gap-2 py-2.5 px-3 rounded-lg bg-muted/40 border border-border text-center">
+            {/* Shift Punch Times Breakdown */}
+            <div className="grid grid-cols-3 gap-3 py-3 px-4 rounded-xl bg-muted/40 border border-border text-center">
               <div>
-                <span className="text-[10px] font-mono text-muted-foreground uppercase block mb-0.5">
-                  FIRST PUNCH
+                <span className="text-[11px] text-muted-foreground uppercase font-semibold block mb-0.5">
+                  Clock In
                 </span>
-                <span className="text-sm font-mono font-semibold text-foreground">
+                <span className="text-sm font-bold text-foreground">
                   {formatTime(stats.todayAttendance?.checkInTime)}
                 </span>
               </div>
               <div>
-                <span className="text-[10px] font-mono text-muted-foreground uppercase block mb-0.5">
-                  SIGN-OFF TARGET
+                <span className="text-[11px] text-muted-foreground uppercase font-semibold block mb-0.5">
+                  Shift End Target
                 </span>
-                <span className="text-sm font-mono font-semibold text-foreground">06:00 PM</span>
+                <span className="text-sm font-bold text-foreground">06:00 PM</span>
               </div>
               <div>
-                <span className="text-[10px] font-mono text-muted-foreground uppercase block mb-0.5">
-                  LAST CHECKOUT
+                <span className="text-[11px] text-muted-foreground uppercase font-semibold block mb-0.5">
+                  Clock Out
                 </span>
-                <span className="text-sm font-mono font-semibold text-foreground">
+                <span className="text-sm font-bold text-foreground">
                   {formatTime(stats.todayAttendance?.checkOutTime)}
                 </span>
               </div>
             </div>
 
-            {/* Verification & Punch Controls */}
+            {/* Geofence Validation & Action Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-border">
-              <div className="flex items-center gap-1.5 font-mono text-[11px] text-emerald-500 bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/20">
-                <ShieldCheck className="h-3.5 w-3.5" />
+              <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20 font-medium">
+                <ShieldCheck className="h-4 w-4" />
                 <span>Geofence GPS Verified</span>
               </div>
 
@@ -213,7 +213,7 @@ export const EmployeeDashboardView: React.FC<EmployeeDashboardViewProps> = ({
                     variant="destructive"
                     onClick={() => checkOutMutation.mutate({ notes: 'Shift completed' })}
                     disabled={checkOutMutation.isPending}
-                    className="h-8 px-3 text-xs gap-1.5"
+                    className="h-9 px-4 text-xs font-semibold gap-1.5 rounded-xl"
                   >
                     <LogOut className="h-3.5 w-3.5" />
                     <span>Clock Out</span>
@@ -221,9 +221,9 @@ export const EmployeeDashboardView: React.FC<EmployeeDashboardViewProps> = ({
                 ) : (
                   <Button
                     size="sm"
-                    onClick={() => checkInMutation.mutate({ notes: 'Punching from Cockpit' })}
+                    onClick={() => checkInMutation.mutate({ notes: 'Punching from ESS Portal' })}
                     disabled={checkInMutation.isPending}
-                    className="h-8 px-3 text-xs bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 shadow-xs"
+                    className="h-9 px-4 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 rounded-xl shadow-xs"
                   >
                     <LogIn className="h-3.5 w-3.5" />
                     <span>Clock In Now</span>
@@ -234,55 +234,62 @@ export const EmployeeDashboardView: React.FC<EmployeeDashboardViewProps> = ({
                   size="sm"
                   variant="outline"
                   onClick={() => navigate(RouteDict.Attendance.Base)}
-                  className="h-8 px-3 text-xs"
+                  className="h-9 px-3.5 text-xs font-medium rounded-xl border-border"
                 >
-                  Timesheet History
+                  View Timesheet
                 </Button>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Right (5 Columns): Financial & Compensation Summary Card */}
-        <Card className="xl:col-span-5 bg-card/60 backdrop-blur border border-border shadow-xs flex flex-col justify-between">
+        {/* Right (5 Columns): Compensation & Payroll Card */}
+        <Card className="xl:col-span-5 bg-card border border-border shadow-sm rounded-2xl flex flex-col justify-between text-left">
           <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-border">
-            <div className="flex items-center gap-2">
-              <Coins className="h-4 w-4 text-primary" />
-              <CardTitle className="text-sm font-mono uppercase tracking-wider text-foreground">
-                Compensation & Payroll
-              </CardTitle>
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                <CreditCard className="h-4 w-4" />
+              </div>
+              <div>
+                <CardTitle className="text-sm font-bold text-foreground">
+                  Compensation &amp; Payroll
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Monthly disbursement &amp; tax slips
+                </CardDescription>
+              </div>
             </div>
-            <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-muted border border-border text-muted-foreground">
+            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-muted text-muted-foreground border border-border">
               Direct Deposit
             </span>
           </CardHeader>
 
-          <CardContent className="pt-4 space-y-4">
+          <CardContent className="pt-5 space-y-4">
             <div>
-              <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
-                <span>ESTIMATED NET MONTHLY</span>
-                <span className="text-emerald-500 flex items-center gap-1 font-semibold">
-                  <CheckCircle className="h-3 w-3" /> Disbursed Active
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span className="font-semibold uppercase tracking-wider">Estimated Net Monthly</span>
+                <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-semibold">
+                  <CheckCircle className="h-3.5 w-3.5" /> Verified
                 </span>
               </div>
-              <div className="text-3xl font-extrabold font-mono text-foreground tracking-tight mt-1">
+              <div className="text-3xl font-extrabold text-foreground tracking-tight mt-1.5">
                 {userProfile?.monthlySalary
-                  ? `₹${Number(userProfile.monthlySalary).toLocaleString()}`
+                  ? `₹${Number(userProfile.monthlySalary).toLocaleString('en-IN')}`
                   : 'Confidential'}
               </div>
-              <p className="text-xs text-muted-foreground font-mono mt-1">
-                Tax declarations and payslip artifacts stored in Vault
+              <p className="text-xs text-muted-foreground mt-1">
+                Statutory deductions (PF, TDS) applied automatically.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 p-2.5 rounded-lg bg-muted/40 border border-border text-xs font-mono">
+            <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-muted/40 border border-border text-xs">
               <div>
-                <span className="text-muted-foreground text-[10px] block">PAYROLL CYCLE</span>
-                <span className="font-semibold text-foreground">Monthly (Last Day)</span>
+                <span className="text-muted-foreground text-[11px] block font-medium">Payroll Cycle</span>
+                <span className="font-bold text-foreground">Monthly (End of Month)</span>
               </div>
               <div>
-                <span className="text-muted-foreground text-[10px] block">STATUS</span>
-                <span className="font-semibold text-emerald-500">Regular</span>
+                <span className="text-muted-foreground text-[11px] block font-medium">Disbursement Status</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">Regular On-Time</span>
               </div>
             </div>
 
@@ -290,45 +297,45 @@ export const EmployeeDashboardView: React.FC<EmployeeDashboardViewProps> = ({
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-xs gap-1 font-mono p-0 h-auto text-primary hover:bg-transparent hover:underline"
+                className="text-xs gap-1 font-semibold text-primary hover:text-primary/90 p-0 h-auto hover:bg-transparent"
                 onClick={() => navigate(RouteDict.Payroll.Base)}
               >
-                View Payslip PDF & Taxes <ArrowRight className="h-3 w-3" />
+                View Latest Payslip <ArrowRight className="h-3.5 w-3.5" />
               </Button>
 
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => navigate(RouteDict.Payroll.Base)}
-                className="text-xs h-7 px-2.5"
+                className="text-xs h-8 px-3 rounded-xl border-border"
               >
-                Payslips
+                Download PDF
               </Button>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* 3. Leave Quota & Allocation Bento Grid (4 Columns) */}
-      <div>
-        <div className="flex justify-between items-center mb-3">
+      {/* 3. Leave Balances & Quota Grid */}
+      <div className="text-left">
+        <div className="flex justify-between items-center mb-3.5">
           <div className="flex items-center gap-2">
             <CalendarDays className="h-4 w-4 text-primary" />
-            <h2 className="text-base font-semibold text-foreground">Leave Quota & Balances</h2>
+            <h2 className="text-base font-bold text-foreground">Leave Quota &amp; Balances</h2>
           </div>
           <Button
             variant="ghost"
             size="sm"
-            className="text-xs gap-1 font-mono"
+            className="text-xs font-semibold text-primary hover:text-primary/90 gap-1"
             onClick={() => navigate(RouteDict.Leave.Requests.Base)}
           >
-            Leave Policy Details <ArrowRight className="h-3 w-3" />
+            Leave History <ArrowRight className="h-3.5 w-3.5" />
           </Button>
         </div>
 
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {stats.leaveBalances.length === 0 ? (
-            <Card className="col-span-full py-6 text-center text-xs text-muted-foreground">
+            <Card className="col-span-full py-8 text-center text-xs text-muted-foreground rounded-2xl border border-border">
               No leave policies allocated yet.
             </Card>
           ) : (
@@ -340,33 +347,33 @@ export const EmployeeDashboardView: React.FC<EmployeeDashboardViewProps> = ({
               return (
                 <Card
                   key={balance.id}
-                  className="shadow-xs border border-border bg-card/60 backdrop-blur hover:border-primary/40 transition-colors p-4 space-y-3"
+                  className="shadow-sm border border-border bg-card hover:border-primary/50 transition-all p-5 rounded-2xl space-y-3"
                 >
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-mono text-muted-foreground uppercase font-medium truncate max-w-[140px]">
+                    <span className="text-muted-foreground uppercase font-bold tracking-wider truncate max-w-[140px]">
                       {balance.name}
                     </span>
-                    <span className="font-mono text-xs text-primary font-bold">{pct}%</span>
+                    <span className="text-xs text-primary font-bold">{pct}% Left</span>
                   </div>
 
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-2xl font-extrabold font-mono text-foreground">
+                    <span className="text-3xl font-extrabold text-foreground">
                       {balance.remaining}
                     </span>
-                    <span className="text-xs font-mono text-muted-foreground">
+                    <span className="text-xs text-muted-foreground font-medium">
                       / {balance.total} days
                     </span>
                   </div>
 
-                  <div className="w-full bg-muted h-1.5 rounded-full overflow-hidden">
+                  <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${color}`}
                       style={{ width: `${pct}%` }}
                     />
                   </div>
 
-                  <span className="text-[10px] font-mono text-muted-foreground block">
-                    {balance.used} days utilized this cycle
+                  <span className="text-xs text-muted-foreground block font-medium">
+                    {balance.used} days used this cycle
                   </span>
                 </Card>
               );
@@ -375,23 +382,23 @@ export const EmployeeDashboardView: React.FC<EmployeeDashboardViewProps> = ({
         </div>
       </div>
 
-      {/* 4. Operational Grid: My Recent Leaves & Upcoming Holidays (2 Columns) */}
-      <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
-        {/* Recent Leave Requests */}
-        <Card className="shadow-xs bg-card/60 backdrop-blur border border-border">
-          <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-border">
+      {/* 4. Recent Leaves & Upcoming Holidays (2 Column Split) */}
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 text-left">
+        {/* Recent Leave Submissions */}
+        <Card className="shadow-sm bg-card border border-border rounded-2xl">
+          <CardHeader className="flex flex-row items-center justify-between pb-3.5 border-b border-border">
             <div>
-              <CardTitle className="text-base font-semibold text-foreground">
+              <CardTitle className="text-base font-bold text-foreground">
                 My Recent Requests
               </CardTitle>
-              <CardDescription className="text-xs">
-                History of leave submissions and manager sign-off
+              <CardDescription className="text-xs mt-0.5">
+                History of leave submissions &amp; approvals
               </CardDescription>
             </div>
             <Button
               variant="ghost"
               size="sm"
-              className="text-xs font-mono"
+              className="text-xs text-primary hover:text-primary/90 font-medium"
               onClick={() => navigate(RouteDict.Leave.Requests.Base)}
             >
               All Requests
@@ -399,7 +406,7 @@ export const EmployeeDashboardView: React.FC<EmployeeDashboardViewProps> = ({
           </CardHeader>
           <CardContent className="pt-4">
             {stats.recentLeaves.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-6">
+              <p className="text-xs text-muted-foreground text-center py-8">
                 No recent leave requests recorded.
               </p>
             ) : (
@@ -408,12 +415,12 @@ export const EmployeeDashboardView: React.FC<EmployeeDashboardViewProps> = ({
                   const isApproved = leave.status === 'APPROVED';
                   const isPending = leave.status === 'PENDING';
                   return (
-                    <div key={leave.id} className="py-2.5 flex items-center justify-between text-xs">
+                    <div key={leave.id} className="py-3 flex items-center justify-between text-xs">
                       <div>
                         <span className="font-semibold text-sm text-foreground">
                           {leave.leaveType?.name || 'Leave'}
                         </span>
-                        <div className="text-muted-foreground font-mono text-[11px] mt-0.5">
+                        <div className="text-muted-foreground text-xs mt-0.5 font-medium">
                           {new Date(leave.startDate).toLocaleDateString()} —{' '}
                           {new Date(leave.endDate).toLocaleDateString()}
                         </div>
@@ -422,10 +429,10 @@ export const EmployeeDashboardView: React.FC<EmployeeDashboardViewProps> = ({
                         variant="secondary"
                         className={
                           isApproved
-                            ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 font-mono text-[10px]'
+                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-xs font-semibold'
                             : isPending
-                            ? 'bg-amber-500/10 text-amber-500 border-amber-500/20 font-mono text-[10px]'
-                            : 'bg-rose-500/10 text-rose-500 border-rose-500/20 font-mono text-[10px]'
+                            ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 text-xs font-semibold'
+                            : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20 text-xs font-semibold'
                         }
                       >
                         {leave.status}
@@ -439,13 +446,13 @@ export const EmployeeDashboardView: React.FC<EmployeeDashboardViewProps> = ({
         </Card>
 
         {/* Upcoming Holidays Calendar */}
-        <Card className="shadow-xs bg-card/60 backdrop-blur border border-border">
-          <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-border">
+        <Card className="shadow-sm bg-card border border-border rounded-2xl">
+          <CardHeader className="flex flex-row items-center justify-between pb-3.5 border-b border-border">
             <div>
-              <CardTitle className="text-base font-semibold text-foreground">
-                Upcoming Holidays
+              <CardTitle className="text-base font-bold text-foreground">
+                Upcoming Company Holidays
               </CardTitle>
-              <CardDescription className="text-xs">
+              <CardDescription className="text-xs mt-0.5">
                 Statutory and organization calendar holidays
               </CardDescription>
             </div>
@@ -453,20 +460,20 @@ export const EmployeeDashboardView: React.FC<EmployeeDashboardViewProps> = ({
           </CardHeader>
           <CardContent className="pt-4">
             {stats.upcomingHolidays.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-6">
+              <p className="text-xs text-muted-foreground text-center py-8">
                 No upcoming holidays scheduled this month.
               </p>
             ) : (
               <div className="divide-y divide-border">
                 {stats.upcomingHolidays.map((holiday) => (
-                  <div key={holiday.id} className="py-2.5 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2.5">
-                      <div className="p-1.5 rounded-md bg-primary/10 text-primary">
-                        <Sparkles className="h-3.5 w-3.5" />
+                  <div key={holiday.id} className="py-3 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                        <Sparkles className="h-4 w-4" />
                       </div>
-                      <span className="font-medium text-sm text-foreground">{holiday.name}</span>
+                      <span className="font-semibold text-sm text-foreground">{holiday.name}</span>
                     </div>
-                    <span className="text-muted-foreground font-mono text-xs">
+                    <span className="text-muted-foreground font-medium text-xs">
                       {new Date(holiday.date).toLocaleDateString(undefined, {
                         month: 'short',
                         day: 'numeric',
@@ -481,10 +488,10 @@ export const EmployeeDashboardView: React.FC<EmployeeDashboardViewProps> = ({
         </Card>
       </div>
 
-      {/* 5. Navigation Utilities (Profile & Edits, Timesheet, Payslips) */}
-      <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
+      {/* 5. Navigation Utilities Strip */}
+      <div className="grid gap-3.5 grid-cols-1 sm:grid-cols-3 text-left">
         <Card
-          className="p-4 flex items-center gap-3 hover:bg-muted/40 cursor-pointer transition-colors border border-border shadow-xs"
+          className="p-4 flex items-center justify-between hover:border-primary/50 cursor-pointer transition-all border border-border shadow-sm rounded-2xl group"
           onClick={() => {
             if (userProfile?.id) {
               navigate(RouteDict.Profile.Info(userProfile.id));
@@ -493,39 +500,48 @@ export const EmployeeDashboardView: React.FC<EmployeeDashboardViewProps> = ({
             }
           }}
         >
-          <div className="p-2.5 rounded-lg bg-teal-500/10 text-teal-400">
-            <User className="h-5 w-5" />
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 group-hover:scale-105 transition-transform">
+              <User className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-foreground">My Profile</div>
+              <div className="text-[11px] text-muted-foreground">Personal &amp; bank records</div>
+            </div>
           </div>
-          <div>
-            <div className="text-sm font-semibold text-foreground">My Profile & Revision History</div>
-            <div className="text-xs text-muted-foreground">View details, self-edits & audit diffs</div>
-          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
         </Card>
 
         <Card
-          className="p-4 flex items-center gap-3 hover:bg-muted/40 cursor-pointer transition-colors border border-border shadow-xs"
+          className="p-4 flex items-center justify-between hover:border-primary/50 cursor-pointer transition-all border border-border shadow-sm rounded-2xl group"
           onClick={() => navigate(RouteDict.Attendance.Base)}
         >
-          <div className="p-2.5 rounded-lg bg-emerald-500/10 text-emerald-500">
-            <Clock className="h-5 w-5" />
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform">
+              <Clock className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-foreground">Attendance Logs</div>
+              <div className="text-[11px] text-muted-foreground">Timesheet &amp; punch records</div>
+            </div>
           </div>
-          <div>
-            <div className="text-sm font-semibold text-foreground">Attendance & Timesheet</div>
-            <div className="text-xs text-muted-foreground">Clock-in records, GPS & session logs</div>
-          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
         </Card>
 
         <Card
-          className="p-4 flex items-center gap-3 hover:bg-muted/40 cursor-pointer transition-colors border border-border shadow-xs"
+          className="p-4 flex items-center justify-between hover:border-primary/50 cursor-pointer transition-all border border-border shadow-sm rounded-2xl group"
           onClick={() => navigate(RouteDict.Payroll.Base)}
         >
-          <div className="p-2.5 rounded-lg bg-blue-500/10 text-blue-400">
-            <FileText className="h-5 w-5" />
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 group-hover:scale-105 transition-transform">
+              <FileText className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-foreground">Payslips &amp; Tax Slips</div>
+              <div className="text-[11px] text-muted-foreground">Monthly compensation breakdown</div>
+            </div>
           </div>
-          <div>
-            <div className="text-sm font-semibold text-foreground">Payslips & Taxes</div>
-            <div className="text-xs text-muted-foreground">Monthly breakdown & tax slips</div>
-          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
         </Card>
       </div>
     </div>

@@ -15,6 +15,11 @@ module.exports = {
   		}
   	},
   	extend: {
+  		fontFamily: {
+  			sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+  			display: ['"Plus Jakarta Sans"', 'Inter', 'system-ui', 'sans-serif'],
+  			mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
+  		},
   		colors: {
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
@@ -102,7 +107,9 @@ module.exports = {
 function addVariablesForColors({ addBase, theme }) {
   let allColors = flattenColorPalette(theme("colors"));
   let newVars = Object.fromEntries(
-    Object.entries(allColors).map(([key, val]) => [`--${key}`, val])
+    Object.entries(allColors)
+      .filter(([_, val]) => typeof val === "string" && !val.includes("var("))
+      .map(([key, val]) => [`--${key}`, val])
   );
  
   addBase({

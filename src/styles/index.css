@@ -83,10 +83,31 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased selection:bg-primary/20 selection:text-primary;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
 @layer utilities {
+  /* Executive Ambience & Glassmorphism Tokens */
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-md border border-border/70 shadow-xs;
+  }
+  .glass-card-elevated {
+    @apply bg-card/90 backdrop-blur-lg border border-border/80 shadow-md shadow-black/5 dark:shadow-black/20;
+  }
+  .metric-card {
+    @apply rounded-xl border border-border/70 bg-card p-4 transition-all duration-200 hover:border-primary/40 hover:shadow-xs;
+  }
+  .metric-value {
+    @apply font-mono text-2xl font-bold tracking-tight text-foreground;
+  }
+  .metric-label {
+    @apply text-xs font-medium uppercase tracking-wider text-muted-foreground;
+  }
+  .table-row-hover {
+    @apply transition-colors duration-150 hover:bg-muted/40;
+  }
+
   .scrollbar-thin {
     scrollbar-width: thin;
   }

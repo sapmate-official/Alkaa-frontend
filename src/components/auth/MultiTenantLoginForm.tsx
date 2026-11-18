@@ -1,16 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/providers/AuthContext";
-import { Eye, EyeOff, ArrowLeft, Mail, Lock, CheckCircle2, Sparkles, Building2 } from "lucide-react";
+import { 
+  Eye, 
+  EyeOff, 
+  ArrowLeft, 
+  Mail, 
+  Lock, 
+  Building2, 
+  ShieldCheck, 
+  ChevronRight, 
+  Timer
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { OrganizationSelector } from "@/components/auth/OrganizationSelector";
-import { OTPVerification } from "@/components/auth/OTPVerification";
-import { Badge } from "@/components/ui/badge";
+import ThemeToggle from '@/components/ThemeSwitchButtonComponent';
 
 interface Organization {
     orgId: string;
@@ -41,15 +49,43 @@ export function MultiTenantLoginForm({
     const [organizationName, setOrganizationName] = useState("");
     const [otpExpiresIn, setOtpExpiresIn] = useState(600);
 
+    // OTP states
+    const [otp, setOtp] = useState<string[]>(new Array(6).fill(''));
+    const [timeLeft, setTimeLeft] = useState(600);
+    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
     // Reset error when step changes
     useEffect(() => {
         setError("");
     }, [authStep.step]);
 
+    // Timer for OTP step
+    useEffect(() => {
+        if (authStep.step !== 'otp') return;
+        setTimeLeft(otpExpiresIn);
+        const timer = setInterval(() => {
+            setTimeLeft((prev) => {
+                if (prev <= 1) {
+                    clearInterval(timer);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [authStep.step, otpExpiresIn]);
+
+    const formatTime = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    // Step 1: Submit Email (calls backend POST /api/v1/general/check-email)
     const handleEmailSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!email.trim()) {
-            setError("Please enter your email address");
+            setError("Please enter your workplace email address");
             return;
         }
 
@@ -58,29 +94,25 @@ export function MultiTenantLoginForm({
 
         try {
             const result = await checkEmail(email.trim());
-            
             if (result.singleOrganization && result.organization) {
                 setSelectedOrganization(result.organization);
             } else if (result.multipleOrganizations && result.organizations) {
                 setOrganizations(result.organizations);
             }
         } catch (err: unknown) {
-            console.log(err);
-            
-            setError(err instanceof Error ? err.message : "Failed to check email");
+            setError(err instanceof Error ? err.message : "Failed to verify email address");
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleOrganizationSelect = (orgId: string) => {
-        const org = organizations.find(o => o.orgId === orgId);
-        if (org) {
-            setSelectedOrganization(org);
-            selectOrganization(org, email);
-        }
+    // Step 2: Select Organization (for multi-org users)
+    const handleOrganizationSelect = (org: Organization) => {
+        setSelectedOrganization(org);
+        selectOrganization(org, email);
     };
 
+    // Step 3: Submit Password (calls backend POST /api/v1/general/verify-password)
     const handlePasswordSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!password.trim()) {
@@ -108,283 +140,371 @@ export function MultiTenantLoginForm({
             );
             setOtpExpiresIn(result?.otpExpiresIn || 600);
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : "Failed to verify password");
+            setError(err instanceof Error ? err.message : "Invalid password. Please check your credentials.");
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleOTPVerify = async (otpCode: string) => {
+    // Step 4: Submit OTP (calls backend POST /api/v1/general/verify-otp)
+    const handleOTPChange = (value: string, index: number) => {
+        if (isNaN(Number(value))) return;
+        const newOtp = [...otp];
+        newOtp[index] = value;
+        setOtp(newOtp);
+
+        if (value && index < 5) {
+            inputRefs.current[index + 1]?.focus();
+        }
+
+        if (newOtp.every(val => val !== '') && newOtp.join('').length === 6) {
+            executeOTPVerify(newOtp.join(''));
+        }
+    };
+
+    const handleOTPPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+        e.preventDefault();
+        const pasteData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+        if (pasteData.length > 0) {
+            const newOtp = [...otp];
+            for (let i = 0; i < pasteData.length; i++) {
+                newOtp[i] = pasteData[i];
+            }
+            setOtp(newOtp);
+            if (pasteData.length === 6) {
+                executeOTPVerify(pasteData);
+            } else {
+                inputRefs.current[pasteData.length]?.focus();
+            }
+        }
+    };
+
+    const executeOTPVerify = async (otpCode: string) => {
         setIsLoading(true);
         setError("");
-
         try {
             await verifyOtp(sessionToken, otpCode);
-            // Navigation will be handled by the AuthContext after successful login
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : "Failed to verify OTP");
+            setError(err instanceof Error ? err.message : "Invalid or expired verification code.");
         } finally {
             setIsLoading(false);
         }
     };
 
     const handleBack = () => {
+        setError("");
         if (authStep.step === 'organization' || authStep.step === 'password') {
             resetAuthFlow();
-            setEmail("");
             setPassword("");
-            setOrganizations([]);
             setSelectedOrganization(null);
         } else if (authStep.step === 'otp') {
             resetAuthFlow();
-            // Go back to appropriate step based on organization count
-            if (organizations.length > 1) {
-                // Will trigger organization selection
-                checkEmail(email);
-            } else {
-                // Will trigger password step
-                checkEmail(email);
-            }
+            checkEmail(email);
         }
     };
 
-    // Render different steps based on auth flow
-    if (authStep.step === 'organization') {
-        return (
-            <div className={cn("flex flex-col gap-6", className)} {...props}>
-                <OrganizationSelector
-                    organizations={organizations}
-                    email={email}
-                    onSelect={handleOrganizationSelect}
-                    onBack={handleBack}
-                    isLoading={isLoading}
-                />
-            </div>
-        );
-    }
-
-    if (authStep.step === 'otp') {
-        return (
-            <div className={cn("flex flex-col gap-6", className)} {...props}>
-                <OTPVerification
-                    organizationName={organizationName}
-                    otpExpiresIn={otpExpiresIn}
-                    onVerify={handleOTPVerify}
-                    onBack={handleBack}
-                    isLoading={isLoading}
-                    error={error}
-                />
-            </div>
-        );
-    }
-
-    // Email step or Password step
     return (
-        <div className={cn("flex flex-col gap-6", className)} {...props}>
-            <Card className="overflow-hidden border border-border/80 shadow-lg bg-card">
-                <CardContent className="grid p-0 md:grid-cols-2">
-                    <form 
-                        className="p-6 md:p-8 flex flex-col justify-between" 
-                        onSubmit={authStep.step === 'email' ? handleEmailSubmit : handlePasswordSubmit}
-                    >
-                        <div className="flex flex-col gap-5">
-                            <div className="flex items-center justify-between">
-                                {authStep.step === 'password' ? (
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={handleBack}
-                                        className="h-8 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
+        <div className={cn("w-full max-w-md mx-auto flex flex-col gap-6", className)} {...props}>
+            {/* Top Navigation & Stepper Row */}
+            <div className="flex items-center justify-between px-1">
+                {/* Step Progress Pill */}
+                <div className="flex items-center gap-2 py-1.5 px-3 rounded-full bg-card border border-border shadow-xs text-xs text-muted-foreground">
+                    <span className={cn(
+                        "flex items-center justify-center w-5 h-5 rounded-full text-[11px] font-semibold transition-colors",
+                        authStep.step === 'email' ? "bg-primary text-primary-foreground" : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                    )}>
+                        {authStep.step === 'email' ? '1' : '✓'}
+                    </span>
+                    <span className={cn("font-medium", authStep.step === 'email' && "text-foreground font-semibold")}>Email</span>
+                    
+                    <span className="text-border">/</span>
+
+                    <span className={cn(
+                        "flex items-center justify-center w-5 h-5 rounded-full text-[11px] font-semibold transition-colors",
+                        authStep.step === 'password' || authStep.step === 'organization'
+                            ? "bg-primary text-primary-foreground" 
+                            : (authStep.step === 'otp' ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-muted text-muted-foreground")
+                    )}>
+                        {authStep.step === 'otp' ? '✓' : '2'}
+                    </span>
+                    <span className={cn("font-medium", (authStep.step === 'password' || authStep.step === 'organization') && "text-foreground font-semibold")}>Password</span>
+                    
+                    <span className="text-border">/</span>
+
+                    <span className={cn(
+                        "flex items-center justify-center w-5 h-5 rounded-full text-[11px] font-semibold transition-colors",
+                        authStep.step === 'otp' ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                    )}>
+                        3
+                    </span>
+                    <span className={cn("font-medium", authStep.step === 'otp' && "text-foreground font-semibold")}>2FA</span>
+                </div>
+
+                <ThemeToggle className="h-8 w-8 text-muted-foreground hover:text-foreground" />
+            </div>
+
+            {/* Main Auth Card */}
+            <Card className="border border-border shadow-sm bg-card text-card-foreground rounded-2xl overflow-hidden">
+                <CardContent className="p-7 sm:p-8">
+                    {/* Brand Header */}
+                    <div className="flex flex-col items-center text-center mb-6">
+                        <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-3.5 border border-primary/20 shadow-xs">
+                            <Building2 className="h-5 w-5" />
+                        </div>
+                        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                            {authStep.step === 'email' && 'Sign in to ALKAA HRMS'}
+                            {authStep.step === 'organization' && 'Select Your Workspace'}
+                            {authStep.step === 'password' && 'Enter Workspace Password'}
+                            {authStep.step === 'otp' && 'Two-Factor Security Verification'}
+                        </h1>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            {authStep.step === 'email' && 'Enter your workplace email to access your employee portal'}
+                            {authStep.step === 'organization' && `Multiple active workspaces found for ${email}`}
+                            {authStep.step === 'password' && `Authenticate your session for ${selectedOrganization?.orgName || 'your workspace'}`}
+                            {authStep.step === 'otp' && (organizationName ? `Enter the 6-digit verification code for ${organizationName}` : 'Enter the 6-digit verification code sent to your email')}
+                        </p>
+                    </div>
+
+                    {/* Error Banner */}
+                    {error && (
+                        <div className="mb-5 text-xs text-destructive bg-destructive/10 border border-destructive/20 p-3 rounded-lg font-medium flex items-start gap-2">
+                            <span className="font-bold">•</span>
+                            <span>{error}</span>
+                        </div>
+                    )}
+
+                    {/* Step 1: Work Email Form */}
+                    {authStep.step === 'email' && (
+                        <form onSubmit={handleEmailSubmit} className="space-y-4">
+                            <div className="space-y-1.5 text-left">
+                                <Label htmlFor="email" className="text-xs font-semibold text-foreground">Workplace Email</Label>
+                                <div className="relative">
+                                    <Mail className="absolute left-3.5 top-3 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        id="email"
+                                        type="email"
+                                        placeholder="name@company.com"
+                                        required
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
                                         disabled={isLoading}
-                                    >
-                                        <ArrowLeft className="h-3.5 w-3.5" />
-                                        <span>Change Email</span>
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => navigate("/")}
-                                        className="h-8 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
-                                    >
-                                        <ArrowLeft className="h-3.5 w-3.5" />
-                                        <span>Back to Home</span>
-                                    </Button>
-                                )}
-                            </div>
-                            
-                            <div className="flex flex-col items-center text-center">
-                                <img src="/logo.svg" alt="Alkaa Logo" className="h-12 w-auto mb-3" />
-                                <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                                    {authStep.step === 'email' ? 'Sign In to Your Workspace' : 'Enter Password'}
-                                </h1>
-                                <p className="text-sm text-muted-foreground mt-1.5">
-                                    {authStep.step === 'email' 
-                                        ? 'Enter your work email to access your organization dashboard' 
-                                        : `Enter your password for ${selectedOrganization?.orgName || 'your account'}`
-                                    }
-                                </p>
-                            </div>
-
-                            {/* Email Field */}
-                            {authStep.step === 'email' && (
-                                <div className="grid gap-2">
-                                    <Label htmlFor="email" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Work Email</Label>
-                                    <div className="relative">
-                                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                        <Input
-                                            id="email"
-                                            type="email"
-                                            placeholder="alex.morgan@acme.com"
-                                            required
-                                            value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
-                                            disabled={isLoading}
-                                            className="pl-10 h-10 border-border focus-visible:ring-primary"
-                                            autoComplete="email"
-                                        />
-                                    </div>
+                                        className="pl-10 h-11 border-input bg-background text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:ring-primary focus-visible:border-primary text-sm"
+                                        autoComplete="email"
+                                        autoFocus
+                                    />
                                 </div>
-                            )}
+                            </div>
 
-                            {/* Password Field */}
-                            {authStep.step === 'password' && (
-                                <>
-                                    <div className="p-3 bg-secondary/50 border border-border/80 rounded-lg flex items-center justify-between text-xs">
-                                        <div className="truncate pr-2">
-                                            <div className="font-semibold text-foreground truncate">{email}</div>
-                                            <div className="text-muted-foreground text-[11px] flex items-center gap-1 mt-0.5">
-                                                <Building2 className="h-3 w-3 text-primary" />
-                                                <span className="truncate">{selectedOrganization?.orgName || 'Organization Workspace'}</span>
+                            <Button 
+                                type="submit" 
+                                className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-sm rounded-xl shadow-xs transition-all"
+                                disabled={isLoading}
+                            >
+                                {isLoading ? "Checking Workspace..." : "Continue to Portal →"}
+                            </Button>
+                        </form>
+                    )}
+
+                    {/* Step 2: Multi-Organization Selector */}
+                    {authStep.step === 'organization' && (
+                        <div className="space-y-4">
+                            <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+                                {organizations.map((org) => (
+                                    <div
+                                        key={org.orgId}
+                                        onClick={() => handleOrganizationSelect(org)}
+                                        className="p-3.5 border border-border hover:border-primary/50 hover:bg-primary/5 rounded-xl cursor-pointer transition-all flex items-center justify-between group"
+                                    >
+                                        <div className="flex items-center gap-3 truncate">
+                                            <div className="w-8 h-8 rounded-lg bg-muted group-hover:bg-primary/10 text-foreground group-hover:text-primary font-bold text-xs flex items-center justify-center shrink-0">
+                                                {org.orgName.slice(0, 2).toUpperCase()}
+                                            </div>
+                                            <div className="truncate text-left">
+                                                <div className="font-semibold text-sm text-foreground truncate">{org.orgName}</div>
+                                                <div className="text-xs text-muted-foreground font-mono">ID: {org.orgId}</div>
                                             </div>
                                         </div>
-                                        <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20 shrink-0">
-                                            Verified
-                                        </Badge>
+                                        <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary shrink-0" />
                                     </div>
-                                    
-                                    <div className="grid gap-2">
-                                        <div className="flex items-center justify-between">
-                                            <Label htmlFor="password" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Password</Label>
-                                            <button
-                                                type="button"
-                                                className="text-xs text-primary hover:underline font-medium"
-                                                onClick={() => {
-                                                    toast({
-                                                        title: "Password Assistance",
-                                                        description: "Please reach out to your organization administrator or HR team to reset your account password.",
-                                                    });
-                                                }}
-                                            >
-                                                Forgot password?
-                                            </button>
-                                        </div>
-                                        <div className="relative">
-                                            <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                            <Input
-                                                id="password"
-                                                type={showPassword ? "text" : "password"}
-                                                required
-                                                placeholder="••••••••••••"
-                                                value={password}
-                                                onChange={(e) => setPassword(e.target.value)}
-                                                disabled={isLoading}
-                                                className="pl-10 pr-10 h-10 border-border focus-visible:ring-primary"
-                                                autoComplete="current-password"
-                                            />
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="icon"
-                                                className="absolute right-0 top-0 h-full px-3 py-2 text-muted-foreground hover:text-foreground"
-                                                onClick={() => setShowPassword(!showPassword)}
-                                            >
-                                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </>
-                            )}
+                                ))}
+                            </div>
 
-                            {error && (
-                                <div className="text-xs text-destructive bg-destructive/10 border border-destructive/20 p-3 rounded-lg font-medium">
-                                    {error}
-                                </div>
-                            )}
-
-                            <Button type="submit" className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-sm transition-all" disabled={isLoading}>
-                                {isLoading 
-                                    ? (authStep.step === 'email' ? "Checking Workspace..." : "Verifying Credentials...") 
-                                    : (authStep.step === 'email' ? "Continue to Workspace →" : "Sign In & Send OTP →")
-                                }
+                            <Button 
+                                type="button" 
+                                variant="outline" 
+                                onClick={handleBack} 
+                                className="w-full h-10 text-xs border-border text-muted-foreground hover:text-foreground rounded-xl"
+                            >
+                                <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
+                                Use a different email
                             </Button>
                         </div>
-                    </form>
-                    
-                    {/* Right Branded Feature & Trust Showcase Panel */}
-                    <div className="relative hidden md:flex flex-col justify-between p-8 bg-gradient-to-br from-primary/5 via-secondary/40 to-primary/10 border-l border-border/70">
-                        {/* Header Copy */}
-                        <div>
-                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-bold tracking-wide uppercase mb-3">
-                                <Sparkles className="h-3.5 w-3.5" />
-                                <span>Workforce Operating System</span>
-                            </div>
-                            <h2 className="text-xl font-bold tracking-tight text-foreground leading-snug">
-                                Manage Onboarding, Shifts & Payroll in Real Time
-                            </h2>
-                            <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                                Experience instant tenant provisioning, automated biometric shift sync, and verified compliance chains for global enterprise teams.
-                            </p>
-                        </div>
+                    )}
 
-                        {/* Interactive Live Telemetry Card */}
-                        <div className="my-5 p-4 rounded-xl bg-card border border-border shadow-sm space-y-3">
-                            <div className="flex items-center justify-between text-xs">
-                                <div className="flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                    <span className="font-semibold text-foreground">Acme Technologies</span>
+                    {/* Step 3: Password Verification Form */}
+                    {authStep.step === 'password' && (
+                        <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                            {/* Selected Organization Context Pill */}
+                            <div className="p-3 bg-muted/50 border border-border rounded-xl flex items-center justify-between text-xs">
+                                <div className="truncate pr-2 text-left">
+                                    <div className="font-semibold text-foreground truncate">{email}</div>
+                                    <div className="text-muted-foreground text-[11px] flex items-center gap-1 mt-0.5">
+                                        <Building2 className="h-3 w-3 text-primary" />
+                                        <span className="truncate">{selectedOrganization?.orgName || 'Workspace Account'}</span>
+                                    </div>
                                 </div>
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 font-semibold border border-emerald-500/20">Production</span>
+                                <button
+                                    type="button"
+                                    onClick={handleBack}
+                                    className="text-[11px] font-semibold text-primary hover:underline shrink-0"
+                                    disabled={isLoading}
+                                >
+                                    Switch
+                                </button>
                             </div>
-                            <div>
-                                <div className="flex items-baseline justify-between text-xs mb-1.5">
-                                    <span className="text-muted-foreground">Today's Shift Attendance</span>
-                                    <span className="font-bold text-foreground">134 / 142 (94.2%)</span>
-                                </div>
-                                <div className="w-full bg-muted h-1.5 rounded-full overflow-hidden">
-                                    <div className="bg-primary h-full rounded-full" style={{ width: '94.2%' }} />
-                                </div>
-                            </div>
-                            <div className="pt-2 border-t border-border/60 flex items-center justify-between text-[11px]">
-                                <span className="text-muted-foreground">Payroll Run</span>
-                                <span className="text-emerald-600 font-medium flex items-center gap-1">
-                                    <CheckCircle2 className="h-3 w-3" /> Nov 2026 Disbursed
-                                </span>
-                            </div>
-                        </div>
 
-                        {/* Customer Quote */}
-                        <div className="p-3.5 rounded-lg bg-card/70 border border-border/60 text-xs text-muted-foreground space-y-2">
-                            <p className="italic text-[11px] leading-relaxed">
-                                "ALKAA streamlined our candidate onboarding and multi-branch payroll into one unified 15-minute workflow."
-                            </p>
-                            <div className="flex items-center gap-2 pt-0.5">
-                                <div className="w-6 h-6 rounded-full bg-primary/20 text-primary font-bold text-[10px] flex items-center justify-center">
-                                    MV
+                            <div className="space-y-1.5 text-left">
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor="password" className="text-xs font-semibold text-foreground">Password</Label>
+                                    <button
+                                        type="button"
+                                        className="text-xs text-primary hover:underline font-medium"
+                                        onClick={() => {
+                                            toast({
+                                                title: "Password Assistance",
+                                                description: "Please reach out to your organization administrator or HR team to reset your password.",
+                                            });
+                                        }}
+                                    >
+                                        Forgot password?
+                                    </button>
                                 </div>
-                                <div>
-                                    <div className="font-semibold text-foreground text-[11px]">Marcus Vance</div>
-                                    <div className="text-[10px] text-muted-foreground">VP of People Operations</div>
+                                <div className="relative">
+                                    <Lock className="absolute left-3.5 top-3 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        id="password"
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="••••••••••••"
+                                        required
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        disabled={isLoading}
+                                        className="pl-10 pr-10 h-11 border-input bg-background text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:ring-primary focus-visible:border-primary text-sm"
+                                        autoComplete="current-password"
+                                        autoFocus
+                                    />
+                                    <button
+                                        type="button"
+                                        className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                    >
+                                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
                                 </div>
                             </div>
+
+                            <Button 
+                                type="submit" 
+                                className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-sm rounded-xl shadow-xs transition-all"
+                                disabled={isLoading}
+                            >
+                                {isLoading ? "Verifying..." : "Sign In with Secure Session →"}
+                            </Button>
+                        </form>
+                    )}
+
+                    {/* Step 4: 2FA OTP Code Verification */}
+                    {authStep.step === 'otp' && (
+                        <div className="space-y-5">
+                            <div className="flex justify-center gap-2" onPaste={handleOTPPaste}>
+                                {otp.map((digit, idx) => (
+                                    <Input
+                                        key={idx}
+                                        ref={(el) => (inputRefs.current[idx] = el)}
+                                        type="text"
+                                        maxLength={1}
+                                        value={digit}
+                                        onChange={(e) => handleOTPChange(e.target.value, idx)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Backspace' && !digit && idx > 0) {
+                                                inputRefs.current[idx - 1]?.focus();
+                                            }
+                                        }}
+                                        disabled={isLoading}
+                                        className="w-11 h-12 text-center text-lg font-bold border-input bg-background text-slate-900 dark:text-slate-100 focus-visible:ring-primary focus-visible:border-primary rounded-lg"
+                                        autoFocus={idx === 0}
+                                    />
+                                ))}
+                            </div>
+
+                            <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
+                                <div className="flex items-center gap-1.5 font-medium">
+                                    <Timer className="h-3.5 w-3.5 text-primary" />
+                                    <span>Expires in: <span className="font-mono font-bold text-foreground">{formatTime(timeLeft)}</span></span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        toast({
+                                            title: "Code Resent",
+                                            description: "A fresh verification code has been dispatched to your email."
+                                        });
+                                        setTimeLeft(600);
+                                        setOtp(new Array(6).fill(''));
+                                    }}
+                                    className="text-primary hover:underline font-semibold"
+                                    disabled={isLoading}
+                                >
+                                    Resend Code
+                                </button>
+                            </div>
+
+                            <Button 
+                                type="button" 
+                                onClick={() => executeOTPVerify(otp.join(''))}
+                                disabled={isLoading || otp.join('').length < 6}
+                                className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-sm rounded-xl shadow-xs transition-all"
+                            >
+                                {isLoading ? "Verifying Token..." : "Verify & Complete Login"}
+                            </Button>
+
+                            <Button 
+                                type="button" 
+                                variant="ghost" 
+                                onClick={handleBack}
+                                className="w-full h-9 text-xs text-muted-foreground hover:text-foreground"
+                            >
+                                <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
+                                Back to password
+                            </Button>
                         </div>
-                    </div>
+                    )}
                 </CardContent>
             </Card>
-            <div className="text-balance text-center text-xs text-muted-foreground">
-                Owned by Shapenxt.
+
+            {/* Subtle Security & Compliance Footer */}
+            <div className="flex flex-col items-center gap-2.5 text-center text-xs text-muted-foreground">
+                <div className="flex items-center gap-1.5 text-[11px]">
+                    <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+                    <span>Protected by multi-tenant isolation and 256-bit encryption</span>
+                </div>
+                <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                    <button 
+                        type="button" 
+                        onClick={() => navigate('/')} 
+                        className="hover:text-foreground transition-colors font-medium"
+                    >
+                        Return to Homepage
+                    </button>
+                    <span>•</span>
+                    <button 
+                        type="button" 
+                        onClick={() => navigate('/')} 
+                        className="hover:text-primary transition-colors font-medium"
+                    >
+                        Need an account? Request a demo
+                    </button>
+                </div>
             </div>
         </div>
     );

@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { legacyBackendDomain } from "@/constants/Domain";
+import { backendDomain } from "@/constants/Domain";
 import RouteDict from "@/routes/RouteDict";
 import { useAuth } from "@/providers/AuthContext";
 import axios from "axios";
@@ -60,7 +60,7 @@ const CreateLeaveType = () => {
             setIsSubmitting(true);
             if(!user?.orgId) return null;
             await axios.post(
-                `${legacyBackendDomain}/api/v2/leave-type`,
+                `${backendDomain}/api/v2/leave-type`,
                 {
                     ...data,
                     orgId: user?.organization?.id ?? null

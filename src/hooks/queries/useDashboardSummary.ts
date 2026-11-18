@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
+import { apiClient } from '@/services/api/client';
 import { APIDictionary } from '@/services/api/v2/APIdict';
 
 export interface AdminStats {
@@ -69,10 +69,8 @@ export const useDashboardSummaryQuery = (userId?: string) => {
   return useQuery<DashboardSummaryResponse>({
     queryKey: dashboardKeys.summary(userId),
     queryFn: async () => {
-      const endpoint = APIDictionary.dashboardSummary || (userId ? APIDictionary.dashboard(userId) : '/api/v2/dashboard/summary');
-      const response = await axios.get<DashboardSummaryResponse>(endpoint, {
-        withCredentials: true,
-      });
+      const endpoint = APIDictionary.dashboardSummary || (userId ? APIDictionary.dashboard(userId) : '/api/v1/dashboard/summary');
+      const response = await apiClient.get<DashboardSummaryResponse>(endpoint);
       return response.data;
     },
     enabled: Boolean(userId),

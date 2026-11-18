@@ -1,4 +1,4 @@
-import { backendDomain, legacyBackendDomain } from "@/constants/Domain";
+import { backendDomain } from "@/constants/Domain";
 
 export const APIDictionary = {
     // Authentication endpoints (TypeScript Backend)
@@ -42,24 +42,24 @@ export const APIDictionary = {
     leave_request: `${backendDomain}/api/v2/leave-request`,
     leave_balance: `${backendDomain}/api/v2/leave-balance`,
     attendance: `${backendDomain}/api/v2/attendance`,
-    payroll: `${legacyBackendDomain}/api/v2/payroll`,
+    payroll: `${backendDomain}/api/v2/payroll`,
     events: `${backendDomain}/api/v2/events`,
     bank: `${backendDomain}/api/v2/bank-details`,
-    payrollParameters: (userId: string) => `${legacyBackendDomain}/api/v2/payroll/parameters/${userId}`,
+    payrollParameters: (userId: string) => `${backendDomain}/api/v2/payroll/parameters/${userId}`,
     notification: `${backendDomain}/api/v2/notification`,
     department: `${backendDomain}/api/v2/department`,
     dashboard: (userId: string) => `${backendDomain}/api/v2/screen/dashboard/${userId}`,
     dashboardSummary: `${backendDomain}/api/v1/dashboard/summary`,
-    get_payroll: (userId: string) => `${legacyBackendDomain}/api/v2/payroll/user/${userId}`,
-    get_payroll_stats: (userId: string) => `${legacyBackendDomain}/api/v2/payroll/statistics/${userId}`,
+    get_payroll: (userId: string) => `${backendDomain}/api/v2/payroll/user/${userId}`,
+    get_payroll_stats: (userId: string) => `${backendDomain}/api/v2/payroll/statistics/${userId}`,
     permission: `${backendDomain}/api/v2/permission`,
     holiday: `${backendDomain}/api/v2/holiday`,
     holiday_by_org: (orgId:string) => `${backendDomain}/api/v2/holiday/${orgId}`,
     holiday_type: `${backendDomain}/api/v2/holiday-type`,
     holiday_type_by_org: (orgId:string) => `${backendDomain}/api/v2/holiday-type/${orgId}`,
-    OrganizationSettings: () => `${legacyBackendDomain}/api/v3/settings`,
-    SalaryRecordExistence: (userId: string, month: number, year: number) => `${legacyBackendDomain}/api/v2/salary/user/${userId}/monthly/${month}/year/${year}`,
-    permissionPreset: `${legacyBackendDomain}/api/v3/permission-preset`,
+    OrganizationSettings: () => `${backendDomain}/api/v3/settings`,
+    SalaryRecordExistence: (userId: string, month: number, year: number) => `${backendDomain}/api/v2/salary/user/${userId}/monthly/${month}/year/${year}`,
+    permissionPreset: `${backendDomain}/api/v3/permission-preset`,
 
     // Bank Endpoints
     bankDetails: (userId: string) => `${backendDomain}/api/v2/bank-details/${userId}`,

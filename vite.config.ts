@@ -15,12 +15,21 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // Critical vendor chunks (load first)
-          if (['react', 'react-dom'].some(pkg => id.includes(pkg))) {
-            return 'react-vendor';
+          // Critical React core
+          if (
+            id.includes('node_modules/react/') ||
+            id.includes('node_modules/react-dom/') ||
+            id.includes('node_modules/scheduler/')
+          ) {
+            return 'react-core';
+          }
+
+          // Data fetching cache layer
+          if (id.includes('node_modules/@tanstack/react-query')) {
+            return 'query-vendor';
           }
           
-          // Large external libraries (separate chunks)
+          // Large external visualization & map libraries
           if (id.includes('olamaps-web-sdk') || id.includes('/services/OlaMap')) {
             return 'map-vendor';
           }
@@ -29,42 +38,44 @@ export default defineConfig({
             return 'pdf-vendor';
           }
           
-          // Split recharts to avoid circular dependency issues
-          if (id.includes('recharts')) {
+          if (id.includes('node_modules/recharts')) {
             return 'recharts-vendor';
           }
           
-          if (id.includes('d3')) {
+          if (id.includes('node_modules/d3') || id.includes('node_modules/d3-')) {
             return 'visualization';
           }
           
-          if (id.includes('framer-motion')) {
+          if (id.includes('node_modules/framer-motion')) {
             return 'animation';
           }
           
-          // UI library chunks
-          if (id.includes('@radix-ui/react-') || id.includes('@tabler/icons')) {
-            return 'ui-components';
+          // Radix primitives & icons
+          if (id.includes('node_modules/@radix-ui')) {
+            return 'radix-ui';
+          }
+          if (id.includes('node_modules/lucide-react') || id.includes('node_modules/@tabler/icons')) {
+            return 'icons';
           }
           
-          // Routing and state management
-          if (['react-router-dom', 'jotai'].some(pkg => id.includes(pkg))) {
-            return 'routing-state';
+          // Routing & State management
+          if (id.includes('node_modules/react-router') || id.includes('node_modules/react-router-dom')) {
+            return 'routing';
+          }
+          if (id.includes('node_modules/jotai') || id.includes('node_modules/zustand')) {
+            return 'state-management';
           }
           
           // Form and validation
-          if (['react-hook-form', '@hookform/resolvers', 'zod'].some(pkg => id.includes(pkg))) {
+          if (['react-hook-form', '@hookform/resolvers', 'zod'].some(pkg => id.includes(`node_modules/${pkg}`))) {
             return 'form-handling';
           }
           
-          // Utilities (commonly used)
-          if (['date-fns', 'axios', 'clsx', 'tailwind-merge', 'lodash'].some(pkg => id.includes(pkg))) {
+          // Core utilities
+          if (['date-fns', 'axios', 'clsx', 'tailwind-merge'].some(pkg => id.includes(`node_modules/${pkg}`))) {
             return 'utilities';
           }
           
-          // Feature chunks intentionally not forced.
-          // For large route areas (billing/attendance/org/system/etc.), forcing everything into a single
-          // chunk can surface TDZ/circular-init issues only after minification and chunk flattening.
           return undefined;
         }
       }

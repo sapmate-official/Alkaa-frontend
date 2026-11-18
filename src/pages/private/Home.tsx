@@ -30,24 +30,24 @@ export const Home: React.FC = () => {
 
   if (isLoading && !dashboardSummary) {
     return (
-      <div className="p-4 md:p-6 space-y-6">
-        <Skeleton className="h-20 w-full rounded-xl" />
+      <div className="p-4 md:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
+        <Skeleton className="h-24 w-full rounded-2xl" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Skeleton className="h-28 rounded-xl" />
-          <Skeleton className="h-28 rounded-xl" />
-          <Skeleton className="h-28 rounded-xl" />
-          <Skeleton className="h-28 rounded-xl" />
+          <Skeleton className="h-36 rounded-2xl" />
+          <Skeleton className="h-36 rounded-2xl" />
+          <Skeleton className="h-36 rounded-2xl" />
+          <Skeleton className="h-36 rounded-2xl" />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <Skeleton className="lg:col-span-7 h-72 rounded-xl" />
-          <Skeleton className="lg:col-span-5 h-72 rounded-xl" />
+          <Skeleton className="lg:col-span-7 h-80 rounded-2xl" />
+          <Skeleton className="lg:col-span-5 h-80 rounded-2xl" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-full overflow-y-auto">
+    <div className="p-4 md:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto overflow-y-auto">
       {/* Viewport Mode Switcher for Admins */}
       {isAdminOrSuperAdmin && (
         <div className="flex justify-end">
@@ -56,12 +56,12 @@ export const Home: React.FC = () => {
             onValueChange={(val) => setActiveTabOverride(val as 'admin' | 'employee')}
             className="w-auto"
           >
-            <TabsList className="grid grid-cols-2 h-9 p-1 bg-muted/60 border border-border">
-              <TabsTrigger value="admin" className="text-xs flex items-center gap-1.5 px-3">
-                <Shield className="h-3.5 w-3.5" /> Executive View
+            <TabsList className="grid grid-cols-2 h-10 p-1 bg-muted/60 border border-border rounded-xl">
+              <TabsTrigger value="admin" className="text-xs font-semibold flex items-center gap-1.5 px-3.5 rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-xs">
+                <Shield className="h-3.5 w-3.5 text-primary" /> Executive View
               </TabsTrigger>
-              <TabsTrigger value="employee" className="text-xs flex items-center gap-1.5 px-3">
-                <User className="h-3.5 w-3.5" /> My Self-Service
+              <TabsTrigger value="employee" className="text-xs font-semibold flex items-center gap-1.5 px-3.5 rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-xs">
+                <User className="h-3.5 w-3.5 text-emerald-500" /> Employee Self-Service
               </TabsTrigger>
             </TabsList>
           </Tabs>

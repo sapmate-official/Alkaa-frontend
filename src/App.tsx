@@ -29,8 +29,8 @@ const BillingModule = lazy(() => import('./pages/private/system/BillingManagemen
 const LeaveModule = lazy(() => import('./pages/private/system/LeaveManagementSystem/LeaveModule'));
 const OnboardingModule = lazy(() => import('./pages/private/system/OnboardingManagementSystem/OnboardingModule'));
 const TaskModule = lazy(() => import('./pages/private/system/TaskManagementSystem/index.tsx'));
-import HolidayManagementSystem from './pages/private/system/HolidayManagementSystem/HolidayDashboard.tsx';
-import ModernRolePermissionPage from './pages/private/system/RoleManagementSystem/ModernRolePermissionPage.tsx';
+const HolidayManagementSystem = lazy(() => import('./pages/private/system/HolidayManagementSystem/HolidayDashboard.tsx'));
+const ModernRolePermissionPage = lazy(() => import('./pages/private/system/RoleManagementSystem/ModernRolePermissionPage.tsx'));
 
 
 // Admin modules (less frequently used)
