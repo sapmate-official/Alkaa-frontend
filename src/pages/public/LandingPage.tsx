@@ -1,942 +1,826 @@
-import React, { useState } from 'react';
-import { 
-  Card, 
-  CardContent 
-} from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { 
-  Calendar,
-  ChartPie,
-  Clock,
-  Building2,
-  ArrowRight,
-  Users,
-  Shield,
-  Zap,
-  CheckCircle,
-  Lock,
-  BarChart3,
-  DollarSign,
+  Building2, 
+  Users, 
+  Clock, 
+  Calendar, 
+  CreditCard, 
+  ShieldCheck, 
+  ArrowRight, 
+  CheckCircle2, 
+  Lock, 
+  Sparkles,
+  Send,
   UserCheck,
   FileText,
-  Bell,
-  Target,
-  Award,
-  Briefcase,
-  Activity,
-  Sparkles,
-  CheckCircle2,
-  TrendingUp
+  BadgeCheck
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import RouteDict from '@/routes/RouteDict';
+import { submitDemoRequest } from '@/services/api/publicApi';
+import { useToast } from '@/hooks/use-toast';
+import ThemeToggle from '@/components/ThemeSwitchButtonComponent';
+import { tokenStorage } from '@/services/api/client';
 
-// interface FeatureCardProps {
-//   title: string;
-//   description: string;
-//   icon: React.ReactNode;
-//   category?: string;
-// }
-
-// const FeatureCard: React.FC<FeatureCardProps> = ({ title, description, icon, category }) => (
-//   <Card className="border border-border bg-card hover:shadow-lg transition-all duration-300 hover:scale-105 group">
-//     <CardHeader className="pb-2">
-//       <div className="mb-2 text-primary group-hover:scale-110 transition-transform duration-300">{icon}</div>
-//       {category && <div className="text-xs text-primary font-medium mb-1">{category}</div>}
-//       <CardTitle className="text-lg font-semibold">{title}</CardTitle>
-//     </CardHeader>
-//     <CardContent>
-//       <CardDescription className="text-sm text-muted-foreground">{description}</CardDescription>
-//     </CardContent>
-//   </Card>
-// );
-
-// interface MetricCardProps {
-//   value: string;
-//   label: string;
-//   icon: React.ReactNode;
-//   description?: string;
-// }
-
-// const MetricCard: React.FC<MetricCardProps> = ({ value, label, icon, description }) => (
-//   <Card className="text-center border-border bg-card/50 backdrop-blur hover:bg-card transition-colors">
-//     <CardContent className="p-6">
-//       <div className="text-primary mb-3 flex justify-center">
-//         {icon}
-//       </div>
-//       <div className="text-3xl font-bold text-primary mb-1">{value}</div>
-//       <div className="text-sm font-medium text-foreground mb-1">{label}</div>
-//       {description && <div className="text-xs text-muted-foreground">{description}</div>}
-//     </CardContent>
-//   </Card>
-// );
-
-interface SecurityFeatureProps {
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  compliance?: string[];
-}
-
-const SecurityFeature: React.FC<SecurityFeatureProps> = ({ title, description, icon, compliance }) => (
-  <Card className="border border-border bg-card hover:shadow-md transition-all duration-300">
-    <CardContent className="p-6">
-      <div className="text-primary mb-3">{icon}</div>
-      <h3 className="font-semibold mb-2">{title}</h3>
-      <p className="text-sm text-muted-foreground mb-3">{description}</p>
-      {compliance && (
-        <div className="flex flex-wrap gap-1">
-          {compliance.map((item, index) => (
-            <span key={index} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-              {item}
-            </span>
-          ))}
-        </div>
-      )}
-    </CardContent>
-  </Card>
-);
-
-const AlkaaLandingPage: React.FC = () => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+export const AlkaaLandingPage: React.FC = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  // If user is already authenticated, redirect straight to their workspace
+  useEffect(() => {
+    const accessToken = tokenStorage.getAccessToken();
+    const refreshToken = tokenStorage.getRefreshToken();
+    if (
+      (accessToken && !tokenStorage.isTokenExpired(accessToken)) ||
+      (refreshToken && !tokenStorage.isTokenExpired(refreshToken))
+    ) {
+      navigate(RouteDict.Protected, { replace: true });
+    }
+  }, [navigate]);
+
+  // Demo Request Form State (wired directly to backend POST /api/v1/public/demo-request)
+  const [formData, setFormData] = useState({
+    name: '',
+    company: '',
+    email: '',
+    phoneNumber: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  // Active module tab for interactive preview
+  const [activeTab, setActiveTab] = useState<'payroll' | 'attendance' | 'directory' | 'leave'>('payroll');
+
+  const handleDemoSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name.trim() || !formData.company.trim() || !formData.email.trim() || !formData.phoneNumber.trim()) {
+      toast({
+        title: "Incomplete details",
+        description: "Please complete all fields to request your tailored demonstration.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await submitDemoRequest(formData);
+      setIsSubmitted(true);
+      toast({
+        title: "Demo Request Submitted",
+        description: res.message || "Thank you! Our workforce solutions specialist will contact you shortly.",
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to submit demo request";
+      toast({
+        title: "Submission Error",
+        description: msg,
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ scrollBehavior: 'smooth' }}>
-      <style>
-        {`
-          html {
-            scroll-behavior: smooth;
-          }
-        `}
-      </style>
-      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 max-w-screen-xl items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src="/logo_icon.svg" alt="Alkaa Logo" className="h-8 w-8" />
-            <span className="text-xl font-bold">Alkaa</span>
+    <div className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-primary/20 selection:text-primary">
+      {/* Top Enterprise Navigation */}
+      <header className="sticky top-0 z-50 w-full bg-background/85 backdrop-blur-md border-b border-border/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          {/* Logo & Brand Identity */}
+          <div 
+            className="flex items-center gap-2.5 cursor-pointer group" 
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          >
+            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-primary-foreground shadow-sm shadow-primary/25 transition-transform group-hover:scale-105">
+              <Building2 className="h-5 w-5" />
+            </div>
+            <div className="flex flex-col text-left">
+              <div className="flex items-center gap-1.5">
+                <span className="font-extrabold text-lg tracking-tight text-foreground">ALKAA</span>
+                <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                  HRMS
+                </span>
+              </div>
+              <span className="text-[10px] text-muted-foreground font-medium hidden sm:inline">Workforce Operating System</span>
+            </div>
           </div>
-          
-          <nav className="hidden md:flex items-center gap-6">
-            <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Features</a>
-            <Button onClick={()=>navigate(RouteDict.SignInPage)} variant="outline">Sign In</Button>
-            <Button onClick={()=>navigate(RouteDict.SignUpPage)}>Register</Button>
+
+          {/* Nav Links */}
+          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
+            <a href="#modules" className="hover:text-foreground transition-colors">Core Modules</a>
+            <a href="#solutions" className="hover:text-foreground transition-colors">Why ALKAA</a>
+            <a href="#security" className="hover:text-foreground transition-colors">Security &amp; Compliance</a>
           </nav>
-          
-          <div className="md:hidden">
+
+          {/* Actions: Theme Toggle, Sign In, Request Demo */}
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <ThemeToggle className="h-8 w-8 text-muted-foreground hover:text-foreground" />
             <Button 
-              variant="outline" 
-              className="h-10 w-10 p-0" 
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              variant="ghost" 
+              onClick={() => navigate(RouteDict.SignInPage)}
+              className="text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-muted px-3"
             >
-              <span className="sr-only">Toggle menu</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-4 w-4"
-              >
-                {mobileMenuOpen ? (
-                  <>
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </>
-                ) : (
-                  <>
-                    <line x1="4" y1="12" x2="20" y2="12" />
-                    <line x1="4" y1="6" x2="20" y2="6" />
-                    <line x1="4" y1="18" x2="20" y2="18" />
-                  </>
-                )}
-              </svg>
+              Sign In
+            </Button>
+            <Button 
+              onClick={() => {
+                const el = document.getElementById('demo-form-section');
+                el?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-xl shadow-xs px-4"
+            >
+              Book a Demo
             </Button>
           </div>
         </div>
-        
-        {mobileMenuOpen && (
-          <div className="md:hidden p-4 border-t border-border/40 bg-background">
-            <nav className="flex flex-col gap-4">
-              <a 
-                href="#features" 
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Features
-              </a>
-              <div className="flex flex-col gap-2 pt-2">
-                <Button onClick={()=>navigate(RouteDict.SignInPage)} variant="outline">Sign In</Button>
-                <Button onClick={()=>navigate(RouteDict.SignUpPage)}>Register</Button>
-              </div>
-            </nav>
-          </div>
-        )}
-      </header>      <main className="flex-1">
-        {/* Modern Enterprise SaaS Hero Section */}
-        <section className="relative pt-12 pb-24 md:pt-20 md:pb-32 overflow-hidden bg-gradient-to-b from-background via-secondary/20 to-background border-b border-border/60">
-          {/* Subtle Ambient Glow */}
-          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-primary/10 rounded-full blur-[120px] pointer-events-none -z-10" />
-          
-          <div className="container max-w-screen-xl px-4 md:px-8 relative z-10">
-            <div className="flex flex-col items-center text-center">
-              <div className="max-w-4xl space-y-6">
-                {/* 1. Announcement Badge */}
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-primary transition-all hover:bg-primary/15">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  <span>ALKAA 2.0 • Unified Enterprise Workforce Operating System</span>
-                  <ArrowRight className="h-3 w-3" />
-                </div>
+      </header>
 
-                {/* 2. Main Heading */}
-                <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight leading-[1.1] text-foreground">
-                  From HR Chaos to{" "}
-                  <span className="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-                    Workforce Harmony
-                  </span>
-                </h1>
+      {/* Hero Section */}
+      <section className="relative pt-12 pb-20 md:py-24 border-b border-border/80 overflow-hidden">
+        {/* Subtle decorative background glow */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-primary/5 blur-3xl pointer-events-none -z-10 rounded-full" />
 
-                {/* 3. Description */}
-                <p className="text-base sm:text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-                  Streamline your workforce with our enterprise cloud-native HR platform. From candidate invitation and KYC verification to shift attendance and automated multi-tenant payroll.
-                </p>
-
-                {/* 4. Value Propositions Chips */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-2 max-w-2xl mx-auto text-left">
-                  <div className="flex items-center gap-2.5 p-3 rounded-lg bg-card border border-border shadow-xs">
-                    <div className="p-1.5 rounded-md bg-primary/10 text-primary">
-                      <Zap className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold text-foreground">Digital Onboarding</div>
-                      <div className="text-[11px] text-muted-foreground">Candidate KYC & Reviews</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2.5 p-3 rounded-lg bg-card border border-border shadow-xs">
-                    <div className="p-1.5 rounded-md bg-primary/10 text-primary">
-                      <Building2 className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold text-foreground">Multi-Tenant</div>
-                      <div className="text-[11px] text-muted-foreground">Isolated Workspaces</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2.5 p-3 rounded-lg bg-card border border-border shadow-xs">
-                    <div className="p-1.5 rounded-md bg-primary/10 text-primary">
-                      <Clock className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold text-foreground">Real-Time Sync</div>
-                      <div className="text-[11px] text-muted-foreground">Live Shifts & Attendance</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 5. CTA Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3 pt-3 justify-center items-center">
-                  <Button 
-                    onClick={() => navigate(RouteDict.SignUpPage)} 
-                    className="text-sm font-semibold px-7 py-5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md transition-all hover:shadow-lg"
-                  >
-                    Get Started
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="text-sm font-medium px-7 py-5 border-border bg-card hover:bg-secondary transition-all"
-                    onClick={() => navigate(RouteDict.SignInPage)}
-                  >
-                    Sign In to Workspace
-                  </Button>
-                </div>
-              </div>
-
-              {/* 7. Product Preview UI Centerpiece Mockup */}
-              <div className="mt-14 w-full max-w-5xl relative">
-                {/* Floating Telemetry Badge - Top Right */}
-                <div className="hidden lg:flex items-center gap-2.5 absolute -top-4 -right-4 z-20 px-3.5 py-2 rounded-xl bg-card border border-border shadow-lg animate-bounce duration-1000">
-                  <div className="p-1 rounded-full bg-emerald-500/10 text-emerald-600">
-                    <CheckCircle2 className="h-4 w-4" />
-                  </div>
-                  <div className="text-left">
-                    <div className="text-xs font-bold text-foreground">Sarah Jenkins Verified</div>
-                    <div className="text-[10px] text-muted-foreground">DevOps Lead • Account Provisioned</div>
-                  </div>
-                </div>
-
-                {/* Floating Telemetry Badge - Bottom Left */}
-                <div className="hidden lg:flex items-center gap-2.5 absolute -bottom-5 -left-4 z-20 px-3.5 py-2 rounded-xl bg-card border border-border shadow-lg">
-                  <div className="p-1 rounded-full bg-primary/10 text-primary">
-                    <Sparkles className="h-4 w-4" />
-                  </div>
-                  <div className="text-left">
-                    <div className="text-xs font-bold text-foreground">Nov 2026 Payroll Executed</div>
-                    <div className="text-[10px] text-emerald-600 font-medium">100% Disbursed across 142 Staff</div>
-                  </div>
-                </div>
-
-                {/* Browser Shell Frame */}
-                <div className="rounded-2xl border border-border/80 bg-card shadow-2xl overflow-hidden text-left">
-                  {/* Browser Window Bar */}
-                  <div className="flex items-center justify-between px-4 py-3 bg-secondary/50 border-b border-border">
-                    <div className="flex items-center gap-2">
-                      <span className="w-3 h-3 rounded-full bg-red-400" />
-                      <span className="w-3 h-3 rounded-full bg-amber-400" />
-                      <span className="w-3 h-3 rounded-full bg-emerald-400" />
-                    </div>
-                    <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-card/80 border border-border/80 text-[11px] text-muted-foreground font-mono">
-                      <Lock className="h-3 w-3 text-emerald-500" />
-                      <span>https://app.alkaa.io/dashboard/command-center</span>
-                    </div>
-                    <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20">
-                      Acme Technologies
-                    </Badge>
-                  </div>
-
-                  {/* Mockup Dashboard Content */}
-                  <div className="p-5 md:p-6 space-y-5 bg-card">
-                    {/* Metric Cards Row */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
-                      <div className="p-3.5 rounded-xl bg-secondary/30 border border-border/80">
-                        <div className="text-xs text-muted-foreground font-medium">Total Headcount</div>
-                        <div className="text-2xl font-bold text-foreground mt-1">142</div>
-                        <div className="text-[11px] text-emerald-600 font-medium mt-1 flex items-center gap-1">
-                          <TrendingUp className="h-3 w-3" /> +4 this cycle
-                        </div>
-                      </div>
-                      <div className="p-3.5 rounded-xl bg-secondary/30 border border-border/80">
-                        <div className="text-xs text-muted-foreground font-medium">Present Today</div>
-                        <div className="text-2xl font-bold text-foreground mt-1">94.2%</div>
-                        <div className="text-[11px] text-muted-foreground mt-1">134 Clocked In</div>
-                      </div>
-                      <div className="p-3.5 rounded-xl bg-secondary/30 border border-border/80">
-                        <div className="text-xs text-muted-foreground font-medium">Onboarding Pipeline</div>
-                        <div className="text-2xl font-bold text-primary mt-1">6</div>
-                        <div className="text-[11px] text-amber-600 font-medium mt-1">2 Pending Review</div>
-                      </div>
-                      <div className="p-3.5 rounded-xl bg-secondary/30 border border-border/80">
-                        <div className="text-xs text-muted-foreground font-medium">Leave Requests</div>
-                        <div className="text-2xl font-bold text-foreground mt-1">3</div>
-                        <div className="text-[11px] text-muted-foreground mt-1">1 Requires Approval</div>
-                      </div>
-                    </div>
-
-                    {/* Mini Data Table Snapshot */}
-                    <div className="rounded-xl border border-border overflow-hidden">
-                      <div className="px-4 py-2.5 bg-secondary/40 border-b border-border flex items-center justify-between text-xs font-semibold text-muted-foreground">
-                        <span>Recent Candidate Verification Queue</span>
-                        <span className="text-[11px] text-primary font-normal">View Pipeline →</span>
-                      </div>
-                      <div className="divide-y divide-border text-xs">
-                        <div className="px-4 py-2.5 flex items-center justify-between">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-7 h-7 rounded-full bg-primary/20 text-primary font-bold text-xs flex items-center justify-center">
-                              SJ
-                            </div>
-                            <div>
-                              <div className="font-semibold text-foreground">Sarah Jenkins</div>
-                              <div className="text-[11px] text-muted-foreground">Senior DevOps Engineer • Engineering</div>
-                            </div>
-                          </div>
-                          <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 border-amber-200 text-[10px]">
-                            Under Review
-                          </Badge>
-                        </div>
-                        <div className="px-4 py-2.5 flex items-center justify-between">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-700 font-bold text-xs flex items-center justify-center">
-                              DK
-                            </div>
-                            <div>
-                              <div className="font-semibold text-foreground">David Kim</div>
-                              <div className="text-[11px] text-muted-foreground">Senior UI/UX Designer • Product Design</div>
-                            </div>
-                          </div>
-                          <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-[10px]">
-                            Verified
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </section>
-
-        {/* Mission & Overview Section */}
-        <section className="py-24 bg-secondary/20">
-          <div className="container max-w-screen-xl px-4 md:px-8">
-            <div className="text-center mb-20">
-              <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-6">
-                <Target className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium text-primary">Platform Capabilities</span>
-              </div>
-              <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-                Modern HR & Workforce Operations
-              </h2>
-              <p className="text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
-                Empowering organizations with structured employee directories, verified KYC onboarding, attendance tracking, and reliable payroll management.
-              </p>
-            </div>
-
-            {/* Key Pillars Grid */}
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
-              <div className="text-center p-8 rounded-2xl bg-gradient-to-b from-card to-card/50 border border-border/50 hover:shadow-lg transition-all duration-300">
-                <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-2xl flex items-center justify-center">
-                  <Zap className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="text-lg font-bold text-foreground mb-2">Automated Flows</h3>
-                <p className="text-xs text-muted-foreground">Digital candidate onboarding, KYC submission, and document verification.</p>
-              </div>
-              
-              <div className="text-center p-8 rounded-2xl bg-gradient-to-b from-card to-card/50 border border-border/50 hover:shadow-lg transition-all duration-300">
-                <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-2xl flex items-center justify-center">
-                  <Shield className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="text-lg font-bold text-foreground mb-2">Role-Based Access</h3>
-                <p className="text-xs text-muted-foreground">Granular permissions with complete audit trails for every organizational action.</p>
-              </div>
-              
-              <div className="text-center p-8 rounded-2xl bg-gradient-to-b from-card to-card/50 border border-border/50 hover:shadow-lg transition-all duration-300">
-                <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-2xl flex items-center justify-center">
-                  <Building2 className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="text-lg font-bold text-foreground mb-2">Multi-Tenant</h3>
-                <p className="text-xs text-muted-foreground">Strict organizational data isolation across branches, departments, and roles.</p>
-              </div>
-              
-              <div className="text-center p-8 rounded-2xl bg-gradient-to-b from-card to-card/50 border border-border/50 hover:shadow-lg transition-all duration-300">
-                <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-2xl flex items-center justify-center">
-                  <BarChart3 className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="text-lg font-bold text-foreground mb-2">Live Workforce KPIs</h3>
-                <p className="text-xs text-muted-foreground">Real-time attendance summaries, shift tracking, and salary analytics.</p>
-              </div>
-            </div>
-
-            {/* Complete Employee Lifecycle */}
-            <div className="bg-gradient-to-r from-primary/5 to-secondary/5 rounded-3xl p-12 border border-border/50">
-              <div className="text-center mb-12">
-                <h3 className="text-3xl font-bold mb-4">Complete Employee Lifecycle Management</h3>
-                <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-                  From recruitment to exit, Alkaa covers every aspect of employee management with integrated modules.
-                </p>
-              </div>
-              
-              <div className="grid md:grid-cols-3 gap-8">
-                <div className="text-center">
-                  <div className="w-20 h-20 mx-auto mb-6 bg-primary/10 rounded-full flex items-center justify-center">
-                    <UserCheck className="h-10 w-10 text-primary" />
-                  </div>
-                  <h4 className="text-xl font-semibold mb-3">Onboarding & Management</h4>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    Complete employee data management with document handling, verification processes, 
-                    and automated workflows for seamless onboarding.
-                  </p>
-                </div>
-                
-                <div className="text-center">
-                  <div className="w-20 h-20 mx-auto mb-6 bg-green-500/10 rounded-full flex items-center justify-center">
-                    <Activity className="h-10 w-10 text-green-500" />
-                  </div>
-                  <h4 className="text-xl font-semibold mb-3">Tracking & Analytics</h4>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    Real-time attendance monitoring with location verification, performance tracking, 
-                    and comprehensive reporting for data-driven insights.
-                  </p>
-                </div>
-                
-                <div className="text-center">
-                  <div className="w-20 h-20 mx-auto mb-6 bg-blue-500/10 rounded-full flex items-center justify-center">
-                    <DollarSign className="h-10 w-10 text-blue-500" />
-                  </div>
-                  <h4 className="text-xl font-semibold mb-3">Payroll & Benefits</h4>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    Comprehensive salary calculation with tax management, payment processing, 
-                    and automated compliance with regulatory requirements.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Core Architecture Section */}
-        <section className="py-20">
-          <div className="container max-w-screen-xl px-4 md:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-5xl font-bold mb-4 tracking-tight">
-                Architected for Modern <span className="text-primary">Enterprise Workforces</span>
-              </h2>
-              <p className="text-base md:text-lg text-muted-foreground max-w-3xl mx-auto">
-                Alkaa provides a unified, multi-tenant workforce management suite connecting administrators, managers, and employees on a single secure platform.
-              </p>
-            </div>
-
-            {/* Core Modules Grid */}
-            <div className="grid md:grid-cols-3 gap-8">
-              <Card className="p-8 border border-border bg-card hover:shadow-lg transition-all duration-300">
-                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-6">
-                  <Building2 className="h-6 w-6" />
-                </div>
-                <h3 className="text-xl font-bold mb-3">Organization Command Center</h3>
-                <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
-                  Real-time visibility over your workforce. Monitor shift headcounts, pending onboarding reviews, and operational KPIs from an intuitive administrative dashboard.
-                </p>
-                <ul className="space-y-2.5 text-sm">
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle className="h-4 w-4 text-primary shrink-0" />
-                    <span>Real-time workforce KPIs & telemetry</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle className="h-4 w-4 text-primary shrink-0" />
-                    <span>Multi-tenant organization oversight</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle className="h-4 w-4 text-primary shrink-0" />
-                    <span>Department & designation hierarchies</span>
-                  </li>
-                </ul>
-              </Card>
-
-              <Card className="p-8 border border-border bg-card hover:shadow-lg transition-all duration-300">
-                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-6">
-                  <UserCheck className="h-6 w-6" />
-                </div>
-                <h3 className="text-xl font-bold mb-3">Employee Self-Service</h3>
-                <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
-                  Empower staff with an easy self-service portal. Employees can clock in shifts, view leave balances, submit requests, and manage personal tasks seamlessly.
-                </p>
-                <ul className="space-y-2.5 text-sm">
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle className="h-4 w-4 text-primary shrink-0" />
-                    <span>One-click shift clock-in and punch history</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle className="h-4 w-4 text-primary shrink-0" />
-                    <span>Live leave balance wallets & request flows</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle className="h-4 w-4 text-primary shrink-0" />
-                    <span>Interactive task board & work assignments</span>
-                  </li>
-                </ul>
-              </Card>
-
-              <Card className="p-8 border border-border bg-card hover:shadow-lg transition-all duration-300">
-                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-6">
-                  <Shield className="h-6 w-6" />
-                </div>
-                <h3 className="text-xl font-bold mb-3">Tenant Isolation & Governance</h3>
-                <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
-                  Strict tenant isolation guarantees organizational data privacy. Includes granular role-based permissions and immutable activity audit logs across all actions.
-                </p>
-                <ul className="space-y-2.5 text-sm">
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle className="h-4 w-4 text-primary shrink-0" />
-                    <span>Tenant-isolated database partition</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle className="h-4 w-4 text-primary shrink-0" />
-                    <span>Granular RBAC (Admin, Manager, Staff)</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle className="h-4 w-4 text-primary shrink-0" />
-                    <span>Audit trail logging for all mutations</span>
-                  </li>
-                </ul>
-              </Card>
-            </div>
-          </div>
-        </section>
-
-        {/* Comprehensive HR Suite */}
-        <section id="features" className="py-24 bg-secondary/20">
-          <div className="container max-w-screen-xl px-4 md:px-8">
-            <div className="text-center mb-20">
-              <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-6">
-                <Briefcase className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium text-primary">Complete Feature Set</span>
-              </div>
-              <h2 className="text-4xl md:text-5xl font-bold mb-6">
-                Everything You Need for <span className="text-primary">HR Excellence</span>
-              </h2>
-              <p className="text-xl text-muted-foreground max-w-4xl mx-auto">
-                Every tool you need to manage your workforce efficiently. From onboarding to payroll, 
-                handle the complete employee lifecycle with ease and precision.
-              </p>
-            </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
             
-            {/* Feature Categories */}
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {/* Employee Management */}
-              <div className="group">
-                <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-8 border border-primary/20 hover:shadow-xl transition-all duration-500 h-full">
-                  <div className="w-16 h-16 mb-6 bg-primary/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <Users className="h-8 w-8 text-primary" />
-                  </div>
-                  <div className="text-xs text-primary font-semibold mb-2 uppercase tracking-wider">Employee Management</div>
-                  <h3 className="text-xl font-bold mb-4">User & Organization</h3>
-                  <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
-                    Complete employee directory with hierarchical organizational structure, 
-                    department management, and role-based access control.
-                  </p>
-                  <ul className="space-y-2">
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span>Employee directory & profiles</span>
-                    </li>
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span>Department hierarchy</span>
-                    </li>
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span>Role-based permissions</span>
-                    </li>
-                  </ul>
-                </div>
+            {/* Left Column: Core Value Proposition */}
+            <div className="lg:col-span-7 space-y-6 text-left">
+              {/* Professional Category Badge */}
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold tracking-wide border border-primary/20">
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>Modern Human Resource Management System (HRMS)</span>
               </div>
 
-              {/* Time & Attendance */}
-              <div className="group">
-                <div className="bg-gradient-to-br from-green-500/10 to-green-500/5 rounded-2xl p-8 border border-green-500/20 hover:shadow-xl transition-all duration-500 h-full">
-                  <div className="w-16 h-16 mb-6 bg-green-500/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <Clock className="h-8 w-8 text-green-500" />
-                  </div>
-                  <div className="text-xs text-green-600 font-semibold mb-2 uppercase tracking-wider">Time Tracking</div>
-                  <h3 className="text-xl font-bold mb-4">Attendance System</h3>
-                  <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
-                    Real-time check-in/check-out with location verification, session tracking, 
-                    and automated attendance reports with verification workflows.
-                  </p>
-                  <ul className="space-y-2">
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span>GPS location tracking</span>
-                    </li>
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span>Multiple session support</span>
-                    </li>
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span>Attendance verification</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
+              <h1 className="text-4xl sm:text-5xl lg:text-5xl font-extrabold tracking-tight text-foreground leading-[1.12]">
+                Complete workforce operations. <br />
+                <span className="text-primary">From hire to payroll.</span>
+              </h1>
 
-              {/* Leave Management */}
-              <div className="group">
-                <div className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 rounded-2xl p-8 border border-blue-500/20 hover:shadow-xl transition-all duration-500 h-full">
-                  <div className="w-16 h-16 mb-6 bg-blue-500/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <Calendar className="h-8 w-8 text-blue-500" />
-                  </div>
-                  <div className="text-xs text-blue-600 font-semibold mb-2 uppercase tracking-wider">Leave Management</div>
-                  <h3 className="text-xl font-bold mb-4">Advanced Leave System</h3>
-                  <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
-                    Configurable leave types, balance tracking, approval workflows, 
-                    and calendar integration with carryover support.
-                  </p>
-                  <ul className="space-y-2">
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span>Flexible leave types</span>
-                    </li>
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span>Approval workflows</span>
-                    </li>
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span>Balance carryover</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Payroll */}
-              <div className="group">
-                <div className="bg-gradient-to-br from-orange-500/10 to-orange-500/5 rounded-2xl p-8 border border-orange-500/20 hover:shadow-xl transition-all duration-500 h-full">
-                  <div className="w-16 h-16 mb-6 bg-orange-500/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <DollarSign className="h-8 w-8 text-orange-500" />
-                  </div>
-                  <div className="text-xs text-orange-600 font-semibold mb-2 uppercase tracking-wider">Payroll</div>
-                  <h3 className="text-xl font-bold mb-4">Automated Processing</h3>
-                  <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
-                    Complete salary calculation with tax management, allowances, 
-                    deductions, and automated payslip generation.
-                  </p>
-                  <ul className="space-y-2">
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span>Tax calculations</span>
-                    </li>
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span>Payslip generation</span>
-                    </li>
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span>Payment processing</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Performance & Analytics */}
-              <div className="group">
-                <div className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 rounded-2xl p-8 border border-purple-500/20 hover:shadow-xl transition-all duration-500 h-full">
-                  <div className="w-16 h-16 mb-6 bg-purple-500/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <ChartPie className="h-8 w-8 text-purple-500" />
-                  </div>
-                  <div className="text-xs text-purple-600 font-semibold mb-2 uppercase tracking-wider">Performance</div>
-                  <h3 className="text-xl font-bold mb-4">Analytics & Insights</h3>
-                  <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
-                    Track employee performance with comprehensive analytics, 
-                    reporting, and data-driven insights for better decisions.
-                  </p>
-                  <ul className="space-y-2">
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span>Performance tracking</span>
-                    </li>
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span>Advanced reporting</span>
-                    </li>
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span>Data insights</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Onboarding */}
-              <div className="group">
-                <div className="bg-gradient-to-br from-pink-500/10 to-pink-500/5 rounded-2xl p-8 border border-pink-500/20 hover:shadow-xl transition-all duration-500 h-full">
-                  <div className="w-16 h-16 mb-6 bg-pink-500/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <UserCheck className="h-8 w-8 text-pink-500" />
-                  </div>
-                  <div className="text-xs text-pink-600 font-semibold mb-2 uppercase tracking-wider">Onboarding</div>
-                  <h3 className="text-xl font-bold mb-4">Employee Onboarding</h3>
-                  <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
-                    Structured onboarding workflows with document management, 
-                    verification processes, and automated communications.
-                  </p>
-                  <ul className="space-y-2">
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span>Document management</span>
-                    </li>
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span>Workflow automation</span>
-                    </li>
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span>Verification processes</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Communication */}
-              <div className="group">
-                <div className="bg-gradient-to-br from-cyan-500/10 to-cyan-500/5 rounded-2xl p-8 border border-cyan-500/20 hover:shadow-xl transition-all duration-500 h-full">
-                  <div className="w-16 h-16 mb-6 bg-cyan-500/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <Bell className="h-8 w-8 text-cyan-500" />
-                  </div>
-                  <div className="text-xs text-cyan-600 font-semibold mb-2 uppercase tracking-wider">Communication</div>
-                  <h3 className="text-xl font-bold mb-4">Notification System</h3>
-                  <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
-                    Multi-channel notifications with email, push, and in-app messaging. 
-                    Customizable templates and user preferences.
-                  </p>
-                  <ul className="space-y-2">
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span>Multi-channel delivery</span>
-                    </li>
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span>Custom templates</span>
-                    </li>
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span>User preferences</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Compliance */}
-              <div className="group">
-                <div className="bg-gradient-to-br from-red-500/10 to-red-500/5 rounded-2xl p-8 border border-red-500/20 hover:shadow-xl transition-all duration-500 h-full">
-                  <div className="w-16 h-16 mb-6 bg-red-500/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <FileText className="h-8 w-8 text-red-500" />
-                  </div>
-                  <div className="text-xs text-red-600 font-semibold mb-2 uppercase tracking-wider">Compliance</div>
-                  <h3 className="text-xl font-bold mb-4">Audit & Compliance</h3>
-                  <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
-                    Complete audit trails, activity logging, and compliance features 
-                    for regulatory requirements and data governance.
-                  </p>
-                  <ul className="space-y-2">
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span>Activity logging</span>
-                    </li>
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span>Audit trails</span>
-                    </li>
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span>Compliance reporting</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Platform Architecture & Data Protection Section */}
-        <section className="py-20">
-          <div className="container max-w-screen-xl px-4 md:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Enterprise Platform Architecture</h2>
-              <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-                Built with multi-tenant organization isolation, granular role-based permissions, and comprehensive activity logging.
+              <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl">
+                ALKAA is the modern HRMS platform designed for forward-thinking enterprises. Unify employee lifecycle records, geofenced attendance tracking, multi-tier leave approvals, and 100% compliant automated payroll into one elegant workspace.
               </p>
-            </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
-              <SecurityFeature
-                title="Data Protection"
-                description="Isolated organization data stores with secure transport and automatic scheduled backups."
-                icon={<Lock className="h-6 w-6" />}
-                compliance={["Tenant Isolation", "Automated Backups", "Encrypted Transport"]}
-              />
-              <SecurityFeature
-                title="Access Control"
-                description="Multi-factor authentication, granular role-based permissions, and secure session management."
-                icon={<Shield className="h-6 w-6" />}
-                compliance={["RBAC", "MFA", "Session Control"]}
-              />
-              <SecurityFeature
-                title="Audit & Governance"
-                description="Complete event activity logging and operational controls across all organizational workflows."
-                icon={<Award className="h-6 w-6" />}
-                compliance={["Activity Logs", "User Audits", "Event History"]}
-              />
-            </div>
-
-            {/* Platform Stats */}
-            <div className="grid sm:grid-cols-4 gap-6 mt-12">
-              <div className="text-center p-6 bg-card rounded-lg border border-border">
-                <div className="text-2xl font-bold text-primary mb-2">99.9%</div>
-                <div className="text-sm text-muted-foreground">High Availability</div>
-              </div>
-              <div className="text-center p-6 bg-card rounded-lg border border-border">
-                <div className="text-2xl font-bold text-primary mb-2">Multi-Tenant</div>
-                <div className="text-sm text-muted-foreground">Tenant Partitioning</div>
-              </div>
-              <div className="text-center p-6 bg-card rounded-lg border border-border">
-                <div className="text-2xl font-bold text-primary mb-2">Real-Time</div>
-                <div className="text-sm text-muted-foreground">Audit Activity Logs</div>
-              </div>
-              <div className="text-center p-6 bg-card rounded-lg border border-border">
-                <div className="text-2xl font-bold text-primary mb-2">Daily</div>
-                <div className="text-sm text-muted-foreground">Automated Backups</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Streamlined Call to Action */}
-        <section className="py-20 bg-secondary/30 border-t border-border">
-          <div className="container max-w-screen-xl px-4 md:px-8">
-            <div className="text-center max-w-3xl mx-auto">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">
-                Streamline Your Workforce Operations
-              </h2>
-              <p className="text-base md:text-lg text-muted-foreground mb-8">
-                Empower your organization with unified employee directories, verified KYC onboarding, attendance tracking, and reliable multi-tenant payroll.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center gap-3.5 pt-1">
                 <Button 
-                  onClick={() => navigate(RouteDict.SignUpPage)} 
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground text-sm px-8 py-5 font-semibold shadow-md"
+                  onClick={() => navigate(RouteDict.SignInPage)}
+                  className="h-11 px-6 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-sm rounded-xl shadow-sm shadow-primary/20 gap-2"
                 >
-                  Register Organization
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <span>Launch Employee Portal</span>
+                  <ArrowRight className="h-4 w-4" />
                 </Button>
                 <Button 
                   variant="outline"
-                  className="text-sm px-8 py-5 font-semibold bg-card hover:bg-secondary"
-                  onClick={() => navigate(RouteDict.SignInPage)}
+                  onClick={() => {
+                    const el = document.getElementById('demo-form-section');
+                    el?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="h-11 px-6 border-border text-foreground font-semibold text-sm rounded-xl hover:bg-muted"
                 >
-                  Sign In
+                  Schedule Demo
                 </Button>
               </div>
+
+              {/* Enterprise Trust Proof Points */}
+              <div className="pt-6 border-t border-border/70 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-muted-foreground font-medium">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                  <span>100% Automated Payroll</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                  <span>Geofenced &amp; Mobile Shifts</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                  <span>Multi-Tenant Org Isolation</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: High-Converting Demo Request Card */}
+            <div id="demo-form-section" className="lg:col-span-5">
+              <Card className="border border-border shadow-lg bg-card text-card-foreground rounded-2xl overflow-hidden">
+                <CardContent className="p-7 sm:p-8">
+                  <div className="mb-6 text-left">
+                    <span className="text-[11px] font-bold text-primary uppercase tracking-wider">Fast-Track Onboarding</span>
+                    <h3 className="text-2xl font-bold text-foreground mt-1 tracking-tight">Request a Personalized Demo</h3>
+                    <p className="text-xs text-muted-foreground mt-1">See how ALKAA transforms your company's HR and payroll in a 15-minute guided session.</p>
+                  </div>
+
+                  {isSubmitted ? (
+                    <div className="py-10 text-center space-y-4">
+                      <div className="w-14 h-14 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto">
+                        <CheckCircle2 className="h-7 w-7" />
+                      </div>
+                      <h4 className="font-bold text-foreground text-lg">Thank You for Your Request!</h4>
+                      <p className="text-xs text-muted-foreground max-w-xs mx-auto leading-relaxed">
+                        Our HR solutions engineer will reach out to <strong>{formData.email}</strong> with customized demo access and sandbox credentials.
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => {
+                          setIsSubmitted(false);
+                          setFormData({ name: '', company: '', email: '', phoneNumber: '' });
+                        }}
+                        className="text-xs rounded-xl mt-2"
+                      >
+                        Submit another request
+                      </Button>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleDemoSubmit} className="space-y-4 text-left">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="demo-name" className="text-xs font-semibold text-foreground">Your Full Name</Label>
+                        <Input
+                          id="demo-name"
+                          placeholder="Marcus Vance"
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          disabled={isSubmitting}
+                          required
+                          className="h-10 text-xs border-input bg-background text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:ring-primary rounded-xl"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="demo-company" className="text-xs font-semibold text-foreground">Company Name</Label>
+                        <Input
+                          id="demo-company"
+                          placeholder="Acme Global Technologies"
+                          value={formData.company}
+                          onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                          disabled={isSubmitting}
+                          required
+                          className="h-10 text-xs border-input bg-background text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:ring-primary rounded-xl"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="demo-email" className="text-xs font-semibold text-foreground">Work Email Address</Label>
+                        <Input
+                          id="demo-email"
+                          type="email"
+                          placeholder="marcus@acmeglobal.com"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          disabled={isSubmitting}
+                          required
+                          className="h-10 text-xs border-input bg-background text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:ring-primary rounded-xl"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="demo-phone" className="text-xs font-semibold text-foreground">Phone Number</Label>
+                        <Input
+                          id="demo-phone"
+                          type="tel"
+                          placeholder="+1 (555) 234-5678"
+                          value={formData.phoneNumber}
+                          onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                          disabled={isSubmitting}
+                          required
+                          className="h-10 text-xs border-input bg-background text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:ring-primary rounded-xl"
+                        />
+                      </div>
+
+                      <Button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-sm rounded-xl shadow-xs gap-2 transition-all mt-2"
+                      >
+                        <Send className="h-4 w-4" />
+                        <span>{isSubmitting ? 'Submitting Request...' : 'Schedule Personalized Demo'}</span>
+                      </Button>
+
+                      <div className="text-[11px] text-center text-muted-foreground flex items-center justify-center gap-1.5 pt-1">
+                        <Lock className="h-3 w-3 text-muted-foreground" />
+                        <span>Enterprise multi-tenant privacy • 256-bit encryption</span>
+                      </div>
+                    </form>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           </div>
-        </section>
-      </main>
+        </div>
+      </section>
 
-      {/* Clean Modern Enterprise Footer */}
-      <footer className="bg-secondary/40 border-t border-border py-12">
-        <div className="container max-w-screen-xl px-4 md:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-8 border-b border-border/60">
-            {/* Brand Info */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <img src="/logo_icon.svg" alt="Alkaa Logo" className="h-7 w-7" />
-                <span className="text-lg font-bold text-foreground">Alkaa</span>
+      {/* Live Operational Metrics Banner */}
+      <section className="py-12 bg-muted/40 border-b border-border/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            <div className="space-y-1">
+              <div className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight">99.98%</div>
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Payroll Accuracy</div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-3xl sm:text-4xl font-extrabold text-primary tracking-tight">15 min</div>
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Average Monthly Pay Run</div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight">&lt; 1 sec</div>
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Geofence Punch Verification</div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-3xl sm:text-4xl font-extrabold text-primary tracking-tight">100%</div>
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Statutory Tax Compliance</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Core HRMS Modules Showcase */}
+      <section id="modules" className="py-20 bg-background border-b border-border/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <span className="text-xs font-bold text-primary uppercase tracking-wider">The All-in-One HR Suite</span>
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground mt-2">
+              Every HR tool your organization needs, under one roof.
+            </h2>
+            <p className="text-sm sm:text-base text-muted-foreground mt-3 leading-relaxed">
+              Eliminate disconnected spreadsheets and scattered software. ALKAA connects your employee records, daily attendance, leave balances, and payroll disbursements seamlessly.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Module 1: Employee Directory & Profiles */}
+            <div className="p-7 rounded-2xl bg-card border border-border hover:border-primary/50 hover:shadow-md transition-all text-left space-y-3.5 group">
+              <div className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-105 transition-transform">
+                <Users className="h-6 w-6" />
               </div>
-              <p className="text-xs text-muted-foreground max-w-md leading-relaxed">
-                Complete HR & Workforce Operating System. Streamline onboarding, attendance, leave management, and multi-tenant operations.
+              <h3 className="font-bold text-lg text-foreground">Core HR &amp; Employee Directory</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Centralized digital profiles with document storage, emergency contacts, compensation history, bank account verification, and automated employee onboarding workflows.
+              </p>
+              <ul className="text-xs text-muted-foreground space-y-1.5 pt-1">
+                <li className="flex items-center gap-2">
+                  <BadgeCheck className="h-3.5 w-3.5 text-primary" /> Multi-branch org charts &amp; hierarchy
+                </li>
+                <li className="flex items-center gap-2">
+                  <BadgeCheck className="h-3.5 w-3.5 text-primary" /> Digital onboarding checklist
+                </li>
+              </ul>
+            </div>
+
+            {/* Module 2: Geofenced Attendance */}
+            <div className="p-7 rounded-2xl bg-card border border-border hover:border-emerald-500/50 hover:shadow-md transition-all text-left space-y-3.5 group">
+              <div className="w-11 h-11 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <Clock className="h-6 w-6" />
+              </div>
+              <h3 className="font-bold text-lg text-foreground">Smart Attendance &amp; Shifts</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Precise GPS geofenced punch-in/out, biometric terminal sync, multi-shift scheduling, automated overtime calculations, and manager verification queues.
+              </p>
+              <ul className="text-xs text-muted-foreground space-y-1.5 pt-1">
+                <li className="flex items-center gap-2">
+                  <BadgeCheck className="h-3.5 w-3.5 text-emerald-500" /> Geofenced office perimeter validation
+                </li>
+                <li className="flex items-center gap-2">
+                  <BadgeCheck className="h-3.5 w-3.5 text-emerald-500" /> Daily regularization requests
+                </li>
+              </ul>
+            </div>
+
+            {/* Module 3: Leave Management */}
+            <div className="p-7 rounded-2xl bg-card border border-border hover:border-amber-500/50 hover:shadow-md transition-all text-left space-y-3.5 group">
+              <div className="w-11 h-11 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <Calendar className="h-6 w-6" />
+              </div>
+              <h3 className="font-bold text-lg text-foreground">Time-Off &amp; Leave Balances</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Configure custom leave policies (Casual, Sick, Annual, Maternity). Real-time accrual tracking, team vacation calendars, and single-click manager approval flows.
+              </p>
+              <ul className="text-xs text-muted-foreground space-y-1.5 pt-1">
+                <li className="flex items-center gap-2">
+                  <BadgeCheck className="h-3.5 w-3.5 text-amber-500" /> Automated monthly quota credit
+                </li>
+                <li className="flex items-center gap-2">
+                  <BadgeCheck className="h-3.5 w-3.5 text-amber-500" /> Conflict-free team calendar view
+                </li>
+              </ul>
+            </div>
+
+            {/* Module 4: Automated Payroll Engine */}
+            <div className="p-7 rounded-2xl bg-card border border-border hover:border-blue-500/50 hover:shadow-md transition-all text-left space-y-3.5 group">
+              <div className="w-11 h-11 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <CreditCard className="h-6 w-6" />
+              </div>
+              <h3 className="font-bold text-lg text-foreground">Automated Payroll &amp; Payslips</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Run flawless monthly payroll in minutes. Automated Provident Fund (PF), Tax (TDS), insurance deductions, bank export files, and instant digital payslip generation.
+              </p>
+              <ul className="text-xs text-muted-foreground space-y-1.5 pt-1">
+                <li className="flex items-center gap-2">
+                  <BadgeCheck className="h-3.5 w-3.5 text-blue-500" /> One-click bulk salary generation
+                </li>
+                <li className="flex items-center gap-2">
+                  <BadgeCheck className="h-3.5 w-3.5 text-blue-500" /> Encrypted PDF payslip delivery
+                </li>
+              </ul>
+            </div>
+
+            {/* Module 5: Role-Based Access Control */}
+            <div className="p-7 rounded-2xl bg-card border border-border hover:border-purple-500/50 hover:shadow-md transition-all text-left space-y-3.5 group">
+              <div className="w-11 h-11 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <ShieldCheck className="h-6 w-6" />
+              </div>
+              <h3 className="font-bold text-lg text-foreground">Granular Roles &amp; Permissions</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Customizable access tiers for Executives, HR Managers, Department Leads, and Employees. Ensure data confidentiality with department-level permission presets.
+              </p>
+              <ul className="text-xs text-muted-foreground space-y-1.5 pt-1">
+                <li className="flex items-center gap-2">
+                  <BadgeCheck className="h-3.5 w-3.5 text-purple-500" /> Pre-built role templates
+                </li>
+                <li className="flex items-center gap-2">
+                  <BadgeCheck className="h-3.5 w-3.5 text-purple-500" /> Comprehensive immutable audit trails
+                </li>
+              </ul>
+            </div>
+
+            {/* Module 6: Employee Self-Service (ESS) */}
+            <div className="p-7 rounded-2xl bg-card border border-border hover:border-indigo-500/50 hover:shadow-md transition-all text-left space-y-3.5 group">
+              <div className="w-11 h-11 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <UserCheck className="h-6 w-6" />
+              </div>
+              <h3 className="font-bold text-lg text-foreground">Employee Self-Service (ESS)</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Give employees direct control to check their attendance logs, download historical payslips, apply for time off, and update personal bank credentials on desktop or mobile.
+              </p>
+              <ul className="text-xs text-muted-foreground space-y-1.5 pt-1">
+                <li className="flex items-center gap-2">
+                  <BadgeCheck className="h-3.5 w-3.5 text-indigo-500" /> 24/7 personal HR portal
+                </li>
+                <li className="flex items-center gap-2">
+                  <BadgeCheck className="h-3.5 w-3.5 text-indigo-500" /> Real-time mobile notifications
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Interactive Experience Showcase */}
+      <section id="solutions" className="py-20 bg-muted/30 border-b border-border/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <span className="text-xs font-bold text-primary uppercase tracking-wider">Experience the Platform</span>
+            <h2 className="text-3xl font-bold tracking-tight text-foreground mt-2">
+              Designed for Speed, Clarity, and Accuracy
+            </h2>
+            <p className="text-sm text-muted-foreground mt-2">
+              See how ALKAA eliminates repetitive administrative overhead for HR leaders.
+            </p>
+          </div>
+
+          {/* Interactive Tabs */}
+          <div className="flex justify-center mb-8">
+            <div className="inline-flex p-1.5 rounded-xl bg-card border border-border shadow-xs gap-1">
+              <button
+                type="button"
+                onClick={() => setActiveTab('payroll')}
+                className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+                  activeTab === 'payroll' 
+                    ? 'bg-primary text-primary-foreground shadow-xs' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Automated Payroll
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('attendance')}
+                className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+                  activeTab === 'attendance' 
+                    ? 'bg-primary text-primary-foreground shadow-xs' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Geofenced Attendance
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('leave')}
+                className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+                  activeTab === 'leave' 
+                    ? 'bg-primary text-primary-foreground shadow-xs' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Leave Management
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('directory')}
+                className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+                  activeTab === 'directory' 
+                    ? 'bg-primary text-primary-foreground shadow-xs' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Employee Lifecycle
+              </button>
+            </div>
+          </div>
+
+          {/* Tab Content Preview Card */}
+          <div className="max-w-4xl mx-auto">
+            <Card className="border border-border shadow-md bg-card text-card-foreground rounded-2xl overflow-hidden text-left">
+              <CardContent className="p-8 sm:p-10">
+                {activeTab === 'payroll' && (
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+                    <div className="md:col-span-6 space-y-4">
+                      <span className="text-xs font-bold text-primary uppercase">Zero-Error Pay Runs</span>
+                      <h4 className="text-2xl font-bold text-foreground">Generate 100+ Payslips in Under 3 Minutes</h4>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Automatic integration with monthly attendance, approved unpaid leaves, and predefined salary structures. Statutory taxes and deductions are calculated with 100% precision.
+                      </p>
+                      <div className="space-y-2 pt-2 text-xs font-medium text-foreground">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Automated PF, TDS, and insurance breakdowns
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Direct-to-bank disburse spreadsheet exports
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Instant PDF payslip dispatch to employee inboxes
+                        </div>
+                      </div>
+                    </div>
+                    <div className="md:col-span-6 p-5 rounded-xl bg-muted/60 border border-border space-y-3 font-mono text-xs">
+                      <div className="flex justify-between items-center pb-2 border-b border-border">
+                        <span className="text-muted-foreground">Cycle</span>
+                        <span className="font-semibold text-foreground">November 2026</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Total Headcount</span>
+                        <span className="font-semibold text-foreground">128 Employees</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Gross Compensation</span>
+                        <span className="font-semibold text-foreground">$412,850.00</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Statutory Deductions</span>
+                        <span className="font-semibold text-foreground">-$48,910.00</span>
+                      </div>
+                      <div className="flex justify-between items-center pt-2 border-t border-border font-bold text-sm text-primary">
+                        <span>Net Disbursement</span>
+                        <span>$363,940.00</span>
+                      </div>
+                      <div className="pt-2">
+                        <div className="w-full h-2 rounded-full bg-emerald-500/20 overflow-hidden">
+                          <div className="w-full h-full bg-emerald-500 rounded-full" />
+                        </div>
+                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-sans mt-1 block text-right font-medium">
+                          ✓ Reconciliation Complete
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'attendance' && (
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+                    <div className="md:col-span-6 space-y-4">
+                      <span className="text-xs font-bold text-emerald-500 uppercase">Geofenced Shifts</span>
+                      <h4 className="text-2xl font-bold text-foreground">Eliminate Buddy Punching &amp; Ghost Hours</h4>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Configure office geofences with custom radiuses down to 50 meters. Employees clock in via mobile GPS verification, and shift exceptions are flagged instantly for manager review.
+                      </p>
+                      <div className="space-y-2 pt-2 text-xs font-medium text-foreground">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Precise coordinate validation upon punch
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Auto-calculate late entries, early leaves &amp; OT
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Seamless integration with biometric hardware
+                        </div>
+                      </div>
+                    </div>
+                    <div className="md:col-span-6 p-5 rounded-xl bg-muted/60 border border-border space-y-3 font-mono text-xs">
+                      <div className="flex justify-between items-center pb-2 border-b border-border">
+                        <span className="text-muted-foreground">Office Location</span>
+                        <span className="font-semibold text-foreground">HQ - Manhattan Branch</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Geofence Radius</span>
+                        <span className="font-semibold text-foreground">75 meters</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Today's Check-Ins</span>
+                        <span className="font-semibold text-emerald-500">114 Present (95%)</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Regularization Queue</span>
+                        <span className="font-semibold text-amber-500">2 Pending Reviews</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'leave' && (
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+                    <div className="md:col-span-6 space-y-4">
+                      <span className="text-xs font-bold text-amber-500 uppercase">Seamless Time-Off</span>
+                      <h4 className="text-2xl font-bold text-foreground">No More Lost Emails or Approval Delays</h4>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Employees check their remaining balances in real time and submit requests with one tap. Managers receive instant notifications and can approve or decline directly with notes.
+                      </p>
+                      <div className="space-y-2 pt-2 text-xs font-medium text-foreground">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-amber-500" /> Customized policy tiers (Casual, Sick, Vacation)
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-amber-500" /> Multi-tier manager approval chains
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-amber-500" /> Automated sync with monthly payroll deductions
+                        </div>
+                      </div>
+                    </div>
+                    <div className="md:col-span-6 p-5 rounded-xl bg-muted/60 border border-border space-y-3 font-mono text-xs">
+                      <div className="flex justify-between items-center pb-2 border-b border-border">
+                        <span className="text-muted-foreground">Employee Request</span>
+                        <span className="font-semibold text-foreground">Alex Rivera (Product)</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Leave Category</span>
+                        <span className="font-semibold text-foreground">Annual Vacation (3 Days)</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Balance Remaining</span>
+                        <span className="font-semibold text-foreground">11 Days</span>
+                      </div>
+                      <div className="flex justify-between items-center pt-2 border-t border-border font-semibold text-emerald-500">
+                        <span>Approval Status</span>
+                        <span>Approved by Manager</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'directory' && (
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+                    <div className="md:col-span-6 space-y-4">
+                      <span className="text-xs font-bold text-primary uppercase">People Directory</span>
+                      <h4 className="text-2xl font-bold text-foreground">One Single Source of Truth for Your Team</h4>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Store essential tax details, statutory KYC documents, past appraisals, and emergency contacts in fully encrypted, searchable records.
+                      </p>
+                      <div className="space-y-2 pt-2 text-xs font-medium text-foreground">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-primary" /> Visual departmental hierarchy &amp; reporting lines
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-primary" /> Automated onboarding document upload
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-primary" /> Secure role assignment &amp; account provisioning
+                        </div>
+                      </div>
+                    </div>
+                    <div className="md:col-span-6 p-5 rounded-xl bg-muted/60 border border-border space-y-3 font-mono text-xs">
+                      <div className="flex justify-between items-center pb-2 border-b border-border">
+                        <span className="text-muted-foreground">Active Workspaces</span>
+                        <span className="font-semibold text-foreground">3 Regional Branches</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Departments</span>
+                        <span className="font-semibold text-foreground">Engineering, Sales, HR, Ops</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Onboarding Status</span>
+                        <span className="font-semibold text-emerald-500">4 New Hires Joining</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Enterprise Security & Compliance Section */}
+      <section id="security" className="py-20 bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-14">
+            <span className="text-xs font-bold text-primary uppercase tracking-wider">Enterprise Security</span>
+            <h2 className="text-3xl font-bold tracking-tight text-foreground mt-2">
+              Enterprise-Grade Protection for Your People Data
+            </h2>
+            <p className="text-sm text-muted-foreground mt-2">
+              Your payroll and employee records demand uncompromised privacy, regulatory compliance, and high availability.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+            <div className="p-6 rounded-2xl bg-card border border-border shadow-xs space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                <Lock className="h-5 w-5" />
+              </div>
+              <h3 className="font-bold text-base text-foreground">Multi-Tenant Data Isolation</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Each company operates in strict organization-level cryptographic separation. Zero risk of cross-tenant data leaks or unauthorized data access.
               </p>
             </div>
 
-            {/* Quick Working Navigation */}
-            <div className="flex flex-wrap items-center gap-6 text-sm">
-              <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</a>
-              <button 
-                type="button"
-                onClick={() => navigate(RouteDict.SignInPage)} 
-                className="text-muted-foreground hover:text-primary font-medium transition-colors"
-              >
-                Sign In
-              </button>
-              <button 
-                type="button"
-                onClick={() => navigate(RouteDict.SignUpPage)} 
-                className="text-muted-foreground hover:text-primary font-medium transition-colors"
-              >
-                Register
-              </button>
+            <div className="p-6 rounded-2xl bg-card border border-border shadow-xs space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <h3 className="font-bold text-base text-foreground">Two-Factor Authentication (2FA)</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Every sensitive session is protected with multi-tenant verification and time-based one-time passcodes (OTP) for maximum executive security.
+              </p>
+            </div>
+
+            <div className="p-6 rounded-2xl bg-card border border-border shadow-xs space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                <FileText className="h-5 w-5" />
+              </div>
+              <h3 className="font-bold text-base text-foreground">Regulatory Audit Trails</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Immutable activity logging for all salary modifications, employee record changes, and role reassignments to ensure seamless statutory compliance audits.
+              </p>
             </div>
           </div>
+        </div>
+      </section>
 
-          {/* Bottom Attribution */}
-          <div className="pt-6 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-muted-foreground">
-            <div>
-              &copy; {new Date().getFullYear()} Alkaa. All rights reserved.
+      {/* Pre-Footer CTA */}
+      <section className="py-16 bg-muted/40 border-t border-border">
+        <div className="max-w-4xl mx-auto px-4 text-center space-y-5">
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
+            Ready to elevate your workforce operations?
+          </h2>
+          <p className="text-sm text-muted-foreground max-w-xl mx-auto">
+            Experience the HRMS platform built for growing teams, reliable payroll, and happy employees.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3.5 pt-2">
+            <Button 
+              onClick={() => navigate(RouteDict.SignInPage)}
+              className="h-11 px-6 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-sm rounded-xl shadow-xs"
+            >
+              Sign In to Your Workspace
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => {
+                const el = document.getElementById('demo-form-section');
+                el?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="h-11 px-6 border-border text-foreground font-semibold text-sm rounded-xl hover:bg-muted"
+            >
+              Request a Free Demo
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Enterprise Footer */}
+      <footer className="py-10 bg-background border-t border-border text-xs text-muted-foreground">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-lg bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
+              A
             </div>
-            <div>
-              Owned by Shapenxt.
-            </div>
+            <span className="font-bold text-foreground">ALKAA HRMS</span>
+            <span>•</span>
+            <span>Enterprise Workforce Management Platform</span>
+          </div>
+
+          <div className="flex items-center gap-6">
+            <button 
+              type="button" 
+              onClick={() => navigate(RouteDict.SignInPage)} 
+              className="hover:text-foreground font-medium transition-colors"
+            >
+              Employee Portal
+            </button>
+            <span>•</span>
+            <button 
+              type="button" 
+              onClick={() => {
+                const el = document.getElementById('demo-form-section');
+                el?.scrollIntoView({ behavior: 'smooth' });
+              }} 
+              className="hover:text-foreground font-medium transition-colors"
+            >
+              Book Demo
+            </button>
+            <span>•</span>
+            <span>Owned by Shapenxt.</span>
           </div>
         </div>
       </footer>

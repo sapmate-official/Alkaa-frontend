@@ -48,109 +48,11 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Simple token storage with events
-export const tokenStorage = {
-    setAccessToken: (token: string) => localStorage.setItem('accessToken', token),
-    getAccessToken: () => localStorage.getItem('accessToken'),
-    setRefreshToken: (token: string) => localStorage.setItem('refreshToken', token),
-    getRefreshToken: () => localStorage.getItem('refreshToken'),
-    setOrgData: (orgId: string, orgName: string) => {
-        localStorage.setItem('orgId', orgId);
-        localStorage.setItem('orgName', orgName);
-    },
-    getOrgData: () => ({
-        orgId: localStorage.getItem('orgId'),
-        orgName: localStorage.getItem('orgName')
-    }),
-    clearTokens: () => {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('orgId');
-        localStorage.removeItem('orgName');
-    },
-    isTokenExpired: (token: string) => {
-        if (!token) return true;
-        try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            return payload.exp * 1000 < Date.now();
-        } catch {
-            return true;
-        }
-    }
-};
+import { tokenStorage, setOnUnauthorizedCallback, refreshSessionTokens } from "@/services/api/client";
+export { tokenStorage };
 
 const toPermissionList = (keys?: string[]): Permission[] =>
     (keys ?? []).map((key) => ({ key, name: key, module: '' } as Permission));
-
-// Configure axios interceptors
-const setupAxiosInterceptors = (navigate: ReturnType<typeof useNavigate>) => {
-    // Request interceptor
-    axios.interceptors.request.use(
-        (config) => {
-            const accessToken = tokenStorage.getAccessToken();
-            if (accessToken) {
-                config.headers.Authorization = `Bearer ${accessToken}`;
-            }
-            
-            // Add orgId to headers for organization-specific requests
-            const { orgId } = tokenStorage.getOrgData();
-            if (orgId && !config.url?.includes('/auth/') && !config.url?.includes('/general/')) {
-                config.headers['X-Org-Id'] = orgId;
-            }
-            
-            return config;
-        },
-        (error) => Promise.reject(error)
-    );
-
-    // Response interceptor for automatic token refresh
-    axios.interceptors.response.use(
-        (response) => response,
-        async (error) => {
-            const originalRequest = error.config;
-            
-            // If error is 401 and not a retry and we have a refresh token
-            if (error.response?.status === 401 && !originalRequest._retry && tokenStorage.getRefreshToken()) {
-                originalRequest._retry = true;
-                
-                try {
-                    // Get new tokens
-                    const refreshToken = tokenStorage.getRefreshToken();
-                    const response = await axios.post(
-                        `${backendDomain}/api/v1/general/refresh-token`,
-                        { refreshToken },
-                        { withCredentials: true, headers: { Authorization: `Bearer ${refreshToken}` } }
-                    );
-
-                    if (response.data.accessToken && response.data.refreshToken) {
-                        tokenStorage.setAccessToken(response.data.accessToken);
-                        tokenStorage.setRefreshToken(response.data.refreshToken);
-                        
-                        // Update header and retry
-                        originalRequest.headers.Authorization = `Bearer ${response.data.accessToken}`;
-                        return axios(originalRequest);
-                    }
-                } catch (refreshError) {
-                    // If refresh fails, clear tokens and redirect to login
-                    tokenStorage.clearTokens();
-                    // Clear browser history and force navigation to login
-                    window.history.replaceState(null, '', '/auth/signin');
-                    navigate('/auth/signin', { replace: true });
-                    return Promise.reject(refreshError);
-                }
-            }
-            
-            // For any 401 error (including when refresh token is not available)
-            if (error.response?.status === 401) {
-                tokenStorage.clearTokens();
-                window.history.replaceState(null, '', '/auth/signin');
-                navigate('/auth/signin', { replace: true });
-            }
-            
-            return Promise.reject(error);
-        }
-    );
-};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     children,
@@ -163,9 +65,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const navigate = useNavigate();
     const [isInitialized, setIsInitialized] = useState(false);
     
-    // Setup axios interceptors
+    // Wire unified API client unauthorized callback to navigate to signin
     useEffect(() => {
-        setupAxiosInterceptors(navigate);
+        setOnUnauthorizedCallback(() => {
+            navigate('/auth/signin', { replace: true });
+        });
     }, [navigate]);
 
     const validateToken = async () => {
@@ -203,31 +107,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const initializeAuth = async () => {
         try {
             const accessToken = tokenStorage.getAccessToken();
-            if (!accessToken) {
+            const refreshToken = tokenStorage.getRefreshToken();
+
+            if (!accessToken && !refreshToken) {
                 setUser(null);
                 setIsLoading(false);
                 return;
             }
 
             // Check token expiration client-side first to avoid unnecessary API calls
-            if (tokenStorage.isTokenExpired(accessToken)) {
+            if (!accessToken || tokenStorage.isTokenExpired(accessToken)) {
                 // Try to refresh token if we have a refresh token
-                const refreshToken = tokenStorage.getRefreshToken();
                 if (refreshToken && !tokenStorage.isTokenExpired(refreshToken)) {
                     try {
-                        const response = await axios.post(
-                            `${backendDomain}/api/v1/general/refresh-token`,
-                            { refreshToken },
-                            { withCredentials: true, headers: { Authorization: `Bearer ${refreshToken}` } }
-                        );
-
-                        if (response.data.accessToken && response.data.refreshToken) {
-                            tokenStorage.setAccessToken(response.data.accessToken);
-                            tokenStorage.setRefreshToken(response.data.refreshToken);
-                            await validateToken();
-                        } else {
-                            throw new Error("Invalid refresh response");
-                        }
+                        await refreshSessionTokens();
+                        await validateToken();
+                        setAuthStep({ step: 'complete' });
                     } catch {
                         tokenStorage.clearTokens();
                         setUser(null);
@@ -238,6 +133,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 }
             } else {
                 await validateToken();
+                setAuthStep({ step: 'complete' });
             }
         } catch (error) {
             console.error("Auth initialization error:", error);
