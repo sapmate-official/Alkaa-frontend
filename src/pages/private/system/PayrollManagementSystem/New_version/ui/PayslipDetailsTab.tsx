@@ -87,7 +87,9 @@ const ComparisonsSection: React.FC<{
       <div className="bg-muted p-4 rounded-md">
         <p className="text-sm text-muted-foreground">Earnings Ratio</p>
         <h3 className="text-2xl font-bold">
-          {payslipStatistics.comparisons.earningsRatio.toFixed(2)}%
+          {payslipStatistics.comparisons?.earningsRatio != null
+            ? `${payslipStatistics.comparisons.earningsRatio.toFixed(2)}%`
+            : 'N/A'}
         </h3>
         <p className="text-xs text-muted-foreground mt-1">
           Net to basic salary ratio
@@ -97,14 +99,16 @@ const ComparisonsSection: React.FC<{
       <div className="bg-muted p-4 rounded-md">
         <p className="text-sm text-muted-foreground">YTD Earnings</p>
         <h3 className="text-2xl font-bold">
-          {formatCurrency(payslipStatistics.comparisons.yearToDateEarnings)}
+          {payslipStatistics.comparisons?.yearToDateEarnings != null
+            ? formatCurrency(payslipStatistics.comparisons.yearToDateEarnings)
+            : 'N/A'}
         </h3>
         <p className="text-xs text-muted-foreground mt-1">
           Total earnings this year
         </p>
       </div>
 
-      {payslipStatistics.comparisons.previousMonth && (
+      {payslipStatistics.comparisons?.previousMonth && (
         <div className="bg-muted p-4 rounded-md">
           <p className="text-sm text-muted-foreground">vs Previous Month</p>
           <h3 className="text-2xl font-bold flex items-center">

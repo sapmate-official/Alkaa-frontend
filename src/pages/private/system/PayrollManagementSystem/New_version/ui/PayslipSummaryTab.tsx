@@ -97,7 +97,7 @@ const SalaryBreakdown: React.FC<{
                 {formatCurrency(payslipStatistics.salaryBreakdown.basicSalary)}
               </TableCell>
             </TableRow>
-            {Object.entries(payslipStatistics.salaryBreakdown.allowanceDetails).map(([key, value]) => (
+            {Object.entries(payslipStatistics.salaryBreakdown?.allowanceDetails || {}).map(([key, value]) => (
               <TableRow key={key}>
                 <TableCell className="capitalize">{key}</TableCell>
                 <TableCell className="text-right">
@@ -128,7 +128,7 @@ const SalaryBreakdown: React.FC<{
             </TableRow>
           </TableHeader>
           <TableBody>
-            {Object.entries(payslipStatistics.salaryBreakdown.deductionDetails).map(([key, value]) => (
+            {Object.entries(payslipStatistics.salaryBreakdown?.deductionDetails || {}).map(([key, value]) => (
               <TableRow key={key}>
                 <TableCell className="capitalize">{key}</TableCell>
                 <TableCell className="text-right">

@@ -49,7 +49,9 @@ const AttendanceMetrics: React.FC<{ payslipStatistics: PayrollStatistics }> = ({
     <div className="bg-muted p-4 rounded-md">
       <p className="text-sm text-muted-foreground">Attendance</p>
       <h3 className="text-2xl font-bold">
-        {payslipStatistics.attendanceAnalysis.attendancePercentage.toFixed(2)}%
+        {payslipStatistics.attendanceAnalysis?.attendancePercentage != null
+          ? `${payslipStatistics.attendanceAnalysis.attendancePercentage.toFixed(2)}%`
+          : 'N/A'}
       </h3>
     </div>
   </div>
@@ -94,7 +96,11 @@ const MonthlyOverview: React.FC<{ payslipStatistics: PayrollStatistics }> = ({ p
       </div>
       <div className="flex justify-between mb-2">
         <span>Attendance</span>
-        <span>{payslipStatistics.attendanceAnalysis.attendancePercentage.toFixed(2)}%</span>
+        <span>
+          {payslipStatistics.attendanceAnalysis?.attendancePercentage != null
+            ? `${payslipStatistics.attendanceAnalysis.attendancePercentage.toFixed(2)}%`
+            : 'N/A'}
+        </span>
       </div>
     </div>
   </div>

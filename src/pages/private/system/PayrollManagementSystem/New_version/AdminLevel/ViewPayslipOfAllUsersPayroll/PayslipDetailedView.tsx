@@ -286,11 +286,15 @@ const PayslipDetailedView: React.FC<PayslipDetailedViewProps> = ({ statistics })
             <div className="grid grid-cols-2 gap-3">
               <Card className="bg-primary/15 p-3 text-center">
                 <p className="text-xs font-medium text-primary">Earnings Ratio</p>
-                <p className="text-xl font-bold">{comparisons.earningsRatio}%</p>
+                <p className="text-xl font-bold">
+                  {comparisons?.earningsRatio != null ? `${comparisons.earningsRatio}%` : 'N/A'}
+                </p>
               </Card>
               <Card className="bg-secondary/15 p-3 text-center">
                 <p className="text-xs font-medium text-secondary">YTD Earnings</p>
-                <p className="text-xl font-bold">{formatCurrency(comparisons.yearToDateEarnings)}</p>
+                <p className="text-xl font-bold">
+                  {comparisons?.yearToDateEarnings != null ? formatCurrency(comparisons.yearToDateEarnings) : 'N/A'}
+                </p>
               </Card>
             </div>
           </CardContent>

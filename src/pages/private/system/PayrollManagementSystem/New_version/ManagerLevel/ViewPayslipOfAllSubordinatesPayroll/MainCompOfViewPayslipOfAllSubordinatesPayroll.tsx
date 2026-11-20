@@ -1054,11 +1054,19 @@ const MainCompOfViewPayslipOfAllSubordinatesPayroll = () => {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                               <div className="p-4 bg-muted/30 rounded-md">
                                 <p className="text-sm text-muted-foreground">YTD Earnings</p>
-                                <p className="text-xl font-bold">{formatCurrency(payslipStatistics.comparisons.yearToDateEarnings)}</p>
+                                <p className="text-xl font-bold">
+                                  {payslipStatistics.comparisons?.yearToDateEarnings != null
+                                    ? formatCurrency(payslipStatistics.comparisons.yearToDateEarnings)
+                                    : 'N/A'}
+                                </p>
                               </div>
                               <div className="p-4 bg-muted/30 rounded-md">
                                 <p className="text-sm text-muted-foreground">Earnings Ratio</p>
-                                <p className="text-xl font-bold">{payslipStatistics.comparisons.earningsRatio}%</p>
+                                <p className="text-xl font-bold">
+                                  {payslipStatistics.comparisons?.earningsRatio != null
+                                    ? `${payslipStatistics.comparisons.earningsRatio}%`
+                                    : 'N/A'}
+                                </p>
                               </div>
                               <div className="p-4 bg-muted/30 rounded-md">
                                 <p className="text-sm text-muted-foreground">Payment Status</p>
