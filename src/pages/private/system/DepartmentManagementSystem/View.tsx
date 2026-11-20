@@ -22,8 +22,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { ButtonOfSpecificDepartmentEdit } from './Edit'
 import { useToast } from '@/hooks/use-toast'
 import CheckPermission from '@/services/PermissionCheck'
-import { useAtom } from 'jotai'
-import { permissionListAtom } from '@/store/atom'
+import { usePermissions } from '@/store/useAuthStore'
 import { Input } from '@/components/ui/input'
 import {
   Tooltip,
@@ -79,7 +78,7 @@ const SpecificDepartmentView = () => {
   const { user } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
-  const [permissions] = useAtom(permissionListAtom)
+  const permissions = usePermissions()
   const [searchQuery, setSearchQuery] = useState('')
   const [confirmHeadChange, setConfirmHeadChange] = useState<User | Employee | null>(null)
 

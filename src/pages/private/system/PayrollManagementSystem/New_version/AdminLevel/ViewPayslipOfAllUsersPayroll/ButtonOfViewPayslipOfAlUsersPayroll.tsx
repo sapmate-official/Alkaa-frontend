@@ -1,12 +1,11 @@
 import { Button } from '@/components/ui/button'
 import RouteDict from '@/routes/RouteDict'
 import CheckPermission from '@/services/PermissionCheck'
-import { permissionListAtom } from '@/store/atom'
-import { useAtom } from 'jotai'
+import { usePermissions } from '@/store/useAuthStore'
 import { useNavigate } from 'react-router-dom'
 
 const ButtonOfViewPayslipOfAllUsersPayroll = () => {
-    const [permissions] = useAtom(permissionListAtom)
+    const permissions = usePermissions()
     const navigate = useNavigate()
     const hasPermission = CheckPermission("view_salary_slip_of_all",permissions)
     if(!hasPermission) return null

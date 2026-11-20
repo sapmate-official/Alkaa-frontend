@@ -178,7 +178,7 @@ const EditLeaveRequest = () => {
 
   if (loading) {
     return (
-      <div className="h-screen w-full flex items-center justify-center">
+      <div className="h-full min-h-[50vh] w-full flex items-center justify-center">
         <motion.div 
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -265,7 +265,7 @@ const EditLeaveRequest = () => {
           <Card className="shadow-md">
             <CardHeader className="border-b bg-muted/30">
               <CardTitle className="flex items-center space-x-2">
-                <FileText className="h-5 w-5 text-blue-500" />
+                <FileText className="h-5 w-5 text-muted-foreground" />
                 <span>Request Details</span>
               </CardTitle>
             </CardHeader>
@@ -275,7 +275,7 @@ const EditLeaveRequest = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-sm font-medium flex items-center space-x-2">
-                      <CalendarIcon className="h-4 w-4 text-blue-500" />
+                      <CalendarIcon className="h-4 w-4 text-muted-foreground" />
                       <span>Start Date</span>
                     </label>
                     <div className="border rounded-lg p-3">
@@ -311,7 +311,7 @@ const EditLeaveRequest = () => {
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium flex items-center space-x-2">
-                      <CalendarIcon className="h-4 w-4 text-blue-500" />
+                      <CalendarIcon className="h-4 w-4 text-muted-foreground" />
                       <span>End Date</span>
                     </label>
                     <div className="border rounded-lg p-3">
@@ -345,7 +345,7 @@ const EditLeaveRequest = () => {
                 {/* Reason */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium flex items-center space-x-2">
-                    <FileText className="h-4 w-4 text-blue-500" />
+                    <FileText className="h-4 w-4 text-muted-foreground" />
                     <span>Reason for Leave</span>
                   </label>
                   <Textarea
@@ -441,7 +441,7 @@ const EditLeaveRequest = () => {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center space-x-2">
-                <User className="h-5 w-5 text-blue-500" />
+                <User className="h-5 w-5 text-muted-foreground" />
                 <span>Employee Information</span>
               </CardTitle>
             </CardHeader>

@@ -1,6 +1,5 @@
-import { useAtom } from "jotai";
 import { ReactNode } from "react";
-import { permissionListAtom } from "../../store/atom";
+import { usePermissions } from "@/store/useAuthStore";
 import Unauthorized from "../Unauthorized";
 
 interface PermissionRouteProps {
@@ -10,7 +9,7 @@ interface PermissionRouteProps {
 }
 
 const PermissionRoute = ({ children, requiredPermissions, requireAll = false }: PermissionRouteProps) => {
-  const [permissionList] = useAtom(permissionListAtom);
+  const permissionList = usePermissions();
 
   const hasPermission = requireAll
     ? requiredPermissions.every(permission => 

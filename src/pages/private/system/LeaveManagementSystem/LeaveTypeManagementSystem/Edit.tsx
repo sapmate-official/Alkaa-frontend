@@ -123,9 +123,9 @@ const EditLeaveType = () => {
 
     if (isLoading) {
         return (
-            <div className="h-screen w-full bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+            <div className="w-full min-h-full space-y-6">
                 {/* Header Skeleton */}
-                <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-6 py-4">
+                <div className="bg-card border-b border-border px-6 py-4">
                     <div className="flex items-center space-x-3">
                         <Skeleton className="h-10 w-10" />
                         <Skeleton className="h-8 w-8 rounded-lg" />
@@ -137,7 +137,7 @@ const EditLeaveType = () => {
                 </div>
 
                 {/* Content Skeleton */}
-                <div className="p-6">
+                <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-4xl">
                     <div className="max-w-4xl mx-auto space-y-6">
                         <Card className="p-6">
                             <Skeleton className="h-6 w-48 mb-4" />
@@ -171,35 +171,35 @@ const EditLeaveType = () => {
     }
 
     return (
-        <div className="h-screen w-full bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 overflow-hidden">
+        <div className="w-full min-h-full space-y-6">
             {/* Header */}
             <motion.div 
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-6 py-4"
+                className="bg-card border-b border-border px-6 py-4"
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                         <Button
                             variant="ghost"
                             onClick={() => navigate(RouteDict.Leave.Types.List)}
-                            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800"
+                            className="p-2 hover:bg-secondary"
                         >
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
-                        <div className="p-2 bg-blue-500 rounded-lg">
-                            <CalendarDays className="h-6 w-6 text-white" />
+                        <div className="p-2 bg-secondary rounded-lg">
+                            <CalendarDays className="h-6 w-6 text-foreground" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                            <h1 className="text-2xl font-bold text-foreground">
                                 Edit Leave Type
                             </h1>
-                            <p className="text-sm text-slate-600 dark:text-slate-400">
+                            <p className="text-sm text-muted-foreground">
                                 Modify leave type configuration and policies
                             </p>
                         </div>
                     </div>
-                    <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                    <Badge variant="secondary">
                         <Edit className="h-3 w-3 mr-1" />
                         Editing
                     </Badge>
@@ -207,7 +207,7 @@ const EditLeaveType = () => {
             </motion.div>
 
             {/* Content */}
-            <div className="p-6 h-[calc(100vh-80px)] overflow-y-auto">
+            <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-4xl">
                 <div className="max-w-4xl mx-auto">
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">

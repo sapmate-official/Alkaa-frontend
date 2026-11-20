@@ -30,8 +30,7 @@ import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { useAtom } from 'jotai';
-import { permissionListAtom } from '@/store/atom';
+import { usePermissions } from '@/store/useAuthStore';
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Clock, MapPin, Laptop, Calendar, UserCheck, ClipboardList, CheckCircle, XCircle, Layers, History } from "lucide-react";
@@ -71,7 +70,7 @@ const AttendancePanel = () => {
   const [reportData, setReportData] = useState<reportData>({ "Task 1": "Task 1", "Task 2": "Task 2" });
   const [taskCount, setTaskCount] = useState<number>(2);
   const [fallbackDialogVisible, setFallbackDialogVisible] = useState<boolean>(false);
-  const [permissionList] = useAtom(permissionListAtom);
+  const permissionList = usePermissions();
   
   // Add organization timezone and formatting hooks
   const { orgTimezone } = useDateTimeFormat();
@@ -294,9 +293,9 @@ const AttendancePanel = () => {
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={(e) => {
           if (e.target === e.currentTarget) setFallbackDialogVisible(false);
         }}>
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-[500px] w-full" onClick={e => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold mb-4">Daily Task Report</h3>
-            <p className="text-sm text-gray-500 mb-4">
+          <div className="bg-card text-card-foreground border border-border p-6 rounded-xl shadow-lg max-w-[500px] w-full" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold mb-4 text-foreground">Daily Task Report</h3>
+            <p className="text-sm text-muted-foreground mb-4">
               Please list all the tasks you've completed today before checking out.
             </p>
 
@@ -307,11 +306,11 @@ const AttendancePanel = () => {
                   value={reportData[key]}
                   onChange={(e) => handleTaskInputChange(index, e.target.value)}
                   placeholder={`Task ${index + 1}`}
-                  className="flex-grow border p-2 rounded"
+                  className="flex-grow border border-input bg-background p-2 rounded-md text-sm text-foreground"
                 />
                 <button
                   onClick={() => removeTaskField(index)}
-                  className="h-10 w-10 p-0 border rounded"
+                  className="h-10 w-10 p-0 border border-input rounded-md text-muted-foreground hover:bg-secondary"
                   disabled={Object.keys(reportData).length <= 1}
                 >
                   ×
@@ -436,7 +435,7 @@ const AttendancePanel = () => {
               <ClipboardList className="mr-2 h-4 w-4" />
               Regularize
               {PastNotCheckedDayscount > 0 && (
-                <Badge variant="secondary" className="ml-2 bg-white text-indigo-600">
+                <Badge variant="secondary" className="ml-2 bg-secondary text-secondary-foreground font-mono">
                   {PastNotCheckedDayscount}
                 </Badge>
               )}

@@ -10,8 +10,7 @@ import { Label } from "@/components/ui/label"
 import { useToast } from '@/hooks/use-toast'
 import Loader from '@/components/Loader'
 import { ArrowLeft, Building, Pencil, Save, Trash, AlertTriangle } from 'lucide-react'
-import { useAtom } from 'jotai'
-import { permissionListAtom } from '@/store/atom'
+import { usePermissions } from '@/store/useAuthStore'
 import CheckPermission from '@/services/PermissionCheck'
 import {
   Breadcrumb,
@@ -44,7 +43,7 @@ export const ButtonOfSpecificDepartmentEdit = ({id, user}: {
   user: User | null | undefined
 }) => {
   const navigate = useNavigate()
-  const [permissions] = useAtom(permissionListAtom)
+  const permissions = usePermissions()
   const hasPermission = CheckPermission('edit_department', permissions)
   const isCurrentUserHead = user?.Department?.[0]?.headId === user?.id
   
@@ -84,7 +83,7 @@ const SpecificDepartmentEdit = () => {
   })
   const { toast } = useToast()
   const navigate = useNavigate()
-  const [permissions] = useAtom(permissionListAtom)
+  const permissions = usePermissions()
   const hasDeletePermission = CheckPermission('delete_department', permissions)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)

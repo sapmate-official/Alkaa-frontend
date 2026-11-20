@@ -226,7 +226,7 @@ const LeaveRequestCreate = () => {
           <Card className="shadow-md">
             <CardHeader className="border-b bg-muted/30">
               <CardTitle className="flex items-center space-x-2">
-                <FileText className="h-5 w-5 text-blue-500" />
+                <FileText className="h-5 w-5 text-muted-foreground" />
                 <span>Request Details</span>
               </CardTitle>
               <CardDescription>Fill in the details to submit a new leave request</CardDescription>
@@ -242,7 +242,7 @@ const LeaveRequestCreate = () => {
                   className="space-y-2"
                 >
                   <label className="text-sm font-medium flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-blue-500" />
+                    <FileText className="h-4 w-4 text-muted-foreground" />
                     Leave Type
                   </label>
                   
@@ -313,7 +313,7 @@ const LeaveRequestCreate = () => {
                     htmlFor="same-day-leave" 
                     className="text-sm font-medium cursor-pointer flex items-center space-x-2"
                   >
-                    <Clock className="h-4 w-4 text-blue-500" />
+                    <Clock className="h-4 w-4 text-muted-foreground" />
                     <span>Apply for today only</span>
                   </label>
                 </motion.div>
@@ -328,7 +328,7 @@ const LeaveRequestCreate = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <label className="text-sm font-medium flex items-center gap-2">
-                          <CalendarDays className="h-4 w-4 text-blue-500" />
+                          <CalendarDays className="h-4 w-4 text-muted-foreground" />
                           Start Date
                         </label>
                         <div className="border rounded-lg p-3 bg-background">
@@ -351,7 +351,7 @@ const LeaveRequestCreate = () => {
                       
                       <div className="space-y-2">
                         <label className="text-sm font-medium flex items-center gap-2">
-                          <CalendarDays className="h-4 w-4 text-blue-500" />
+                          <CalendarDays className="h-4 w-4 text-muted-foreground" />
                           End Date
                         </label>
                         <div className="border rounded-lg p-3 bg-background">
@@ -390,7 +390,7 @@ const LeaveRequestCreate = () => {
                   className="space-y-2"
                 >
                   <label className="text-sm font-medium flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-blue-500" />
+                    <FileText className="h-4 w-4 text-muted-foreground" />
                     Reason for Leave
                   </label>
                   <Textarea
@@ -492,7 +492,7 @@ const LeaveRequestCreate = () => {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center space-x-2">
-                <User className="h-5 w-5 text-blue-500" />
+                <User className="h-5 w-5 text-muted-foreground" />
                 <span>Employee Information</span>
               </CardTitle>
             </CardHeader>
@@ -508,7 +508,7 @@ const LeaveRequestCreate = () => {
           <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950">
             <CardContent className="p-4">
               <div className="flex items-start space-x-2">
-                <FileText className="h-5 w-5 text-blue-500 mt-0.5" />
+                <FileText className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div>
                   <p className="text-sm font-medium text-blue-900 dark:text-blue-100">Quick Tips</p>
                   <ul className="text-sm text-blue-700 dark:text-blue-300 mt-1 space-y-1">

@@ -16,8 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/providers/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { useAtom } from 'jotai';
-import { permissionListAtom } from '@/store/atom';
+import { usePermissions } from '@/store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import CreateTaskDialog from './components/CreateTaskDialog';
 import { EditTaskDialog } from './components/EditTaskDialog';
@@ -33,7 +32,7 @@ const TaskView = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [permissionList] = useAtom(permissionListAtom);
+  const permissionList = usePermissions();
   
   // Use TanStack Query hooks to fetch both manager tasks and assigned tasks
   // Only fetch if user ID is available to prevent API calls with empty strings

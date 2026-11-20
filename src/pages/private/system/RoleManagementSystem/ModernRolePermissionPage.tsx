@@ -77,7 +77,12 @@ import {
   ChevronsRight
 } from 'lucide-react';
 import { APIDictionary } from '@/services/api/v2/APIdict';
-import { useAuth } from '@/providers/AuthContext';
+import { useAuthStore } from '@/store/useAuthStore';
+import { useRoles, useCreateRole, useUpdateRole, useDeleteRole } from '@/hooks/queries/useRoles';
+import { usePermissions } from '@/hooks/queries/usePermissions';
+import { useEmployees } from '@/hooks/queries/useEmployees';
+import { useQueryClient } from '@tanstack/react-query';
+import { employeeKeys } from '@/hooks/queries/employeeKeys';
 import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
 import { Permission, Role, User } from '@/types/general';
@@ -94,14 +99,20 @@ interface PermissionGroup {
 }
 
 const ModernRolePermissionPage = () => {
-  const [roles, setRoles] = useState<RoleWithStats[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [permissions, setPermissions] = useState<Permission[]>([]);
-  const [permissionGroups, setPermissionGroups] = useState<PermissionGroup[]>([]);
+  const user = useAuthStore(state => state.user);
+  const queryClient = useQueryClient();
+  const { data: rawRoles = [], isLoading: isRolesLoading } = useRoles(user?.orgId);
+  const { data: rawUsers = [], isLoading: isUsersLoading } = useEmployees({ orgId: user?.orgId }, !!user?.orgId);
+  const { data: rawPermissions = [], isLoading: isPermsLoading } = usePermissions(user?.orgId);
+
+  const createRoleMutation = useCreateRole();
+  const updateRoleMutation = useUpdateRole();
+  const deleteRoleMutation = useDeleteRole();
+
   const [selectedRole, setSelectedRole] = useState<RoleWithStats | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTab, setSelectedTab] = useState('roles');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isActionLoading, setIsActionLoading] = useState(false);
   const [deleteRoleId, setDeleteRoleId] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<'all' | 'default' | 'custom'>('all');
   
@@ -127,7 +138,6 @@ const ModernRolePermissionPage = () => {
   const [permissionSearchTerm, setPermissionSearchTerm] = useState('');
   const [editPermissionSearchTerm, setEditPermissionSearchTerm] = useState('');
   
-
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage, setUsersPerPage] = useState(24); // Show 24 users per page for better performance
   const [totalUsers, setTotalUsers] = useState(0);
@@ -135,125 +145,38 @@ const ModernRolePermissionPage = () => {
   // Debounced search state
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   
-
-  const { user } = useAuth();
-  const { toast } = useToast();
-
-  // Define calculateUserCounts before useEffect
-  const calculateUserCounts = useCallback(() => {
-    setRoles(prevRoles => 
-      prevRoles.map(role => {
-        const userCount = users.filter(user => 
-          user.roles?.some(userRole => userRole.role?.id === role.id)
-        ).length;
-        
-        return {
-          ...role,
-          userCount
-        };
-      })
-    );
-  }, [users]);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-
-  // Debounce search term to improve performance
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
-      setCurrentPage(1); // Reset to first page when searching
+      setCurrentPage(1);
     }, 300);
 
     return () => clearTimeout(timer);
   }, [searchTerm]);
+  
+  const { toast } = useToast();
 
+  const isLoading = isRolesLoading || isUsersLoading || isPermsLoading || isActionLoading || createRoleMutation.isPending || updateRoleMutation.isPending || deleteRoleMutation.isPending;
 
-  // Calculate user counts whenever users change
-  useEffect(() => {
-    if (roles.length > 0 && users.length > 0) {
-      calculateUserCounts();
-    }
-  }, [users, calculateUserCounts]);
+  const users = useMemo(() => (rawUsers as unknown as User[]) || [], [rawUsers]);
+  const permissions = useMemo(() => (rawPermissions as unknown as Permission[]) || [], [rawPermissions]);
 
-
-  // Clear search term when switching tabs
-  useEffect(() => {
-    setSearchTerm('');
-  }, [selectedTab]);
-
-
-  const fetchData = async () => {
-    setIsLoading(true);
-    try {
-      await Promise.all([
-        fetchRoles(),
-        fetchUsers(),
-        fetchPermissions()
-      ]);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchRoles = async () => {
-    try {
-      const response = await axios.get(`${APIDictionary.role}/org/${user?.orgId}`);
-      setRoles(response.data.map((role: Role) => ({
+  const roles = useMemo<RoleWithStats[]>(() => {
+    return rawRoles.map(role => {
+      const userCount = users.filter(u => 
+        u.roles?.some(ur => ur.role?.id === role.id || ur.id === role.id)
+      ).length;
+      return {
         ...role,
-        userCount: 0, // Will be calculated after users are fetched
-        lastModified: new Date().toISOString(),
-        isDefault: role.isDefault || false
-      })));
-    } catch {
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch roles',
-        variant: 'destructive'
-      });
-    }
-  };
+        userCount,
+        lastModified: role.updatedAt || new Date().toISOString(),
+        isDefault: role.isDefault || false,
+      } as unknown as RoleWithStats;
+    });
+  }, [rawRoles, users]);
 
-  const fetchUsers = async () => {
-    try {
-      const response = await axios.get(`${APIDictionary.user}/org/${user?.orgId}`, {
-        withCredentials: true
-      });
-      setUsers(response.data);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch users',
-        variant: 'destructive'
-      });
-    }
-  };
-
-  const fetchPermissions = async () => {
-    try {
-      const response = await axios.get(`${APIDictionary.permission}/org/${user?.orgId}`);
-      setPermissions(response.data);
-      
-      // Group permissions by category (mock categorization)
-      const groups = groupPermissionsByCategory(response.data);
-      setPermissionGroups(groups);
-    } catch {
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch permissions',
-        variant: 'destructive'
-      });
-    }
-  };
-
-  const groupPermissionsByCategory = (permissions: Permission[]): PermissionGroup[] => {
+  const permissionGroups = useMemo<PermissionGroup[]>(() => {
     const categories: { [key: string]: Permission[] } = {};
-    
     permissions.forEach(permission => {
       const category = permission.name.split('_')[0] || 'General';
       if (!categories[category]) {
@@ -266,7 +189,7 @@ const ModernRolePermissionPage = () => {
       category: category.charAt(0).toUpperCase() + category.slice(1),
       permissions: perms
     }));
-  };
+  }, [permissions]);
 
   const createRole = async () => {
     if (!newRoleName.trim()) {
@@ -277,18 +200,16 @@ const ModernRolePermissionPage = () => {
       });
       return;
     }
+    if (!user?.orgId) return;
 
-    setIsLoading(true);
     try {
-      const newRole = {
+      await createRoleMutation.mutateAsync({
         name: newRoleName,
         description: newRoleDescription,
-        orgId: user?.orgId ?? '',
+        orgId: user.orgId,
         isDefault: false,
-        permissions: newRolePermissions.map(id => ({ permissionId: id }))
-      };
-      
-      await axios.post(APIDictionary.role, newRole);
+        permissions: newRolePermissions
+      });
       toast({
         title: 'Success',
         description: 'Role created successfully',
@@ -299,13 +220,9 @@ const ModernRolePermissionPage = () => {
       setNewRoleName('');
       setNewRoleDescription('');
       setNewRolePermissions([]);
-      setPermissionSearchTerm(''); // Clear search term
+      setPermissionSearchTerm('');
       setIsCreateDialogOpen(false);
-      
-      // Refresh data
-      fetchRoles();
     } catch (error: unknown) {
-      // Enhanced error handling for new backend validation
       const err = error as { response?: { data?: { message?: string; invalidIds?: string[] } } };
       const errorMessage = err?.response?.data?.message || 'Failed to create role';
       const invalidIds = err?.response?.data?.invalidIds;
@@ -317,21 +234,17 @@ const ModernRolePermissionPage = () => {
           : errorMessage,
         variant: 'destructive'
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const deleteRole = async (roleId: string) => {
-    setIsLoading(true);
     try {
-      await axios.delete(`${APIDictionary.role}/${roleId}`);
+      await deleteRoleMutation.mutateAsync(roleId);
       toast({
         title: 'Success',
         description: 'Role deleted successfully',
         variant: 'default'
       });
-      fetchRoles();
     } catch {
       toast({
         title: 'Error',
@@ -339,7 +252,6 @@ const ModernRolePermissionPage = () => {
         variant: 'destructive'
       });
     } finally {
-      setIsLoading(false);
       setDeleteRoleId(null);
     }
   };
@@ -364,8 +276,8 @@ const ModernRolePermissionPage = () => {
     setEditingRole(role);
     setEditRoleName(role.name);
     setEditRoleDescription(role.description || '');
-    setEditRolePermissions(role.permissions.map(p => p.permission.id));
-    setEditPermissionSearchTerm(''); // Clear search term
+    setEditRolePermissions(role.permissions.map((p: unknown) => ((p as { permission?: { id: string }; id?: string })?.permission?.id ?? (p as { id?: string })?.id ?? '')));
+    setEditPermissionSearchTerm('');
     setIsEditDialogOpen(true);
   };
 
@@ -379,32 +291,28 @@ const ModernRolePermissionPage = () => {
       return;
     }
 
-    setIsLoading(true);
     try {
-      const updateData = {
-        name: editRoleName,
-        description: editRoleDescription,
-        permissions: editRolePermissions.map(id => ({ permissionId: id })),
-        updateType: 'replace'
-      };
-      
-      await axios.put(`${APIDictionary.role}/${editingRole.id}`, updateData);
+      await updateRoleMutation.mutateAsync({
+        id: editingRole.id,
+        data: {
+          name: editRoleName,
+          description: editRoleDescription,
+          permissions: editRolePermissions,
+          updateType: 'replace'
+        }
+      });
       toast({
         title: 'Success',
         description: 'Role updated successfully',
         variant: 'default'
       });
       
-      // Reset form and close dialog
       setIsEditDialogOpen(false);
       setEditingRole(null);
       setEditRoleName('');
       setEditRoleDescription('');
       setEditRolePermissions([]);
-      setEditPermissionSearchTerm(''); // Clear search term
-      
-      // Refresh data
-      fetchRoles();
+      setEditPermissionSearchTerm('');
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       const errorMessage = err?.response?.data?.message || 'Failed to update role';
@@ -414,45 +322,35 @@ const ModernRolePermissionPage = () => {
         description: errorMessage,
         variant: 'destructive'
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const duplicateRole = async (role: RoleWithStats) => {
+    if (!user?.orgId) return;
     const newName = `${role.name} (Copy)`;
-    setIsLoading(true);
     try {
-      const newRole = {
+      await createRoleMutation.mutateAsync({
         name: newName,
         description: role.description,
-        orgId: user?.orgId ?? '',
+        orgId: user.orgId,
         isDefault: false,
-        permissions: role.permissions.map(p => ({ permissionId: p.permission.id }))
-      };
-      
-      await axios.post(APIDictionary.role, newRole);
+        permissions: role.permissions.map((p: unknown) => ((p as { permission?: { id: string }; id?: string })?.permission?.id ?? (p as { id?: string })?.id ?? ''))
+      });
       toast({
         title: 'Success',
         description: 'Role duplicated successfully',
         variant: 'default'
       });
-      
-      fetchRoles();
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       const errorMessage = err?.response?.data?.message || 'Failed to duplicate role';
-      
       toast({
         title: 'Error',
         description: errorMessage,
         variant: 'destructive'
       });
-    } finally {
-      setIsLoading(false);
     }
   };
-
 
   const openChangeRoleDialog = useCallback((user: User) => {
     setSelectedUser(user);
@@ -463,13 +361,11 @@ const ModernRolePermissionPage = () => {
   const changeUserRole = async () => {
     if (!selectedUser || !selectedRoleForUser || selectedRoleForUser === 'no-role') {
       if (selectedUser && selectedRoleForUser === 'no-role') {
-        // Handle removing role (setting to no role)
-        setIsLoading(true);
+        setIsActionLoading(true);
         try {
-          // Remove existing user roles
           if (selectedUser.roles && selectedUser.roles.length > 0) {
             for (const userRole of selectedUser.roles) {
-              await axios.delete(`${APIDictionary.user_role}/${userRole.id}`);
+              await axios.delete(`${APIDictionary.user_role}/${userRole.id}`, { withCredentials: true });
             }
           }
 
@@ -482,26 +378,19 @@ const ModernRolePermissionPage = () => {
           setIsChangeRoleDialogOpen(false);
           setSelectedUser(null);
           setSelectedRoleForUser('');
-
-          // Refresh data efficiently - only update the modified user
-          await fetchUsers();
-
+          queryClient.invalidateQueries({ queryKey: employeeKeys.lists() });
           return;
         } catch (error: unknown) {
           const err = error as { response?: { data?: { message?: string } } };
           const errorMessage = err?.response?.data?.message || 'Failed to remove user role';
-          
           toast({
             title: 'Error',
             description: errorMessage,
             variant: 'destructive'
           });
-          setIsLoading(false);
           return;
-
         } finally {
-          setIsLoading(false);
-
+          setIsActionLoading(false);
         }
       }
       
@@ -513,20 +402,18 @@ const ModernRolePermissionPage = () => {
       return;
     }
 
-    setIsLoading(true);
+    setIsActionLoading(true);
     try {
-      // First, remove existing user roles
       if (selectedUser.roles && selectedUser.roles.length > 0) {
         for (const userRole of selectedUser.roles) {
-          await axios.delete(`${APIDictionary.user_role}/${userRole.id}`);
+          await axios.delete(`${APIDictionary.user_role}/${userRole.id}`, { withCredentials: true });
         }
       }
 
-      // Then add the new role
       await axios.post(APIDictionary.user_role, {
         userId: selectedUser.id,
         roleId: selectedRoleForUser
-      });
+      }, { withCredentials: true });
 
       toast({
         title: 'Success',
@@ -537,22 +424,17 @@ const ModernRolePermissionPage = () => {
       setIsChangeRoleDialogOpen(false);
       setSelectedUser(null);
       setSelectedRoleForUser('');
-      
-
-      // Refresh data efficiently
-      await fetchUsers();
-
+      queryClient.invalidateQueries({ queryKey: employeeKeys.lists() });
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       const errorMessage = err?.response?.data?.message || 'Failed to update user role';
-      
       toast({
         title: 'Error',
         description: errorMessage,
         variant: 'destructive'
       });
     } finally {
-      setIsLoading(false);
+      setIsActionLoading(false);
     }
   };
 
@@ -564,7 +446,7 @@ const ModernRolePermissionPage = () => {
         roles: roles.map(role => ({
           name: role.name,
           description: role.description,
-          permissions: role.permissions.map(p => p.permission.name),
+          permissions: role.permissions.map((p: unknown) => ((p as { permission?: { name: string }; name?: string })?.permission?.name ?? (p as { name?: string })?.name ?? '')),
           isDefault: role.isDefault
         })),
         exportDate: new Date().toISOString(),
@@ -686,11 +568,11 @@ const ModernRolePermissionPage = () => {
 
   const getRoleColor = (roleName: string) => {
     const colors = {
-      'admin': 'bg-red-100 text-red-800 border-red-200',
-      'manager': 'bg-blue-100 text-blue-800 border-blue-200',
-      'employee': 'bg-green-100 text-green-800 border-green-200',
-      'hr': 'bg-purple-100 text-purple-800 border-purple-200',
-      'default': 'bg-gray-100 text-gray-800 border-gray-200'
+      'admin': 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
+      'manager': 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
+      'employee': 'bg-secondary text-secondary-foreground border-border/40',
+      'hr': 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20',
+      'default': 'bg-secondary text-secondary-foreground border-border/40'
     };
     
     const lowerName = roleName.toLowerCase();
@@ -921,9 +803,7 @@ const ModernRolePermissionPage = () => {
   );
 
   return (
-    <ScrollArea className="h-screen w-full">
-
-      <div className="p-6 space-y-6  mx-auto">
+    <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-7xl">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
           <div>
@@ -1345,12 +1225,15 @@ const ModernRolePermissionPage = () => {
                   <h4 className="font-medium mb-2">Permissions ({selectedRole.permissions.length})</h4>
                   <ScrollArea className="h-64 border rounded-md p-4">
                     <div className="space-y-2">
-                      {selectedRole.permissions.map((perm) => (
-                        <div key={perm.permissionId} className="flex items-center space-x-2">
-                          <Check className="h-4 w-4 text-green-600" />
-                          <span className="text-sm">{perm.permission.name}</span>
-                        </div>
-                      ))}
+                      {selectedRole.permissions.map((perm: unknown, idx: number) => {
+                        const permObj = perm as { permissionId?: string; id?: string; permission?: { name: string }; name?: string };
+                        return (
+                          <div key={permObj.permissionId || permObj.id || idx} className="flex items-center space-x-2">
+                            <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                            <span className="text-sm">{permObj.permission?.name ?? permObj.name}</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </ScrollArea>
                 </div>
@@ -1451,8 +1334,7 @@ const ModernRolePermissionPage = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
-    </ScrollArea>
+    </div>
   );
 };
 

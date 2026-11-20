@@ -5,12 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
-import { BriefcaseIcon, BanknotesIcon, UserIcon, PencilIcon, CalendarIcon, PhoneIcon, MapPinIcon, EnvelopeIcon, IdentificationIcon } from "@heroicons/react/24/outline"
+import { BriefcaseIcon, BanknotesIcon, UserIcon, PencilIcon, CalendarIcon, PhoneIcon, MapPinIcon, EnvelopeIcon, IdentificationIcon, GlobeAltIcon, BuildingOfficeIcon } from "@heroicons/react/24/outline"
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/providers/AuthContext'
 import { Button } from "@/components/ui/button"
-import { permissionListAtom } from '@/store/atom'
-import { useAtom } from 'jotai'
+import { usePermissions } from '@/store/useAuthStore'
 import { motion } from 'framer-motion'
 import BankDetails from '@/components/BankDetails'
 import RouteDict from '@/routes/RouteDict'
@@ -26,7 +25,7 @@ const ProfileInfo = () => {
     const { user } = useAuth()
     const navigate = useNavigate()
     const { toast } = useToast()
-    const [permissionList] = useAtom(permissionListAtom)
+    const permissionList = usePermissions()
 
     const profileId = id || user?.id || ''
     
@@ -477,6 +476,36 @@ const ProfileInfo = () => {
                                         <p className="font-medium">{profileInfo?.employeeId || profileInfo?.id}</p>
                                     </div>
                                 </div>
+
+                                {profileInfo?.countryOfCompany && (
+                                    <div className="flex items-start gap-3">
+                                        <div className="rounded-full bg-primary/10 p-2 mt-1">
+                                            <GlobeAltIcon className="w-4 h-4 text-primary" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm text-muted-foreground font-medium">Company Country</p>
+                                                <PreviousDetailPill fieldKey="countryOfCompany" auditLogs={auditLogs} />
+                                            </div>
+                                            <p className="font-medium">{profileInfo.countryOfCompany}</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {profileInfo?.market && (
+                                    <div className="flex items-start gap-3">
+                                        <div className="rounded-full bg-primary/10 p-2 mt-1">
+                                            <BuildingOfficeIcon className="w-4 h-4 text-primary" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm text-muted-foreground font-medium">Market / Industry</p>
+                                                <PreviousDetailPill fieldKey="market" auditLogs={auditLogs} />
+                                            </div>
+                                            <p className="font-medium">{profileInfo.market}</p>
+                                        </div>
+                                    </div>
+                                )}
                                 
                                 {safeFormatDate(profileInfo?.hiredDate) && (
                                     <div className="flex items-start gap-3">

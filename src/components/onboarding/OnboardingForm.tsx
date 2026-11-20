@@ -35,9 +35,13 @@ import {
   Building2,
   Users,
   XCircle,
-  Clock
+  Clock,
+  Globe,
+  Store
 } from 'lucide-react';
 import { useParams } from 'react-router-dom';
+import { CountrySelect } from '@/components/common/CountrySelect';
+import { MarketSelect } from '@/components/common/MarketSelect';
 
 const onboardingSchema = z.object({
   firstName: z.string().min(2, 'First name is required'),
@@ -48,6 +52,8 @@ const onboardingSchema = z.object({
   address: z.string().min(10, 'Complete address is required'),
   adharNumber: z.string().optional(),
   panNumber: z.string().optional(),
+  countryOfCompany: z.string().optional(),
+  market: z.string().optional(),
   // Bank Details
   bankAccountNumber: z.string().min(8, 'Valid account number is required'),
   bankIFSC: z.string().min(11, 'Valid IFSC code is required'),
@@ -79,6 +85,8 @@ const OnboardingForm = () => {
       address: '',
       adharNumber: '',
       panNumber: '',
+      countryOfCompany: '',
+      market: '',
       // Bank Details
       bankAccountNumber: '',
       bankIFSC: '',
@@ -106,6 +114,12 @@ const OnboardingForm = () => {
       if (candidateData.formData?.address) form.setValue('address', candidateData.formData.address);
       if (candidateData.formData?.adharNumber) form.setValue('adharNumber', candidateData.formData.adharNumber);
       if (candidateData.formData?.panNumber) form.setValue('panNumber', candidateData.formData.panNumber);
+      if (candidateData.countryOfCompany || candidateData.formData?.countryOfCompany) {
+        form.setValue('countryOfCompany', candidateData.countryOfCompany || candidateData.formData?.countryOfCompany);
+      }
+      if (candidateData.market || candidateData.formData?.market) {
+        form.setValue('market', candidateData.market || candidateData.formData?.market);
+      }
       // Pre-fill bank details if available
       if (candidateData.formData?.bankDetails) {
         const bankDetails = candidateData.formData.bankDetails;
@@ -419,6 +433,12 @@ const OnboardingForm = () => {
                   </h4>
                   <div className="space-y-1 text-sm text-muted-foreground">
                     <p><strong>Organization:</strong> {candidate.organizationName || 'N/A'}</p>
+                    {(candidate.countryOfCompany || (candidate.formData?.countryOfCompany as string)) && (
+                      <p><strong>Country of Company:</strong> {candidate.countryOfCompany || (candidate.formData?.countryOfCompany as string)}</p>
+                    )}
+                    {(candidate.market || (candidate.formData?.market as string)) && (
+                      <p><strong>Market / Industry:</strong> {candidate.market || (candidate.formData?.market as string)}</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -602,6 +622,50 @@ const OnboardingForm = () => {
                     </FormItem>
                   )}
                 />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="countryOfCompany"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Globe className="h-4 w-4" />
+                          Country of Company
+                        </FormLabel>
+                        <FormControl>
+                          <CountrySelect
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Select company country"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="market"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Store className="h-4 w-4" />
+                          Market / Industry
+                        </FormLabel>
+                        <FormControl>
+                          <MarketSelect
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Select market or industry"
+                            customPlaceholder="Specify custom market..."
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 {/* Bank Details Section */}
                 <div className="space-y-4">

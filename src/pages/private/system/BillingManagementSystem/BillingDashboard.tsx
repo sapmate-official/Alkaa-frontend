@@ -55,9 +55,9 @@ const BillingDashboard = () => {
       case 'Expired':
         return <Badge variant="destructive">Expired</Badge>;
       case 'Expiring Soon':
-        return <Badge variant="destructive" className="bg-amber-100 text-amber-800 hover:bg-amber-100">Expiring Soon</Badge>;
+        return <Badge variant="outline" className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20">Expiring Soon</Badge>;
       case 'Active':
-        return <Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-100">Active</Badge>;
+        return <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">Active</Badge>;
       default:
         return <Badge variant="outline">{status || 'Unknown'}</Badge>;
     }
@@ -66,13 +66,13 @@ const BillingDashboard = () => {
   const getBillStatusBadge = (status: string) => {
     switch (status) {
       case 'PAID':
-        return <Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-100">Paid</Badge>;
+        return <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">Paid</Badge>;
       case 'UNPAID':
-        return <Badge variant="outline">Unpaid</Badge>;
+        return <Badge variant="outline" className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20">Unpaid</Badge>;
       case 'OVERDUE':
         return <Badge variant="destructive">Overdue</Badge>;
       case 'CANCELLED':
-        return <Badge variant="outline" className="bg-gray-100 text-gray-800">Cancelled</Badge>;
+        return <Badge variant="outline" className="bg-secondary text-secondary-foreground border-border/40">Cancelled</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -292,7 +292,7 @@ const BillingDashboard = () => {
             })}
           </div>
         </CardContent>
-        <CardFooter className="border-t pt-4 bg-gray-50 dark:bg-gray-900">
+        <CardFooter className="border-t pt-4 bg-secondary/20">
           <Button 
             variant="ghost" 
             className="w-full" 

@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
-import { SpecialEvent } from '@/store/atom'
+import { SpecialEvent } from '@/store/useAppStore'
 import RouteDict from '@/routes/RouteDict'
 
 interface SpecialEventsProps {

@@ -1,6 +1,5 @@
 import React from 'react';
-import { useAtom } from 'jotai';
-import { permissionListAtom } from '@/store/atom';
+import { usePermissions } from '@/store/useAuthStore';
 
 interface PermissionGuardProps {
   requiredPermission: string | string[];
@@ -15,7 +14,7 @@ const PermissionGuard: React.FC<PermissionGuardProps> = ({
   children,
   fallback = null
 }) => {
-  const [permissions] = useAtom(permissionListAtom);
+  const permissions = usePermissions();
   
   // Convert to array if single permission
   const requiredPermissions = Array.isArray(requiredPermission) 

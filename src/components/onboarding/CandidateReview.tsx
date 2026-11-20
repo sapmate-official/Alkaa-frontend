@@ -48,6 +48,8 @@ interface ReviewData {
     hiredDate: string;
     departmentId: string;
     department: { id: string; name: string; [key: string]: unknown } | null;
+    countryOfCompany?: string;
+    market?: string;
   };
   submittedData: {
     personalInfo: {
@@ -59,6 +61,8 @@ interface ReviewData {
       address: string;
       adharNumber: string;
       panNumber: string;
+      countryOfCompany?: string;
+      market?: string;
     };
     bankDetails: {
       accountNumber?: string;
@@ -411,6 +415,16 @@ const CandidateReview = ({ candidateId, isOpen, onClose, onActionComplete }: Can
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       <span className="font-medium">Hired Date:</span>
                       <span>{initialData.hiredDate ? new Date(initialData.hiredDate).toLocaleDateString() : 'Not specified'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">Company Country:</span>
+                      <span>{initialData.countryOfCompany || submittedData.personalInfo.countryOfCompany || 'Not specified'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">Market:</span>
+                      <span>{initialData.market || submittedData.personalInfo.market || 'Not specified'}</span>
                     </div>
                   </div>
                 </div>

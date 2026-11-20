@@ -499,6 +499,22 @@ export const CandidateReviewDialog: React.FC<CandidateReviewDialogProps> = ({
                         <p className="text-sm">{formatDate(initialData.hiredDate)}</p>
                       </div>
                       <div>
+                        <label className="text-sm font-medium text-muted-foreground">Country of Company</label>
+                        <p className="text-sm font-medium">
+                          {(initialData as { countryOfCompany?: string }).countryOfCompany ||
+                            (submittedData.personalInfo as { countryOfCompany?: string }).countryOfCompany ||
+                            'Not specified'}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Market / Industry</label>
+                        <p className="text-sm font-medium">
+                          {(initialData as { market?: string }).market ||
+                            (submittedData.personalInfo as { market?: string }).market ||
+                            'Not specified'}
+                        </p>
+                      </div>
+                      <div>
                         <label className="text-sm font-medium text-muted-foreground">Created By</label>
                         <p className="text-sm">
                           {metadata.createdBy?.firstName} {metadata.createdBy?.lastName}

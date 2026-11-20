@@ -1,4 +1,5 @@
 import { APIDictionary } from "@/services/api/v2/APIdict";
+import { tokenStorage } from "@/services/api/client";
 
 // Rename your interface to avoid conflict with browser's PushSubscription
 interface PushSubscriptionPayload {
@@ -61,8 +62,8 @@ class NotificationService {
   
   private async saveSubscription(userId: string, subscription: PushSubscriptionPayload): Promise<void> {
     try {
-      // Get token from localStorage
-      const token = localStorage.getItem("accessToken");
+      // Get token from tokenStorage
+      const token = tokenStorage.getAccessToken();
       
       await fetch(`${APIDictionary.notification}/subscription`, {
         method: 'POST',

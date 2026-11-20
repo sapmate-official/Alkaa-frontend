@@ -237,37 +237,37 @@ const LeaveRequestApprove = () => {
 
   if (loading) {
     return (
-      <div className="h-screen w-full flex items-center justify-center">
+      <div className="h-full min-h-[50vh] w-full flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           className="text-center space-y-4"
         >
           <Spinner size="lg" />
-          <p className="text-lg font-medium">Loading leave requests...</p>
+          <p className="text-lg font-medium text-foreground">Loading leave requests...</p>
         </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen w-full bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+    <div className="h-full w-full flex flex-col bg-background">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-6 py-4"
+        className="bg-card border-b border-border px-6 py-4"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-blue-500 rounded-lg">
-              <FileCheck className="h-6 w-6 text-white" />
+            <div className="p-2 bg-secondary rounded-lg">
+              <FileCheck className="h-6 w-6 text-foreground" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+              <h1 className="text-2xl font-bold text-foreground">
                 Leave Request Approval
               </h1>
-              <p className="text-sm text-slate-600 dark:text-slate-400">
+              <p className="text-sm text-muted-foreground">
                 Review and manage employee leave requests
               </p>
             </div>
@@ -287,7 +287,7 @@ const LeaveRequestApprove = () => {
 
       <ResizablePanelGroup
         direction="horizontal"
-        className="h-[calc(100vh-80px)] w-full"
+        className="flex-1 w-full min-h-0"
       >
         {/* Left Panel - List of Leave Requests */}
         <ResizablePanel defaultSize={35} minSize={25} maxSize={50}>
@@ -600,24 +600,24 @@ const LeaveRequestApprove = () => {
                           >
                             <div className="space-y-2">
                               <div className="flex items-center space-x-2">
-                                <User className="h-4 w-4 text-blue-500" />
-                                <h4 className="font-semibold text-slate-900 dark:text-slate-100">
+                                <User className="h-4 w-4 text-muted-foreground" />
+                                <h4 className="font-semibold text-foreground">
                                   Employee
                                 </h4>
                               </div>
-                              <p className="text-slate-700 dark:text-slate-300 pl-6">
+                              <p className="text-foreground pl-6">
                                 {selectedRequest.user?.firstName}{" "}
                                 {selectedRequest.user?.lastName}
                               </p>
                             </div>
                             <div className="space-y-2">
                               <div className="flex items-center space-x-2">
-                                <FileText className="h-4 w-4 text-blue-500" />
-                                <h4 className="font-semibold text-slate-900 dark:text-slate-100">
+                                <FileText className="h-4 w-4 text-muted-foreground" />
+                                <h4 className="font-semibold text-foreground">
                                   Leave Type
                                 </h4>
                               </div>
-                              <p className="text-slate-700 dark:text-slate-300 pl-6">
+                              <p className="text-foreground pl-6">
                                 {selectedRequest.leaveType?.name}
                               </p>
                             </div>
@@ -633,18 +633,18 @@ const LeaveRequestApprove = () => {
                             className="space-y-4"
                           >
                             <div className="flex items-center space-x-2">
-                              <Calendar className="h-4 w-4 text-blue-500" />
-                              <h4 className="font-semibold text-slate-900 dark:text-slate-100">
+                              <Calendar className="h-4 w-4 text-muted-foreground" />
+                              <h4 className="font-semibold text-foreground">
                                 Duration
                               </h4>
                             </div>
                             <div className="pl-6 space-y-2">
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                                  <p className="text-sm text-muted-foreground">
                                     Start Date
                                   </p>
-                                  <p className="font-medium text-slate-900 dark:text-slate-100">
+                                  <p className="font-medium text-foreground">
                                     {format(
                                       new Date(selectedRequest.startDate),
                                       "EEEE, PPP",
@@ -652,10 +652,10 @@ const LeaveRequestApprove = () => {
                                   </p>
                                 </div>
                                 <div>
-                                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                                  <p className="text-sm text-muted-foreground">
                                     End Date
                                   </p>
-                                  <p className="font-medium text-slate-900 dark:text-slate-100">
+                                  <p className="font-medium text-foreground">
                                     {format(
                                       new Date(selectedRequest.endDate),
                                       "EEEE, PPP",
@@ -664,12 +664,11 @@ const LeaveRequestApprove = () => {
                                 </div>
                               </div>
                               <div className="flex items-center space-x-2">
-                                <p className="text-sm text-slate-600 dark:text-slate-400">
+                                <p className="text-sm text-muted-foreground">
                                   Total Duration:
                                 </p>
                                 <Badge
-                                  variant="outline"
-                                  className="bg-blue-50 text-blue-700 border-blue-200"
+                                  variant="secondary"
                                 >
                                   {selectedRequest.numberOfDays}{" "}
                                   {selectedRequest.numberOfDays === 1
@@ -690,14 +689,14 @@ const LeaveRequestApprove = () => {
                             className="space-y-2"
                           >
                             <div className="flex items-center space-x-2">
-                              <FileText className="h-4 w-4 text-blue-500" />
-                              <h4 className="font-semibold text-slate-900 dark:text-slate-100">
+                              <FileText className="h-4 w-4 text-muted-foreground" />
+                              <h4 className="font-semibold text-foreground">
                                 Reason
                               </h4>
                             </div>
                             <div className="pl-6">
-                              <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 border">
-                                <p className="text-slate-700 dark:text-slate-300">
+                              <div className="bg-secondary/40 rounded-lg p-4 border border-border">
+                                <p className="text-foreground">
                                   {selectedRequest.reason ||
                                     "No reason provided"}
                                 </p>

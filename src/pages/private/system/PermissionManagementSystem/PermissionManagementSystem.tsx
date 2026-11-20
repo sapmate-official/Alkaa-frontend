@@ -888,8 +888,8 @@ const PermissionManagementSystem = () => {
   }
 
   return (
-    <div className='flex flex-col w-full h-full overflow-y-scroll'>
-      <div className='justify-center w-full h-full p-4'>
+    <div className='container mx-auto p-4 md:p-6 space-y-6 max-w-7xl'>
+      <div className='w-full'>
         <h1 className='text-2xl font-bold'>Permission Management System</h1>
 
         <Tabs defaultValue='category' className='mt-4 w-full h-full'>

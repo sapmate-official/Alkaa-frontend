@@ -1,8 +1,7 @@
-import { useAtom } from "jotai";
 import { ReactNode } from "react";
-import { permissionListAtom } from "../../store/atom";
 import Unauthorized from "../Unauthorized";
 import { useAuth } from "../../providers/AuthContext";
+import { usePermissions, useCurrentUser } from "@/store/useAuthStore";
 
 interface PermissionRouteProps {
   children: ReactNode;
@@ -11,8 +10,9 @@ interface PermissionRouteProps {
 }
 
 const PermissionRouteBasedOnKey = ({ children, requiredPermissions, requireAll = false }: PermissionRouteProps) => {
-  const [permissionList] = useAtom(permissionListAtom);
-  const { user } = useAuth();
+  const permissionList = usePermissions();
+  const authContext = useAuth();
+  const user = useCurrentUser() ?? authContext.user;
 
   // SuperAdmins have platform-wide access and bypass all individual tenant permission gates
   if (user?.superAdmin || user?.isSuperAdmin || permissionList.some(p => p.key === '*')) {

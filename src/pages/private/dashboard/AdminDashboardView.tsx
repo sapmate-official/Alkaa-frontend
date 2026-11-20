@@ -500,7 +500,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
               onClick={() => navigate(RouteDict.Payroll.Dashboard)}
             >
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 group-hover:scale-105 transition-transform">
+                <div className="p-2.5 rounded-xl bg-secondary text-foreground group-hover:scale-105 transition-transform">
                   <CreditCard className="h-5 w-5" />
                 </div>
                 <div>
@@ -515,7 +515,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
               onClick={() => navigate(RouteDict.Attendance.Base)}
             >
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform">
+                <div className="p-2.5 rounded-xl bg-secondary text-foreground group-hover:scale-105 transition-transform">
                   <Clock className="h-5 w-5" />
                 </div>
                 <div>
@@ -530,7 +530,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
               onClick={() => navigate(RouteDict.Role.Base)}
             >
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 group-hover:scale-105 transition-transform">
+                <div className="p-2.5 rounded-xl bg-secondary text-foreground group-hover:scale-105 transition-transform">
                   <ShieldCheck className="h-5 w-5" />
                 </div>
                 <div>
@@ -545,7 +545,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
               onClick={() => navigate(RouteDict.Organization.Settings)}
             >
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 group-hover:scale-105 transition-transform">
+                <div className="p-2.5 rounded-xl bg-secondary text-foreground group-hover:scale-105 transition-transform">
                   <Building2 className="h-5 w-5" />
                 </div>
                 <div>

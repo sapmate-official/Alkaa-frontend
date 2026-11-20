@@ -10,8 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Department, User } from '@/types/general';
-import { useAtom } from 'jotai';
-import { permissionListAtom } from '../../../../store/atom';
+import { usePermissions } from '@/store/useAuthStore';
 import { Spinner } from "@/components/ui/spinner";
 import { AlertCircle, ArrowLeft, Save } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
@@ -20,6 +19,8 @@ import { useUserDetailsQuery, useUpdateProfileMutation } from '@/hooks/queries/u
 import { useEmployeeAuditHistory } from '@/hooks/queries/useEmployeeAuditHistory';
 import { PreviousDetailPill } from '@/components/employee/PreviousDetailPill';
 import { EmployeeRevisionHistoryCard } from '@/components/employee/EmployeeRevisionHistoryCard';
+import { CountrySelect } from '@/components/common/CountrySelect';
+import { MarketSelect } from '@/components/common/MarketSelect';
 
 interface FormDataType {
   [key: string]: string | undefined;
@@ -42,6 +43,8 @@ interface FormDataType {
   orgId: string;
   managerId: string;
   status?: string;
+  countryOfCompany?: string;
+  market?: string;
 }
 
 const ProfileEdit = () => {
@@ -51,7 +54,7 @@ const ProfileEdit = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [managers, setManagers] = useState<User[]>([]);
   const [canEditStatus, setCanEditStatus] = useState(false);
-  const [permissionList] = useAtom(permissionListAtom);
+  const permissionList = usePermissions();
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -127,6 +130,8 @@ const ProfileEdit = () => {
     orgId: '',
     managerId: '',
     status: 'active',
+    countryOfCompany: '',
+    market: '',
   });
 
   const safeDateStr = (dateVal?: string | Date | null) => {
@@ -207,6 +212,8 @@ const ProfileEdit = () => {
         orgId: userData?.orgId || '',
         managerId: userData?.managerId || '',
         status: userData?.status || 'active',
+        countryOfCompany: (userData as { countryOfCompany?: string })?.countryOfCompany || '',
+        market: (userData as { market?: string })?.market || '',
       });
     }
   }, [userData, user?.id, canEditAllUserInfo, canEditSubordinatesInfo]);
@@ -241,6 +248,8 @@ const ProfileEdit = () => {
         departmentId: formData.departmentId?.trim() || null,
         managerId: formData.managerId?.trim() || null,
         status: formData.status || 'active',
+        countryOfCompany: formData.countryOfCompany?.trim() || null,
+        market: formData.market?.trim() || null,
       };
 
       if (formData.annualPackage) {
@@ -561,7 +570,32 @@ const ProfileEdit = () => {
                 />
               </div>
 
-              
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="countryOfCompany">Country of Company</Label>
+                  <PreviousDetailPill fieldKey="countryOfCompany" auditLogs={auditLogs} />
+                </div>
+                <CountrySelect
+                  value={formData.countryOfCompany}
+                  onChange={(val) => setFormData((prev) => ({ ...prev, countryOfCompany: val }))}
+                  disabled={!canEditProfile}
+                  placeholder="Select company country"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="market">Market / Industry</Label>
+                  <PreviousDetailPill fieldKey="market" auditLogs={auditLogs} />
+                </div>
+                <MarketSelect
+                  value={formData.market}
+                  onChange={(val) => setFormData((prev) => ({ ...prev, market: val }))}
+                  disabled={!canEditProfile}
+                  placeholder="Select market or industry"
+                  customPlaceholder="Specify custom market..."
+                />
+              </div>
 
               <div className="space-y-2">
                 <div className="flex items-center gap-2">

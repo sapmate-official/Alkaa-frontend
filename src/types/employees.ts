@@ -36,6 +36,8 @@ export interface Employee {
   jobTitle?: string
   businessEmail?: string
   personalEmail?: string
+  countryOfCompany?: string
+  market?: string
   terminationDate?: string
   updatedAt?: string
   organizationId: string
@@ -53,6 +55,8 @@ export interface CreateEmployeeRequest {
   phone?: string
   position?: string
   hireDate?: string
+  countryOfCompany?: string
+  market?: string
 }
 
 export interface UpdateEmployeeRequest {
@@ -68,6 +72,8 @@ export interface UpdateEmployeeRequest {
   phone?: string
   position?: string
   hireDate?: string
+  countryOfCompany?: string
+  market?: string
 }
 
 export interface AssignEmployeeRoleRequest {

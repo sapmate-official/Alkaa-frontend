@@ -13,8 +13,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import Loader from '@/components/Loader';
 import { useAuth } from '@/providers/AuthContext';
-import { useAtom } from 'jotai';
-import { permissionListAtom } from '@/store/atom';
+import { usePermissions } from '@/store/useAuthStore';
 // Import TanStack Query hooks
 import { 
   useUpdateTask, 
@@ -58,7 +57,7 @@ export const EditTaskDialog: React.FC<EditTaskDialogProps> = ({
 }) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [permissionList] = useAtom(permissionListAtom);
+  const permissionList = usePermissions();
   
   // State variables
   const [loading, setLoading] = useState(false);

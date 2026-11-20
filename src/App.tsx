@@ -175,7 +175,7 @@ const ClientRoute = () => {
           <ModernRolePermissionPage />
         </PermissionRouteBasedOnKey>
       } /> */}
-      <Route path="/holiday/" element={
+      <Route path="/holiday/*" element={
         <PermissionRouteBasedOnKey requireAll={false} requiredPermissions={['holiday_view', 'holiday_manage', 'create_holiday', 'view_holiday', 'update_holiday', 'delete_holiday']}>
           <HolidayManagementSystem />
         </PermissionRouteBasedOnKey>

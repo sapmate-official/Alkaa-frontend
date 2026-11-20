@@ -3,8 +3,7 @@ import { useMemo } from 'react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from "@/components/ui/skeleton"
-import { useAtom } from 'jotai';
-import { permissionListAtom } from '@/store/atom';
+import { usePermissions } from '@/store/useAuthStore';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { 
@@ -20,7 +19,7 @@ import { useLegacyOrganization, useOrganizationDepartments, useTeamMembers, useE
 import { User } from './types';
 
 const SpecificOrganizationView = () => {
-  const [permissions] = useAtom(permissionListAtom)
+  const permissions = usePermissions()
   const { user } = useAuth()
   const navigate = useNavigate();
 
@@ -71,7 +70,7 @@ const SpecificOrganizationView = () => {
 
   if (isLoadingOrg) {
     return (
-      <div className="p-4 space-y-6 w-screen h-screen">
+      <div className="w-full px-4 md:px-8 py-6 space-y-6">
         <Card>
           <CardHeader>
             <Skeleton className="h-8 w-[200px]" />

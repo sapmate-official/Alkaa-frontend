@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import RouteDict from '@/routes/RouteDict';
-import axios from 'axios';
+import { useBill, useMarkBillAsPaid } from '@/hooks/queries/useBilling';
 import {
   Card,
   CardContent,
@@ -46,33 +46,10 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { APIV2Dictionary } from '@/services/api/v2/Api2Dicts';
 
-interface BillData {
-  id: string;
-  organizationId: string;
-  organizationName: string;
-  organizationLogo: string | null;
-  month: number;
-  monthName: string;
-  year: number;
-  activeUserCount: number;
-  pricePerUser: number;
-  totalAmount: number;
-  status: 'PAID' | 'UNPAID' | 'OVERDUE' | 'CANCELLED';
-  billDate: string;
-  dueDate: string;
-  subscriptionPlan: string;
-  paidDate?: string;
-  paymentReference?: string;
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 const BillDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [bill, setBill] = useState<BillData | null>(null);
+  const { data: bill, isLoading: loading, error: queryError } = useBill(id || '');
+  const markBillAsPaidMutation = useMarkBillAsPaid();
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('credit_card');
   const [paymentReference, setPaymentReference] = useState('');
@@ -80,83 +57,32 @@ const BillDetails = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchBillDetails();
-  }, [id]);
-
-  const fetchBillDetails = async () => {
-    try {
-      setLoading(true);
-      
-      const response = await axios.get(APIV2Dictionary.billing.getBill(id!), {
-        withCredentials: true
-      });
-      
-      if (response.data.success) {
-        setBill(response.data.data);
-        setError(null);
-      } else {
-        setError(response.data.message || 'Failed to load bill details');
-      }
-    } catch (error: unknown) {
-      console.error('Error fetching bill details:', error);
-      const err = error as { response?: { data?: { message?: string } } };
-      const msg = err.response?.data?.message || 'Failed to load bill details';
-      setError(msg);
-      
-      toast({
-        title: 'Error loading data',
-        description: msg,
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const error = queryError ? ((queryError as { message?: string }).message || 'Failed to load bill details') : null;
 
   const handlePayBill = async () => {
     if (!bill) return;
     
     try {
       setProcessingPayment(true);
-      
-      const response = await axios.post(APIV2Dictionary.billing.payBill(bill.id), {
-        paymentMethod,
-        paymentReference: paymentReference || undefined
-      }, {
-        withCredentials: true
+      await markBillAsPaidMutation.mutateAsync({
+        billId: bill.id,
+        paymentDetails: {
+          paymentMethod,
+          paymentReference: paymentReference || undefined,
+        },
       });
-      
-      if (response.data.success) {
-        setPaymentDialogOpen(false);
-        
-        // Update bill with new paid status
-        setBill({
-          ...bill,
-          status: 'PAID',
-          paidDate: new Date().toISOString(),
-          paymentReference: response.data.data.paymentReference
-        });
-        
-        toast({
-          title: 'Payment successful',
-          description: 'Your payment has been processed successfully.',
-          variant: 'default',
-        });
-      } else {
-        toast({
-          title: 'Payment failed',
-          description: response.data.message || 'Failed to process payment',
-          variant: 'destructive',
-        });
-      }
-    } catch (error: unknown) {
-      console.error('Error processing payment:', error);
-      const err = error as { response?: { data?: { message?: string } } };
-      
+      setPaymentDialogOpen(false);
+      toast({
+        title: 'Payment successful',
+        description: 'Your payment has been processed successfully.',
+        variant: 'default',
+      });
+    } catch (err: unknown) {
+      console.error('Error processing payment:', err);
+      const e = err as { response?: { data?: { message?: string } } };
       toast({
         title: 'Payment failed',
-        description: err.response?.data?.message || 'Failed to process payment',
+        description: e.response?.data?.message || 'Failed to process payment',
         variant: 'destructive',
       });
     } finally {
@@ -173,13 +99,13 @@ const BillDetails = () => {
   const getBillStatusBadge = (status: string) => {
     switch (status) {
       case 'PAID':
-        return <Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-100">Paid</Badge>;
+        return <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">Paid</Badge>;
       case 'UNPAID':
-        return <Badge variant="outline">Unpaid</Badge>;
+        return <Badge variant="outline" className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20">Unpaid</Badge>;
       case 'OVERDUE':
         return <Badge variant="destructive">Overdue</Badge>;
       case 'CANCELLED':
-        return <Badge variant="outline" className="bg-gray-100 text-gray-800">Cancelled</Badge>;
+        return <Badge variant="outline" className="bg-secondary text-secondary-foreground border-border/40">Cancelled</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -295,7 +221,7 @@ const BillDetails = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Bill Date:</span>
-                  <span>{formatDate(bill.billDate)}</span>
+                  <span>{formatDate(bill.billDate || bill.createdAt)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Due Date:</span>
@@ -327,56 +253,61 @@ const BillDetails = () => {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Plan:</span>
-                  <span className="capitalize">{bill.subscriptionPlan.toLowerCase()}</span>
+                  <span className="capitalize">
+                    {(typeof bill.subscriptionPlan === 'string'
+                      ? bill.subscriptionPlan
+                      : bill.subscriptionPlan?.name || 'Standard'
+                    ).toLowerCase()}
+                  </span>
                 </div>
               </div>
             </div>
             
-            <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg">
-              <h3 className="text-lg font-medium mb-4">Payment Summary</h3>
+            <div className="bg-secondary/40 border border-border p-6 rounded-xl">
+              <h3 className="text-lg font-medium mb-4 text-foreground">Payment Summary</h3>
               
-              <div className="space-y-3 mb-6">
+              <div className="space-y-3 mb-6 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Active Users:</span>
-                  <span>{bill.activeUserCount}</span>
+                  <span className="text-muted-foreground">Active Users:</span>
+                  <span className="tabular-nums font-medium">{bill.activeUserCount ?? 0}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Price Per User:</span>
-                  <span>₹{bill.pricePerUser.toFixed(2)}</span>
+                  <span className="text-muted-foreground">Price Per User:</span>
+                  <span className="tabular-nums font-medium">₹{(bill.pricePerUser ?? 0).toFixed(2)}</span>
                 </div>
                 <Separator />
-                <div className="flex justify-between text-lg font-bold">
+                <div className="flex justify-between text-base font-bold">
                   <span>Total Amount:</span>
-                  <span>₹{bill.totalAmount.toFixed(2)}</span>
+                  <span className="tabular-nums text-foreground">₹{(bill.totalAmount ?? 0).toFixed(2)}</span>
                 </div>
               </div>
               
               {bill.status === 'PAID' ? (
-                <div className="bg-green-50 dark:bg-green-900 p-4 rounded-lg flex items-center">
-                  <CheckCircle className="h-6 w-6 text-green-500 mr-2" />
+                <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl flex items-center">
+                  <CheckCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400 mr-3 shrink-0" />
                   <div>
-                    <p className="font-medium text-green-800 dark:text-green-200">Payment Complete</p>
-                    <p className="text-sm text-green-600 dark:text-green-300">
+                    <p className="font-medium text-emerald-700 dark:text-emerald-300 text-sm">Payment Complete</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       Paid on {bill.paidDate ? formatDate(bill.paidDate) : 'Unknown date'}
                     </p>
                   </div>
                 </div>
               ) : bill.status === 'OVERDUE' ? (
-                <div className="bg-red-50 dark:bg-red-900 p-4 rounded-lg flex items-center">
-                  <AlertTriangle className="h-6 w-6 text-red-500 mr-2" />
+                <div className="bg-destructive/10 border border-destructive/20 p-4 rounded-xl flex items-center">
+                  <AlertTriangle className="h-5 w-5 text-destructive mr-3 shrink-0" />
                   <div>
-                    <p className="font-medium text-red-800 dark:text-red-200">Payment Overdue</p>
-                    <p className="text-sm text-red-600 dark:text-red-300">
+                    <p className="font-medium text-destructive text-sm">Payment Overdue</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       Due date was {formatDate(bill.dueDate)}
                     </p>
                   </div>
                 </div>
               ) : (
-                <div className="bg-amber-50 dark:bg-amber-900 p-4 rounded-lg flex items-center">
-                  <Calendar className="h-6 w-6 text-amber-500 mr-2" />
+                <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl flex items-center">
+                  <Calendar className="h-5 w-5 text-amber-600 dark:text-amber-400 mr-3 shrink-0" />
                   <div>
-                    <p className="font-medium text-amber-800 dark:text-amber-200">Payment Pending</p>
-                    <p className="text-sm text-amber-600 dark:text-amber-300">
+                    <p className="font-medium text-amber-700 dark:text-amber-300 text-sm">Payment Pending</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       Due by {formatDate(bill.dueDate)}
                     </p>
                   </div>
@@ -421,7 +352,7 @@ const BillDetails = () => {
           <DialogHeader>
             <DialogTitle>Pay Bill</DialogTitle>
             <DialogDescription>
-              Select a payment method to process your payment of ₹{bill.totalAmount.toFixed(2)}
+              Select a payment method to process your payment of ₹{(bill.totalAmount ?? 0).toFixed(2)}
             </DialogDescription>
           </DialogHeader>
           
@@ -492,7 +423,7 @@ const BillDetails = () => {
                   Processing...
                 </>
               ) : (
-                <>Pay ₹{bill.totalAmount.toFixed(2)}</>
+                <>Pay ₹{(bill.totalAmount ?? 0).toFixed(2)}</>
               )}
             </Button>
           </DialogFooter>

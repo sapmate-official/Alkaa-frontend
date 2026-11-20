@@ -21,8 +21,7 @@ import {
   TrendingUp,
   Activity
 } from 'lucide-react';
-import { useAtom } from 'jotai';
-import { permissionListAtom } from '@/store/atom';
+import { usePermissions } from '@/store/useAuthStore';
 import {
   useLeaveTypesQuery,
   useLeaveRequestsQuery,
@@ -36,7 +35,7 @@ const LeaveDashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [permissionList] = useAtom(permissionListAtom);
+  const permissionList = usePermissions();
   
   // Check if user has approval permissions
   const canApproveLeaveRequests = permissionList.some(permission => 

@@ -19,8 +19,7 @@ import {
 import { useAuth } from '@/providers/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useAtom } from 'jotai';
-import { permissionListAtom } from '@/store/atom';
+import { usePermissions } from '@/store/useAuthStore';
 import RouteDict from '@/routes/RouteDict';
 
 // Import TanStack Query hooks
@@ -36,7 +35,7 @@ const EmployeeView = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [permissionList] = useAtom(permissionListAtom);
+  const permissionList = usePermissions();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [searchTerm, setSearchTerm] = useState('');

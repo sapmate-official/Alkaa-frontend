@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useBillingHistoryPaginated } from '@/hooks/queries/useBilling';
 import {
   Table,
   TableBody,
@@ -37,103 +37,37 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { useToast } from '@/hooks/use-toast';
 import { APIV2Dictionary } from '@/services/api/v2/Api2Dicts';
 import RouteDict from '@/routes/RouteDict';
 
-interface BillData {
-  id: string;
-  organizationId: string;
-  month: number;
-  monthName: string;
-  year: number;
-  activeUserCount: number;
-  pricePerUser: number;
-  totalAmount: number;
-  status: 'PAID' | 'UNPAID' | 'OVERDUE' | 'CANCELLED';
-  billDate: string;
-  dueDate: string;
-  paidDate?: string;
-  paymentReference?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface PaginationData {
-  total: number;
-  page: number;
-  limit: number;
-  pages: number;
-}
-
 const BillHistory = () => {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [bills, setBills] = useState<BillData[]>([]);
-  const [pagination, setPagination] = useState<PaginationData>({
-    total: 0,
-    page: 1,
-    limit: 10,
-    pages: 0
-  });
+  const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({
     status: 'all',
     year: 'all',
     sort: 'desc'
   });
   const navigate = useNavigate();
-  const { toast } = useToast();
 
-  useEffect(() => {
-    fetchBills();
-  }, [pagination.page, filters]);
+  const { data: historyResponse, isLoading: loading, error: queryError } = useBillingHistoryPaginated({
+    page: currentPage,
+    limit: 10,
+    sort: filters.sort,
+    status: filters.status !== 'all' ? filters.status : undefined,
+    year: filters.year !== 'all' ? filters.year : undefined,
+  });
 
-  const fetchBills = async () => {
-    try {
-      setLoading(true);
-      
-      // Build query parameters
-      const params = new URLSearchParams();
-      params.append('page', pagination.page.toString());
-      params.append('limit', pagination.limit.toString());
-      params.append('sort', filters.sort);
-      if (filters.status !== 'all') params.append('status', filters.status);
-      if (filters.year !== 'all') params.append('year', filters.year);
-      
-      const response = await axios.get(`${APIV2Dictionary.billing.getHistory()}?${params.toString()}`, {
-        withCredentials: true
-      });
-      
-      if (response.data.success) {
-        setBills(response.data.data);
-        setPagination(response.data.pagination);
-        setError(null);
-      } else {
-        setError(response.data.message || 'Failed to load bills');
-      }
-    } catch (error: unknown) {
-      console.error('Error fetching bills:', error);
-      const err = error as { response?: { data?: { message?: string } } };
-      const msg = err.response?.data?.message || 'Failed to load bills';
-      setError(msg);
-      
-      toast({
-        title: 'Error loading data',
-        description: msg,
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const bills = historyResponse?.data || [];
+  const pagination = historyResponse?.pagination || { total: 0, page: currentPage, limit: 10, pages: 1 };
+  const error = queryError ? ((queryError as { message?: string }).message || 'Failed to load bills') : null;
 
   const handlePageChange = (newPage: number) => {
-    setPagination(prev => ({ ...prev, page: newPage }));
+    setCurrentPage(newPage);
   };
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
-    setPagination(prev => ({ ...prev, page: 1 })); // Reset to first page when filters change
+    setCurrentPage(1); // Reset to first page when filters change
   };
 
   const getBillStatusBadge = (status: string) => {
@@ -319,7 +253,7 @@ const BillHistory = () => {
                         {bill.monthName} {bill.year}
                       </TableCell>
                       <TableCell>{bill.activeUserCount}</TableCell>
-                      <TableCell>₹{bill.totalAmount.toFixed(2)}</TableCell>
+                      <TableCell>₹{(bill.totalAmount ?? 0).toFixed(2)}</TableCell>
                       <TableCell>{getBillStatusBadge(bill.status)}</TableCell>
                       <TableCell>{formatDate(bill.dueDate)}</TableCell>
                       <TableCell className="text-right space-x-2">

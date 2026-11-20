@@ -17,6 +17,7 @@ import {
   Network,
   Clock,
   CalendarCheck,
+  CalendarDays,
   ListTodo,
   History,
   KeyRound,
@@ -144,6 +145,11 @@ export const AppSidebarRail: React.FC<AppSidebarRailProps> = ({
               icon: <CalendarCheck className="h-4 w-4" strokeWidth={1.75} />,
               badge: pendingLeaves > 0 ? pendingLeaves : null,
               badgeVariant: 'warning',
+            },
+            {
+              label: 'Company Holidays',
+              href: RouteDict.Holiday.Base,
+              icon: <CalendarDays className="h-4 w-4" strokeWidth={1.75} />,
             },
             {
               label: 'Tasks & Ops',

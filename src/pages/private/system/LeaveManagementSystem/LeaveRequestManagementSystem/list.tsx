@@ -34,8 +34,7 @@ import {
   Eye
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { useAtom } from 'jotai'
-import { permissionListAtom } from '@/store/atom'
+import { usePermissions } from '@/store/useAuthStore'
 import RouteDict from '@/routes/RouteDict'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -72,7 +71,7 @@ const LeaveRequestList = () => {
   const { user } = useAuth()
   const { toast } = useToast()
   const navigate = useNavigate()
-  const [permissionList] = useAtom(permissionListAtom)
+  const permissionList = usePermissions()
 
   // TanStack Query hooks
   const { data: leaveRequests = [], isLoading, refetch } = useLeaveRequestsQuery(user?.id, !!user?.id)
@@ -349,7 +348,7 @@ const LeaveRequestList = () => {
 
   if (isLoading) {
     return (
-      <div className="h-screen w-full flex items-center justify-center">
+      <div className="min-h-[50vh] w-full flex items-center justify-center">
         <motion.div 
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}

@@ -235,4 +235,16 @@ export {
   type UserProfileSummary
 } from './useDashboardSummary'
 
+// Activity Logs
+export {
+  useActivityLogsQuery,
+  useActivityStatsQuery,
+  activityLogsKeys,
+  type ActivityLogEntry,
+  type ActivityStats,
+  type ActivityLogsFilterParams,
+  type ActivityLogsResponse,
+  type ActivityActorTarget
+} from './useActivityLogs'
+
 

@@ -12,8 +12,7 @@ import { useAuth } from '@/providers/AuthContext'
 import { useEffect, useState } from 'react'
 import { useDepartmentsQuery } from '@/hooks/queries/useDepartments'
 import {  useNavigate } from 'react-router-dom'
-import { useAtom } from 'jotai'
-import { permissionListAtom } from '@/store/atom'
+import { usePermissions } from '@/store/useAuthStore'
 import CheckPermission from '@/services/PermissionCheck'
 import { Input } from '@/components/ui/input'
 import { 
@@ -200,7 +199,7 @@ const ListOfDepartment = () => {
     const [allDepartments, setAllDepartments] = useState<Department[]>([])
     const [filteredDepartments, setFilteredDepartments] = useState<Department[]>([])
     const { user } = useAuth()
-    const [permissions] = useAtom(permissionListAtom)
+    const permissions = usePermissions()
     
     const [headOfDepartments, setHeadOfDepartments] = useState<Department[]>([])
     const [ownDepartment, setOwnDepartment] = useState<Department | null>(null)

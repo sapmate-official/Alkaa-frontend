@@ -9,8 +9,8 @@ import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 import { UserOptions } from "jspdf-autotable";
 import CheckPermission from '@/services/PermissionCheck';
-import { permissionListAtom } from '@/store/atom';
-import { useAtom } from 'jotai';
+import { usePermissions } from '@/store/useAuthStore';
+import PayrollHeader from '../../ui/PayrollHeader';
 
 // Extend jsPDF with autoTable
 declare module "jspdf" {
@@ -61,7 +61,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, Download, DollarSign, FileText, Users, CreditCard, ChevronLeft, ClipboardCopy } from 'lucide-react';
+import { Loader2, Download, Users, CreditCard, ChevronLeft, ClipboardCopy } from 'lucide-react';
 import RouteDict from '@/routes/RouteDict';
 
 // Types
@@ -110,7 +110,7 @@ interface BankDetails {
 
 const MainSubordinateSalaryTransactionPage: React.FC = () => {
   const { user } = useAuth();
-  const [permissions] = useAtom(permissionListAtom);
+  const permissions = usePermissions();
   const navigate = useNavigate();
   const { userId, payrollId } = useParams();
   
@@ -720,37 +720,46 @@ const MainSubordinateSalaryTransactionPage: React.FC = () => {
   }
 
   return (
-    <div className=" p-4 w-full px-4 overflow-y-auto">
+    <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-7xl">
+      <PayrollHeader
+        title="Subordinate Salary Transactions"
+        description="Process and track salary payments for direct reporting team members"
+        activeTab="subordinate-payslip"
+      />
       
-      {userId && payrollId ? (
+      {userId && payrollId && (
         <Button 
           variant="outline" 
-          className="mb-4"
+          size="sm"
+          className="mb-2 h-8 text-xs"
           onClick={() => navigate(RouteDict.Payroll.Manager.Transaction)}
         >
-          <ChevronLeft className="mr-2 h-4 w-4" />
+          <ChevronLeft className="mr-1.5 h-3.5 w-3.5" />
           Back to All Subordinates
         </Button>
-      ) : (
-        <h1 className="text-3xl font-bold mb-6">Subordinate Salary Transaction Management</h1>
       )}
       
       {/* Top section with month/year selection and report */}
-      <Card className="mb-6">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Payment Overview</CardTitle>
-            <div className="flex gap-2">
+      <Card className="border-border shadow-xs">
+        <CardHeader className="p-4 sm:p-5 border-b border-border">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <CardTitle className="text-base font-semibold">Payment Overview</CardTitle>
+              <CardDescription className="text-xs">
+                Salary payment summary for {months.find(m => m.value === selectedMonth)?.label} {selectedYear}
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
               <Select
                 value={selectedMonth.toString()}
                 onValueChange={(value) => setSelectedMonth(parseInt(value))}
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[125px] h-9 text-xs">
                   <SelectValue placeholder="Month" />
                 </SelectTrigger>
                 <SelectContent>
                   {months.map((month) => (
-                    <SelectItem key={month.value} value={month.value.toString()}>
+                    <SelectItem key={month.value} value={month.value.toString()} className="text-xs">
                       {month.label}
                     </SelectItem>
                   ))}
@@ -761,12 +770,12 @@ const MainSubordinateSalaryTransactionPage: React.FC = () => {
                 value={selectedYear.toString()}
                 onValueChange={(value) => setSelectedYear(parseInt(value))}
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[95px] h-9 text-xs">
                   <SelectValue placeholder="Year" />
                 </SelectTrigger>
                 <SelectContent>
                   {years.map((year) => (
-                    <SelectItem key={year} value={year.toString()}>
+                    <SelectItem key={year} value={year.toString()} className="text-xs">
                       {year}
                     </SelectItem>
                   ))}
@@ -774,59 +783,51 @@ const MainSubordinateSalaryTransactionPage: React.FC = () => {
               </Select>
             </div>
           </div>
-          <CardDescription>
-            Salary payment summary for {months.find(m => m.value === selectedMonth)?.label} {selectedYear}
-          </CardDescription>
         </CardHeader>
         
-        <CardContent>
+        <CardContent className="p-4 sm:p-5">
           {report ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total Subordinates</p>
-                      <h3 className="text-2xl font-bold">{report.totalEmployees}</h3>
-                    </div>
-                    <Users className="h-8 w-8 text-blue-500" />
-                  </div>
-                </CardContent>
-              </Card>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-4 rounded-lg bg-card border border-border flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Total Subordinates</p>
+                  <p className="text-2xl font-bold tabular-nums text-foreground mt-1">{report.totalEmployees}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Direct reports</p>
+                </div>
+                <Users className="h-5 w-5 text-muted-foreground" />
+              </div>
               
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Unpaid Salaries</p>
-                      <h3 className="text-2xl font-bold">{report.unpaidCount}</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {formatCurrency(report.totalUnpaidAmount)}
-                      </p>
-                    </div>
-                    <FileText className="h-8 w-8 text-amber-500" />
+              <div className="p-4 rounded-lg bg-card border border-border flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Disbursed Salaries</p>
+                  <p className="text-2xl font-bold tabular-nums text-foreground mt-1">{report.paidCount}</p>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block"></span>
+                    <span className="text-xs font-semibold tabular-nums text-muted-foreground">
+                      {formatCurrency(report.paidAmount)}
+                    </span>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+                <Users className="h-5 w-5 text-muted-foreground" />
+              </div>
               
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Paid Salaries</p>
-                      <h3 className="text-2xl font-bold">{report.paidCount}</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {formatCurrency(report.paidAmount)}
-                      </p>
-                    </div>
-                    <DollarSign className="h-8 w-8 text-green-500" />
+              <div className="p-4 rounded-lg bg-card border border-border flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Pending Disbursement</p>
+                  <p className="text-2xl font-bold tabular-nums text-foreground mt-1">{report.unpaidCount}</p>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className="h-2 w-2 rounded-full bg-amber-500 inline-block"></span>
+                    <span className="text-xs font-semibold tabular-nums text-muted-foreground">
+                      {formatCurrency(report.totalUnpaidAmount)}
+                    </span>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+                <Users className="h-5 w-5 text-muted-foreground" />
+              </div>
             </div>
           ) : (
             <div className="flex justify-center items-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           )}
         </CardContent>

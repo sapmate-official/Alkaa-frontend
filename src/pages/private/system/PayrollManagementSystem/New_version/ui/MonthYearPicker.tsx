@@ -8,66 +8,65 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { Calendar } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+export interface MonthOption {
+  value: number;
+  label?: string;
+  name?: string;
+}
 
 interface MonthYearPickerProps {
   month: number;
   year: number;
   onMonthChange: (month: number) => void;
   onYearChange: (year: number) => void;
-  color?: string;
+  className?: string;
+  color?: string; // Kept for backwards-compatibility
 }
+
+const DEFAULT_MONTHS: MonthOption[] = [
+  { value: 1, label: 'January' },
+  { value: 2, label: 'February' },
+  { value: 3, label: 'March' },
+  { value: 4, label: 'April' },
+  { value: 5, label: 'May' },
+  { value: 6, label: 'June' },
+  { value: 7, label: 'July' },
+  { value: 8, label: 'August' },
+  { value: 9, label: 'September' },
+  { value: 10, label: 'October' },
+  { value: 11, label: 'November' },
+  { value: 12, label: 'December' },
+];
 
 export const MonthYearPicker: React.FC<MonthYearPickerProps> = ({ 
   month, 
   year, 
   onMonthChange, 
-  onYearChange, 
-  color = 'inherit' 
+  onYearChange,
+  className
 }) => {
-  const months = [
-    { value: 1, name: 'January' },
-    { value: 2, name: 'February' },
-    { value: 3, name: 'March' },
-    { value: 4, name: 'April' },
-    { value: 5, name: 'May' },
-    { value: 6, name: 'June' },
-    { value: 7, name: 'July' },
-    { value: 8, name: 'August' },
-    { value: 9, name: 'September' },
-    { value: 10, name: 'October' },
-    { value: 11, name: 'November' },
-    { value: 12, name: 'December' }
-  ];
-
-  // Generate years (current year and 5 years back)
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 6 }, (_, i) => currentYear - i);
 
-  // Define styles based on color
-  const selectStyles = {
-    color: color === 'white' ? 'white' : undefined,
-    borderColor: color === 'white' ? 'rgba(255, 255, 255, 0.5)' : undefined,
-  };
-
   return (
-    <div className="flex gap-2">
+    <div className={cn("flex items-center gap-2", className)}>
       <Select
         value={month.toString()}
-        onValueChange={(value) => onMonthChange(Number(value))}
+        onValueChange={(val) => onMonthChange(Number(val))}
       >
-        <SelectTrigger 
-          className="w-[120px]"
-          style={selectStyles}
-        >
+        <SelectTrigger className="w-[130px] h-9 text-xs font-medium">
           <SelectValue placeholder="Month" />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
-            <SelectLabel>Month</SelectLabel>
-            {months.map((m) => (
-              <SelectItem key={m.value} value={m.value.toString()}>
-                {m.name}
+            <SelectLabel className="text-xs">Month</SelectLabel>
+            {DEFAULT_MONTHS.map((m) => (
+              <SelectItem key={m.value} value={m.value.toString()} className="text-xs">
+                {m.label || m.name}
               </SelectItem>
             ))}
           </SelectGroup>
@@ -76,19 +75,16 @@ export const MonthYearPicker: React.FC<MonthYearPickerProps> = ({
 
       <Select
         value={year.toString()}
-        onValueChange={(value) => onYearChange(Number(value))}
+        onValueChange={(val) => onYearChange(Number(val))}
       >
-        <SelectTrigger 
-          className="w-[100px]"
-          style={selectStyles}
-        >
+        <SelectTrigger className="w-[95px] h-9 text-xs font-medium">
           <SelectValue placeholder="Year" />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
-            <SelectLabel>Year</SelectLabel>
+            <SelectLabel className="text-xs">Year</SelectLabel>
             {years.map((y) => (
-              <SelectItem key={y} value={y.toString()}>
+              <SelectItem key={y} value={y.toString()} className="text-xs">
                 {y}
               </SelectItem>
             ))}
@@ -98,35 +94,50 @@ export const MonthYearPicker: React.FC<MonthYearPickerProps> = ({
     </div>
   );
 };
-export const MonthAndYearSelector = ({ selectedMonth, setSelectedMonth, months, selectedYear, setSelectedYear, years }:
-  {
-    selectedMonth: number,
-    setSelectedMonth: (month: number) => void,
-    months: { value: number; label: string }[],
-    selectedYear: number,
-    setSelectedYear: (year: number) => void,
-    years: number[]
-  }
-) => {
-  return (<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-    <Card className="md:col-span-4">
-      <CardHeader className="flex flex-col md:flex-row justify-between items-start md:items-center">
-        <div>
-          <CardTitle>Payslip Selection</CardTitle>
-          <CardDescription>Select month and year to view payslip</CardDescription>
+
+export const MonthAndYearSelector = ({ 
+  selectedMonth, 
+  setSelectedMonth, 
+  months = DEFAULT_MONTHS, 
+  selectedYear, 
+  setSelectedYear, 
+  years,
+  className
+}: {
+  selectedMonth: number;
+  setSelectedMonth: (month: number) => void;
+  months?: MonthOption[];
+  selectedYear: number;
+  setSelectedYear: (year: number) => void;
+  years?: number[];
+  className?: string;
+}) => {
+  const currentYear = new Date().getFullYear();
+  const yearList = years || Array.from({ length: 6 }, (_, i) => currentYear - i);
+
+  return (
+    <Card className={cn("bg-card border-border", className)}>
+      <CardContent className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <div>
+            <h3 className="text-sm font-medium text-foreground">Payroll Period</h3>
+            <p className="text-xs text-muted-foreground">Select month and year to inspect payslip records</p>
+          </div>
         </div>
-        <div className="flex gap-2 mt-2 md:mt-0">
+
+        <div className="flex items-center gap-2">
           <Select
             value={selectedMonth.toString()}
-            onValueChange={(value) => setSelectedMonth(parseInt(value))}
+            onValueChange={(val) => setSelectedMonth(parseInt(val))}
           >
-            <SelectTrigger className="w-[120px]">
+            <SelectTrigger className="w-[130px] h-9 text-xs">
               <SelectValue placeholder="Month" />
             </SelectTrigger>
             <SelectContent>
-              {months.map((month) => (
-                <SelectItem key={month.value} value={month.value.toString()}>
-                  {month.label}
+              {months.map((m) => (
+                <SelectItem key={m.value} value={m.value.toString()} className="text-xs">
+                  {m.label || m.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -134,21 +145,23 @@ export const MonthAndYearSelector = ({ selectedMonth, setSelectedMonth, months, 
 
           <Select
             value={selectedYear.toString()}
-            onValueChange={(value) => setSelectedYear(parseInt(value))}
+            onValueChange={(val) => setSelectedYear(parseInt(val))}
           >
-            <SelectTrigger className="w-[100px]">
+            <SelectTrigger className="w-[95px] h-9 text-xs">
               <SelectValue placeholder="Year" />
             </SelectTrigger>
             <SelectContent>
-              {years.map((year) => (
-                <SelectItem key={year} value={year.toString()}>
-                  {year}
+              {yearList.map((y) => (
+                <SelectItem key={y} value={y.toString()} className="text-xs">
+                  {y}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-      </CardHeader>
+      </CardContent>
     </Card>
-  </div>)
-}
+  );
+};
+
+export default MonthYearPicker;

@@ -17,10 +17,11 @@ import {
 } from "@/components/ui/dialog";
 import axios from "axios";
 import { format } from "date-fns";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useGeolocation } from "@/hooks/useAttendance";
+import { usePastNotCheckedDaysQuery } from "@/hooks/queries/useAttendance";
 
 // Simplified interfaces
 interface AttendanceSession {
@@ -53,9 +54,10 @@ const toLocalDate = (dateKey: string, time: string) => new Date(`${dateKey}T${ti
 const toDisplayDate = (dateKey: string) => new Date(`${dateKey}T12:00:00`);
 
 const PastNotCheckedDays = () => {
-    const [data, setData] = useState<AttendanceSession[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { data: rawData = [], isLoading: loading, refetch: fetchData } = usePastNotCheckedDaysQuery();
+    const data = (rawData as unknown as AttendanceSession[]) || [];
     const [selectedSession, setSelectedSession] = useState<AttendanceSession | null>(null);
+    const [submitting, setSubmitting] = useState(false);
     const { toast } = useToast();
     const [openDialogs, setOpenDialogs] = useState<{ [key: string]: boolean }>({});
     const [isAddNewDialogOpen, setIsAddNewDialogOpen] = useState(false);
@@ -81,27 +83,6 @@ const PastNotCheckedDays = () => {
             notes: ''
         }
     });
-
-    const fetchData = async () => {
-        try {
-            const response = await axios.get(`${APIDictionary.attendance}/check-out/past`, {
-                withCredentials: true
-            });
-            setData(response.data);
-            setLoading(false);
-        } catch (error) {
-            console.error('Failed to fetch past not checked days:', error);
-            toast({
-                title: "Error",
-                description: "Failed to fetch past sessions",
-                variant: "destructive",
-            });
-        }
-    };
-
-    useEffect(() => {
-        fetchData();
-    }, []);
 
     // Simplified handleEndSession function with manual validation
     const handleEndSession = async (values: z.infer<typeof formSchema>) => {
@@ -164,7 +145,7 @@ const PastNotCheckedDays = () => {
         }
         
         try {
-            setLoading(true);
+            setSubmitting(true);
             
             const currentClientTime = new Date();
             const checkInDateTime = toLocalDate(values.date, values.checkInTime);
@@ -176,7 +157,7 @@ const PastNotCheckedDays = () => {
                     description: "Check-out time must be after check-in time",
                     variant: "destructive",
                 });
-                setLoading(false);
+                setSubmitting(false);
                 return;
             }
 
@@ -218,7 +199,7 @@ const PastNotCheckedDays = () => {
                 variant: "destructive",
             });
         } finally {
-            setLoading(false);
+            setSubmitting(false);
         }
     };
 
@@ -503,9 +484,9 @@ const PastNotCheckedDays = () => {
                                 </Button>
                                 <Button 
                                     type="submit"
-                                    disabled={loading || !location}
+                                    disabled={loading || submitting || !location}
                                 >
-                                    {loading ? 'Submitting...' : 'Submit Past Attendance'}
+                                    {submitting ? 'Submitting...' : 'Submit Past Attendance'}
                                 </Button>
                             </DialogFooter>
                         </form>

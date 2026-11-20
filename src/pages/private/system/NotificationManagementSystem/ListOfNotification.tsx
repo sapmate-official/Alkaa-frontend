@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/providers/AuthContext';
+import { Loader2 } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -24,9 +25,9 @@ const ListOfNotification = () => {
 
     if (isLoading) {
         return (
-            <div className="p-4 w-full h-full overflow-y-scroll">
-                <div className="flex justify-center items-center h-64">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-7xl">
+                <div className="flex justify-center items-center h-64 border rounded-xl bg-card">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
             </div>
         );
@@ -34,16 +35,16 @@ const ListOfNotification = () => {
 
     if (error) {
         return (
-            <div className="p-4 w-full h-full overflow-y-scroll">
-                <div className="flex justify-center items-center h-64">
-                    <p className="text-red-600">Failed to load notifications</p>
+            <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-7xl">
+                <div className="flex justify-center items-center h-64 border rounded-xl bg-card">
+                    <p className="text-sm text-destructive">Failed to load notifications</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="p-4 w-full h-full overflow-y-scroll">
+        <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-7xl">
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold">Notifications</h2>
                 <div className="flex gap-2">

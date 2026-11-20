@@ -380,23 +380,23 @@ const ModernRolePermissionManager = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-7xl">
+      <div className="space-y-6">
         {/* Header */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 border-0">
+        <div className="bg-card rounded-2xl shadow-sm p-6 border border-border">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold text-foreground">
                 Role & Permission Manager
               </h1>
-              <p className="text-slate-600 mt-2">
+              <p className="text-muted-foreground mt-2">
                 Manage roles, permissions, and user assignments with advanced controls
               </p>
             </div>
             <div className="flex gap-3">
               <Button
                 onClick={() => setIsCreateRoleOpen(true)}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Create Role
@@ -406,19 +406,19 @@ const ModernRolePermissionManager = () => {
         </div>
 
         {/* Search and Filters */}
-        <Card className="border-0 shadow-xl">
+        <Card className="border border-border shadow-sm">
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
                   placeholder="Search roles by name or description..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 border-slate-200"
+                  className="pl-10"
                 />
               </div>
-              <Button variant="outline" className="border-slate-200">
+              <Button variant="outline">
                 <Filter className="mr-2 h-4 w-4" />
                 Filter
               </Button>
@@ -428,16 +428,16 @@ const ModernRolePermissionManager = () => {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'roles' | 'permissions' | 'assignments')} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 bg-white border border-slate-200 p-1 rounded-xl shadow-lg">
-            <TabsTrigger value="roles" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg">
+          <TabsList className="grid w-full grid-cols-3 bg-secondary/50 border border-border p-1 rounded-xl">
+            <TabsTrigger value="roles" className="rounded-lg">
               <Shield className="mr-2 h-4 w-4" />
               Roles
             </TabsTrigger>
-            <TabsTrigger value="permissions" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg">
+            <TabsTrigger value="permissions" className="rounded-lg">
               <Lock className="mr-2 h-4 w-4" />
               Permissions
             </TabsTrigger>
-            <TabsTrigger value="assignments" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg">
+            <TabsTrigger value="assignments" className="rounded-lg">
               <Users className="mr-2 h-4 w-4" />
               Assignments
             </TabsTrigger>

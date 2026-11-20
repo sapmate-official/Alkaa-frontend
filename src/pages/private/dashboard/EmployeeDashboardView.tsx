@@ -8,7 +8,6 @@ import {
   CalendarDays,
   FileText,
   User,
-  Calendar,
   Sparkles,
   ArrowRight,
   PlusCircle,
@@ -247,7 +246,7 @@ export const EmployeeDashboardView: React.FC<EmployeeDashboardViewProps> = ({
         <Card className="xl:col-span-5 bg-card border border-border shadow-sm rounded-2xl flex flex-col justify-between text-left">
           <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-border">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-secondary text-foreground flex items-center justify-center">
                 <CreditCard className="h-4 w-4" />
               </div>
               <div>
@@ -455,7 +454,14 @@ export const EmployeeDashboardView: React.FC<EmployeeDashboardViewProps> = ({
                 Statutory and organization calendar holidays
               </CardDescription>
             </div>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-primary hover:text-primary/90 font-medium"
+              onClick={() => navigate(RouteDict.Holiday.Base)}
+            >
+              View Calendar
+            </Button>
           </CardHeader>
           <CardContent className="pt-4">
             {stats.upcomingHolidays.length === 0 ? (
@@ -532,7 +538,7 @@ export const EmployeeDashboardView: React.FC<EmployeeDashboardViewProps> = ({
           onClick={() => navigate(RouteDict.Payroll.Base)}
         >
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 group-hover:scale-105 transition-transform">
+            <div className="p-2.5 rounded-xl bg-secondary text-foreground group-hover:scale-105 transition-transform">
               <FileText className="h-5 w-5" />
             </div>
             <div>

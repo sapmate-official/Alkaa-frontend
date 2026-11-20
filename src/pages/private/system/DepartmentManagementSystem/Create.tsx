@@ -35,8 +35,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import { useAtom } from 'jotai'
-import { permissionListAtom } from '@/store/atom'
+import { usePermissions } from '@/store/useAuthStore'
 import CheckPermission from '@/services/PermissionCheck'
 import RouteDict from '@/routes/RouteDict'
 import { useDepartmentsQuery, useCreateDepartmentMutation } from '@/hooks/queries/useDepartments'
@@ -82,7 +81,7 @@ const formSchema = z.object({
 const CreateDepartment = () => {
   const { user } = useAuth()
   const { toast } = useToast()
-  const [permissions] = useAtom(permissionListAtom)
+  const permissions = usePermissions()
   const navigate = useNavigate()
 
   const canCreateDepartment = CheckPermission('create_new_department', permissions)

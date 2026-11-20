@@ -33,8 +33,7 @@ import { useAuth } from '@/providers/AuthContext';
 import { APIDictionary } from '@/services/api/v2/APIdict';
 import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
-import { useAtom } from 'jotai';
-import { permissionListAtom } from '@/store/atom';
+import { usePermissions } from '@/store/useAuthStore';
 import CreateTaskDialog from './components/CreateTaskDialog';
 import TaskChatView from './components/TaskChatView';
 import GroupDetailsDialog from './components/GroupDetailsDialog';
@@ -64,7 +63,7 @@ interface TaskGroupStats {
 const UserView = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [permissionList] = useAtom(permissionListAtom);
+  const permissionList = usePermissions();
   const [users, setUsers] = useState<User[]>([]);
   const [taskGroups, setTaskGroups] = useState<TaskGroup[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);

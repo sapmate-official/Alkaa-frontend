@@ -1,7 +1,5 @@
-import { permissionListAtom, userIdAtom } from "../store/atom";
 import { useAuthStore } from "../store/useAuthStore";
 import axios, { AxiosError } from "axios";
-import { useAtom } from "jotai";
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { Permission, User } from "../types/general";
 import { backendDomain } from "../constants/Domain";
@@ -60,8 +58,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [authStep, setAuthStep] = useState<AuthStep>({ step: 'email' });
-    const [, setUser_id] = useAtom(userIdAtom);
-    const [, setPermissionList] = useAtom(permissionListAtom);
     const navigate = useNavigate();
     const [isInitialized, setIsInitialized] = useState(false);
     
@@ -91,8 +87,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             if (response.status === 200 && response.data.user) {
                 const perms = toPermissionList(response.data.user.permissions);
                 setUser(response.data.user);
-                setUser_id(response.data.user.id ?? null);
-                setPermissionList(perms);
                 useAuthStore.getState().setUser(response.data.user);
                 useAuthStore.getState().setPermissions(perms);
                 return response.data.user;
@@ -373,8 +367,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         } finally {
             // Always clear tokens and user state
             setUser(null);
-            setUser_id(null);
-            setPermissionList([]);
             useAuthStore.getState().clearAuth();
             tokenStorage.clearTokens();
             setIsLoading(false);

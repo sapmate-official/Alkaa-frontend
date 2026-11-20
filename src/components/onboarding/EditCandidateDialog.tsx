@@ -43,6 +43,8 @@ import {
   DollarSign
 } from 'lucide-react';
 import { useCandidate, useDepartments, useUpdateCandidate } from '@/hooks/queries/useOnboarding';
+import { CountrySelect } from '@/components/common/CountrySelect';
+import { MarketSelect } from '@/components/common/MarketSelect';
 
 const editCandidateSchema = z.object({
   // Basic Information
@@ -55,6 +57,8 @@ const editCandidateSchema = z.object({
   departmentId: z.string().transform(val => val === '' ? 'none' : val).optional(),
   annualPackage: z.number().min(0, 'Annual package must be positive').optional(),
   hiredDate: z.string().optional(),
+  countryOfCompany: z.string().optional(),
+  market: z.string().optional(),
   
   // Personal Information (from form data)
   emergencyContact: z.string().optional(),
@@ -99,6 +103,8 @@ const EditCandidateDialog = ({ candidateId, isOpen, onClose, onSuccess }: EditCa
       departmentId: 'none',
       annualPackage: 0,
       hiredDate: '',
+      countryOfCompany: '',
+      market: '',
       emergencyContact: '',
       dateOfBirth: '',
       address: '',
@@ -122,6 +128,8 @@ const EditCandidateDialog = ({ candidateId, isOpen, onClose, onSuccess }: EditCa
         departmentId: candidate.departmentId || 'none',
         annualPackage: candidate.annualPackage || 0,
         hiredDate: candidate.hiredDate || '',
+        countryOfCompany: candidate.countryOfCompany || ((candidate.formData as Record<string, unknown> | null)?.countryOfCompany as string) || '',
+        market: candidate.market || ((candidate.formData as Record<string, unknown> | null)?.market as string) || '',
         emergencyContact: candidate.emergencyContact || '',
         dateOfBirth: candidate.dateOfBirth || '',
         address: candidate.address || '',
@@ -357,6 +365,44 @@ const EditCandidateDialog = ({ candidateId, isOpen, onClose, onSuccess }: EditCa
                         </FormLabel>
                         <FormControl>
                           <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <FormField
+                    control={form.control}
+                    name="countryOfCompany"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Country of Company</FormLabel>
+                        <FormControl>
+                          <CountrySelect
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Select company country"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="market"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Market / Industry</FormLabel>
+                        <FormControl>
+                          <MarketSelect
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Select market or industry"
+                            customPlaceholder="Specify custom market..."
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

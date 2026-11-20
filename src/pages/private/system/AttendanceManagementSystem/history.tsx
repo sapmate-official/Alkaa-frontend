@@ -19,8 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAtom } from "jotai";
-import { permissionListAtom } from "@/store/atom";
+import { usePermissions } from "@/store/useAuthStore";
 import { CalendarX2, Clock, MapPin, UserCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import { DayPicker } from "react-day-picker";
@@ -41,7 +40,7 @@ const fromDateKey = (dateKey: string) => new Date(`${dateKey}T12:00:00`);
 
 const AttendanceHistory = () => {
   const { user } = useAuth();
-  const [permissionList] = useAtom(permissionListAtom);
+  const permissionList = usePermissions();
   const [groupedAttendance, setGroupedAttendance] = useState<GroupedSessions>(
     {},
   );
@@ -402,7 +401,7 @@ const AttendanceHistory = () => {
   };
 
   return (
-    <div className="p-3 sm:p-4 md:p-6 w-full mx-auto overflow-y-scroll">
+    <div className="p-3 sm:p-4 md:p-6 w-full mx-auto">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -623,24 +622,20 @@ const AttendanceHistory = () => {
                   transition={{ delay: 0.2 }}
                   className="flex justify-center"
                 >
-                  <style
-                    dangerouslySetInnerHTML={{
-                      __html: `
-                      .rdp-day_selected:not([disabled]) {
-                        background-color: var(--primary);
-                        color: white;
-                      }
-                      .rdp-day_today:not(.rdp-day_outside) {
-                        font-weight: bold;
-                        border: 1px solid var(--primary);
-                      }
-                      .attendance-day:not(.rdp-day_selected):not([disabled]) {
-                        background-color: rgba(16, 185, 129, 0.15);
-                        color: rgb(6, 95, 70);
-                      }
-                    `,
-                    }}
-                  />
+                  <style>{`
+                    .rdp-day_selected:not([disabled]) {
+                      background-color: hsl(var(--primary));
+                      color: hsl(var(--primary-foreground));
+                    }
+                    .rdp-day_today:not(.rdp-day_outside) {
+                      font-weight: bold;
+                      border: 1px solid hsl(var(--primary));
+                    }
+                    .attendance-day:not(.rdp-day_selected):not([disabled]) {
+                      background-color: hsl(var(--success) / 0.15);
+                      color: hsl(var(--success));
+                    }
+                  `}</style>
                   <DayPicker
                     mode="single"
                     selected={selectedDate}

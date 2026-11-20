@@ -1,8 +1,6 @@
-import { APIDictionary } from '@/services/api/v2/APIdict'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { useAuth } from '@/providers/AuthContext'
-import axios from 'axios'
+import { useAuthStore } from '@/store/useAuthStore'
 import React, { useEffect, useState, useMemo } from 'react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
@@ -17,21 +15,9 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { ScrollArea } from '@/components/ui/scroll-area'
-
-interface Role {
-  id: string
-  name: string
-  description: string
-  permissions: { permission: Permission }[]
-}
-
-interface Permission {
-  id: string
-  name: string
-  description: string
-  module?: string
-  key?: string
-}
+import { useRoles, useCreateRole, type Permission } from '@/hooks/queries/useRoles'
+import { usePermissions } from '@/hooks/queries/usePermissions'
+import { useDepartmentsQuery, useCreateDepartmentMutation } from '@/hooks/queries/useDepartments'
 
 export interface RoleDepartment {
   id: string
@@ -53,17 +39,20 @@ interface RoleAssignmentProps {
 }
 
 const RoleAssignment: React.FC<RoleAssignmentProps> = ({ setRoleId, onDepartmentCreated }) => {
-  const { user } = useAuth()
-  const [roles, setRoles] = useState<Role[]>([])
-  const [permissions, setPermissions] = useState<Permission[]>([])
-  const [, setDepartments] = useState<RoleDepartment[]>([])
+  const user = useAuthStore(state => state.user)
+  const { data: roles = [] } = useRoles(user?.orgId)
+  const { data: permissions = [] } = usePermissions(user?.orgId)
+  const { data: departments = [] } = useDepartmentsQuery(user?.orgId)
+
+  const createRoleMutation = useCreateRole()
+  const createDepartmentMutation = useCreateDepartmentMutation()
+
   const [selectedRole, setSelectedRole] = useState<string>('')
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([])
   const [newRoleName, setNewRoleName] = useState('')
   const [newRoleDescription, setNewRoleDescription] = useState('')
   const [openRoleSelector, setOpenRoleSelector] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [isCreatingRole, setIsCreatingRole] = useState(false)
   const [currentTab, setCurrentTab] = useState('presets')
   const { toast } = useToast()
   const [isDepartmentDialogOpen, setIsDepartmentDialogOpen] = useState(false)
@@ -73,13 +62,32 @@ const RoleAssignment: React.FC<RoleAssignmentProps> = ({ setRoleId, onDepartment
     code: '',
     location: ''
   })
-  const [isCreatingDepartment, setIsCreatingDepartment] = useState(false)
-  const [permissionsByModule, setPermissionsByModule] = useState<Record<string, Permission[]>>({})
-  const [expandedModules, setExpandedModules] = useState<string[]>([])
+  const [expandedModules, setExpandedModules] = useState<string[]>(['User', 'Department', 'Employee'])
+
+  const isCreatingRole = createRoleMutation.isPending
+  const isCreatingDepartment = createDepartmentMutation.isPending
+
+  useEffect(() => {
+    if (departments.length > 0 && onDepartmentCreated) {
+      onDepartmentCreated(departments as unknown as RoleDepartment[])
+    }
+  }, [departments, onDepartmentCreated])
+
+  const permissionsByModule = useMemo(() => {
+    const byModule: Record<string, Permission[]> = {}
+    permissions.forEach((permission) => {
+      const module = permission.module || permission.category || 'Other'
+      if (!byModule[module]) {
+        byModule[module] = []
+      }
+      byModule[module].push(permission)
+    })
+    return byModule
+  }, [permissions])
 
   const rolePresets = useMemo(() => {
     if (!permissions || permissions.length === 0) {
-      return [];
+      return []
     }
 
     const managerPreset = {
@@ -89,7 +97,7 @@ const RoleAssignment: React.FC<RoleAssignmentProps> = ({ setRoleId, onDepartment
         .filter(p => p.key?.includes('manage_') || p.key?.includes('view_') || p.key?.includes('approve_'))
         .map(p => p.id),
       icon: <Users className="h-4 w-4" />
-    };
+    }
 
     const adminPreset = {
       name: 'Admin',
@@ -98,7 +106,7 @@ const RoleAssignment: React.FC<RoleAssignmentProps> = ({ setRoleId, onDepartment
         .filter(p => !p.key?.includes('super_admin'))
         .map(p => p.id),
       icon: <Shield className="h-4 w-4" />
-    };
+    }
 
     const employeePreset = {
       name: 'Employee',
@@ -107,81 +115,10 @@ const RoleAssignment: React.FC<RoleAssignmentProps> = ({ setRoleId, onDepartment
         .filter(p => p.key?.includes('view_personal') || p.key?.includes('mark_attendance') || p.key?.includes('leave_request'))
         .map(p => p.id),
       icon: <ClipboardCheck className="h-4 w-4" />
-    };
-
-    return [managerPreset, adminPreset, employeePreset];
-  }, [permissions]);
-
-  const fetchDepartments = async () => {
-    try {
-      const response = await axios.get(`${APIDictionary.department}/org/${user?.orgId}`, { withCredentials: true })
-      const fetchedDepartments = response.data || []
-      setDepartments(fetchedDepartments)
-
-      if (onDepartmentCreated) {
-        onDepartmentCreated(fetchedDepartments)
-      }
-    } catch (error) {
-      console.error('Error fetching departments:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch departments',
-        variant: 'destructive'
-      })
     }
-  }
 
-  const fetchRoles = async () => {
-    try {
-      const response = await axios.get(`${APIDictionary.role}/org/${user?.orgId}`, { withCredentials: true })
-      setRoles(response.data)
-    } catch (error) {
-      console.error(error)
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch roles',
-        variant: 'destructive'
-      })
-    }
-  }
-
-  const fetchPermissions = async () => {
-    try {
-      const response = await axios.get(`${APIDictionary.Permission}`, { withCredentials: true })
-
-      if (!response.data || response.data.length === 0) {
-        toast({
-          title: 'Warning',
-          description: 'No permissions available in the system.',
-          variant: 'default'
-        });
-        return;
-      }
-
-      setPermissions(response.data);
-
-      const byModule: Record<string, Permission[]> = {}
-      response.data.forEach((permission: Permission) => {
-        const module = permission.module || 'Other'
-        if (!byModule[module]) {
-          byModule[module] = []
-        }
-        byModule[module].push(permission)
-      })
-      setPermissionsByModule(byModule)
-
-      if (Object.keys(byModule).length > 0) {
-        setExpandedModules(['User', 'Department', 'Employee'])
-      }
-    } catch (error) {
-      console.error('Error fetching permissions:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch permissions',
-        variant: 'destructive'
-      })
-    }
-  }
+    return [managerPreset, adminPreset, employeePreset]
+  }, [permissions])
 
   const handleCreateRole = async () => {
     if (!newRoleName) {
@@ -190,7 +127,7 @@ const RoleAssignment: React.FC<RoleAssignmentProps> = ({ setRoleId, onDepartment
         description: 'Role name is required',
         variant: 'destructive'
       })
-      return;
+      return
     }
 
     if (selectedPermissions.length === 0) {
@@ -199,27 +136,32 @@ const RoleAssignment: React.FC<RoleAssignmentProps> = ({ setRoleId, onDepartment
         description: 'At least one permission must be selected',
         variant: 'destructive'
       })
-      return;
+      return
     }
 
-    setIsCreatingRole(true);
+    if (!user?.orgId) {
+      toast({
+        title: 'Error',
+        description: 'Organization ID is missing',
+        variant: 'destructive'
+      })
+      return
+    }
 
     try {
-      const response = await axios.post(`${APIDictionary.role}`, {
-        orgId: user?.orgId,
+      const newRole = await createRoleMutation.mutateAsync({
+        orgId: user.orgId,
         name: newRoleName,
         description: newRoleDescription,
-        permissions: selectedPermissions.map(permissionId => ({ permissionId }))
-      }, { withCredentials: true })
+        permissions: selectedPermissions,
+      })
 
-      const newRoleId = response.data?.id
+      const newRoleId = newRole?.id
 
       toast({
         title: 'Success',
         description: 'Role created successfully'
       })
-
-      await fetchRoles()
 
       setNewRoleName('')
       setNewRoleDescription('')
@@ -236,14 +178,12 @@ const RoleAssignment: React.FC<RoleAssignmentProps> = ({ setRoleId, onDepartment
       }
     } catch (error: unknown) {
       console.error('Error creating role:', error)
-      const err = error as { response?: { data?: { message?: string } } };
+      const err = error as { response?: { data?: { message?: string } } }
       toast({
         title: 'Error',
         description: err?.response?.data?.message || 'Failed to create role',
         variant: 'destructive'
       })
-    } finally {
-      setIsCreatingRole(false);
     }
   }
 
@@ -257,18 +197,19 @@ const RoleAssignment: React.FC<RoleAssignmentProps> = ({ setRoleId, onDepartment
       return
     }
 
-    setIsCreatingDepartment(true)
-    try {
-      await axios.post(APIDictionary.department, {
-        ...newDepartment,
-        orgId: user?.orgId
-      }, {
-        withCredentials: true
-      })
-
+    if (!user?.orgId) {
       toast({
-        title: 'Success',
-        description: 'Department created successfully'
+        title: 'Error',
+        description: 'Organization ID is missing',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    try {
+      await createDepartmentMutation.mutateAsync({
+        ...newDepartment,
+        orgId: user.orgId
       })
 
       setIsDepartmentDialogOpen(false)
@@ -278,18 +219,8 @@ const RoleAssignment: React.FC<RoleAssignmentProps> = ({ setRoleId, onDepartment
         code: '',
         location: ''
       })
-
-      await fetchDepartments()
-
     } catch (error) {
       console.error(error)
-      toast({
-        title: 'Error',
-        description: 'Failed to create department',
-        variant: 'destructive'
-      })
-    } finally {
-      setIsCreatingDepartment(false)
     }
   }
 
@@ -332,22 +263,6 @@ const RoleAssignment: React.FC<RoleAssignmentProps> = ({ setRoleId, onDepartment
         role.description?.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : roles
-
-  useEffect(() => {
-    const initializeData = async () => {
-      try {
-        await fetchPermissions();
-        await Promise.all([
-          fetchRoles(),
-          fetchDepartments()
-        ]);
-      } catch (error) {
-        console.error('Error initializing data:', error);
-      }
-    }
-
-    initializeData();
-  }, [])
 
   return (
     <div className="space-y-6">
@@ -490,17 +405,20 @@ const RoleAssignment: React.FC<RoleAssignmentProps> = ({ setRoleId, onDepartment
                 </div>
 
                 <ScrollArea className="h-[280px] border rounded-md p-2">
-                  {roles.find(r => r.id === selectedRole)?.permissions.map(({ permission }) => (
-                    <div key={permission?.id} className="flex items-start space-x-2 py-2 px-1 hover:bg-accent/30 rounded-sm">
-                      <Checkbox checked disabled className="mt-1" />
-                      <div>
-                        <label className="text-sm font-medium">{permission?.name}</label>
-                        {permission?.description && (
-                          <p className="text-xs text-muted-foreground">{permission?.description}</p>
-                        )}
+                  {roles.find(r => r.id === selectedRole)?.permissions.map((item: unknown) => {
+                    const permission = ((item as { permission?: Permission })?.permission ?? item) as Permission;
+                    return (
+                      <div key={permission?.id} className="flex items-start space-x-2 py-2 px-1 hover:bg-accent/30 rounded-sm">
+                        <Checkbox checked disabled className="mt-1" />
+                        <div>
+                          <label className="text-sm font-medium">{permission?.name}</label>
+                          {permission?.description && (
+                            <p className="text-xs text-muted-foreground">{permission?.description}</p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </ScrollArea>
 
                 <div className="pt-3 border-t">

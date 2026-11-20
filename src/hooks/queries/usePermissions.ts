@@ -24,9 +24,11 @@ export interface PermissionPreset {
 export interface CreatePermissionRequest {
   name: string
   description?: string
-  category: string
+  category?: string
   action: string
-  resource: string
+  resource?: string
+  module?: string
+  key?: string
 }
 
 export interface UpdatePermissionRequest {
@@ -35,6 +37,8 @@ export interface UpdatePermissionRequest {
   category?: string
   action?: string
   resource?: string
+  module?: string
+  key?: string
 }
 
 export interface CreatePermissionPresetRequest {
@@ -63,11 +67,11 @@ type PermissionListEnvelope = RawPermission[] | { data?: RawPermission[] }
 // API Functions
 const permissionsApi = {
   async getAllPermissions(orgId?: string): Promise<Permission[]> {
-    if (!orgId) {
-      throw new Error('Organization ID is required to fetch permissions')
-    }
+    const url = orgId
+      ? `${APIDictionary.Permission}/org/${orgId}`
+      : APIDictionary.Permission
     const response = await axios.get<PermissionListEnvelope>(
-      `${APIDictionary.permission}/org/${orgId}`,
+      url,
       { withCredentials: true }
     )
     return unwrapList(response.data).map(normalizePermission)
@@ -161,9 +165,8 @@ const permissionsApi = {
 // Query Hooks
 export function usePermissions(orgId?: string) {
   return useQuery<Permission[]>({
-    queryKey: permissionKeys.list({ orgId: orgId || '' }),
+    queryKey: permissionKeys.list({ orgId: orgId || 'all' }),
     queryFn: () => permissionsApi.getAllPermissions(orgId),
-    enabled: !!orgId,
     staleTime: 10 * 60 * 1000, // 10 minutes - permissions change less frequently
   })
 }

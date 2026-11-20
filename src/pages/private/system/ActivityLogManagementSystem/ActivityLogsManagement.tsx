@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -21,51 +21,10 @@ import {
   BarChart3
 } from 'lucide-react';
 import { useAuth } from '@/providers/AuthContext';
-import { APIDictionary } from '@/services/api/v2/APIdict';
-import axios from 'axios';
+import { useActivityLogsQuery, useActivityStatsQuery } from '@/hooks/queries/useActivityLogs';
+import { useEmployeesByManager } from '@/hooks/queries/useEmployees';
 import { format } from 'date-fns';
 import { DateRange } from 'react-day-picker';
-
-interface ActivityLogEntry {
-  id: string;
-  action: string;
-  entity: string;
-  entityId: string;
-  description: string;
-  metadata?: Record<string, unknown>;
-  createdAt: string;
-  ipAddress?: string;
-  userAgent?: string;
-  actor: {
-    id: string;
-    name: string;
-    email: string;
-    employeeId?: string;
-    department?: string;
-  };
-  target?: {
-    id: string;
-    name: string;
-    email: string;
-    employeeId?: string;
-    department?: string;
-  };
-}
-
-interface ActivityStats {
-  totalActivities: number;
-  period: string;
-  actionStats: Array<{ action: string; count: number }>;
-  entityStats: Array<{ entity: string; count: number }>;
-  dailyStats: Array<{ date: string; count: number }>;
-  userStats: Array<{
-    userId: string;
-    name: string;
-    email: string;
-    employeeId?: string;
-    activityCount: number;
-  }>;
-}
 
 interface User {
   id: string;
@@ -80,12 +39,6 @@ interface User {
 
 const ActivityLogsManagement: React.FC = () => {
   const { user } = useAuth();
-  const [activityLogs, setActivityLogs] = useState<ActivityLogEntry[]>([]);
-  const [activityStats, setActivityStats] = useState<ActivityStats | null>(null);
-  const [subordinates, setSubordinates] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [statsLoading, setStatsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -99,7 +52,28 @@ const ActivityLogsManagement: React.FC = () => {
   // Pagination states
   const [page, setPage] = useState(1);
   const [limit] = useState(50);
-  const [totalPages, setTotalPages] = useState(1);
+
+  // TanStack Query Hooks
+  const { data: logsResponse, isLoading: loading, error: logsError, refetch: refetchLogs } = useActivityLogsQuery({
+    page,
+    limit,
+    action: selectedAction !== 'all' ? selectedAction : undefined,
+    entity: selectedEntity !== 'all' ? selectedEntity : undefined,
+    userId: selectedUser !== 'all' ? selectedUser : undefined,
+    targetUserId: selectedTarget !== 'all' ? selectedTarget : undefined,
+    startDate: dateRange?.from ? dateRange.from.toISOString() : undefined,
+    endDate: dateRange?.to ? dateRange.to.toISOString() : undefined,
+    searchTerm: searchTerm.trim() || undefined,
+  });
+
+  const activityLogs = logsResponse?.data || [];
+  const totalPages = logsResponse?.pagination.totalPages || 1;
+  const error = logsError ? ((logsError as { message?: string }).message || 'Failed to fetch activity logs') : null;
+
+  const { data: activityStats = null, isLoading: statsLoading } = useActivityStatsQuery(period);
+
+  const { data: rawSubordinates = [] } = useEmployeesByManager(user?.id || '');
+  const subordinates = (rawSubordinates as unknown as User[]) || [];
 
   const actionTypes = [
     'CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 'ASSIGN', 'UNASSIGN',
@@ -116,108 +90,26 @@ const ActivityLogsManagement: React.FC = () => {
     'NOTIFICATION', 'DOCUMENT', 'SETTINGS'
   ];
 
-  useEffect(() => {
-    fetchSubordinates();
-    fetchActivityLogs();
-    fetchActivityStats();
-  }, []);
-
-  useEffect(() => {
-    fetchActivityLogs();
-  }, [page, selectedAction, selectedEntity, selectedUser, selectedTarget, dateRange, searchTerm]);
-
-  useEffect(() => {
-    fetchActivityStats();
-  }, [period]);
-
-  const fetchSubordinates = async () => {
-    try {
-      const response = await axios.get(`${APIDictionary.user}/subordinates/${user?.id}`, {
-        withCredentials: true,
-      });
-      setSubordinates(response.data);
-    } catch (error) {
-      console.error('Error fetching subordinates:', error);
-    }
-  };
-
-  const fetchActivityLogs = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-      });
-
-      if (selectedAction && selectedAction !== 'all') params.append('action', selectedAction);
-      if (selectedEntity && selectedEntity !== 'all') params.append('entity', selectedEntity);
-      if (selectedUser && selectedUser !== 'all') params.append('userId', selectedUser);
-      if (selectedTarget && selectedTarget !== 'all') params.append('targetUserId', selectedTarget);
-      if (dateRange?.from) params.append('startDate', dateRange.from.toISOString());
-      if (dateRange?.to) params.append('endDate', dateRange.to.toISOString());
-
-      const response = await axios.get(`${APIDictionary.activityLogs}?${params.toString()}`, {
-        withCredentials: true,
-      });
-
-      if (response.data.success) {
-        setActivityLogs(response.data.data);
-        setTotalPages(response.data.pagination.totalPages);
-      } else {
-        setError('Failed to fetch activity logs');
-      }
-    } catch (error: unknown) {
-      console.error('Error fetching activity logs:', error);
-      const err = error as { response?: { data?: { error?: string } } };
-      setError(err.response?.data?.error || 'Failed to fetch activity logs');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchActivityStats = async () => {
-    try {
-      setStatsLoading(true);
-      const response = await axios.get(`${APIDictionary.activityStats}?period=${period}`, {
-        withCredentials: true,
-      });
-
-      if (response.data.success) {
-        setActivityStats(response.data.data);
-      }
-    } catch (error) {
-      console.error('Error fetching activity stats:', error);
-    } finally {
-      setStatsLoading(false);
-    }
-  };
-
   const getActionBadgeColor = (action: string) => {
-    const colorMap: Record<string, string> = {
-      CREATE: 'bg-green-100 text-green-800',
-      UPDATE: 'bg-blue-100 text-blue-800',
-      DELETE: 'bg-red-100 text-red-800',
-      LOGIN: 'bg-purple-100 text-purple-800',
-      LOGOUT: 'bg-gray-100 text-gray-800',
-      APPROVE: 'bg-green-100 text-green-800',
-      REJECT: 'bg-red-100 text-red-800',
-      VIEW_SENSITIVE_DATA: 'bg-yellow-100 text-yellow-800',
-    };
-    return colorMap[action] || 'bg-gray-100 text-gray-800';
+    switch (action) {
+      case 'CREATE':
+      case 'APPROVE':
+        return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20';
+      case 'UPDATE':
+      case 'ASSIGN':
+        return 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20';
+      case 'DELETE':
+      case 'REJECT':
+        return 'bg-destructive/10 text-destructive border border-destructive/20';
+      case 'VIEW_SENSITIVE_DATA':
+        return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20';
+      default:
+        return 'bg-secondary text-secondary-foreground border border-border/40';
+    }
   };
 
-  const getEntityBadgeColor = (entity: string) => {
-    const colorMap: Record<string, string> = {
-      USER: 'bg-blue-100 text-blue-800',
-      ATTENDANCE: 'bg-green-100 text-green-800',
-      LEAVE_REQUEST: 'bg-orange-100 text-orange-800',
-      SALARY_RECORD: 'bg-purple-100 text-purple-800',
-      DEPARTMENT: 'bg-cyan-100 text-cyan-800',
-      ROLE: 'bg-pink-100 text-pink-800',
-    };
-    return colorMap[entity] || 'bg-gray-100 text-gray-800';
+  const getEntityBadgeColor = (_entity: string) => {
+    return 'bg-secondary text-secondary-foreground border border-border/40';
   };
 
   const clearFilters = () => {
@@ -271,7 +163,7 @@ const ActivityLogsManagement: React.FC = () => {
           <h1 className="text-3xl font-bold">Activity Logs</h1>
           <p className="text-muted-foreground">Monitor what your team members are doing</p>
         </div>
-        <Button onClick={fetchActivityLogs} disabled={loading}>
+        <Button onClick={() => refetchLogs()} disabled={loading}>
           {loading ? 'Loading...' : 'Refresh'}
         </Button>
       </div>

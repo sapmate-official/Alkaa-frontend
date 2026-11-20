@@ -1,13 +1,12 @@
 import { AlertCircle } from "lucide-react";
-import { useAtomValue } from "jotai";
-import { permissionListAtom } from "@/store/atom";
+import { usePermissions } from "@/store/useAuthStore";
 
 interface UnauthorizedProps {
   requiredPermissions?: string[];
 }
 
 const Unauthorized = ({ requiredPermissions = [] }: UnauthorizedProps) => {
-  const userPermissions = useAtomValue(permissionListAtom);
+  const userPermissions = usePermissions();
   
   // Get the list of missing permissions
   const missingPermissions = requiredPermissions.filter(

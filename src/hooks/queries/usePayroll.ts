@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { APIDictionary } from '@/services/api/v2/APIdict'
+import { APIV3Dictionary } from '@/services/api/v3/Api3Dicts'
 
 // Types
 export interface PayrollRecord {
@@ -215,21 +216,26 @@ const payrollApi = {
   },
 
   async generatePayroll(userId: string, month: number, year: number): Promise<PayrollRecord> {
-    const response = await axios.post(`${APIDictionary.payroll}/generate`, {
-      userId,
-      month,
-      year
-    }, { withCredentials: true })
+    const response = await axios.post(
+      APIV3Dictionary.payroll.generateSalary(month, year, userId),
+      {},
+      { withCredentials: true }
+    )
     return response.data.data || response.data
   },
 
   async bulkGeneratePayroll(userIds: string[], month: number, year: number): Promise<PayrollRecord[]> {
-    const response = await axios.post(`${APIDictionary.payroll}/bulk-generate`, {
-      userIds,
-      month,
-      year
-    }, { withCredentials: true })
-    return response.data.data || response.data
+    const results = await Promise.all(
+      userIds.map(async (userId) => {
+        const response = await axios.post(
+          APIV3Dictionary.payroll.generateSalary(month, year, userId),
+          {},
+          { withCredentials: true }
+        )
+        return response.data.data || response.data
+      })
+    )
+    return results
   },
 
   async approvePayroll(id: string): Promise<PayrollRecord> {

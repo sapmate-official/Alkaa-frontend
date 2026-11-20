@@ -84,3 +84,9 @@ export const useAppStore = create<AppState>()(
     { name: 'AppStore' }
   )
 );
+
+// Selector hooks for ergonomic access
+export const useSpecialEvents = () => useAppStore((state) => state.specialEvents);
+export const useSetSpecialEvents = () => useAppStore((state) => state.setSpecialEvents);
+export const useDashboardData = () => useAppStore((state) => state.dashboardData);
+export const useBillingDashboardData = () => useAppStore((state) => state.billingDashboardData);

@@ -5,7 +5,7 @@ import axios from 'axios'
 import { APIDictionary } from '@/services/api/v2/APIdict'
 import { APIV3Dictionary } from '@/services/api/v3/Api3Dicts'
 import ButtonOfSubordinateSalaryTransaction from '../Salarytransaction/ButtonOfSubordinateSalaryTransaction'
-import ButtonOfGenerateSubordinateSalaryPage from '../GenerateSalary/ButtonOfGenerateSubordinateSalaryPage'
+import PayrollHeader from '../../ui/PayrollHeader'
 
 import { format } from 'date-fns'
 
@@ -505,13 +505,12 @@ const MainCompOfViewPayslipOfAllSubordinatesPayroll = () => {
   }
 
   return (
-    <div className="space-y-6 w-full h-screen overflow-y-auto p-4">
-
-      
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Team Payroll Management</h2>
-        <ButtonOfGenerateSubordinateSalaryPage />
-      </div>
+    <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-7xl">
+      <PayrollHeader
+        title="Subordinate Payslips"
+        description="Inspect and download payroll records for reporting team members"
+        activeTab="subordinate-payslip"
+      />
       
       <div className="flex flex-col md:flex-row gap-6">
         <div className="w-full md:w-1/3">

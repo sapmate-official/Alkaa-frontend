@@ -45,7 +45,7 @@ export const CalendarView = ({ holidays, year, setYear }: CalendarViewProps) => 
       {orderedMonths.length === 0 ? (
         <Card>
           <CardContent className="text-center py-8">
-            <p className="text-gray-600">No holidays found for {year}</p>
+            <p className="text-sm text-muted-foreground">No holidays found for {year}</p>
           </CardContent>
         </Card>
       ) : (

@@ -1,22 +1,18 @@
 import { useAuth } from '@/providers/AuthContext';
-import { useEffect } from 'react'
-import { useSetAtom } from 'jotai';
-import { dashboardDataAtom, permissionListAtom, userIdAtom } from '@/store/atom';
+import { useEffect } from 'react';
+import { useAuthStore } from '@/store/useAuthStore';
+import { useAppStore } from '@/store/useAppStore';
 import Loader from '@/components/Loader';
 import { useNavigate } from 'react-router-dom';
 
 const Logout = () => {
     const { logout } = useAuth();
     const navigate = useNavigate();
-    const setDashboardData = useSetAtom(dashboardDataAtom);
-    const setPermissionList = useSetAtom(permissionListAtom);
-    const setUserId = useSetAtom(userIdAtom);
     
     const handleLogout = async () => {
-        // Clear all application state
-        setDashboardData(null);
-        setPermissionList([]);
-        setUserId(null);
+        // Clear all application state in Zustand
+        useAuthStore.getState().logout();
+        useAppStore.getState().resetAppStore();
         
         // Clear browser history to prevent back button access
         window.history.replaceState(null, '', '/auth/signin');

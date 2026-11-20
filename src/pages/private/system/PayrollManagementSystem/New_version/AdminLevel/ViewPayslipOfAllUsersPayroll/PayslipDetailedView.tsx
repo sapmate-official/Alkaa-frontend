@@ -141,8 +141,14 @@ const PayslipDetailedView: React.FC<PayslipDetailedViewProps> = ({ statistics })
     { name: 'Unpaid Leave', value: attendanceAnalysis.unpaidLeaveDays }
   ];
 
-  // Colors for pie chart
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+  // Colors for chart: Accent for primary series, neutral ramp for remaining (following color-styling-guide)
+  const COLORS = [
+    'hsl(var(--primary))',
+    'hsl(var(--muted-foreground))',
+    'hsl(var(--secondary-foreground))',
+    'hsl(var(--border))',
+    'hsl(var(--muted))',
+  ];
 
   return (
     <div className="space-y-6">
@@ -363,24 +369,24 @@ const PayslipDetailedView: React.FC<PayslipDetailedViewProps> = ({ statistics })
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <Card className={`p-4 text-center ${
-                comparisons.previousMonth.difference > 0 
-                  ? 'bg-green-50 text-green-700' 
-                  : 'bg-red-50 text-red-700'
-              }`}>
-                <p className="text-sm font-medium">Difference from Last Month</p>
-                <p className="text-2xl font-bold">
+              <Card className="bg-card border border-border p-4 text-center">
+                <p className="text-xs text-muted-foreground font-medium mb-1">Difference from Last Month</p>
+                <p className={`text-2xl font-bold tabular-nums ${
+                  comparisons.previousMonth.difference >= 0 
+                    ? 'text-emerald-600 dark:text-emerald-400' 
+                    : 'text-destructive'
+                }`}>
                   {comparisons.previousMonth.difference > 0 ? '+' : ''}
                   {formatCurrency(comparisons.previousMonth.difference)}
                 </p>
               </Card>
-              <Card className={`p-4 text-center ${
-                comparisons.previousMonth.percentageChange > 0 
-                  ? 'bg-green-50 text-green-700' 
-                  : 'bg-red-50 text-red-700'
-              }`}>
-                <p className="text-sm font-medium">Percentage Change</p>
-                <p className="text-2xl font-bold">
+              <Card className="bg-card border border-border p-4 text-center">
+                <p className="text-xs text-muted-foreground font-medium mb-1">Percentage Change</p>
+                <p className={`text-2xl font-bold tabular-nums ${
+                  comparisons.previousMonth.percentageChange >= 0 
+                    ? 'text-emerald-600 dark:text-emerald-400' 
+                    : 'text-destructive'
+                }`}>
                   {comparisons.previousMonth.percentageChange > 0 ? '+' : ''}
                   {comparisons.previousMonth.percentageChange.toFixed(1)}%
                 </p>

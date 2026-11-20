@@ -1,7 +1,6 @@
 import { Button } from '@/components/ui/button'
 import CheckPermission from '@/services/PermissionCheck'
-import { permissionListAtom } from '@/store/atom'
-import { useAtom } from 'jotai'
+import { usePermissions } from '@/store/useAuthStore'
 import { useNavigate } from 'react-router-dom'
 import RouteDict from '@/routes/RouteDict'
 
@@ -11,7 +10,7 @@ const ButtonOfUsersSalaryTransaction = () => {
     // this button will redirect to the salary transaction page
     // this button will be shown on the dashboard of payroll
     const navigate = useNavigate()
-    const [permissions] = useAtom(permissionListAtom)
+    const permissions = usePermissions()
     const hasPermission = CheckPermission("send_salary_to_all",permissions)
     if(!hasPermission) return null
   return (

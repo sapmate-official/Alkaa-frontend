@@ -1,8 +1,7 @@
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/providers/AuthContext'
 import { useEffect, useState } from 'react'
-import { useAtom } from 'jotai'
-import { permissionListAtom } from '@/store/atom'
+import { usePermissions } from '@/store/useAuthStore'
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -23,7 +22,7 @@ const OrganizationSettings = () => {
     const [editedWorkingHours, setEditedWorkingHours] = useState<string>('9:00 AM - 6:00 PM')
     const [saving, setSaving] = useState(false)
     const { toast } = useToast()
-    const [permissionList] = useAtom(permissionListAtom)
+    const permissionList = usePermissions()
     
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     

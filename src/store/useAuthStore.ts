@@ -11,6 +11,7 @@ interface AuthState {
   setUserId: (id: string | null) => void;
   setPermissions: (permissions: Permission[]) => void;
   clearAuth: () => void;
+  logout: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -35,7 +36,21 @@ export const useAuthStore = create<AuthState>()(
           permissions: [],
           isAuthenticated: false,
         }),
+      logout: () =>
+        set({
+          user: null,
+          userId: null,
+          permissions: [],
+          isAuthenticated: false,
+        }),
     }),
     { name: 'AuthStore' }
   )
 );
+
+// Selector hooks for ergonomic access
+export const useCurrentUser = () => useAuthStore((state) => state.user);
+export const usePermissions = () => useAuthStore((state) => state.permissions);
+export const useIsAuthenticated = () => useAuthStore((state) => state.isAuthenticated);
+export const useUserId = () => useAuthStore((state) => state.userId);
+

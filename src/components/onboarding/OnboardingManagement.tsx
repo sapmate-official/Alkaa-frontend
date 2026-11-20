@@ -57,6 +57,8 @@ interface ManagerOption extends Pick<User, 'id' | 'firstName' | 'lastName' | 'em
 }
 import CandidateReview from './CandidateReview';
 import EditCandidateDialog from './EditCandidateDialog';
+import { CountrySelect } from '@/components/common/CountrySelect';
+import { MarketSelect } from '@/components/common/MarketSelect';
 import {
   UserPlus,
   Send,
@@ -90,6 +92,8 @@ const candidateSchema = z.object({
   departmentId: z.string().optional(),
   managerId: z.string().optional(),
   hiredDate: z.string().optional(),
+  countryOfCompany: z.string().optional(),
+  market: z.string().optional(),
 });
 
 import RoleSelector from './RoleSelector';
@@ -126,6 +130,8 @@ const OnboardingManagement = () => {
       departmentId: '',
       managerId: '',
       hiredDate: '',
+      countryOfCompany: '',
+      market: '',
     }
   });
 
@@ -945,6 +951,45 @@ const OnboardingManagement = () => {
                 )}
               />
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="countryOfCompany"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Country of Company</FormLabel>
+                      <FormControl>
+                        <CountrySelect
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Select company country"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="market"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Market / Industry</FormLabel>
+                      <FormControl>
+                        <MarketSelect
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Select market or industry"
+                          customPlaceholder="Specify custom market..."
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               
 
               <div className="flex justify-end gap-2 pt-4">
@@ -1017,6 +1062,14 @@ const OnboardingManagement = () => {
                       : 'Not set'
                     }
                   </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Country of Company</label>
+                  <p className="text-sm font-medium">{selectedCandidate.countryOfCompany || 'Not specified'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Market / Industry</label>
+                  <p className="text-sm font-medium">{selectedCandidate.market || 'Not specified'}</p>
                 </div>
               </div>
               

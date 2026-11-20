@@ -7,26 +7,35 @@ import { APIV2Dictionary } from '@/services/api/v2/Api2Dicts'
 export interface Bill {
   id: string
   organizationId: string
-  planId: string
-  amount: number
+  planId?: string
+  amount?: number
   totalAmount?: number
   month?: number
   year?: number
-  currency: string
-  billingCycle: 'MONTHLY' | 'QUARTERLY' | 'YEARLY'
-  status: 'PENDING' | 'PAID' | 'OVERDUE' | 'CANCELLED' | 'REFUNDED'
+  monthName?: string
+  activeUserCount?: number
+  pricePerUser?: number
+  organizationName?: string
+  organizationLogo?: string | null
+  subscriptionPlan?: string | SubscriptionPlan
+  billDate?: string
+  currency?: string
+  billingCycle?: 'MONTHLY' | 'QUARTERLY' | 'YEARLY'
+  status: 'PENDING' | 'PAID' | 'OVERDUE' | 'CANCELLED' | 'REFUNDED' | 'UNPAID'
   dueDate: string
   paidDate?: string
+  paymentReference?: string
+  notes?: string
   createdAt: string
   updatedAt: string
-  organization: {
+  organization?: {
     id: string
     name: string
     email: string
   }
-  plan: SubscriptionPlan
+  plan?: SubscriptionPlan
   invoice?: Invoice
-  payments: Payment[]
+  payments?: Payment[]
   _count?: {
     payments: number
   }
@@ -199,11 +208,24 @@ export interface BillingDashboardData {
   recentBills: Bill[];
 }
 
+export interface BillingPagination {
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
+export interface BillingHistoryResponse {
+  data: Bill[];
+  pagination: BillingPagination;
+}
+
 // Query Keys
 export const billingKeys = {
   all: ['billing'] as const,
   bills: () => [...billingKeys.all, 'bills'] as const,
   bill: (id: string) => [...billingKeys.bills(), id] as const,
+  publicBill: (id: string) => [...billingKeys.bills(), 'public', id] as const,
   billsList: (filters: Record<string, unknown>) => [...billingKeys.bills(), 'list', { filters }] as const,
   orgBills: (orgId: string) => [...billingKeys.bills(), 'organization', orgId] as const,
   billingHistory: (filters: Record<string, unknown>) => [...billingKeys.bills(), 'history', { filters }] as const,
@@ -238,6 +260,16 @@ const billingApi = {
     return response.data.data || response.data
   },
 
+  async getPublicBill(id: string): Promise<Bill> {
+    const response = await axios.get(APIV2Dictionary.billing.getPublicBill(id))
+    return response.data.data || response.data
+  },
+
+  async payPublicBill(id: string, paymentData: { paymentMethod: string; paymentReference?: string; notes?: string }): Promise<Bill> {
+    const response = await axios.post(APIV2Dictionary.billing.payPublicBill(id), paymentData)
+    return response.data.data || response.data
+  },
+
   async createBill(data: CreateBillRequest): Promise<Bill> {
     const response = await axios.post(`${APIDictionary.payroll}/billing`, data, { withCredentials: true })
     return response.data.data || response.data
@@ -259,6 +291,21 @@ const billingApi = {
       : base
     const response = await axios.get(endpoint, { withCredentials: true })
     return response.data.data || response.data
+  },
+
+  async getBillingHistoryPaginated(filters: Record<string, unknown>): Promise<BillingHistoryResponse> {
+    const params = new URLSearchParams()
+    Object.entries(filters).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== '' && v !== 'all') {
+        params.append(k, String(v))
+      }
+    })
+    const url = `${APIV2Dictionary.billing.getHistory()}${params.toString() ? `?${params.toString()}` : ''}`
+    const response = await axios.get(url, { withCredentials: true })
+    return {
+      data: response.data.data || [],
+      pagination: response.data.pagination || { total: 0, page: 1, limit: 10, pages: 1 }
+    }
   },
 
   // Invoices
@@ -383,11 +430,28 @@ export function useBill(id: string) {
   })
 }
 
+export function usePublicBill(id: string) {
+  return useQuery<Bill>({
+    queryKey: billingKeys.publicBill(id),
+    queryFn: () => billingApi.getPublicBill(id),
+    enabled: !!id,
+    staleTime: 1 * 60 * 1000,
+  })
+}
+
 export function useBillingHistory(orgId?: string) {
   return useQuery<Bill[]>({
     queryKey: orgId ? billingKeys.orgBills(orgId) : billingKeys.bills(),
     queryFn: () => billingApi.getBillingHistory(orgId),
     staleTime: 5 * 60 * 1000, // 5 minutes
+  })
+}
+
+export function useBillingHistoryPaginated(filters: Record<string, unknown>) {
+  return useQuery<BillingHistoryResponse>({
+    queryKey: billingKeys.billingHistory(filters),
+    queryFn: () => billingApi.getBillingHistoryPaginated(filters),
+    staleTime: 2 * 60 * 1000,
   })
 }
 
@@ -588,6 +652,20 @@ export function useMarkBillAsPaid() {
       queryClient.invalidateQueries({ queryKey: billingKeys.bills() })
       queryClient.invalidateQueries({ queryKey: billingKeys.billPayments(billId) })
       queryClient.invalidateQueries({ queryKey: billingKeys.stats() })
+    },
+  })
+}
+
+export function usePayPublicBill() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ billId, data }: { billId: string; data: { paymentMethod: string; paymentReference?: string; notes?: string } }) =>
+      billingApi.payPublicBill(billId, data),
+    onSuccess: (_updatedBill, { billId }) => {
+      queryClient.invalidateQueries({ queryKey: billingKeys.publicBill(billId) })
+      queryClient.invalidateQueries({ queryKey: billingKeys.bill(billId) })
+      queryClient.invalidateQueries({ queryKey: billingKeys.bills() })
     },
   })
 }

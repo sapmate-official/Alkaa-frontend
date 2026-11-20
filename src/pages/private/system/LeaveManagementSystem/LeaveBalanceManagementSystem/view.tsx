@@ -69,7 +69,7 @@ const ViewLeaveBalance = () => {
   }
 
   return (
-    <div className="p-6 space-y-4 w-full h-full overflow-y-scroll">
+    <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-7xl">
       <h2 className="text-2xl font-bold tracking-tight">Leave Balance ({new Date().getFullYear()})</h2>
       <div className="rounded-md border">
         <Table>

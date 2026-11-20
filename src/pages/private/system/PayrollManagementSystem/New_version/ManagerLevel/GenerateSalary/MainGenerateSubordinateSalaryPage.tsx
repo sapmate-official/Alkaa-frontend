@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
 import { APIV3Dictionary } from '@/services/api/v3/Api3Dicts';
 import { APIV2Dictionary } from '@/services/api/v2/Api2Dicts';
+import PayrollHeader from '../../ui/PayrollHeader';
 
 interface Subordinate {
   id: string;
@@ -223,12 +224,16 @@ const MainGenerateSubordinateSalaryPage = () => {
   const availableSubordinates = getAvailableSubordinates();
   
   return (
-    <div className="container mx-auto py-6">
-      
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-6 w-6" />
+    <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-7xl">
+      <PayrollHeader
+        title="Generate Subordinate Salary"
+        description="Calculate and issue monthly salary records for your direct reports"
+        activeTab="generate"
+      />
+      <Card className="border-border shadow-xs">
+        <CardHeader className="p-4 sm:p-5 border-b border-border">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <Users className="h-5 w-5 text-muted-foreground" />
             Generate Subordinate Salary
           </CardTitle>
         </CardHeader>

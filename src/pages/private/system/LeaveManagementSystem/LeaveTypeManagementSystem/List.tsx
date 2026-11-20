@@ -148,7 +148,7 @@ export default function LeaveTypeList() {
     }
 
     return (
-        <div className="h-screen w-full bg-background overflow-hidden">
+        <div className="w-full min-h-full space-y-6">
             {/* Header */}
             <motion.div 
                 initial={{ opacity: 0, y: -20 }}
@@ -157,8 +157,8 @@ export default function LeaveTypeList() {
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-primary rounded-lg">
-                            <CalendarDays className="h-6 w-6 text-primary-foreground" />
+                        <div className="p-2 bg-secondary rounded-lg">
+                            <CalendarDays className="h-5 w-5 text-foreground" />
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold text-foreground">
@@ -192,7 +192,7 @@ export default function LeaveTypeList() {
             </motion.div>
 
             {/* Content */}
-            <div className="p-6 h-[calc(100vh-80px)] overflow-y-auto">
+            <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-7xl">
                 {/* Search and Filter */}
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}

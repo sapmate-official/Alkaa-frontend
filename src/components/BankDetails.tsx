@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/providers/AuthContext';
-import { useAtom } from 'jotai';
-import { permissionListAtom } from '@/store/atom';
+import { usePermissions } from '@/store/useAuthStore';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,7 +17,7 @@ const BankDetails = ({ userId }: BankDetailsProps) => {
   const [showFullDetails, setShowFullDetails] = useState<boolean>(false);
   const { toast } = useToast();
   const { user } = useAuth();
-  const [permissionList] = useAtom(permissionListAtom);
+  const permissionList = usePermissions();
 
   // Use TanStack Query hook instead of direct axios call
   const { data: bankData, isLoading: queryLoading, error: queryError } = useBankDetailsQuery(userId);

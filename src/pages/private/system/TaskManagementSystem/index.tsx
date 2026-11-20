@@ -1,8 +1,7 @@
 import { lazy, useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAtom } from 'jotai';
 import RouteDict from '@/routes/RouteDict';
-import { permissionListAtom } from '@/store/atom';
+import { usePermissions } from '@/store/useAuthStore';
 import PermissionRouteBasedOnKey from '@/components/RouteSecurityWrapper/PermissionBasedOnKey';
 import { useAuth } from '@/providers/AuthContext';
 import { APIDictionary } from '@/services/api/v2/APIdict';
@@ -17,7 +16,7 @@ const GroupView = lazy(() => import('./GroupView'));
 // Smart Route Component that checks for assigned tasks
 const SmartTaskRoute = () => {
   const { user } = useAuth();
-  const [permissionList] = useAtom(permissionListAtom);
+  const permissionList = usePermissions();
   const [hasAssignedTasks, setHasAssignedTasks] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 

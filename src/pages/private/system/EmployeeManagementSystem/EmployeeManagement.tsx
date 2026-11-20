@@ -10,8 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Loader2, Search, UserCog, Users } from 'lucide-react'
 import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { useAtomValue } from 'jotai'
-import { permissionListAtom } from '@/store/atom'
+import { usePermissions } from '@/store/useAuthStore'
 import { createPortal } from 'react-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
@@ -61,8 +60,7 @@ const EmployeeManagement: React.FC = () => {
     const [selectedRole, setSelectedRole] = useState<string>('')
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [activeTab, setActiveTab] = useState('profile')
-
-    const permissionList = useAtomValue(permissionListAtom)
+    const permissionList = usePermissions()
 
     // Add these hooks after your state declarations
     const dialogRef = useRef<HTMLDivElement>(null)
@@ -499,23 +497,23 @@ const EmployeeManagement: React.FC = () => {
                 >
                     <div 
                         ref={dialogRef}
-                        className="relative bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+                        className="relative bg-card text-card-foreground border border-border p-6 rounded-xl shadow-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto"
                         role="dialog"
                         aria-modal="true"
                     >
                         {/* Dialog Header */}
                         <div className="flex justify-between items-center mb-4">
                             <div>
-                                <h2 className="text-xl font-semibold">
+                                <h2 className="text-xl font-semibold text-foreground">
                                     {selectedEmployee && `${selectedEmployee.firstName} ${selectedEmployee.lastName}`}
                                 </h2>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                <p className="text-sm text-muted-foreground">
                                     Manage employee profile, department and role
                                 </p>
                             </div>
                             <button 
                                 onClick={() => setIsDialogOpen(false)} 
-                                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+                                className="p-2 rounded-lg text-muted-foreground hover:bg-secondary transition-colors"
                                 aria-label="Close dialog"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -618,6 +616,20 @@ const EmployeeManagement: React.FC = () => {
                                                     <Label>Job Title / Designation</Label>
                                                     <p className="text-sm mt-1 font-medium">
                                                         {selectedEmployee.jobTitle || 'Unassigned'}
+                                                    </p>
+                                                </div>
+
+                                                <div>
+                                                    <Label>Country of Company</Label>
+                                                    <p className="text-sm mt-1 font-medium">
+                                                        {(selectedEmployee as { countryOfCompany?: string }).countryOfCompany || 'Not specified'}
+                                                    </p>
+                                                </div>
+
+                                                <div>
+                                                    <Label>Market / Industry</Label>
+                                                    <p className="text-sm mt-1 font-medium">
+                                                        {(selectedEmployee as { market?: string }).market || 'Not specified'}
                                                     </p>
                                                 </div>
 
@@ -847,8 +859,8 @@ const EmployeeManagement: React.FC = () => {
                                                         </div>
                                                     </>
                                                 ) : (
-                                                    <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md text-center">
-                                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                    <div className="bg-secondary/40 border border-border p-4 rounded-lg text-center">
+                                                        <p className="text-sm text-muted-foreground">
                                                             You don't have permission to change role assignments.
                                                         </p>
                                                     </div>
@@ -864,7 +876,7 @@ const EmployeeManagement: React.FC = () => {
                         <div className="flex justify-end mt-6">
                             <button
                                 onClick={() => setIsDialogOpen(false)}
-                                className="py-2 px-4 border border-gray-300 rounded-md hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
+                                className="py-2 px-4 border border-border rounded-lg hover:bg-secondary/60 text-sm font-medium transition-colors"
                             >
                                 Close
                             </button>
@@ -926,36 +938,36 @@ const EmployeeManagement: React.FC = () => {
 
             {/* Delete Confirmation Dialog */}
             {showDeleteConfirmation && createPortal(
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
                     <div 
-                        className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg w-full max-w-md max-h-[90vh] overflow-y-auto"
+                        className="bg-card text-card-foreground border border-border p-6 rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto"
                         role="dialog"
                         aria-modal="true"
                     >
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold text-red-600 dark:text-red-400">
+                            <h2 className="text-lg font-bold text-destructive">
                                 {deleteConfirmStep === 1 ? "Confirm Deletion" : "Final Verification"}
                             </h2>
                             <button 
                                 onClick={() => setShowDeleteConfirmation(false)}
-                                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+                                className="p-2 rounded-lg text-muted-foreground hover:bg-secondary transition-colors"
                                 aria-label="Close dialog"
                                 disabled={isDeleting}
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                             </button>
                         </div>
 
                         {deleteConfirmStep === 1 ? (
                             <div className="space-y-4">
-                                <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-md">
-                                    <p className="text-sm text-red-600 dark:text-red-400 font-medium">
+                                <div className="bg-destructive/10 border border-destructive/20 p-4 rounded-xl">
+                                    <p className="text-sm text-destructive font-medium">
                                         Warning: This action cannot be undone
                                     </p>
-                                    <p className="text-sm mt-2">
+                                    <p className="text-xs text-muted-foreground mt-2">
                                         You are about to permanently delete {selectedEmployee?.firstName} {selectedEmployee?.lastName} and all associated data including:
                                     </p>
-                                    <ul className="list-disc list-inside text-sm mt-2 space-y-1">
+                                    <ul className="list-disc list-inside text-xs text-muted-foreground mt-2 space-y-1">
                                         <li>User profile information</li>
                                         <li>Role assignments and permissions</li>
                                         <li>Attendance records</li>
@@ -968,14 +980,14 @@ const EmployeeManagement: React.FC = () => {
                                 <div className="flex justify-end space-x-3 mt-4">
                                     <button
                                         onClick={() => setShowDeleteConfirmation(false)}
-                                        className="py-2 px-4 border border-gray-300 rounded-md hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
+                                        className="py-2 px-4 border border-border rounded-lg hover:bg-secondary/60 text-sm font-medium transition-colors"
                                         disabled={isDeleting}
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         onClick={() => setDeleteConfirmStep(2)}
-                                        className="py-2 px-4 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none"
+                                        className="py-2 px-4 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 text-sm font-medium transition-colors"
                                         disabled={isDeleting}
                                     >
                                         Continue to Verification
@@ -1005,14 +1017,14 @@ const EmployeeManagement: React.FC = () => {
                                 <div className="flex justify-end space-x-3 mt-4">
                                     <button
                                         onClick={() => setDeleteConfirmStep(1)}
-                                        className="py-2 px-4 border border-gray-300 rounded-md hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
+                                        className="py-2 px-4 border border-border rounded-lg hover:bg-secondary/60 text-sm font-medium transition-colors"
                                         disabled={isDeleting}
                                     >
                                         Back
                                     </button>
                                     <button
                                         onClick={handleHardDeleteUser}
-                                        className="py-2 px-4 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="py-2 px-4 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                         disabled={isDeleting || confirmationEmail !== selectedEmployee?.email}
                                     >
                                         {isDeleting ? (

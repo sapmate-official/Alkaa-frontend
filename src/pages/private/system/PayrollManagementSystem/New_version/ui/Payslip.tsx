@@ -1,7 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { PayrollStatus, PayslipData } from "@/types/general";
-
-
+import { cn } from "@/lib/utils";
 
 interface Month {
     value: number;
@@ -14,7 +13,7 @@ interface PayslipItemProps {
     onSelect: (payslip: PayslipData) => void;
     months: Month[];
     formatCurrency: (amount: number) => string;
-    getStatusBadgeVariant: (status: PayrollStatus) => "default" | "destructive" | "success" | "secondary" | "outline";
+    getStatusBadgeVariant: (status: PayrollStatus) => "default" | "destructive" | "success" | "secondary" | "outline" | "warning";
 }
 
 export const PayslipListItem = ({ 
@@ -28,19 +27,20 @@ export const PayslipListItem = ({
     return (
         <div
             key={payslip.id}
-            className={`p-4 rounded-md cursor-pointer transition-colors ${
+            className={cn(
+                "p-3.5 rounded-lg border transition-colors cursor-pointer",
                 isSelected
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted hover:bg-muted/80'
-            }`}
+                    ? "bg-secondary/80 border-foreground/25"
+                    : "bg-card border-border hover:bg-muted/40"
+            )}
             onClick={() => onSelect(payslip)}
         >
             <div className="flex justify-between items-center">
-                <div>
-                    <h4 className="font-medium">
-                        {months.find((m) => m.value === payslip.month)?.label} {payslip.year}
+                <div className="space-y-0.5">
+                    <h4 className="font-medium text-sm text-foreground">
+                        {months.find((m) => m.value === payslip.month)?.label || `Month ${payslip.month}`} {payslip.year}
                     </h4>
-                    <p className="text-sm opacity-90">
+                    <p className="text-sm font-semibold tabular-nums text-muted-foreground">
                         {formatCurrency(payslip.netSalary)}
                     </p>
                 </div>

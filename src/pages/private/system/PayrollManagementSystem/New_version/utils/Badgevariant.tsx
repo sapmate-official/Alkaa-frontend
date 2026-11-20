@@ -1,16 +1,23 @@
 import { PayrollStatus } from "@/types/general";
 
-export const getStatusBadgeVariant = (status: PayrollStatus): "default" | "destructive" | "success" | "secondary" | "outline" => {
-    switch (status) {
-      case 'PAID':
-        return 'success';
-      case 'PENDING':
-        return 'secondary';
-      case 'PROCESSING':
-        return 'outline'; 
-      case 'FAILED':
-        return 'destructive';
-      default:
-        return 'outline';
-    }
-  };
+export const getStatusBadgeVariant = (
+  status?: PayrollStatus | string
+): "default" | "destructive" | "success" | "secondary" | "outline" | "warning" => {
+  if (!status) return "outline";
+  switch (status.toUpperCase()) {
+    case 'PAID':
+    case 'APPROVED':
+      return 'success';
+    case 'PENDING':
+    case 'AWAITING':
+      return 'warning';
+    case 'PROCESSING':
+      return 'secondary';
+    case 'FAILED':
+    case 'CANCELLED':
+    case 'REJECTED':
+      return 'destructive';
+    default:
+      return 'outline';
+  }
+};

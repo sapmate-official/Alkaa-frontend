@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { IBankDetails } from '@/types/bankDetails';
-import { APIDictionary } from '@/services/api/v2/APIdict';
-import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from "@/components/ui/button";
 import {
@@ -18,11 +16,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useAuth } from '@/providers/AuthContext';
 import SalaryParameter from './SalaryParameter';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAtom } from 'jotai';
-import { permissionListAtom } from '@/store/atom';
+import { usePermissions } from '@/store/useAuthStore';
 import { Landmark, SaveIcon } from 'lucide-react';
 import RouteDict from '@/routes/RouteDict';
-import { useBankDetailsQuery, useUpdateBankDetailsMutation } from '@/hooks/queries/useProfile';
+import { useBankDetailsQuery, useUpdateBankDetailsMutation, useUserDetailsQuery } from '@/hooks/queries/useProfile';
 
 const BankDetails = () => {
   const form = useForm<IBankDetails>({
@@ -38,7 +35,7 @@ const BankDetails = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [permissionList] = useAtom(permissionListAtom);
+  const permissionList = usePermissions();
 
   const userId = id || user?.id || ''
   
@@ -47,6 +44,8 @@ const BankDetails = () => {
     data: bankDetails, 
     error: bankError 
   } = useBankDetailsQuery(userId)
+  
+  const { data: targetUserData } = useUserDetailsQuery(id && id !== user?.id ? id : '');
   
   const updateBankMutation = useUpdateBankDetailsMutation()
 
@@ -80,21 +79,15 @@ const BankDetails = () => {
   }, [bankDetails, form]);
 
   useEffect(() => {
-    if (!user) return;
+    if (targetUserData) {
+      const userData = (targetUserData as { managerId?: string; user?: { managerId?: string } });
+      const managerId = userData.managerId || userData.user?.managerId;
+      setIsManager(managerId === user?.id);
+    }
+  }, [targetUserData, user?.id]);
 
-    const checkManagerRelationship = async () => {
-      if (id && id !== user?.id) {
-        try {
-          const response = await axios.get(APIDictionary.userProfile(id), { 
-            withCredentials: true 
-          });
-          const userData = response.data?.user;
-          setIsManager(userData?.managerId === user?.id);
-        } catch (error) {
-          console.error('Error checking manager relationship:', error);
-        }
-      }
-    };
+  useEffect(() => {
+    if (!user) return;
     
     if (!canEditOwnBank && !canEditSubordinatesBank && !canEditAllUserBank) {
       toast({
@@ -105,8 +98,6 @@ const BankDetails = () => {
       navigate(RouteDict.Profile.Info(id || user?.id || ''));
       return;
     }
-    
-    checkManagerRelationship();
   }, [user, id, canEditOwnBank, canEditSubordinatesBank, canEditAllUserBank, toast, navigate]);
 
   // Handle bank details error

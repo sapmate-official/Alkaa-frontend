@@ -23,26 +23,26 @@ const PrivacyPolicyPage: React.FC = () => {
     const isExpanded = expandedSections[id] ?? defaultExpanded;
     
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all duration-300 hover:shadow-md">
+      <div className="bg-card rounded-xl shadow-xs border border-border overflow-hidden mb-5 transition-all duration-200">
         <button
           onClick={() => toggleSection(id)}
-          className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors duration-200"
+          className="w-full flex items-center justify-between p-5 sm:p-6 text-left hover:bg-muted/40 transition-colors"
         >
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Icon className="w-5 h-5 text-blue-600" />
+          <div className="flex items-center space-x-3.5">
+            <div className="p-2 bg-secondary text-foreground rounded-lg">
+              <Icon className="w-5 h-5 text-foreground" />
             </div>
-            <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
+            <h2 className="text-lg sm:text-xl font-semibold text-foreground">{title}</h2>
           </div>
           {isExpanded ? (
-            <ChevronUp className="w-5 h-5 text-gray-500" />
+            <ChevronUp className="w-5 h-5 text-muted-foreground" />
           ) : (
-            <ChevronDown className="w-5 h-5 text-gray-500" />
+            <ChevronDown className="w-5 h-5 text-muted-foreground" />
           )}
         </button>
         
         <div className={`overflow-hidden transition-all duration-300 ${isExpanded ? 'max-h-none opacity-100' : 'max-h-0 opacity-0'}`}>
-          <div className="px-6 pb-6">
+          <div className="px-5 sm:px-6 pb-6 pt-1 text-sm text-muted-foreground">
             {children}
           </div>
         </div>
@@ -58,38 +58,38 @@ const PrivacyPolicyPage: React.FC = () => {
   }
 
   const HighlightBox: React.FC<HighlightBoxProps> = ({ children, type = "info" }) => {
-    const styles: Record<HighlightType, string> = {
-      info: "bg-blue-50 border-blue-200 text-blue-900",
-      warning: "bg-amber-50 border-amber-200 text-amber-900",
-      success: "bg-green-50 border-green-200 text-green-900"
+    const borderStyles: Record<HighlightType, string> = {
+      info: "border-l-primary",
+      warning: "border-l-amber-500",
+      success: "border-l-emerald-500"
     };
     
     return (
-      <div className={`p-4 rounded-lg border-l-4 ${styles[type]} my-4`}>
+      <div className={`p-4 rounded-lg border-l-4 ${borderStyles[type]} bg-secondary/40 my-4 text-foreground text-sm`}>
         {children}
       </div>
     );
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-100">
-        <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="bg-card border-b border-border">
+        <div className="max-w-4xl mx-auto px-6 py-10">
           <div className="flex items-center space-x-4 mb-4">
-            <div className="p-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl">
-              <Shield className="w-8 h-8 text-white" />
+            <div className="p-3 bg-secondary rounded-xl text-foreground">
+              <Shield className="w-8 h-8 text-foreground" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Privacy Policy</h1>
-              <div className="flex items-center space-x-2 mt-2 text-sm text-gray-600">
-                <Calendar className="w-4 h-4" />
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">Privacy Policy</h1>
+              <div className="flex items-center space-x-2 mt-1.5 text-xs text-muted-foreground">
+                <Calendar className="w-3.5 h-3.5" />
                 <span>Last updated: August 23, 2025</span>
               </div>
             </div>
           </div>
-          <p className="text-lg text-gray-700 leading-relaxed">
-            This Privacy Policy describes our policies and procedures on the collection, use and disclosure of your information when you use our service and tells you about your privacy rights and how the law protects you.
+          <p className="text-base text-muted-foreground leading-relaxed">
+            This Privacy Policy describes our policies and procedures on the collection, use, and disclosure of your information when you use our service, explaining your privacy rights and statutory protections.
           </p>
         </div>
       </div>
@@ -99,11 +99,11 @@ const PrivacyPolicyPage: React.FC = () => {
         {/* Quick Summary */}
         <HighlightBox type="info">
           <div className="flex items-start space-x-3">
-            <Eye className="w-5 h-5 text-blue-600 mt-0.5" />
+            <Eye className="w-5 h-5 text-primary mt-0.5 shrink-0" />
             <div>
-              <h3 className="font-semibold mb-2">Quick Summary</h3>
-              <p className="text-sm">
-                We use your personal data to provide and improve our service. By using Alkaa, you agree to the collection and use of information in accordance with this Privacy Policy.
+              <h3 className="font-semibold text-foreground mb-1">Quick Summary</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                We use your personal data exclusively to provide, maintain, and enhance the Alkaa platform. By using Alkaa, you agree to the collection and use of information in accordance with this Privacy Policy.
               </p>
             </div>
           </div>
@@ -112,21 +112,21 @@ const PrivacyPolicyPage: React.FC = () => {
         {/* Definitions Section */}
         <CollapsibleSection id="definitions" title="Definitions & Terms" icon={FileText} defaultExpanded={false}>
           <div className="space-y-4">
-            <p className="text-gray-700 mb-4">
-              The words of which the initial letter is capitalized have meanings defined under the following conditions:
+            <p className="text-muted-foreground mb-4">
+              Capitalized terms in this document hold specific legal meanings defined below:
             </p>
-            <div className="grid gap-4">
+            <div className="grid gap-3">
               {[
-                { term: "Account", def: "A unique account created for you to access our service or parts of our service." },
-                { term: "Company", def: 'Refers to ShapeNXT, located at Noida one sec 62 Noida Uttar pradesh-201309 India.' },
-                { term: "Service", def: "Refers to the Alkaa website." },
-                { term: "Personal Data", def: "Any information that relates to an identified or identifiable individual." },
-                { term: "Usage Data", def: "Data collected automatically, either generated by the use of the service or from the service infrastructure itself." },
+                { term: "Account", def: "A unique authenticated profile provisioned for an organization or employee to access the service." },
+                { term: "Company", def: 'ShapeNXT, located at Noida One, Sector 62, Noida, Uttar Pradesh - 201309, India.' },
+                { term: "Service", def: "The Alkaa Workforce & People Management platform." },
+                { term: "Personal Data", def: "Any information relating to an identified or identifiable natural person." },
+                { term: "Usage Data", def: "Telemetry and diagnostic metrics generated automatically through interaction with the service." },
                 { term: "Website", def: "Alkaa, accessible from https://www.alkaa.online" }
               ].map((item, index) => (
-                <div key={index} className="bg-gray-50 rounded-lg p-4">
-                  <dt className="font-semibold text-gray-900 mb-1">{item.term}</dt>
-                  <dd className="text-gray-700 text-sm">{item.def}</dd>
+                <div key={index} className="bg-secondary/40 border border-border/50 rounded-lg p-3.5">
+                  <dt className="font-semibold text-foreground mb-0.5">{item.term}</dt>
+                  <dd className="text-muted-foreground text-xs leading-relaxed">{item.def}</dd>
                 </div>
               ))}
             </div>
@@ -137,42 +137,49 @@ const PrivacyPolicyPage: React.FC = () => {
         <CollapsibleSection id="data-collection" title="What Data We Collect" icon={Eye} defaultExpanded={true}>
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
-                <Users className="w-5 h-5 mr-2 text-blue-600" />
+              <h3 className="text-base font-semibold text-foreground mb-2 flex items-center">
+                <Users className="w-4 h-4 mr-2 text-muted-foreground" />
                 Personal Information
               </h3>
-              <p className="text-gray-700 mb-3">
-                We may ask you to provide certain personally identifiable information that can be used to contact or identify you:
+              <p className="text-muted-foreground text-sm mb-3">
+                During account creation, onboarding, or administrative management, we may collect:
               </p>
-              <div className="grid md:grid-cols-2 gap-3">
-                {["Email address", "First name and last name", "Phone number", "Address, State, Province, ZIP/Postal code, City", "Usage Data"].map((item, index) => (
-                  <div key={index} className="bg-blue-50 rounded-lg p-3 text-sm text-blue-900">
+              <div className="grid md:grid-cols-2 gap-2.5">
+                {[
+                  "Email address & authentication tokens",
+                  "First name and last name",
+                  "Phone numbers & emergency contacts",
+                  "Address, State, Postal Code, Country",
+                  "Department, role, and manager mappings",
+                  "Attendance coordinates & check-in timestamps"
+                ].map((item, index) => (
+                  <div key={index} className="bg-secondary/40 border border-border/50 rounded-lg p-3 text-xs text-foreground">
                     {item}
                   </div>
                 ))}
               </div>
             </div>
 
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
-                <FileText className="w-5 h-5 mr-2 text-purple-600" />
-                Usage Data
+            <div className="pt-2 border-t border-border/60">
+              <h3 className="text-base font-semibold text-foreground mb-2 flex items-center">
+                <FileText className="w-4 h-4 mr-2 text-muted-foreground" />
+                Usage & Telemetry Data
               </h3>
-              <p className="text-gray-700 mb-3">
-                Usage Data is collected automatically and may include:
+              <p className="text-muted-foreground text-sm mb-3">
+                Operational data collected automatically to safeguard system integrity:
               </p>
-              <ul className="space-y-2 text-gray-700">
+              <ul className="space-y-2 text-xs text-muted-foreground">
                 <li className="flex items-start space-x-2">
-                  <div className="w-1.5 h-1.5 bg-purple-600 rounded-full mt-2"></div>
-                  <span>Your device's IP address, browser type and version</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                  <span>IP address, user agent, browser engine, and operating system</span>
                 </li>
                 <li className="flex items-start space-x-2">
-                  <div className="w-1.5 h-1.5 bg-purple-600 rounded-full mt-2"></div>
-                  <span>Pages you visit, time and date of visits</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                  <span>Page visits, navigation duration, and interaction timestamps</span>
                 </li>
                 <li className="flex items-start space-x-2">
-                  <div className="w-1.5 h-1.5 bg-purple-600 rounded-full mt-2"></div>
-                  <span>Mobile device information and unique identifiers</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                  <span>Audit trails of administrative updates and access token validations</span>
                 </li>
               </ul>
             </div>
@@ -181,18 +188,18 @@ const PrivacyPolicyPage: React.FC = () => {
 
         {/* How We Use Data */}
         <CollapsibleSection id="data-usage" title="How We Use Your Data" icon={Lock} defaultExpanded={true}>
-          <div className="grid gap-4">
+          <div className="grid sm:grid-cols-2 gap-3">
             {[
-              { title: "Service Provision", desc: "To provide and maintain our service, including monitoring usage" },
-              { title: "Account Management", desc: "To manage your registration and provide access to service features" },
-              { title: "Communication", desc: "To contact you with updates, security alerts, and service information" },
-              { title: "Improvement", desc: "To analyze usage trends and improve our service quality" },
-              { title: "Marketing", desc: "To provide news and offers about similar services (opt-out available)" },
-              { title: "Legal Compliance", desc: "To comply with legal obligations and protect our rights" }
+              { title: "Service Delivery", desc: "Core payroll, live attendance verification, and role-based permissions." },
+              { title: "Account & Organization", desc: "Managing multi-tenant separation, user provisioning, and role governance." },
+              { title: "System Communication", desc: "Transmitting security alerts, password resets, and critical workflow notices." },
+              { title: "Reliability & Analytics", desc: "Monitoring platform stability, eliminating errors, and diagnosing latency." },
+              { title: "Compliance", desc: "Fulfilling tax withholding records, statutory audit trails, and legal duties." },
+              { title: "Data Security", desc: "Preventing unauthorized access, fraudulent logins, and malicious abuse." }
             ].map((item, index) => (
-              <div key={index} className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4 border border-green-100">
-                <h4 className="font-semibold text-gray-900 mb-2">{item.title}</h4>
-                <p className="text-sm text-gray-700">{item.desc}</p>
+              <div key={index} className="bg-secondary/40 rounded-lg p-4 border border-border/50">
+                <h4 className="font-semibold text-foreground text-sm mb-1">{item.title}</h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -201,20 +208,20 @@ const PrivacyPolicyPage: React.FC = () => {
         {/* Data Sharing */}
         <CollapsibleSection id="data-sharing" title="When We Share Data" icon={Users}>
           <HighlightBox type="warning">
-            <p className="font-medium mb-2">We may share your information in these situations:</p>
+            <p className="font-medium text-xs">We do not sell personal data. Information is disclosed solely in these scenarios:</p>
           </HighlightBox>
           
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {[
-              "With service providers to monitor and analyze our service usage",
-              "During business transfers like mergers or acquisitions",
-              "With affiliates who must honor this privacy policy",
-              "With business partners for specific promotions or services",
-              "With your explicit consent for other purposes"
+              "With enterprise cloud infrastructure and verified database providers strictly for hosting",
+              "During corporate transactions such as a merger, asset restructuring, or acquisition",
+              "With authorized administrators inside your employer's tenant organization",
+              "When required by applicable statutory regulations, subpoenas, or lawful orders",
+              "With your express, verifiable consent for integrated third-party extensions"
             ].map((item, index) => (
-              <div key={index} className="flex items-start space-x-3 p-3 bg-amber-50 rounded-lg">
-                <div className="w-2 h-2 bg-amber-500 rounded-full mt-2"></div>
-                <span className="text-sm text-amber-900">{item}</span>
+              <div key={index} className="flex items-start space-x-3 p-3 bg-secondary/30 border border-border/40 rounded-lg">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                <span className="text-xs text-foreground leading-relaxed">{item}</span>
               </div>
             ))}
           </div>
@@ -223,21 +230,21 @@ const PrivacyPolicyPage: React.FC = () => {
         {/* Your Rights */}
         <CollapsibleSection id="your-rights" title="Your Privacy Rights" icon={Shield}>
           <HighlightBox type="success">
-            <h4 className="font-semibold mb-2">You have the right to:</h4>
+            <h4 className="font-medium text-xs">Under data privacy regulations, you retain enforceable rights:</h4>
           </HighlightBox>
           
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid md:grid-cols-2 gap-3">
             {[
-              { title: "Access", desc: "Request copies of your personal data" },
-              { title: "Correction", desc: "Request correction of inaccurate data" },
-              { title: "Deletion", desc: "Request deletion of your personal data" },
-              { title: "Portability", desc: "Request transfer of your data" },
-              { title: "Objection", desc: "Object to processing of your data" },
-              { title: "Restriction", desc: "Request restriction of processing" }
+              { title: "Right of Access", desc: "Request an export of all personal information retained on your profile." },
+              { title: "Right to Rectification", desc: "Correct inaccurate or incomplete profile and bank information." },
+              { title: "Right to Erasure", desc: "Request deletion of non-statutory records upon contract conclusion." },
+              { title: "Data Portability", desc: "Export your attendance and compensation history in standardized format." },
+              { title: "Right to Object", desc: "Challenge processing based on legitimate interests or automated decisions." },
+              { title: "Consent Withdrawal", desc: "Revoke optional permissions such as push notifications at any time." }
             ].map((item, index) => (
-              <div key={index} className="bg-white border border-green-200 rounded-lg p-4">
-                <h5 className="font-semibold text-green-800 mb-1">{item.title}</h5>
-                <p className="text-sm text-gray-700">{item.desc}</p>
+              <div key={index} className="bg-secondary/40 border border-border/50 rounded-lg p-3.5">
+                <h5 className="font-semibold text-foreground text-xs mb-1">{item.title}</h5>
+                <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -245,75 +252,43 @@ const PrivacyPolicyPage: React.FC = () => {
 
         {/* Security */}
         <CollapsibleSection id="security" title="Data Security" icon={Lock}>
-          <div className="flex items-start space-x-4 p-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl text-white">
-            <Shield className="w-8 h-8 flex-shrink-0 mt-1" />
+          <div className="flex items-start space-x-4 p-5 bg-card border border-border rounded-xl">
+            <Shield className="w-7 h-7 flex-shrink-0 text-primary mt-0.5" />
             <div>
-              <h3 className="font-semibold text-lg mb-2">Your Security Matters</h3>
-              <p className="text-blue-100">
-                The security of your personal data is important to us. While we use commercially acceptable means to protect your data, 
-                no method of transmission over the internet is 100% secure. We continuously work to improve our security measures.
+              <h3 className="font-semibold text-foreground text-sm mb-1.5">Defense in Depth Architecture</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                We protect your data with TLS 1.3 encryption in transit, AES-256 encryption at rest, secure HTTP-only cookies, strict CORS controls, and role-based tenant isolation. While no online storage is impenetrable, our infrastructure undergoes routine vulnerability reviews and automated testing.
               </p>
-            </div>
-          </div>
-        </CollapsibleSection>
-
-        {/* Children's Privacy */}
-        <CollapsibleSection id="children-privacy" title="Children's Privacy" icon={Shield}>
-          <HighlightBox type="warning">
-            <p>
-              <strong>Age Restriction:</strong> Our service does not address anyone under the age of 13. We do not knowingly collect 
-              personally identifiable information from children under 13. If you're a parent and believe your child has provided us 
-              with personal data, please contact us immediately.
-            </p>
-          </HighlightBox>
-        </CollapsibleSection>
-
-        {/* Updates */}
-        <CollapsibleSection id="updates" title="Policy Updates" icon={Calendar}>
-          <p className="text-gray-700 mb-4">
-            We may update our Privacy Policy from time to time. We will notify you of any changes by:
-          </p>
-          <div className="space-y-2">
-            <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
-              <Mail className="w-5 h-5 text-blue-600" />
-              <span className="text-blue-900">Email notification</span>
-            </div>
-            <div className="flex items-center space-x-3 p-3 bg-purple-50 rounded-lg">
-              <FileText className="w-5 h-5 text-purple-600" />
-              <span className="text-purple-900">Prominent notice on our service</span>
             </div>
           </div>
         </CollapsibleSection>
 
         {/* Contact Information */}
-        <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl p-8 text-white mt-8">
-          <div className="flex items-start space-x-4">
-            <div className="p-3 bg-white/10 rounded-lg">
-              <Mail className="w-6 h-6" />
-            </div>
+        <div className="bg-card border border-border rounded-xl p-6 sm:p-8 mt-8 shadow-xs">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold mb-2">Questions?</h2>
-              <p className="text-gray-300 mb-4">
-                If you have any questions about this Privacy Policy, don't hesitate to reach out.
+              <h2 className="text-xl font-bold text-foreground">Have Questions?</h2>
+              <p className="text-xs text-muted-foreground mt-1 max-w-md leading-relaxed">
+                Our security and compliance team is available to assist with data access requests or privacy questions.
               </p>
-              <a 
-                href="mailto:support@alkaa.online" 
-                className="inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg transition-colors duration-200"
-              >
-                <Mail className="w-4 h-4" />
-                <span>support@alkaa.online</span>
-                <ExternalLink className="w-4 h-4" />
-              </a>
             </div>
+            <a 
+              href="mailto:support@alkaa.online" 
+              className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-medium px-4 py-2.5 rounded-lg transition-colors"
+            >
+              <Mail className="w-3.5 h-3.5" />
+              <span>support@alkaa.online</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="bg-gray-100 border-t border-gray-200 py-8 mt-12">
+      <div className="border-t border-border py-6 mt-12 bg-card/50">
         <div className="max-w-4xl mx-auto px-6 text-center">
-          <p className="text-gray-600 text-sm">
-            © 2025 Alkaa by ShapeNXT. This privacy policy is effective as of August 23, 2025.
+          <p className="text-muted-foreground text-xs">
+            © 2025 Alkaa by ShapeNXT. All rights reserved.
           </p>
         </div>
       </div>

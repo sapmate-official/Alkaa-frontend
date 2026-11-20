@@ -33,39 +33,51 @@ export interface HolidayType {
 
 export interface CreateHolidayRequest {
   name: string
-  description?: string
-  date: string
+  description?: string | null
+  date: string | Date
   isRecurring?: boolean
-  holidayTypeId: string
+  holidayTypeId?: string
+  typeId?: string
+  type?: string | null
+  organizationId?: string
+  orgId?: string
   departmentIds?: string[]
   roleIds?: string[]
   isActive?: boolean
+  isOptional?: boolean
 }
 
 export interface UpdateHolidayRequest {
   name?: string
-  description?: string
-  date?: string
+  description?: string | null
+  date?: string | Date
   isRecurring?: boolean
   holidayTypeId?: string
+  typeId?: string
+  type?: string | null
   departmentIds?: string[]
   roleIds?: string[]
   isActive?: boolean
+  isOptional?: boolean
 }
 
 export interface CreateHolidayTypeRequest {
   name: string
   description?: string
-  color: string
+  color?: string
+  policy?: string | null
   isPaid?: boolean
   isOptional?: boolean
   isDefault?: boolean
+  organizationId?: string
+  orgId?: string
 }
 
 export interface UpdateHolidayTypeRequest {
   name?: string
   description?: string
   color?: string
+  policy?: string | null
   isPaid?: boolean
   isOptional?: boolean
   isDefault?: boolean

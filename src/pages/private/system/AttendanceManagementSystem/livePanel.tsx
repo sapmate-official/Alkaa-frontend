@@ -10,8 +10,7 @@ import axios from 'axios';
 import { APIDictionary } from '@/services/api/v2/APIdict';
 import { useAuth } from '@/providers/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { useAtom } from 'jotai';
-import { permissionListAtom } from '@/store/atom';
+import { usePermissions } from '@/store/useAuthStore';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -95,8 +94,7 @@ const EmployeeAttendanceDashboard: React.FC = () => {
     const [permissionType, setPermissionType] = useState<'all' | 'subordinates' | 'none'>('none');
     const currentSession = getCurrentSession();
     const {toast} = useToast()
-    const { theme } = useTheme();
-    const [permissionList] = useAtom(permissionListAtom);
+    const permissionList = usePermissions();
     
     // Check if user has permission to view attendance data
     const checkPermissions = (): boolean => {
@@ -200,28 +198,9 @@ const EmployeeAttendanceDashboard: React.FC = () => {
         );
     });
 
-    // Helper to determine card status color (now more subtle)
-    const getStatusColor = (userId: string): string => {
-        const records = attendanceData[userId] || [];
-        const currentSessionRecord = records?.find(r => r?.sessionNumber === currentSession);
-        const isDark = theme === 'dark';
-
-        if (!currentSessionRecord) return '';
-
-        switch (currentSessionRecord?.status) {
-            case 'PRESENT':
-                return currentSessionRecord.checkOutTime !== null && currentSessionRecord.checkOutTime !== undefined
-                    ? (isDark ? 'bg-blue-50/5 border-blue-200/20' : 'bg-blue-50/50 border-blue-200/50')
-                    : (isDark ? 'bg-green-50/5 border-green-200/20' : 'bg-green-50/50 border-green-200/50');
-            case 'LATE':
-                return isDark ? 'bg-yellow-50/5 border-yellow-200/20' : 'bg-yellow-50/50 border-yellow-200/50';
-            case 'ABSENT':
-                return isDark ? 'bg-red-50/5 border-red-200/20' : 'bg-red-50/50 border-red-200/50';
-            case 'LEAVE':
-                return isDark ? 'bg-gray-50/5 border-gray-200/20' : 'bg-gray-50/50 border-gray-200/50';
-            default:
-                return '';
-        }
+    // Helper to determine card status color (neutral per color-styling-guide)
+    const getStatusColor = (_userId?: string): string => {
+        return 'hover:bg-secondary/40';
     };
 
     // Helper to get status text
@@ -252,13 +231,13 @@ const EmployeeAttendanceDashboard: React.FC = () => {
     };
 
     return (
-        <div className="p-6 w-full h-full overflow-y-scroll">
-            <div className="flex items-center justify-between mb-4">
+        <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-7xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold mb-2">Employee Attendance</h1>
-                    <div className="flex items-center gap-2">
-                        <p className="text-muted">{format(new Date(), 'EEEE, MMMM d, yyyy')}</p>
-                        <Badge variant="outline" className="ml-2">
+                    <h1 className="text-2xl font-bold tracking-tight text-foreground">Employee Attendance</h1>
+                    <div className="flex items-center gap-2 mt-1">
+                        <p className="text-xs text-muted-foreground">{format(new Date(), 'EEEE, MMMM d, yyyy')}</p>
+                        <Badge variant="outline" className="text-xs">
                             Session {currentSession}
                         </Badge>
                     </div>
@@ -288,8 +267,8 @@ const EmployeeAttendanceDashboard: React.FC = () => {
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <Badge variant="outline" className="cursor-help">
-                                            <ShieldCheck className="h-3.5 w-3.5 mr-1" />
+                                        <Badge variant="outline" className="cursor-help gap-1">
+                                            <ShieldCheck className="h-3.5 w-3.5" />
                                             {permissionType === 'all' ? 'All Access' : 'Team Access'}
                                         </Badge>
                                     </TooltipTrigger>
@@ -305,17 +284,17 @@ const EmployeeAttendanceDashboard: React.FC = () => {
                 )}
             </div>
             
-            <div className="flex items-center justify-between mb-6">
-                <div className="text-sm text-muted">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="text-xs text-muted-foreground">
                     {lastUpdated && (
                         <span>Last updated: {format(lastUpdated, 'h:mm a')}</span>
                     )}
                 </div>
                 {hasPermission && (
-                    <div className="relative w-64">
-                        <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                    <div className="relative w-full sm:w-64">
+                        <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
-                            className="pl-8"
+                            className="pl-8 text-xs"
                             placeholder="Search employees..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -326,7 +305,7 @@ const EmployeeAttendanceDashboard: React.FC = () => {
 
             {/* Quick Stats */}
             {hasPermission && userData.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {(() => {
                         const stats = userData.reduce((acc, employee) => {
                             const records = attendanceData[employee.id] || [];
@@ -345,36 +324,36 @@ const EmployeeAttendanceDashboard: React.FC = () => {
 
                         return (
                             <>
-                                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                                <div className="bg-card border border-border rounded-xl p-4 shadow-xs">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                        <span className="text-sm font-medium text-green-800 dark:text-green-200">Checked In</span>
+                                        <div className="w-2 h-2 bg-emerald-500 rounded-full shrink-0"></div>
+                                        <span className="text-xs font-medium text-muted-foreground">Checked In</span>
                                     </div>
-                                    <p className="text-2xl font-bold text-green-900 dark:text-green-100 mt-1">{stats.checkedIn}</p>
+                                    <p className="text-2xl font-bold text-foreground tabular-nums mt-1">{stats.checkedIn}</p>
                                 </div>
                                 
-                                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                                <div className="bg-card border border-border rounded-xl p-4 shadow-xs">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                        <span className="text-sm font-medium text-blue-800 dark:text-blue-200">Checked Out</span>
+                                        <div className="w-2 h-2 bg-blue-500 rounded-full shrink-0"></div>
+                                        <span className="text-xs font-medium text-muted-foreground">Checked Out</span>
                                     </div>
-                                    <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 mt-1">{stats.checkedOut}</p>
+                                    <p className="text-2xl font-bold text-foreground tabular-nums mt-1">{stats.checkedOut}</p>
                                 </div>
 
-                                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                                <div className="bg-card border border-border rounded-xl p-4 shadow-xs">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                                        <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Late/Absent</span>
+                                        <div className="w-2 h-2 bg-amber-500 rounded-full shrink-0"></div>
+                                        <span className="text-xs font-medium text-muted-foreground">Late / Absent</span>
                                     </div>
-                                    <p className="text-2xl font-bold text-yellow-900 dark:text-yellow-100 mt-1">{stats.late + stats.absent}</p>
+                                    <p className="text-2xl font-bold text-foreground tabular-nums mt-1">{stats.late + stats.absent}</p>
                                 </div>
 
-                                <div className="bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-800 rounded-lg p-3">
+                                <div className="bg-card border border-border rounded-xl p-4 shadow-xs">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
-                                        <span className="text-sm font-medium text-gray-800 dark:text-gray-200">Not Started</span>
+                                        <div className="w-2 h-2 bg-muted-foreground rounded-full shrink-0"></div>
+                                        <span className="text-xs font-medium text-muted-foreground">Not Started</span>
                                     </div>
-                                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{stats.notCheckedIn + stats.onLeave}</p>
+                                    <p className="text-2xl font-bold text-foreground tabular-nums mt-1">{stats.notCheckedIn + stats.onLeave}</p>
                                 </div>
                             </>
                         );

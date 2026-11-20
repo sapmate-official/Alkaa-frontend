@@ -47,10 +47,14 @@ import {
   Users,
   FileSpreadsheet,
   Briefcase,
-  Calculator
+  Calculator,
+  Globe,
+  Store
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { debounce } from 'lodash';
+import { CountrySelect } from '@/components/common/CountrySelect';
+import { MarketSelect } from '@/components/common/MarketSelect';
 
 const basicDetailsSchema = z.object({
   firstName: z.string().min(2, 'First name is required'),
@@ -64,6 +68,8 @@ const basicDetailsSchema = z.object({
   panNumber: z.string().optional(),
   employeeId: z.string().optional(),
   hiredDate: z.string().nonempty('Hired Date is required'),
+  countryOfCompany: z.string().optional(),
+  market: z.string().optional(),
 });
 
 const bankDetailsSchema = z.object({
@@ -172,6 +178,8 @@ const CreateEmployeeNew = () => {
       panNumber: '',
       employeeId: '',
       hiredDate: '',
+      countryOfCompany: '',
+      market: '',
 
       // Bank Details
       accountHolder: '',
@@ -595,6 +603,50 @@ const CreateEmployeeNew = () => {
           </FormItem>
         )}
       />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="countryOfCompany"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2">
+                <Globe className="h-4 w-4" />
+                Country of Company
+              </FormLabel>
+              <FormControl>
+                <CountrySelect
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select company country"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="market"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2">
+                <Store className="h-4 w-4" />
+                Market / Industry
+              </FormLabel>
+              <FormControl>
+                <MarketSelect
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select market or industry"
+                  customPlaceholder="Write your market..."
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField
@@ -1135,7 +1187,7 @@ const CreateEmployeeNew = () => {
   );
 
   return (
-    <div className="mx-auto p-4 w-full h-full overflow-y-scroll">
+    <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-7xl">
       <Card className="shadow-md border-muted/40">
         <CardHeader className="bg-muted/10">
           <CardTitle className="text-xl font-semibold text-center sm:text-left flex items-center gap-2">

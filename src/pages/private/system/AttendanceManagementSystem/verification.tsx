@@ -52,8 +52,7 @@ import axios from "axios";
 import { useAuth } from "@/providers/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import LazyLocationViewer from "@/components/LazyLocationViewer";
-import { useAtomValue } from 'jotai';
-import { permissionListAtom } from '@/store/atom';
+import { usePermissions } from '@/store/useAuthStore';
 
 // Types
 type AttendanceStatus = "PRESENT" | "ABSENT" | "LATE" | "HALF_DAY";
@@ -97,7 +96,7 @@ interface AttendanceRecord {
 const AttendanceVerificationComponent: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const permissionList = useAtomValue(permissionListAtom);
+  const permissionList = usePermissions();
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [, setLoading] = useState<boolean>(false);
   const [selectedRecord, setSelectedRecord] = useState<AttendanceRecord | null>(null);

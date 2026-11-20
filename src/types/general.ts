@@ -114,6 +114,8 @@ export interface User {
   emergencyContact?: string;
   adharNumber?: string;
   panNumber?: string;
+  countryOfCompany?: string;
+  market?: string;
   employeeId?: string;
   hiredDate?: Date;
   terminationDate?: Date;
@@ -641,6 +643,8 @@ export interface OnboardingCandidate {
   address?: string;
   adharNumber?: string;
   panNumber?: string;
+  countryOfCompany?: string;
+  market?: string;
   hiredDate?: string;
   annualPackage?: number;
   monthlySalary?: number;

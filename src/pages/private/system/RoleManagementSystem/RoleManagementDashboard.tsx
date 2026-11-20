@@ -652,7 +652,7 @@ const RolesPermissionsManagement = () => {
   );
 
   return (
-    <div className="p-6 space-y-6 w-full overflow-y-scroll h-full">
+    <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-7xl">
       {/* Loading state */}
       {(rolesLoading || permissionsLoading || usersLoading) && (
         <div className="flex items-center justify-center py-8">
